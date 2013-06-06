@@ -27,7 +27,7 @@ class ChartboostInterstitial extends CustomEventInterstitial {
      * documentation for more information.
      */
 
-    ChartboostInterstitial() {
+    public ChartboostInterstitial() {
         location = LOCATION_DEFAULT;
     }
 
