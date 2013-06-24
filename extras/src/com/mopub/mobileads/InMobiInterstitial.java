@@ -1,5 +1,6 @@
 package com.mopub.simpleadsdemo;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import android.app.Activity;
@@ -8,6 +9,7 @@ import android.util.Log;
 
 import com.inmobi.androidsdk.IMAdInterstitial;
 import com.inmobi.androidsdk.IMAdInterstitialListener;
+import com.inmobi.androidsdk.IMAdRequest;
 import com.inmobi.androidsdk.IMAdRequest.ErrorCode;
 import com.mopub.mobileads.CustomEventInterstitial;
 import com.mopub.mobileads.MoPubErrorCode;
@@ -45,9 +47,16 @@ class InMobiInterstitial extends CustomEventInterstitial implements IMAdIntersti
          */
         String inMobiAppId = "YOUR_INMOBI_APP_ID";
         mInMobiInterstitial = new IMAdInterstitial(activity, inMobiAppId);
+        IMAdRequest adRequest = new IMAdRequest();
+        Map<String,String> requestParams = new HashMap<String,String>();
+        /*
+         * For InMobi's tracking, "tp" variable needs to be passed with value "c_mopub"
+         */
+        requestParams.put("tp", "c_mopub");
+        adRequest.setRequestParams(requestParams);
 
         mInMobiInterstitial.setIMAdInterstitialListener(this);
-        mInMobiInterstitial.loadNewAd();
+        mInMobiInterstitial.loadNewAd(adRequest);
     }
 
     @Override
