@@ -1,5 +1,6 @@
 package com.mopub.simpleadsdemo;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import android.app.Activity;
@@ -7,6 +8,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.inmobi.androidsdk.IMAdListener;
+import com.inmobi.androidsdk.IMAdRequest;
 import com.inmobi.androidsdk.IMAdRequest.ErrorCode;
 import com.inmobi.androidsdk.IMAdView;
 import com.mopub.mobileads.CustomEventBanner;
@@ -45,9 +47,16 @@ class InMobiBanner extends CustomEventBanner implements IMAdListener {
          */
         String inMobiAppId = "YOUR_INMOBI_APP_ID";
         mInMobiBanner = new IMAdView(activity, IMAdView.INMOBI_AD_UNIT_320X50, inMobiAppId);
+        IMAdRequest adRequest = new IMAdRequest();
+        Map<String,String> requestParams = new HashMap<String,String>();
+        /*
+         * For InMobi's tracking, "tp" variable needs to be passed with value "c_mopub"
+         */
+        requestParams.put("tp", "c_mopub");
+        adRequest.setRequestParams(requestParams);
 
         mInMobiBanner.setIMAdListener(this);
-        mInMobiBanner.loadNewAd();
+        mInMobiBanner.loadNewAd(adRequest);
     }
 
     @Override
