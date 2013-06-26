@@ -19,9 +19,10 @@ public class FacebookKeywordProvider {
     private static final String ID_PREFIX = "FBATTRID:";
     
     public static String getKeyword(Context context) {
+    	Cursor c = null;
         try {
             String projection[] = {ID_COLUMN_NAME};
-            Cursor c = context.getContentResolver().query(ID_URL, projection, null, null, null);
+            c = context.getContentResolver().query(ID_URL, projection, null, null, null);
             
             if (c == null || !c.moveToFirst()) {
                 return null;
@@ -37,6 +38,10 @@ public class FacebookKeywordProvider {
         } catch (Exception exception) {
             Log.d("MoPub", "Unable to retrieve FBATTRID: " + exception.toString());
             return null;
+        } finally {
+        	if (c != null) {
+        		c.close();
+        	}
         }
     }
 }
