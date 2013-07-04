@@ -101,6 +101,8 @@ public class MoPubView extends FrameLayout {
     public MoPubView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
+        if (isInEditMode()) return;
+
         mContext = context;
         mIsInForeground = (getVisibility() == VISIBLE);
         mLocationAwareness = LocationAwareness.LOCATION_AWARENESS_NORMAL;
