@@ -12,7 +12,6 @@ public class BaseHtmlWebView extends BaseWebView {
 
         disableScrollingAndZoom();
         getSettings().setJavaScriptEnabled(true);
-        getSettings().setPluginsEnabled(true);
         setBackgroundColor(Color.TRANSPARENT);
     }
 
