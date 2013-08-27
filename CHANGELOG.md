@@ -1,6 +1,6 @@
 ## Version 1.15 (Aug 21, 2013)
 
-Includes support for ads in the MRAID 2.0 format. MRAID 2.0 allows advertisers to create ads with rich media functionality, including adding calendar events, storing pictures and playing videos in the native video player. 
+Includes support for ads in the MRAID 2.0 format. MRAID 2.0 allows advertisers to create ads with rich media functionality, including adding calendar events, storing pictures and playing videos in the native video player. To learn more about MRAID 2.0, read our [help article](http://j.mp/16MKSci).
 
 To allow advertisers to show store picture ads, you need to make the following change to AndroidManifest.xml:  
 * Add the`WRITE_EXTERNAL_STORAGE` permission. Note: **This permission is optional**. However, if it is not added, we will not be able to display store picture ads. All other features will remain functional with or without the new permission. 
