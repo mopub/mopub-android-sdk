@@ -1,6 +1,13 @@
 ## Version 1.15 (Aug 21, 2013)
 
-  - Added several changes to AndroidManifest.xml. Please be sure to include the permissions for `CALL_PHONE`, `SEND_SMS`, `WRITE_EXTERNAL_STORAGE` and declare activity `com.mopub.mobileads.MraidVideoPlayerActivity`
+Includes support for ads in the MRAID 2.0 format. MRAID 2.0 allows advertisers to create ads with rich media functionality, including adding calendar events, storing pictures and playing videos in the native video player. 
+
+To allow advertisers to show store picture ads, you need to make the following change to AndroidManifest.xml:  
+* Add the`WRITE_EXTERNAL_STORAGE` permission. Note: **This permission is optional**. However, if it is not added, we will not be able to display store picture ads. All other features will remain functional with or without the new permission. 
+
+To allow users to play videos using the native video player:
+* Declare activity `com.mopub.mobileads.MraidVideoPlayerActivity` This activity is required to support playing videos in the native player.
+
   - Added the following MRAID 2.0 features: `createCalendarEvent` (Android 4.0 and above), `playVideo`, `storePicture`, and `supports`
   - Hardware Acceleration is now enabled by default for `MraidInterstitial`s on Android 4.0 and above  
   - Ensured that Cursors in `FacebookKeywordProvider` are always closed properly; fixes [GitHub issue #8](https://github.com/mopub/mopub-android-sdk/issues/8)  
