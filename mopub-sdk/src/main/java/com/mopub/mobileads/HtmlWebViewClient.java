@@ -204,7 +204,7 @@ class HtmlWebViewClient extends WebViewClient {
         boolean handledByMraidBrowser = launchIntentForUserClick(mContext, intent, errorMessage);
 
         if (!handledByMraidBrowser) {
-            intent = new Intent(Intent.ACTION_VIEW, Uri.parse("about:blank"));
+            intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             launchIntentForUserClick(mContext, intent, null);
         }
