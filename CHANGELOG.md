@@ -1,6 +1,6 @@
 ## Version 1.17 (Nov 20, 2013)
 
-  - comment
+  - comment 2
 
   - Support for VAST 2.0 video playback via MoPub Marketplace
     - Short videos (less than 15 seconds) autoplay and and are unskippable
