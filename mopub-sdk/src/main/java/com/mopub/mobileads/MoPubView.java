@@ -428,6 +428,19 @@ public class MoPubView extends FrameLayout {
         return mAdViewController;
     }
 
+    @Override
+    public void setVisibility(int visibility) {
+        boolean isChanged = visibility != getVisibility();
+        super.setVisibility(visibility);
+
+        if (isChanged) {
+            View bannerView = getChildAt(0);
+            if (bannerView != null) {
+                bannerView.setVisibility(visibility);
+            }
+        }
+    }
+
     @Deprecated
     public interface OnAdWillLoadListener {
         public void OnAdWillLoad(MoPubView m, String url);

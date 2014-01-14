@@ -452,6 +452,7 @@ public class AdViewController {
                     return;
                 }
                 moPubView.removeAllViews();
+                view.setVisibility(moPubView.getVisibility());
                 moPubView.addView(view, getAdLayoutParams(view));
             }
         });
