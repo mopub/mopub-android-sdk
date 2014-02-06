@@ -68,24 +68,28 @@ public class WebViews {
             @Override
             public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
                 Log.d(LOGTAG, message);
+                result.cancel();
                 return true;
             }
 
             @Override
             public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
                 Log.d(LOGTAG, message);
+                result.cancel();
                 return true;
             }
 
             @Override
             public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
                 Log.d(LOGTAG, message);
+                result.cancel();
                 return true;
             }
 
             @Override
             public boolean onJsBeforeUnload(WebView view, String url, String message, JsResult result) {
                 Log.d(LOGTAG, message);
+                result.cancel();
                 return true;
             }
         });
