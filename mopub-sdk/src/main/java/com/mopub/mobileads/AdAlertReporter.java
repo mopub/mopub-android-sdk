@@ -36,7 +36,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.util.Log;
 import android.view.View;
 import com.mopub.mobileads.util.Base64;
 import com.mopub.mobileads.util.DateAndTime;

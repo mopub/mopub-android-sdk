@@ -33,7 +33,6 @@
 package com.mopub.mobileads;
 
 import android.content.Context;
-import android.util.Log;
 import android.webkit.WebView;
 import com.mopub.mobileads.util.VersionCode;
 import com.mopub.mobileads.util.Views;

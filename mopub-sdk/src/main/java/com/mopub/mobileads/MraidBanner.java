@@ -36,6 +36,7 @@ import android.content.Context;
 import android.net.Uri;
 import com.mopub.mobileads.MraidView.ViewState;
 import com.mopub.mobileads.factories.MraidViewFactory;
+import com.mopub.mobileads.util.Views;
 
 import java.util.*;
 
@@ -72,6 +73,7 @@ class MraidBanner extends CustomEventBanner {
     protected void onInvalidate() {
         if (mMraidView != null) {
             resetMraidListener();
+            Views.removeFromParent(mMraidView);
             mMraidView.destroy();
         }
     }

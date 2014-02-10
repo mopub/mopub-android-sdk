@@ -2,6 +2,7 @@
 .git.bak/
 .idea/workspace.xml
 .idea/uiDesigner.xml
+.gradle
 ant_build/
 bin/
 gen/
@@ -16,4 +17,5 @@ target/
 mopub-sdk/mopub-sdk.iml
 mopub-sample/mopub-sample.iml
 robotium-sample/robotium-sample.iml
+build/
 
