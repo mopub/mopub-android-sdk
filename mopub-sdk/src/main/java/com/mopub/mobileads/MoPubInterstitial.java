@@ -35,7 +35,6 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
-import android.util.Log;
 import com.mopub.mobileads.MoPubView.LocationAwareness;
 import com.mopub.mobileads.factories.CustomEventInterstitialAdapterFactory;
 
@@ -88,7 +87,6 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         mInterstitialView.setAdUnitId(mAdUnitId);
 
         mCurrentInterstitialState = InterstitialState.NOT_READY;
-
     }
 
     public void load() {
@@ -161,6 +159,21 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
 
     public Activity getActivity() {
         return mActivity;
+    }
+
+    public void setActivity(Activity activity) {
+        if(activity == mActivity) {
+            return;
+        }
+        mActivity = activity;
+
+        if(mInterstitialView != null) {
+            mInterstitialView.destroy();
+        }
+        mInterstitialView = new MoPubInterstitialView(mActivity);
+        mInterstitialView.setAdUnitId(mAdUnitId);
+
+        mCurrentInterstitialState = InterstitialState.NOT_READY;
     }
 
     public Location getLocation() {

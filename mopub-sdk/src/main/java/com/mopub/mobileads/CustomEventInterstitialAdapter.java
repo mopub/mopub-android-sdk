@@ -99,7 +99,7 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
             mLocalExtras.put(AD_CONFIGURATION_KEY, adViewController.getAdConfiguration());
         }
     }
-    
+
     void loadInterstitial() {
         if (isInvalidated() || mCustomEventInterstitial == null) {
             return;
@@ -221,10 +221,5 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
         if (isInvalidated()) return;
 
         if (mCustomEventInterstitialAdapterListener != null) mCustomEventInterstitialAdapterListener.onCustomEventInterstitialDismissed();
-    }
-
-    @Deprecated
-    void setCustomEventInterstitial(CustomEventInterstitial interstitial) {
-        mCustomEventInterstitial = interstitial;
     }
 }

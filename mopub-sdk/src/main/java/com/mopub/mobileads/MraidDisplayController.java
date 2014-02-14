@@ -50,7 +50,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.provider.CalendarContract;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;

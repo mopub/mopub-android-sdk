@@ -39,7 +39,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.webkit.WebViewDatabase;
 import android.widget.FrameLayout;

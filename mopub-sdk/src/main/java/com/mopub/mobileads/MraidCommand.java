@@ -32,8 +32,6 @@
 
 package com.mopub.mobileads;
 
-import android.util.Log;
-
 import java.util.*;
 
 import static com.mopub.mobileads.MraidCommandFactory.MraidJavascriptCommand.GET_RESIZE_PROPERTIES;

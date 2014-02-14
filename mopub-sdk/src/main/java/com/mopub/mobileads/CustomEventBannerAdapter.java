@@ -34,7 +34,6 @@ package com.mopub.mobileads;
 
 import android.content.Context;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import com.mopub.mobileads.CustomEventBanner.CustomEventBannerListener;
 import com.mopub.mobileads.factories.CustomEventBannerFactory;
