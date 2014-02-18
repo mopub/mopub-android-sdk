@@ -345,8 +345,8 @@ public class MraidView extends BaseWebView implements UserClickListener {
             Uri uri = Uri.parse(url);
             String scheme = uri.getScheme();
             
-            if (scheme.equals("mopub")) return true;
-            if (scheme.equals("mraid")) {
+            if ("mopub".equals(scheme)) return true;
+            if ("mraid".equals(scheme)) {
                 tryCommand(URI.create(url)); // java.net.URI, not android.net.Uri
                 return true;
             }
