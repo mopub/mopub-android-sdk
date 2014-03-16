@@ -18,6 +18,7 @@
 
     <properties>
         <robolectric.version>2.1</robolectric.version>
+        <maven.test.skip>true</maven.test.skip>
     </properties>
 
     <dependencies>
