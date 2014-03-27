@@ -1,0 +1,75 @@
+/**
+ * Usage:
+ * Set artifactoryDeployUser and artifactoryDeployPassword in ~/.gradle/gradle.properties
+ *
+ * ./gradlew uploadArchives
+ *
+ * Done!
+ */
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.8.+'
+    }
+}
+
+apply plugin: 'android-library'
+apply plugin: 'maven'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.android.support:support-v4:13.0.+'
+}
+
+android {
+    compileSdkVersion 17
+    buildToolsVersion "19.0.1"
+    sourceSets {
+        main {
+            manifest {
+                srcFile 'mopub-sdk/AndroidManifest.xml'
+            }
+            java.srcDirs = ['mopub-sdk/src/main']
+        }
+
+        test {
+            java.srcDirs = ['mopub-sdk/src/test']
+        }
+    }
+}
+
+version = '1.17.3.1'
+group = 'com.mopub.mobileads'
+
+uploadArchives {
+    repositories {
+        // the maven plugin features this deployer
+        mavenDeployer {
+            // we deploy to the release repository in this case
+            repository(url: "https://scopelybin.artifactoryonline.com/scopelybin/libs-releases-local/") {
+                authentication(userName: artifactoryDeployUser, password: artifactoryDeployPassword)
+            }
+            pom.project {
+                artifactId 'mopub-android'
+                name 'Mopub Android SDK'
+                packaging 'aar'
+            }
+        }
+    }
+}
+
+configurations {
+    archives {
+        extendsFrom configurations.default
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.9'
+}

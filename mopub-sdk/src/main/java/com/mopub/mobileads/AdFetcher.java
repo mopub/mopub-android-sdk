@@ -32,7 +32,6 @@
 
 package com.mopub.mobileads;
 
-import android.util.Log;
 import com.mopub.mobileads.factories.AdFetchTaskFactory;
 import com.mopub.mobileads.util.AsyncTasks;
 
