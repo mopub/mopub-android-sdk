@@ -34,13 +34,14 @@ package com.mopub.mobileads;
 
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
-
+import android.media.MediaPlayer.OnPreparedListener;
 import static com.mopub.mobileads.MraidVideoPlayerActivity.VIDEO_URL;
 
 class MraidVideoView extends BaseVideoView {
 
-    public MraidVideoView(Context context, Intent intent, final BaseVideoViewListener baseVideoViewListener) {
+    public MraidVideoView(final Context context, Intent intent, final BaseVideoViewListener baseVideoViewListener) {
         super(context);
 
         setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -61,6 +62,17 @@ class MraidVideoView extends BaseVideoView {
                 return false;
             }
         });
+
+        setOnPreparedListener(new OnPreparedListener() {
+
+			@Override
+			public void onPrepared(MediaPlayer mp) {
+				 AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+				 if (audioManager != null && audioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL) {
+				     mp.setVolume(0.0f, 0.0f);
+				 }
+			}
+		});
 
         setVideoPath(intent.getStringExtra(VIDEO_URL));
     }
