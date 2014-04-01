@@ -34,11 +34,13 @@ package com.mopub.mobileads;
 
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+
 import com.mopub.mobileads.util.HttpUtils;
 
 import java.util.*;
@@ -110,6 +112,10 @@ class VastVideoView extends BaseVideoView {
             public void onPrepared(MediaPlayer mp) {
                 if (getDuration() < MAX_VIDEO_DURATION_FOR_CLOSE_BUTTON) {
                     mShowCloseButtonDelay = getDuration();
+                }
+                AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+                if (audioManager != null && audioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL) {
+                    mp.setVolume(0.0f, 0.0f);
                 }
             }
         });
