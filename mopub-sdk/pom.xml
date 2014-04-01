@@ -11,7 +11,7 @@
 
     <groupId>com.mopub.mobileads</groupId>
     <artifactId>mopub-sdk</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.17.3.1</version>
     <packaging>jar</packaging>
     <name>MoPub SDK</name>
     <description>The SDK for MoPub developers.</description>
@@ -24,9 +24,9 @@
 
         <!--main-->
         <dependency>
-            <groupId>com.google.android</groupId>
-            <artifactId>support-v4</artifactId>
-            <version>r7</version>
+            <groupId>android.support</groupId>
+            <artifactId>compatibility-v4</artifactId>
+            <version>19.0.1</version>
         </dependency>
 
 
@@ -90,9 +90,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.android</groupId>
+            <groupId>android</groupId>
             <artifactId>android</artifactId>
-            <version>4.1.2</version>
+            <version>4.1.2_r4</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
