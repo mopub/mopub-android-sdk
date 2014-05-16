@@ -87,8 +87,8 @@ public class VungleInterstitial extends CustomEventInterstitial implements Vungl
             appId = DEFAULT_VUNGLE_APP_ID;
         }
 
-        VunglePub.setEventListener(this);
         VunglePub.init(context, appId);
+        VunglePub.setEventListener(this);
 
         scheduleOnInterstitialLoaded();
     }
