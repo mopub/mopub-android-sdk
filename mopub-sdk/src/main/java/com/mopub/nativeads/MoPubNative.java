@@ -138,6 +138,9 @@ public final class MoPubNative {
         } catch (IllegalArgumentException e) {
             mMoPubNativeListener.onNativeFail(INVALID_REQUEST_URL);
             return;
+        } catch (NullPointerException e){
+            mMoPubNativeListener.onNativeFail(INVALID_REQUEST_URL);
+            return;
         }
 
         downloadJson(httpGet);
