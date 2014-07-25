@@ -17,6 +17,7 @@
 
     <properties>
         <robolectric.version>2.1</robolectric.version>
+        <maven.test.skip>true</maven.test.skip>
     </properties>
 
     <dependencies>
@@ -33,14 +34,12 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.0.3</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
             <version>4.0.1</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
