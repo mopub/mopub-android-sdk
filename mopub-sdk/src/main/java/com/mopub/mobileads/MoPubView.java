@@ -38,9 +38,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebView;
 import android.webkit.WebViewDatabase;
 import android.widget.FrameLayout;
 
@@ -174,10 +176,28 @@ public class MoPubView extends FrameLayout {
 
     public void resume() {
         if (mCustomEventBannerAdapter != null) mCustomEventBannerAdapter.resume();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            for (int i = 0; i < getChildCount(); i++) {
+                View view = getChildAt(i);
+                if (view instanceof WebView) {
+                    ((WebView) view).onResume();
+                }
+            }
+        }
     }
 
     public void pause() {
         if (mCustomEventBannerAdapter != null) mCustomEventBannerAdapter.pause();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            for (int i = 0; i < getChildCount(); i++) {
+                View view = getChildAt(i);
+                if (view instanceof WebView) {
+                    ((WebView) view).onPause();
+                }
+            }
+        }
     }
 
     Integer getAdTimeoutDelay() {
