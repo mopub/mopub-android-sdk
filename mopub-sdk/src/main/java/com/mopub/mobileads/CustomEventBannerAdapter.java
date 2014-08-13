@@ -127,6 +127,14 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
         return mInvalidated;
     }
 
+    void pause() {
+        if (mCustomEventBanner != null) mCustomEventBanner.onPause();
+    }
+
+    void resume() {
+        if (mCustomEventBanner != null) mCustomEventBanner.onResume();
+    }
+
     private void cancelTimeout() {
         mHandler.removeCallbacks(mTimeout);
     }

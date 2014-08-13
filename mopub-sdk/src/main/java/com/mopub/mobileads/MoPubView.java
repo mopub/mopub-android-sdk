@@ -51,9 +51,9 @@ import com.mopub.mobileads.factories.CustomEventBannerAdapterFactory;
 import java.util.*;
 
 import static com.mopub.common.LocationService.*;
-import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_NOT_FOUND;
 import static com.mopub.common.util.ResponseHeader.CUSTOM_EVENT_DATA;
 import static com.mopub.common.util.ResponseHeader.CUSTOM_EVENT_NAME;
+import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_NOT_FOUND;
 
 public class MoPubView extends FrameLayout {
 
@@ -170,6 +170,14 @@ public class MoPubView extends FrameLayout {
             mCustomEventBannerAdapter.invalidate();
             mCustomEventBannerAdapter = null;
         }
+    }
+
+    public void resume() {
+        if (mCustomEventBannerAdapter != null) mCustomEventBannerAdapter.resume();
+    }
+
+    public void pause() {
+        if (mCustomEventBannerAdapter != null) mCustomEventBannerAdapter.pause();
     }
 
     Integer getAdTimeoutDelay() {

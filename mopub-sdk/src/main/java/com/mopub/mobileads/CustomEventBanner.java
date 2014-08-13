@@ -69,7 +69,21 @@ public abstract class CustomEventBanner {
      * Called when a Custom Event is being invalidated or destroyed. Perform any final cleanup here.
      */
     protected abstract void onInvalidate();
-    
+
+    /*
+     * Called when an application is being paused. Some ad networks recommend to call their pause
+     * methods here.
+     */
+    protected void onPause() {
+    }
+
+    /*
+     * Called when an application is being resumed. Some ad networks recommend to call their resume
+     * methods here.
+     */
+    protected void onResume() {
+    }
+
     public interface CustomEventBannerListener {
         /*
          * Your custom event subclass must call this method when it successfully loads an ad and
