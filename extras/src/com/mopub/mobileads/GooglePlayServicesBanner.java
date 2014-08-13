@@ -83,6 +83,16 @@ class GooglePlayServicesBanner extends CustomEventBanner {
         }
     }
 
+    @Override
+    protected void onPause() {
+        if (mGoogleAdView != null) mGoogleAdView.pause();
+    }
+
+    @Override
+    protected void onResume() {
+        if (mGoogleAdView != null) mGoogleAdView.resume();
+    }
+
     private boolean extrasAreValid(Map<String, String> serverExtras) {
         try {
             Integer.parseInt(serverExtras.get(AD_WIDTH_KEY));

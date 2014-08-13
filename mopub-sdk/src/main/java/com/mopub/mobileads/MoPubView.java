@@ -38,9 +38,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebView;
 import android.webkit.WebViewDatabase;
 import android.widget.FrameLayout;
 
@@ -51,9 +53,9 @@ import com.mopub.mobileads.factories.CustomEventBannerAdapterFactory;
 import java.util.*;
 
 import static com.mopub.common.LocationService.*;
-import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_NOT_FOUND;
 import static com.mopub.common.util.ResponseHeader.CUSTOM_EVENT_DATA;
 import static com.mopub.common.util.ResponseHeader.CUSTOM_EVENT_NAME;
+import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_NOT_FOUND;
 
 public class MoPubView extends FrameLayout {
 
@@ -169,6 +171,32 @@ public class MoPubView extends FrameLayout {
         if (mCustomEventBannerAdapter != null) {
             mCustomEventBannerAdapter.invalidate();
             mCustomEventBannerAdapter = null;
+        }
+    }
+
+    public void resume() {
+        if (mCustomEventBannerAdapter != null) mCustomEventBannerAdapter.resume();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            for (int i = 0; i < getChildCount(); i++) {
+                View view = getChildAt(i);
+                if (view instanceof WebView) {
+                    ((WebView) view).onResume();
+                }
+            }
+        }
+    }
+
+    public void pause() {
+        if (mCustomEventBannerAdapter != null) mCustomEventBannerAdapter.pause();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            for (int i = 0; i < getChildCount(); i++) {
+                View view = getChildAt(i);
+                if (view instanceof WebView) {
+                    ((WebView) view).onPause();
+                }
+            }
         }
     }
 
