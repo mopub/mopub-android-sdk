@@ -1,0 +1,25 @@
+apply plugin: 'android-library'
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion "19.1.0"
+
+    defaultConfig {
+        applicationId "com.mopub.mobileads"
+        minSdkVersion 11
+        targetSdkVersion 19
+    }
+
+    dependencies {
+        compile 'com.android.support:support-v4:20.0.+'
+        compile 'com.google.android.gms:play-services:5.0.89'
+        compile files('libs/MMSDK-5.3.0.jar')
+    }
+
+    buildTypes {
+        release {
+            runProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
