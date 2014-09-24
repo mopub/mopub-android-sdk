@@ -220,6 +220,11 @@ class ImageService {
         }
         options.inJustDecodeBounds = false;
         Bitmap bitmap = decodeByteArray(bytes, 0, bytes.length, options);
+
+        if (bitmap == null) {
+            return null;
+        }
+        
         final int subsampleWidth = bitmap.getWidth();
 
         // If needed, scale the bitmap so it's exactly the requested width.
