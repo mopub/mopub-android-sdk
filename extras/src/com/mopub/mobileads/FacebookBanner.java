@@ -13,7 +13,7 @@ import com.mopub.common.util.Views;
 import java.util.Map;
 
 /**
- * Tested with Facebook SDK 3.14.1.
+ * Tested with Facebook SDK 3.18.1.
  */
 public class FacebookBanner extends CustomEventBanner implements AdListener {
     private static final String PLACEMENT_ID_KEY = "placement_id";

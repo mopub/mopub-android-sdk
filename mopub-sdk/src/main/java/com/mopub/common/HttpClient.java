@@ -8,7 +8,7 @@ import android.webkit.WebView;
 
 import com.mopub.common.util.AsyncTasks;
 import com.mopub.common.util.DeviceUtils;
-import com.mopub.common.util.MoPubLog;
+import com.mopub.common.logging.MoPubLog;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;

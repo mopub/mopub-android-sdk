@@ -7,6 +7,8 @@ import android.content.pm.ApplicationInfo;
 import android.view.Gravity;
 import android.widget.Toast;
 
+import com.mopub.common.logging.MoPubLog;
+
 import java.util.ArrayList;
 import java.util.List;
 

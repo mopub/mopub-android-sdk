@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, SimpleAdsDemo!</string>
-    <string name="app_name">SimpleAdsDemo</string>
+    <string name="app_name">MoPub Sample App</string>
+    <string name="keywords">Keywords (optional)</string>
+    <string name="load_ad">Load Ad</string>
+    <string name="show_ad">Show Ad</string>
+    <string name="native_icon_image">native_icon_image</string>
+    <string name="native_main_image">native_main_image</string>
+    <string name="learn_more">Learn More</string>
+    <string name="save">Save Ad Unit</string>
+    <string name="ad_unit_id">Ad Unit Id:</string>
+    <string name="ad_unit_hint">Enter Ad Unit Id</string>
+    <string name="ad_unit_name">Name:</string>
+    <string name="ad_unit_name_hint">Enter Name</string>
+    <string name="ad_type">Ad Type:</string>
+    <string name="add_ad_unit_title">Add an Ad Unit</string>
+    <string name="add_ad_unit_button">Add an Ad Unit</string>
+    <string name="ad_unit_id_banner">b195f8dd8ded45fe847ad89ed1d016da</string>
+    <string name="ad_unit_id_mrect">252412d5e9364a05ab77d9396346d73d</string>
+    <string name="ad_unit_id_interstitial">24534e1901884e398f1253216226017e</string>
+    <string name="ad_unit_id_native">11a17b188668469fb0412708c3d16813</string>
+    <string name="swipe_text"><![CDATA[< Swipe Left & Right >]]></string>
 </resources>

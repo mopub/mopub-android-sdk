@@ -2,9 +2,7 @@ package com.mopub.common;
 
 import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
-
-import com.mopub.common.util.MoPubLog;
-
+import com.mopub.common.logging.MoPubLog;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 
@@ -40,7 +38,7 @@ public class DownloadTask extends AsyncTask<HttpUriRequest, Void, DownloadRespon
             final HttpResponse httpResponse = httpClient.execute(httpUriRequest);
             return new DownloadResponse(httpResponse);
         } catch (Exception e) {
-            MoPubLog.d("Download task threw an internal exception");
+            MoPubLog.d("Download task threw an internal exception", e);
             cancel(true);
             return null;
         } finally {

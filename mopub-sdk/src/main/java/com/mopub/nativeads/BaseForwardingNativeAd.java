@@ -1,16 +1,29 @@
 package com.mopub.nativeads;
 
+import android.content.Context;
+import android.graphics.Bitmap;
 import android.view.View;
 
-import com.mopub.common.util.MoPubLog;
+import com.mopub.common.logging.MoPubLog;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.mopub.nativeads.CustomEventNative.CustomEventNativeListener;
+import static com.mopub.nativeads.CustomEventNative.ImageListener;
+
 abstract class BaseForwardingNativeAd implements NativeAdInterface {
     private static final int IMPRESSION_MIN_PERCENTAGE_VIEWED = 50;
+
+    static interface NativeEventListener {
+        public void onAdImpressed();
+        public void onAdClicked();
+    }
+    private NativeEventListener mNativeEventListener;
+
     static final double MIN_STAR_RATING = 0;
     static final double MAX_STAR_RATING = 5;
 
@@ -29,6 +42,10 @@ abstract class BaseForwardingNativeAd implements NativeAdInterface {
 
     // Extras
     private final Map<String, Object> mExtras;
+
+    // Event Logistics
+    private boolean mIsOverridingClickTracker;
+    private boolean mIsOverridingImpressionTracker;
 
     BaseForwardingNativeAd() {
         mImpressionMinTimeViewed = 1000;
@@ -138,18 +155,45 @@ abstract class BaseForwardingNativeAd implements NativeAdInterface {
         return mExtras.get(key);
     }
 
-    @Override
     /**
      * Returns a copy of the extras map, reflecting additional ad content not reflected in any
      * of the above hardcoded setters. This is particularly useful for passing down custom fields
      * with MoPub's direct-sold native ads or from mediated networks that pass back additional
      * fields.
      */
+    @Override
     final public Map<String, Object> getExtras() {
         return new HashMap<String, Object>(mExtras);
     }
 
+    /**
+     * Returns {@code true} if the native ad is using a network impression tracker. If set to
+     * true, the network must expose a callback that calls into
+     * {@link BaseForwardingNativeAd#notifyAdImpressed()} in order for MoPub to fire its impression
+     * tracker at the appropriate time.
+     */
+    @Override
+    final public boolean isOverridingImpressionTracker() {
+        return mIsOverridingImpressionTracker;
+    }
+
+    /**
+     * Returns {@code true} if the native ad is using a network click tracker. If set to true, the
+     * network must expose a callback that calls into
+     * {@link BaseForwardingNativeAd#notifyAdClicked()} in order for MoPub to fire its click tracker
+     * at the appropriate time.
+     */
+    @Override
+    final public boolean isOverridingClickTracker() {
+        return mIsOverridingClickTracker;
+    }
+
     // Setters
+    @Override
+    public final void setNativeEventListener(final NativeEventListener nativeEventListener) {
+        mNativeEventListener = nativeEventListener;
+    }
+
     final void setMainImageUrl(final String mainImageUrl) {
         mMainImageUrl = mainImageUrl;
     }
@@ -199,18 +243,28 @@ abstract class BaseForwardingNativeAd implements NativeAdInterface {
         }
     }
 
+    final void setOverridingImpressionTracker(final boolean isOverridingImpressionTracker) {
+        mIsOverridingImpressionTracker = isOverridingImpressionTracker;
+    }
+
+    final void setOverridingClickTracker(final boolean isOverridingClickTracker) {
+        mIsOverridingClickTracker = isOverridingClickTracker;
+    }
+
     // Event Handlers
     /**
      * Your base native ad subclass should implement this method if the network requires the developer
-     * to prepare state for recording an impression before a view is rendered to screen.
+     * to prepare state for recording an impression or click before a view is rendered to screen.
+     *
      * This method is optional.
      */
     @Override
-    public void prepareImpression(final View view) { }
+    public void prepare(final View view) { }
 
     /**
      * Your base native ad subclass should implement this method if the network requires the developer
      * to explicitly record an impression of a view rendered to screen.
+     *
      * This method is optional.
      */
     @Override
@@ -219,6 +273,7 @@ abstract class BaseForwardingNativeAd implements NativeAdInterface {
     /**
      * Your base native ad subclass should implement this method if the network requires the developer
      * to explicitly handle click events of views rendered to screen.
+     *
      * This method is optional.
      */
     @Override
@@ -226,9 +281,64 @@ abstract class BaseForwardingNativeAd implements NativeAdInterface {
 
     /**
      * Your base native ad subclass should implement this method if the network requires the developer
+     * to reset or clear state of the native ad after it goes off screen and before it is rendered
+     * again.
+     *
+     * This method is optional.
+     */
+    @Override
+    public void clear(final View view) { }
+
+    /**
+     * Your base native ad subclass should implement this method if the network requires the developer
      * to destroy or cleanup their native ad when they are finished with it.
+     *
      * This method is optional.
      */
     @Override
     public void destroy() { }
+
+    // Event Notifiers
+    /**
+     * Notifies the SDK that the ad has been shown. This will cause the SDK to record an impression
+     * for the ad. This is meant for network SDKs that expose their own impression tracking
+     * callbacks, and requires that you call
+     * {@link BaseForwardingNativeAd#setOverridingImpressionTracker} from your implementation of
+     * {@link BaseForwardingNativeAd#prepare}.
+     */
+    protected final void notifyAdImpressed() {
+        mNativeEventListener.onAdImpressed();
+    }
+
+    /**
+     * Notifies the SDK that the user has clicked the ad. This will cause the SDK to record an
+     * click for the ad. This is meant for network SDKs that expose their own click
+     * tracking callbacks, and requires that you call
+     * {@link BaseForwardingNativeAd#setOverridingClickTracker} from your implementation of
+     * {@link BaseForwardingNativeAd#prepare}.
+     */
+    protected final void notifyAdClicked() {
+        mNativeEventListener.onAdClicked();
+    }
+
+    /**
+     * Pre caches the given set of image urls. We recommend using this method to warm the image
+     * cache before calling {@link CustomEventNativeListener#onNativeAdLoaded}. Doing so will
+     * force images to cache before displaying the ad.
+     */
+    static void preCacheImages(final Context context,
+            final List<String> imageUrls,
+            final ImageListener imageListener) {
+        ImageService.get(context, imageUrls, new ImageService.ImageServiceListener() {
+            @Override
+            public void onSuccess(final Map<String, Bitmap> bitmaps) {
+                imageListener.onImagesCached();
+            }
+
+            @Override
+            public void onFail() {
+                imageListener.onImagesFailedToCache(NativeErrorCode.IMAGE_DOWNLOAD_FAILURE);
+            }
+        });
+    }
 }

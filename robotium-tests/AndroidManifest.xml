@@ -3,11 +3,16 @@
 		package="com.mopub.mobileads.test"
 		android:versionCode="1"
 		android:versionName="1.0">
-	<uses-sdk android:minSdkVersion="8"/>
+    <uses-sdk
+        android:minSdkVersion="9"
+        android:targetSdkVersion="19"/>
 
     <instrumentation android:targetPackage="com.mopub.mobileads.robotium" android:name="android.test.InstrumentationTestRunner" />
 
     <application android:label="Cool Activity Test">
         <uses-library android:name="android.test.runner" />
+
+        <meta-data android:name="com.google.android.gms.version"
+                   android:value="@integer/google_play_services_version" />
     </application>
 </manifest>

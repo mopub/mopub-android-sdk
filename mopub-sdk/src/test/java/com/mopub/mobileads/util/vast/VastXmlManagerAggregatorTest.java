@@ -1,6 +1,6 @@
 package com.mopub.mobileads.util.vast;
 
-import com.mopub.mobileads.test.support.SdkTestRunner;
+import com.mopub.common.test.support.SdkTestRunner;
 
 import org.junit.Before;
 import org.junit.Test;

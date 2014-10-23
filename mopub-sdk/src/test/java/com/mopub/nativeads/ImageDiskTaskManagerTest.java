@@ -6,12 +6,13 @@ import android.graphics.Bitmap;
 
 import com.mopub.common.CacheService;
 import com.mopub.common.CacheServiceTest;
-import com.mopub.nativeads.test.support.SdkTestRunner;
+import com.mopub.common.test.support.SdkTestRunner;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
@@ -22,18 +23,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
-import static com.mopub.nativeads.ImageTaskManager.ImageTaskManagerListener;
+import static com.mopub.nativeads.TaskManager.TaskManagerListener;
 import static junit.framework.Assert.fail;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
 public class ImageDiskTaskManagerTest {
 
-    private ImageTaskManagerListener imageTaskManagerListener;
+    @Mock private TaskManagerListener<Bitmap> imageTaskManagerListener;
     private Semaphore semaphore;
     private Map<String, Bitmap> bitmaps;
     private FakeHttpLayer fakeHttpLayer;
@@ -45,12 +44,12 @@ public class ImageDiskTaskManagerTest {
     private String imageData3;
     private List<String> list;
     private Context context;
+    private static final int TEST_WIDTH = 400;
 
     @Before
     public void setUp() throws Exception {
         context = new Activity();
         semaphore = new Semaphore(0);
-        imageTaskManagerListener = mock(ImageTaskManagerListener.class);
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -90,7 +89,7 @@ public class ImageDiskTaskManagerTest {
     @Test
     public void constructor_withNullUrlsList_shouldThrowIllegalArgumentException() throws Exception {
         try {
-            new ImageDiskTaskManager(null, imageTaskManagerListener);
+            new ImageDiskTaskManager(null, imageTaskManagerListener, TEST_WIDTH);
             fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             // pass
@@ -102,7 +101,7 @@ public class ImageDiskTaskManagerTest {
         List<String> myList = new ArrayList<String>();
         myList.add(null);
         try {
-            new ImageDiskTaskManager(myList, imageTaskManagerListener);
+            new ImageDiskTaskManager(myList, imageTaskManagerListener, TEST_WIDTH);
             fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             // pass
@@ -112,7 +111,7 @@ public class ImageDiskTaskManagerTest {
     @Test
     public void constructor_withNullImageTaskManagerListener_shouldThrowIllegalArgumentException() throws Exception {
         try {
-            new ImageDiskTaskManager(list, null);
+            new ImageDiskTaskManager(list, null, TEST_WIDTH);
             fail("Should have thrown IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             // pass
@@ -121,7 +120,7 @@ public class ImageDiskTaskManagerTest {
 
     @Test
     public void execute_withEmptyDiskCache_shouldReturnNullsInMap() throws Exception {
-        new ImageDiskTaskManager(list, imageTaskManagerListener).execute();
+        new ImageDiskTaskManager(list, imageTaskManagerListener, TEST_WIDTH).execute();
         semaphore.acquire();
 
         assertThat(bitmaps.size()).isEqualTo(2);
@@ -133,30 +132,30 @@ public class ImageDiskTaskManagerTest {
 
     @Test
     public void execute_withPopulatedDiskCache_shouldReturnImagesInMap() throws Exception {
-        CacheService.initializeCaches(context);
+        CacheService.initialize(context);
         CacheServiceTest.assertCachesAreEmpty();
         CacheService.putToDiskCache(url1, imageData1.getBytes());
         CacheService.putToDiskCache(url2, imageData2.getBytes());
 
-        new ImageDiskTaskManager(list, imageTaskManagerListener).execute();
+        new ImageDiskTaskManager(list, imageTaskManagerListener, TEST_WIDTH).execute();
         semaphore.acquire();
 
         assertThat(bitmaps.size()).isEqualTo(2);
-        assertThat(shadowOf(bitmaps.get(url1)).getCreatedFromBytes()).isEqualTo(imageData1.getBytes());
-        assertThat(shadowOf(bitmaps.get(url2)).getCreatedFromBytes()).isEqualTo(imageData2.getBytes());
+        assertThat(bitmaps.get(url1)).isNotNull();
+        assertThat(bitmaps.get(url2)).isNotNull();
     }
 
     @Test
     public void execute_withPartiallyPopulatedDiskCache_shouldReturnSomeImagesInMap() throws Exception {
-        CacheService.initializeCaches(context);
+        CacheService.initialize(context);
         CacheServiceTest.assertCachesAreEmpty();
         CacheService.putToDiskCache(url1, imageData1.getBytes());
 
-        new ImageDiskTaskManager(list, imageTaskManagerListener).execute();
+        new ImageDiskTaskManager(list, imageTaskManagerListener, TEST_WIDTH).execute();
         semaphore.acquire();
 
         assertThat(bitmaps.size()).isEqualTo(2);
-        assertThat(shadowOf(bitmaps.get(url1)).getCreatedFromBytes()).isEqualTo(imageData1.getBytes());
+        assertThat(bitmaps.get(url1)).isNotNull();
         assertThat(bitmaps.containsKey(url2)).isTrue();
         assertThat(bitmaps.get(url2)).isNull();
     }

@@ -13,7 +13,7 @@ import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_NO_FILL;
 
 /*
- * Compatible with version 5.0.77 of the Google Play Services SDK.
+ * Compatible with version 5.0.89 of the Google Play Services SDK.
  */
 
 // Note: AdMob ads will now use this class as Google has deprecated the AdMob SDK.
@@ -35,7 +35,6 @@ public class GooglePlayServicesInterstitial extends CustomEventInterstitial {
             final Map<String, Object> localExtras,
             final Map<String, String> serverExtras) {
         mInterstitialListener = customEventInterstitialListener;
-
         final String adUnitId;
 
         if (extrasAreValid(serverExtras)) {
@@ -51,7 +50,12 @@ public class GooglePlayServicesInterstitial extends CustomEventInterstitial {
 
         final AdRequest adRequest = new AdRequest.Builder().build();
 
-        mGoogleInterstitialAd.loadAd(adRequest);
+        try {
+            mGoogleInterstitialAd.loadAd(adRequest);
+        } catch (NoClassDefFoundError e) {
+            // This can be thrown by Play Services on Honeycomb.
+            mInterstitialListener.onInterstitialFailed(NETWORK_NO_FILL);
+        }
     }
 
     @Override

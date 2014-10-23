@@ -17,6 +17,9 @@
   // Establish the root mraidbridge object.
   var mraidbridge = window.mraidbridge = {};
 
+  // native SDK is ready to process mraid commands.
+  var nativeSDKFiredReady = false;
+
   // Listeners for bridge events.
   var listeners = {};
 
@@ -29,6 +32,7 @@
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
   mraidbridge.fireReadyEvent = function() {
+    nativeSDKFiredReady = true;
     mraidbridge.fireEvent('ready');
   };
 
@@ -63,6 +67,12 @@
   };
 
   mraidbridge.executeNativeCall = function(command) {
+    if (!nativeSDKFiredReady) {
+        console.log('rejecting ' + command + ' because mraid is not ready');
+        mraidbridge.fireErrorEvent('mraid is not ready', command);
+        return;
+    }
+
     var call = 'mraid://' + command;
 
     var key, value;

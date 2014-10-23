@@ -1,35 +1,3 @@
-/*
- * Copyright (c) 2010-2013, MoPub Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *  Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- *
- *  Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the distribution.
- *
- *  Neither the name of 'MoPub Inc.' nor the names of its contributors
- *   may be used to endorse or promote products derived from this software
- *   without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -39,10 +7,8 @@ import android.content.Intent;
 import android.view.View;
 import android.webkit.WebViewClient;
 import android.widget.RelativeLayout;
-
-import com.mopub.mobileads.test.support.SdkTestRunner;
+import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestHtmlInterstitialWebViewFactory;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,7 +16,6 @@ import org.mockito.ArgumentCaptor;
 import org.robolectric.Robolectric;
 import org.robolectric.shadows.ShadowLocalBroadcastManager;
 
-import static android.widget.RelativeLayout.LayoutParams;
 import static com.mopub.mobileads.AdFetcher.CLICKTHROUGH_URL_KEY;
 import static com.mopub.mobileads.AdFetcher.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.mobileads.AdFetcher.REDIRECT_URL_KEY;
@@ -169,9 +134,8 @@ public class MoPubActivityTest extends BaseInterstitialActivityTest {
         verify(htmlInterstitialWebView).setLayoutParams(captor.capture());
         RelativeLayout.LayoutParams actualLayoutParams = captor.getValue();
 
-        assertThat(actualLayoutParams.width).isEqualTo(RelativeLayout.LayoutParams.FILL_PARENT);
-        assertThat(actualLayoutParams.height).isEqualTo(RelativeLayout.LayoutParams.WRAP_CONTENT);
-        assertOnlyOneRuleSet(actualLayoutParams, RelativeLayout.CENTER_IN_PARENT);
+        assertThat(actualLayoutParams.width).isEqualTo(RelativeLayout.LayoutParams.MATCH_PARENT);
+        assertThat(actualLayoutParams.height).isEqualTo(RelativeLayout.LayoutParams.MATCH_PARENT);
     }
 
     @Test
@@ -291,18 +255,6 @@ public class MoPubActivityTest extends BaseInterstitialActivityTest {
 
     private Intent createMoPubActivityIntent(String htmlData, boolean isScrollable, String redirectUrl, String clickthroughUrl, AdConfiguration adConfiguration) {
         return MoPubActivity.createIntent(new Activity(), htmlData, isScrollable, redirectUrl, clickthroughUrl, adConfiguration);
-    }
-
-    private void assertOnlyOneRuleSet(LayoutParams layoutParams, int desiredRule) {
-        int[] rules = layoutParams.getRules();
-        for (int ruleIndex = 0; ruleIndex < rules.length; ruleIndex++) {
-            int currentRule = rules[ruleIndex];
-            if (ruleIndex == desiredRule) {
-                assertThat(currentRule).isNotEqualTo(0);
-            } else {
-                assertThat(currentRule).isEqualTo(0);
-            }
-        }
     }
 }
 

@@ -1,12 +1,9 @@
 package com.mopub.nativeads;
 
-import android.graphics.Bitmap;
-
 import com.mopub.common.DownloadResponse;
 import com.mopub.common.DownloadTask;
-import com.mopub.common.HttpResponses;
 import com.mopub.common.util.AsyncTasks;
-import com.mopub.common.util.MoPubLog;
+import com.mopub.common.logging.MoPubLog;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
@@ -17,16 +14,20 @@ import java.util.List;
 import java.util.Map;
 
 import static com.mopub.common.DownloadTask.DownloadTaskListener;
-
 import static java.util.Map.Entry;
 
-class ImageDownloadTaskManager extends ImageTaskManager {
+class ImageDownloadTaskManager extends TaskManager<DownloadResponse> {
 
     private final Map<HttpUriRequest, DownloadTask> mDownloadTasks;
+    private final int mRequestedWidth;
 
-    ImageDownloadTaskManager(final List<String> urls, final ImageTaskManagerListener imageTaskManagerListener)
+    ImageDownloadTaskManager(final List<String> urls,
+                             final TaskManagerListener<DownloadResponse> imageTaskManagerListener,
+                             final int requestedWidth)
             throws IllegalArgumentException {
         super(urls, imageTaskManagerListener);
+
+        mRequestedWidth = requestedWidth;
 
         final DownloadTaskListener downloadTaskListener = new ImageDownloadTaskListener();
         mDownloadTasks = new HashMap<HttpUriRequest, DownloadTask>(urls.size());
@@ -39,7 +40,7 @@ class ImageDownloadTaskManager extends ImageTaskManager {
     @Override
     void execute() {
         if (mDownloadTasks.isEmpty()) {
-            mImageTaskManagerListener.onSuccess(mImages);
+            mImageTaskManagerListener.onSuccess(mResults);
         }
 
         for (final Entry<HttpUriRequest, DownloadTask> entry : mDownloadTasks.entrySet()) {
@@ -74,18 +75,10 @@ class ImageDownloadTaskManager extends ImageTaskManager {
                 return;
             }
 
-            final Bitmap bitmap = HttpResponses.asBitmap(downloadResponse);
-
-            if (bitmap == null) {
-                MoPubLog.d("Failed to decode bitmap from response for image: " + url);
-                failAllTasks();
-                return;
-            }
-
-            MoPubLog.d("Successfully downloaded image: " + url);
-            mImages.put(url, bitmap);
+            MoPubLog.d("Successfully downloaded image bye array: " + url);
+            mResults.put(url, downloadResponse);
             if (mCompletedCount.incrementAndGet() == mSize) {
-                mImageTaskManagerListener.onSuccess(mImages);
+                mImageTaskManagerListener.onSuccess(mResults);
             }
         }
     }

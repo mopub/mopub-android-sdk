@@ -4,7 +4,7 @@ import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
 
 import com.mopub.common.HttpClient;
-import com.mopub.common.util.MoPubLog;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Strings;
 
 import org.apache.http.HttpEntity;

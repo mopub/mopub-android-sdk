@@ -4,12 +4,42 @@ import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
 
-import com.mopub.common.util.MoPubLog;
+import com.mopub.common.logging.MoPubLog;
 
 import java.math.BigDecimal;
 
 public class LocationService {
-    public static enum LocationAwareness { NORMAL, TRUNCATED, DISABLED };
+    public static enum LocationAwareness {
+        NORMAL, TRUNCATED, DISABLED;
+
+        // These deprecated methods are only used to support the deprecated methods
+        // MoPubView#setLocationAwareness, MoPubInterstitial#setLocationAwareness
+        // and should not be used elsewhere. Unless interacting with those methods, use
+        // the type MoPub.LocationAwareness
+
+        @Deprecated
+        public MoPub.LocationAwareness getNewLocationAwareness() {
+            if (this == TRUNCATED) {
+                return MoPub.LocationAwareness.TRUNCATED;
+            } else if (this == DISABLED) {
+                return MoPub.LocationAwareness.DISABLED;
+            } else {
+                return MoPub.LocationAwareness.NORMAL;
+            }
+        }
+
+        @Deprecated
+        public static LocationAwareness
+                fromMoPubLocationAwareness(MoPub.LocationAwareness awareness) {
+            if (awareness == MoPub.LocationAwareness.DISABLED) {
+                return DISABLED;
+            } else if (awareness == MoPub.LocationAwareness.TRUNCATED) {
+                return TRUNCATED;
+            } else {
+                return NORMAL;
+            }
+        }
+    }
 
     /*
      * Returns the last known location of the device using its GPS and network location providers.
@@ -19,11 +49,11 @@ public class LocationService {
      * - Location awareness is disabled in the parent MoPubView
      */
     public static Location getLastKnownLocation(final Context context,
-                                                final int locationPrecision,
-                                                final LocationAwareness locationAwareness) {
+            final int locationPrecision,
+            final MoPub.LocationAwareness locationLocationAwareness) {
         Location result;
 
-        if (locationAwareness == LocationAwareness.DISABLED) {
+        if (locationLocationAwareness == MoPub.LocationAwareness.DISABLED) {
             return null;
         }
 
@@ -48,16 +78,20 @@ public class LocationService {
 
         if (gpsLocation == null && networkLocation == null) {
             return null;
+        } else if (gpsLocation != null && networkLocation != null) {
+            if (gpsLocation.getTime() > networkLocation.getTime()) {
+                result = gpsLocation;
+            } else {
+                result = networkLocation;
+            }
+        } else if (gpsLocation != null) {
+            result = gpsLocation;
+        } else {
+            result = networkLocation;
         }
-        else if (gpsLocation != null && networkLocation != null) {
-            if (gpsLocation.getTime() > networkLocation.getTime()) result = gpsLocation;
-            else result = networkLocation;
-        }
-        else if (gpsLocation != null) result = gpsLocation;
-        else result = networkLocation;
 
         // Truncate latitude/longitude to the number of digits specified by locationPrecision.
-        if (locationAwareness == LocationAwareness.TRUNCATED) {
+        if (locationLocationAwareness == MoPub.LocationAwareness.TRUNCATED) {
             double lat = result.getLatitude();
             double truncatedLat = BigDecimal.valueOf(lat)
                     .setScale(locationPrecision, BigDecimal.ROUND_HALF_DOWN)

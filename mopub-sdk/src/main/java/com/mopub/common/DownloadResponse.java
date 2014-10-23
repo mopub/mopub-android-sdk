@@ -46,7 +46,7 @@ public class DownloadResponse {
 
     public String getFirstHeader(final ResponseHeader responseHeader) {
         for (final Header header : mHeaders) {
-            if (header.getName().equals(responseHeader.getKey())) {
+            if (header.getName().equalsIgnoreCase(responseHeader.getKey())) {
                 return header.getValue();
             }
         }

@@ -1,0 +1,42 @@
+apply plugin: 'com.android.application'
+
+group = 'com.mopub'
+
+description = '''MoPub SDK'''
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion '19.1.0'
+
+    defaultConfig {
+        versionCode 1
+        versionName "3.2.1"
+        minSdkVersion 9
+        targetSdkVersion 19
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src/main']
+            resources.srcDirs = ['src/main']
+            aidl.srcDirs = ['src/main']
+            renderscript.srcDirs = ['src/main']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+        }
+
+        androidTest.setRoot('src/test')
+    }
+
+    // Note: You will also need a local.properties file to set the location of the SDK in the same 
+    // way that the existing SDK requires, using the sdk.dir property.
+    // Alternatively, you can set an environment variable called ANDROID_HOME. There is no 
+    // difference between the two methods, you can use the one you prefer.
+}
+
+dependencies {
+    compile 'com.android.support:support-v4:19.1.+'
+    compile 'com.google.android.gms:play-services:5.0.89'
+    compile project(':mopub-sdk')
+}

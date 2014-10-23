@@ -1,53 +1,19 @@
-/*
- * Copyright (c) 2010-2013, MoPub Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *  Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- *
- *  Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the distribution.
- *
- *  Neither the name of 'MoPub Inc.' nor the names of its contributors
- *   may be used to endorse or promote products derived from this software
- *   without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.net.Uri;
-import android.util.Log;
 
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Json;
 import com.mopub.common.util.Strings;
-
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 
-import java.io.IOException;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.mopub.common.util.ResponseHeader.AD_TYPE;
 import static com.mopub.common.util.ResponseHeader.CLICKTHROUGH_URL;
@@ -100,7 +66,7 @@ abstract class AdLoadTask {
             adType = extractHeader(response, AD_TYPE);
             fullAdType = extractHeader(response, FULL_AD_TYPE);
 
-            Log.d("MoPub", "Loading ad type: " + AdTypeTranslator.getAdNetworkType(adType, fullAdType));
+            MoPubLog.d("Loading ad type: " + AdTypeTranslator.getAdNetworkType(adType, fullAdType));
 
             adTypeCustomEventName = AdTypeTranslator.getCustomEventNameForAdType(
                     adViewController.getMoPubView(), adType, fullAdType);
@@ -115,7 +81,7 @@ abstract class AdLoadTask {
         }
 
         private AdLoadTask extractCustomEventAdLoadTask() {
-            Log.i("MoPub", "Performing custom event.");
+            MoPubLog.i("Performing custom event.");
 
             // If applicable, try to invoke the new custom event system (which uses custom classes)
             adTypeCustomEventName = extractHeader(response, CUSTOM_EVENT_NAME);
@@ -236,13 +202,13 @@ abstract class AdLoadTask {
             MoPubView mpv = adViewController.getMoPubView();
 
             if (mHeader == null) {
-                Log.i("MoPub", "Couldn't call custom method because the server did not specify one.");
+                MoPubLog.i("Couldn't call custom method because the server did not specify one.");
                 mpv.loadFailUrl(MoPubErrorCode.ADAPTER_NOT_FOUND);
                 return;
             }
 
             String methodName = mHeader.getValue();
-            Log.i("MoPub", "Trying to call method named " + methodName);
+            MoPubLog.i("Trying to call method named " + methodName);
 
             Class<? extends Activity> c;
             Method method;
@@ -252,11 +218,11 @@ abstract class AdLoadTask {
                 method = c.getMethod(methodName, MoPubView.class);
                 method.invoke(userActivity, mpv);
             } catch (NoSuchMethodException e) {
-                Log.d("MoPub", "Couldn't perform custom method named " + methodName +
+                MoPubLog.d("Couldn't perform custom method named " + methodName +
                         "(MoPubView view) because your activity class has no such method");
                 mpv.loadFailUrl(MoPubErrorCode.ADAPTER_NOT_FOUND);
             } catch (Exception e) {
-                Log.d("MoPub", "Couldn't perform custom method named " + methodName);
+                MoPubLog.d("Couldn't perform custom method named " + methodName);
                 mpv.loadFailUrl(MoPubErrorCode.ADAPTER_NOT_FOUND);
             }
         }

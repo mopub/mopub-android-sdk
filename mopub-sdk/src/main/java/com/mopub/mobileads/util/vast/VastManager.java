@@ -3,16 +3,12 @@ package com.mopub.mobileads.util.vast;
 import android.content.Context;
 import android.view.Display;
 import android.view.WindowManager;
-
 import com.mopub.common.CacheService;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
-import com.mopub.common.util.MoPubLog;
 import com.mopub.mobileads.VastVideoDownloadTask;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static com.mopub.mobileads.VastVideoDownloadTask.VastVideoDownloadTaskListener;
 import static com.mopub.mobileads.util.vast.VastXmlManagerAggregator.VastXmlManagerAggregatorListener;

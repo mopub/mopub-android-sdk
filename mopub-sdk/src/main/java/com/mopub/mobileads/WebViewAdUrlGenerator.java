@@ -1,14 +1,13 @@
 package com.mopub.mobileads;
 
 import android.content.Context;
-import android.os.Build;
+import android.location.Location;
 
 import com.mopub.common.AdUrlGenerator;
-import com.mopub.common.GpsHelper;
+import com.mopub.common.ClientMetadata;
+import com.mopub.common.LocationService;
 import com.mopub.common.MoPub;
-import com.mopub.mobileads.util.Utils;
-
-import java.lang.reflect.Method;
+import com.mopub.common.util.DateAndTime;
 
 import static com.mopub.mobileads.util.Mraids.isStorePictureSupported;
 
@@ -21,41 +20,50 @@ public class WebViewAdUrlGenerator extends AdUrlGenerator {
     public String generateUrlString(String serverHostname) {
         initUrlString(serverHostname, MoPubView.AD_HANDLER);
 
+        final ClientMetadata clientMetadata = ClientMetadata.getInstance(mContext);
+
         setApiVersion("6");
 
         setAdUnitId(mAdUnitId);
 
-        setSdkVersion(MoPub.SDK_VERSION);
+        setSdkVersion(clientMetadata.getSdkVersion());
 
-        setDeviceInfo(Build.MANUFACTURER, Build.MODEL, Build.PRODUCT);
+        setDeviceInfo(clientMetadata.getDeviceManufacturer(),
+                clientMetadata.getDeviceModel(),
+                clientMetadata.getDeviceProduct());
 
-        setUdid(getUdidFromContext(mContext));
+        setUdid(clientMetadata.getUdid());
 
-        setDoNotTrack(GpsHelper.isLimitAdTrackingEnabled(mContext));
+        setDoNotTrack(clientMetadata.getDoNoTrack());
 
-        String keywords = addKeyword(mKeywords, getFacebookKeyword(mContext, mFacebookSupportEnabled));
-        setKeywords(keywords);
+        setKeywords(mKeywords);
 
-        setLocation(mLocation);
+        Location location = mLocation;
+        if (location == null) {
+            location = LocationService.getLastKnownLocation(mContext,
+                    MoPub.getLocationPrecision(),
+                    MoPub.getLocationAwareness());
+        }
+        setLocation(location);
 
-        setTimezone(AdUrlGenerator.getTimeZoneOffsetString());
+        setTimezone(DateAndTime.getTimeZoneOffsetString());
 
-        setOrientation(mContext.getResources().getConfiguration().orientation);
+        setOrientation(clientMetadata.getOrientationString());
 
-        setDensity(mContext.getResources().getDisplayMetrics().density);
+        setDensity(clientMetadata.getDensity());
 
         setMraidFlag(detectIsMraidSupported());
 
-        String networkOperator = getNetworkOperator();
+        String networkOperator = clientMetadata.getNetworkOperator();
         setMccCode(networkOperator);
         setMncCode(networkOperator);
 
-        setIsoCountryCode(mTelephonyManager.getNetworkCountryIso());
-        setCarrierName(mTelephonyManager.getNetworkOperatorName());
+        setIsoCountryCode(clientMetadata.getIsoCountryCode());
+        setCarrierName(clientMetadata.getNetworkOperatorName());
 
-        setNetworkType(getActiveNetworkType());
+        setNetworkType(clientMetadata.getActiveNetworkType());
 
-        setAppVersion(getAppVersionFromContext(mContext));
+        setAppVersion(clientMetadata.getAppVersion());
 
         setExternalStoragePermission(isStorePictureSupported(mContext));
 
@@ -72,30 +80,5 @@ public class WebViewAdUrlGenerator extends AdUrlGenerator {
             mraid = false;
         }
         return mraid;
-    }
-
-    private static String getFacebookKeyword(Context context, final boolean enabled) {
-        if (!enabled) {
-            return null;
-        }
-
-        try {
-            Class<?> facebookKeywordProviderClass = Class.forName("com.mopub.mobileads.FacebookKeywordProvider");
-            Method getKeywordMethod = facebookKeywordProviderClass.getMethod("getKeyword", Context.class);
-
-            return (String) getKeywordMethod.invoke(facebookKeywordProviderClass, context);
-        } catch (Exception exception) {
-            return null;
-        }
-    }
-
-    private static String addKeyword(String keywords, String addition) {
-        if (addition == null || addition.length() == 0) {
-            return keywords;
-        } else if (keywords == null || keywords.length() == 0) {
-            return addition;
-        } else {
-            return keywords + "," + addition;
-        }
     }
 }

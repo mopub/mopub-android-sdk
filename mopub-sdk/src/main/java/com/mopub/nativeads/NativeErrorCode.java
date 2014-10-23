@@ -12,7 +12,7 @@ public enum NativeErrorCode {
 
     NETWORK_INVALID_REQUEST("Third-party network received invalid request."),
     NETWORK_TIMEOUT("Third-party network failed to respond in a timely manner."),
-    NETWORK_NO_FILL("Third-party network failed to provide inventory."),
+    NETWORK_NO_FILL("Third-party network failed to provide an ad."),
     NETWORK_INVALID_STATE("Third-party network failed due to invalid internal state."),
 
     NATIVE_ADAPTER_CONFIGURATION_ERROR("Custom Event Native was configured incorrectly."),

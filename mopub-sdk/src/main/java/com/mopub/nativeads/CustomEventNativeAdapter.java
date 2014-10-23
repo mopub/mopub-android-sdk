@@ -5,7 +5,7 @@ import android.content.Context;
 import com.mopub.common.DownloadResponse;
 import com.mopub.common.HttpResponses;
 import com.mopub.common.util.Json;
-import com.mopub.common.util.MoPubLog;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.ResponseHeader;
 import com.mopub.nativeads.factories.CustomEventNativeFactory;
 

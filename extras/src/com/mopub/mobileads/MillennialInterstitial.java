@@ -1,41 +1,15 @@
-/*
- * Copyright (c) 2011, MoPub Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- * * Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- *
- * * Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the distribution.
- *
- * * Neither the name of 'MoPub Inc.' nor the names of its contributors
- *   may be used to endorse or promote products derived from this software
- *   without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package com.mopub.mobileads;
 
 import android.content.Context;
 import android.location.Location;
 import android.util.Log;
-import com.millennialmedia.android.*;
+
+import com.millennialmedia.android.MMAd;
+import com.millennialmedia.android.MMException;
+import com.millennialmedia.android.MMInterstitial;
+import com.millennialmedia.android.MMRequest;
+import com.millennialmedia.android.MMSDK;
+import com.millennialmedia.android.RequestListener;
 
 import java.util.Map;
 
@@ -73,15 +47,9 @@ class MillennialInterstitial extends CustomEventInterstitial {
 
         mMillennialInterstitial = new MMInterstitial(context);
         mMillennialInterstitial.setListener(new MillennialInterstitialRequestListener());
-
-        if (mMillennialInterstitial.isAdAvailable()) {
-            Log.d("MoPub", "Millennial interstitial ad already loaded.");
-            mInterstitialListener.onInterstitialLoaded();
-        } else {
-            mMillennialInterstitial.setMMRequest(new MMRequest());
-            mMillennialInterstitial.setApid(apid);
-            mMillennialInterstitial.fetch();
-        }
+        mMillennialInterstitial.setMMRequest(new MMRequest());
+        mMillennialInterstitial.setApid(apid);
+        mMillennialInterstitial.fetch();
     }
 
     @Override
@@ -95,7 +63,11 @@ class MillennialInterstitial extends CustomEventInterstitial {
 
     @Override
     protected void onInvalidate() {
-        mMillennialInterstitial.setListener(null);
+        // mMillennialInterstitial can be null if loadInterstitial terminated prematurely (i.e.
+        // the associated serverExtras are invalid).
+        if (mMillennialInterstitial != null) {
+            mMillennialInterstitial.setListener(null);
+        }
     }
 
     private boolean extrasAreValid(Map<String, String> serverExtras) {
@@ -123,15 +95,23 @@ class MillennialInterstitial extends CustomEventInterstitial {
                 Log.d("MoPub", "Millennial interstitial ad loaded successfully.");
                 mInterstitialListener.onInterstitialLoaded();
             } else {
-                Log.d("MoPub", "Millennial interstitial ad failed to load.");
+                Log.d("MoPub", "Millennial interstitial request completed, but no ad was available.");
                 mInterstitialListener.onInterstitialFailed(NETWORK_INVALID_STATE);
             }
         }
 
         @Override
         public void requestFailed(final MMAd mmAd, final MMException e) {
-            Log.d("MoPub", "Millennial interstitial ad failed to load.");
-            mInterstitialListener.onInterstitialFailed(NETWORK_NO_FILL);
+            if (mMillennialInterstitial == null || e == null) {
+                mInterstitialListener.onInterstitialFailed(NETWORK_INVALID_STATE);
+            } else if (e.getCode() == MMException.CACHE_NOT_EMPTY && mMillennialInterstitial.isAdAvailable()) {
+                // requestFailed can be due to an ad already loaded or an ad failed to load.
+                Log.d("MoPub", "Millennial interstitial loaded successfully from cache.");
+                mInterstitialListener.onInterstitialLoaded();
+            } else {
+                Log.d("MoPub", "Millennial interstitial ad failed to load.");
+                mInterstitialListener.onInterstitialFailed(NETWORK_NO_FILL);
+            }
         }
 
         @Override

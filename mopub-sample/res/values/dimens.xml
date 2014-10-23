@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="sample_text_size">16sp</dimen>
+    <dimen name="spinner_text_size">20sp</dimen>
+    <dimen name="detail_text_size">10sp</dimen>
+    <dimen name="title_size">24sp</dimen>
+    <dimen name="native_main_image_height">200dp</dimen>
+</resources>

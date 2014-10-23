@@ -9,6 +9,8 @@ import android.net.NetworkInfo;
 import android.os.StatFs;
 import android.provider.Settings;
 
+import com.mopub.common.logging.MoPubLog;
+
 import org.apache.http.conn.util.InetAddressUtils;
 
 import java.io.File;

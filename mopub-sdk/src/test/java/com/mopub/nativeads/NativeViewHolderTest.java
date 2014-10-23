@@ -2,6 +2,8 @@ package com.mopub.nativeads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -13,17 +15,20 @@ import com.mopub.common.CacheService;
 import com.mopub.common.DownloadResponse;
 import com.mopub.common.util.Utils;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
-import com.mopub.nativeads.test.support.SdkTestRunner;
+import com.mopub.nativeads.test.support.MoPubShadowBitmap;
+import com.mopub.common.test.support.SdkTestRunner;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
+@Config(shadows={MoPubShadowBitmap.class})
 public class NativeViewHolderTest {
     private Context context;
     private RelativeLayout relativeLayout;
@@ -39,6 +44,16 @@ public class NativeViewHolderTest {
     private TextView extrasTextView;
     private ImageView extrasImageView;
     private ImageView extrasImageView2;
+    private String mainImageUrl;
+    private String iconImageUrl;
+    private String mainImageData;
+    private String iconImageData;
+    private Bitmap iconImage;
+    private Bitmap mainImage;
+    private String extrasImageData;
+    private String extrasImageData2;
+    private Bitmap extrasImage2;
+    private Bitmap extrasImage;
 
     @Before
     public void setUp() throws Exception {
@@ -75,6 +90,17 @@ public class NativeViewHolderTest {
         relativeLayout.addView(extrasTextView);
         relativeLayout.addView(extrasImageView);
         relativeLayout.addView(extrasImageView2);
+
+        mainImageUrl = "mainimageurl";
+        iconImageUrl = "iconimageurl";
+        mainImageData = "mainimagedata";
+        iconImageData = "iconimagedata";
+        extrasImageData = "extrasimagedata";
+        extrasImageData2 = "extrasimagedata2";
+        iconImage = BitmapFactory.decodeByteArray(iconImageData.getBytes(), 0, iconImageData.getBytes().length);
+        mainImage = BitmapFactory.decodeByteArray(mainImageData.getBytes(), 0, mainImageData.getBytes().length);
+        extrasImage = BitmapFactory.decodeByteArray(extrasImageData.getBytes(), 0, extrasImageData.getBytes().length);
+        extrasImage2 = BitmapFactory.decodeByteArray(extrasImageData2.getBytes(), 0, extrasImageData2.getBytes().length);
     }
 
     @Test
@@ -137,9 +163,9 @@ public class NativeViewHolderTest {
     @Test
     public void update_shouldAddValuesToViews() throws Exception {
         // Setup for cache state for image gets
-        CacheService.initializeCaches(context);
-        CacheService.putToMemoryCache("mainimageurl", "mainimagedata".getBytes());
-        CacheService.putToMemoryCache("iconimageurl", "iconimagedata".getBytes());
+        CacheService.initialize(context);
+        CacheService.putToBitmapCache(mainImageUrl, mainImage);
+        CacheService.putToBitmapCache(iconImageUrl, iconImage);
 
         BaseForwardingNativeAd nativeAd = new BaseForwardingNativeAd() {};
         nativeAd.setTitle("titletext");
@@ -149,7 +175,7 @@ public class NativeViewHolderTest {
         nativeAd.setCallToAction("cta");
 
         final DownloadResponse downloadResponse = new DownloadResponse(new TestHttpResponseWithHeaders(200, ""));
-        nativeResponse = new NativeResponse(context, downloadResponse, nativeAd, null);
+        nativeResponse = new NativeResponse(context, downloadResponse, "adunit_id", nativeAd, null);
 
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
                 .titleId(titleView.getId())
@@ -168,9 +194,9 @@ public class NativeViewHolderTest {
         assertThat(textView.getText()).isEqualTo("texttext");
         assertThat(callToActionView.getText()).isEqualTo("cta");
         assertThat(shadowOf(ImageViewServiceTest.getBitmapFromImageView(mainImageView))
-                .getCreatedFromBytes()).isEqualTo("mainimagedata".getBytes());
+                .getCreatedFromBytes()).isEqualTo(mainImageData.getBytes());
         assertThat(shadowOf(ImageViewServiceTest.getBitmapFromImageView(iconImageView))
-                .getCreatedFromBytes()).isEqualTo("iconimagedata".getBytes());
+                .getCreatedFromBytes()).isEqualTo(iconImageData.getBytes());
     }
 
     @Test
@@ -179,12 +205,12 @@ public class NativeViewHolderTest {
         titleView.setText("previoustitletext");
         textView.setText("previoustexttext");
         callToActionView.setText("previousctatext");
-        mainImageView.setImageBitmap(ImageService.byteArrayToBitmap("previousmainimagedata".getBytes()));
-        iconImageView.setImageBitmap(ImageService.byteArrayToBitmap("previousiconimagedata".getBytes()));
+        mainImageView.setImageBitmap(BitmapFactory.decodeByteArray("previousmainimagedata".getBytes(), 0, "previousmainimagedata".getBytes().length));
+        iconImageView.setImageBitmap(BitmapFactory.decodeByteArray("previousiconimagedata".getBytes(), 0, "previousiconimagedata".getBytes().length));
 
         // Only required fields in native response
         final DownloadResponse downloadResponse = new DownloadResponse(new TestHttpResponseWithHeaders(200, ""));
-        nativeResponse = new NativeResponse(context, downloadResponse, mock(BaseForwardingNativeAd.class), null);
+        nativeResponse = new NativeResponse(context, downloadResponse, "adunit_id", mock(BaseForwardingNativeAd.class), null);
 
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
                 .titleId(titleView.getId())
@@ -215,7 +241,7 @@ public class NativeViewHolderTest {
         BaseForwardingNativeAd nativeAd = new BaseForwardingNativeAd() {};
         nativeAd.setCallToAction("cta");
         final DownloadResponse downloadResponse = new DownloadResponse(new TestHttpResponseWithHeaders(200, ""));
-        nativeResponse = new NativeResponse(context, downloadResponse, nativeAd, null);
+        nativeResponse = new NativeResponse(context, downloadResponse, "adunit_id", nativeAd, null);
 
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
                 .callToActionId(callToActionView.getId())
@@ -234,16 +260,16 @@ public class NativeViewHolderTest {
     @Test
     public void updateExtras_shouldAddValuesToViews() throws Exception {
         // Setup for cache state for image gets
-        CacheService.initializeCaches(context);
-        CacheService.putToMemoryCache("extrasimageurl", "extrasimagedata".getBytes());
-        CacheService.putToMemoryCache("extrasimageurl2", "extrasimagedata2".getBytes());
+        CacheService.initialize(context);
+        CacheService.putToBitmapCache("extrasimageurl", extrasImage);
+        CacheService.putToBitmapCache("extrasimageurl2", extrasImage2);
 
         BaseForwardingNativeAd nativeAd = new BaseForwardingNativeAd() {};
         nativeAd.addExtra("extrastext", "extrastexttext");
         nativeAd.addExtra("extrasimage", "extrasimageurl");
         nativeAd.addExtra("extrasimage2", "extrasimageurl2");
         final DownloadResponse downloadResponse = new DownloadResponse(new TestHttpResponseWithHeaders(200, ""));
-        nativeResponse = new NativeResponse(context, downloadResponse, nativeAd, null);
+        nativeResponse = new NativeResponse(context, downloadResponse, "adunit_id", nativeAd, null);
 
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
                 .addExtra("extrastext", extrasTextView.getId())
@@ -266,11 +292,11 @@ public class NativeViewHolderTest {
     @Test
     public void updateExtras_withMissingExtrasValues_shouldClearPreviousValues() throws Exception {
         extrasTextView.setText("previousextrastext");
-        extrasImageView.setImageBitmap(ImageService.byteArrayToBitmap("previousextrasimagedata".getBytes()));
-        extrasImageView2.setImageBitmap(ImageService.byteArrayToBitmap("previousextrasimagedata2".getBytes()));
+        extrasImageView.setImageBitmap(BitmapFactory.decodeByteArray("previousextrasimagedata".getBytes(), 0, "previousextrasimagedata".getBytes().length));
+        extrasImageView2.setImageBitmap(BitmapFactory.decodeByteArray("previousextrasimagedata2".getBytes(), 0, "previousextrasimagedata2".getBytes().length));
 
         final DownloadResponse downloadResponse = new DownloadResponse(new TestHttpResponseWithHeaders(200, ""));
-        nativeResponse = new NativeResponse(context, downloadResponse, new BaseForwardingNativeAd(){}, null);
+        nativeResponse = new NativeResponse(context, downloadResponse, "adunit_id", new BaseForwardingNativeAd(){}, null);
 
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
                 .addExtra("extrastext", extrasTextView.getId())
@@ -301,7 +327,7 @@ public class NativeViewHolderTest {
         nativeAd.addExtra("extrasimage", "extrasimageurl");
 
         final DownloadResponse downloadResponse = new DownloadResponse(new TestHttpResponseWithHeaders(200, ""));
-        nativeResponse = new NativeResponse(context, downloadResponse, nativeAd, null);
+        nativeResponse = new NativeResponse(context, downloadResponse, "adunit_id", nativeAd, null);
 
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
                 .addExtra("extrastext", extrasImageView.getId())

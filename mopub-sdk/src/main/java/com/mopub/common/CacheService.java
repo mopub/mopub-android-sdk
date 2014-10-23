@@ -1,11 +1,12 @@
 package com.mopub.common;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.support.v4.util.LruCache;
 
 import com.mopub.common.util.DeviceUtils;
-import com.mopub.common.util.MoPubLog;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Streams;
 import com.mopub.common.util.Utils;
 
@@ -20,6 +21,10 @@ import java.io.OutputStream;
 import static com.mopub.common.DiskLruCache.open;
 
 public class CacheService {
+    public static interface DiskLruCacheGetListener {
+        void onComplete(final String key, final byte[] content);
+    }
+
     static final String UNIQUE_CACHE_NAME = "mopub-cache";
     private static final int APP_VERSION = 1;
     // The number of values per cache entry. Must be positive.
@@ -27,16 +32,16 @@ public class CacheService {
     private static final int DISK_CACHE_INDEX = 0;
 
     private static DiskLruCache sDiskLruCache;
-    private static MemoryLruCache sMemoryLruCache;
+    private static BitmapLruCache sBitmapLruCache;
 
-    public static boolean initializeMemoryCache(final Context context) {
+    public static boolean initializeBitmapCache(final Context context) {
         if (context == null) {
             return false;
         }
 
-        if (sMemoryLruCache == null) {
+        if (sBitmapLruCache == null) {
             final int memoryCacheSizeBytes = DeviceUtils.memoryCacheSizeBytes(context);
-            sMemoryLruCache = new MemoryLruCache(memoryCacheSizeBytes);
+            sBitmapLruCache = new BitmapLruCache(memoryCacheSizeBytes);
         }
         return true;
     }
@@ -63,8 +68,8 @@ public class CacheService {
         return true;
     }
 
-    public static void initializeCaches(final Context context) {
-        initializeMemoryCache(context);
+    public static void initialize(final Context context) {
+        initializeBitmapCache(context);
         initializeDiskCache(context);
     }
 
@@ -105,12 +110,12 @@ public class CacheService {
                 + DISK_CACHE_INDEX;
     }
 
-    public static byte[] getFromMemoryCache(final String key) {
-        if (sMemoryLruCache == null) {
+    public static Bitmap getFromBitmapCache(final String key) {
+        if (sBitmapLruCache == null) {
             return null;
         }
 
-        return sMemoryLruCache.get(key);
+        return sBitmapLruCache.get(key);
     }
 
     public static byte[] getFromDiskCache(final String key) {
@@ -151,20 +156,12 @@ public class CacheService {
         new DiskLruCacheGetTask(key, diskLruCacheGetListener).execute();
     }
 
-    public static byte[] get(final String key) {
-        byte[] bytes = getFromMemoryCache(key);
-        if (bytes != null) {
-            return bytes;
-        }
-        return getFromDiskCache(key);
-    }
-
-    public static void putToMemoryCache(final String key, final byte[] content) {
-        if (sMemoryLruCache == null) {
+    public static void putToBitmapCache(final String key, final Bitmap bitmap) {
+        if (sBitmapLruCache == null) {
             return;
         }
 
-        sMemoryLruCache.put(key, content);
+        sBitmapLruCache.put(key, bitmap);
     }
 
     public static boolean putToDiskCache(final String key, final byte[] content) {
@@ -211,28 +208,19 @@ public class CacheService {
         new DiskLruCachePutTask(key, content).execute();
     }
 
-    public static void put(final String key, final byte[] content) {
-        putToMemoryCache(key, content);
-        putToDiskCacheAsync(key, content);
-    }
-
-    private static class MemoryLruCache extends LruCache<String, byte[]> {
-        public MemoryLruCache(int maxSize) {
+    private static class BitmapLruCache extends LruCache<String, Bitmap> {
+        public BitmapLruCache(final int maxSize) {
             super(maxSize);
         }
 
         @Override
-        protected int sizeOf(final String key, final byte[] bytes) {
-            if (bytes != null && bytes.length > 0) {
-                return bytes.length;
+        protected int sizeOf(final String key, final Bitmap bitmap) {
+            if (bitmap != null) {
+                return bitmap.getRowBytes() * bitmap.getHeight();
             }
 
-            return super.sizeOf(key, bytes);
+            return super.sizeOf(key, bitmap);
         }
-    }
-
-    public static interface DiskLruCacheGetListener {
-        void onComplete(final String key, final byte[] content);
     }
 
     private static class DiskLruCacheGetTask extends AsyncTask<Void, Void, byte[]> {
@@ -287,6 +275,7 @@ public class CacheService {
 
     // Testing
     @Deprecated
+    @VisibleForTesting
     public static void clearAndNullCaches() {
         if (sDiskLruCache != null) {
             try {
@@ -296,20 +285,22 @@ public class CacheService {
                 sDiskLruCache = null;
             }
         }
-        if (sMemoryLruCache != null) {
-            sMemoryLruCache.evictAll();
-            sMemoryLruCache = null;
+        if (sBitmapLruCache != null) {
+            sBitmapLruCache.evictAll();
+            sBitmapLruCache = null;
         }
     }
 
     // Testing
     @Deprecated
-    public static LruCache<String, byte[]> getMemoryLruCache() {
-        return sMemoryLruCache;
+    @VisibleForTesting
+    public static LruCache<String, Bitmap> getBitmapLruCache() {
+        return sBitmapLruCache;
     }
 
     // Testing
     @Deprecated
+    @VisibleForTesting
     public static DiskLruCache getDiskLruCache() {
         return sDiskLruCache;
     }

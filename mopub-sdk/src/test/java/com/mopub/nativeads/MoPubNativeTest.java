@@ -1,33 +1,35 @@
 package com.mopub.nativeads;
 
 import android.app.Activity;
-
 import com.mopub.common.DownloadTask;
 import com.mopub.common.GpsHelper;
 import com.mopub.common.GpsHelperTest;
 import com.mopub.common.SharedPreferencesHelper;
+import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.ShadowAsyncTasks;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
-import com.mopub.nativeads.test.support.SdkTestRunner;
-
+import com.mopub.nativeads.MoPubNative.MoPubNativeEventListener;
+import com.mopub.nativeads.MoPubNative.MoPubNativeNetworkListener;
 import org.apache.http.client.methods.HttpGet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 
-import java.util.List;
-import java.util.concurrent.Semaphore;
+import java.util.*;
+import java.util.concurrent.*;
 
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
 import static android.Manifest.permission.INTERNET;
 import static com.mopub.common.util.Reflection.MethodBuilder;
-import static com.mopub.nativeads.MoPubNative.MoPubNativeListener;
+import static com.mopub.nativeads.MoPubNative.EMPTY_EVENT_LISTENER;
+import static com.mopub.nativeads.MoPubNative.EMPTY_NETWORK_LISTENER;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -47,15 +49,17 @@ public class MoPubNativeTest {
     private MoPubNative.NativeGpsHelperListener nativeGpsHelperListener;
     private Semaphore semaphore;
     private static final String adUnitId = "test_adunit_id";
-    private MoPubNativeListener moPubNativeListener;
+    
+    @Mock private MoPubNativeEventListener mockEventListener;
 
+    @Mock private MoPubNativeNetworkListener mockNetworkListener;
+    
     @Before
     public void setup() {
         context = new Activity();
         shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
         shadowOf(context).grantPermissions(INTERNET);
-        moPubNativeListener = mock(MoPubNativeListener.class);
-        subject = new MoPubNative(context, adUnitId, moPubNativeListener);
+        subject = new MoPubNative(context, adUnitId, mockNetworkListener);
         methodBuilder = TestMethodBuilderFactory.getSingletonMock();
         nativeGpsHelperListener = mock(MoPubNative.NativeGpsHelperListener.class);
         semaphore = new Semaphore(0);
@@ -69,13 +73,14 @@ public class MoPubNativeTest {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         reset(methodBuilder);
     }
 
     @Ignore("fix concurrency issues")
     @Test
-    public void makeRequest_whenGooglePlayServicesIsLinkedAndAdInfoIsNotCached_shouldCacheAdInfoBeforeFetchingAd() throws Exception {
+    public void
+    makeRequest_whenGooglePlayServicesIsLinkedAndAdInfoIsNotCached_shouldCacheAdInfoBeforeFetchingAd() throws Exception {
         SharedPreferencesHelper.getSharedPreferences(context).edit().clear().commit();
         GpsHelperTest.verifyCleanSharedPreferences(context);
 
@@ -154,19 +159,32 @@ public class MoPubNativeTest {
     }
 
     @Test
-    public void destroy_shouldSetMoPubNativeListenerToEmptyAndClearContext() throws Exception {
+    public void destroy_shouldSetListenersToEmptyAndClearContext() {
         assertThat(subject.getContextOrDestroy()).isSameAs(context);
-        assertThat(subject.getMoPubNativeListener()).isSameAs(moPubNativeListener);
+        assertThat(subject.getMoPubNativeNetworkListener()).isSameAs(mockNetworkListener);
+        subject.setNativeEventListener(mockEventListener);
+        assertThat(subject.getMoPubNativeEventListener()).isSameAs(mockEventListener);
 
         subject.destroy();
 
         assertThat(subject.getContextOrDestroy()).isNull();
-        assertThat(subject.getMoPubNativeListener()).isSameAs(MoPubNativeListener.EMPTY_MOPUB_NATIVE_LISTENER);
+        assertThat(subject.getMoPubNativeNetworkListener()).isSameAs(EMPTY_NETWORK_LISTENER);
+        assertThat(subject.getMoPubNativeEventListener()).isSameAs(EMPTY_EVENT_LISTENER);
+    }
+
+    @Test
+    public void setNativeEventListener_shouldSetListener() {
+        assertThat(subject.getMoPubNativeNetworkListener()).isSameAs(mockNetworkListener);
+        subject.setNativeEventListener(mockEventListener);
+        assertThat(subject.getMoPubNativeEventListener()).isSameAs(mockEventListener);
+
+        subject.setNativeEventListener(null);
+        assertThat(subject.getMoPubNativeEventListener()).isSameAs(EMPTY_EVENT_LISTENER);
     }
 
     @Ignore("pending")
     @Test
-    public void loadNativeAd_shouldQueueAsyncDownloadTask() throws Exception {
+    public void loadNativeAd_shouldQueueAsyncDownloadTask() {
         Robolectric.getUiThreadScheduler().pause();
 
         subject.loadNativeAd(null);
@@ -175,7 +193,7 @@ public class MoPubNativeTest {
     }
 
     @Test
-    public void loadNativeAd_shouldReturnFast() throws Exception {
+    public void loadNativeAd_shouldReturnFast() {
         Robolectric.getUiThreadScheduler().pause();
 
         subject.destroy();
@@ -185,13 +203,13 @@ public class MoPubNativeTest {
     }
 
     @Test
-    public void requestNativeAd_withValidUrl_shouldStartDownloadTaskWithUrl() throws Exception {
+    public void requestNativeAd_withValidUrl_shouldStartDownloadTaskWithUrl() {
         Robolectric.getUiThreadScheduler().pause();
         Robolectric.addPendingHttpResponse(200, "body");
 
         subject.requestNativeAd("http://www.mopub.com");
 
-        verify(moPubNativeListener, never()).onNativeFail(any(NativeErrorCode.class));
+        verify(mockNetworkListener, never()).onNativeFail(any(NativeErrorCode.class));
         assertThat(wasDownloadTaskExecuted()).isTrue();
 
         List<?> latestParams = ShadowAsyncTasks.getLatestParams();
@@ -201,22 +219,22 @@ public class MoPubNativeTest {
     }
 
     @Test
-    public void requestNativeAd_withInvalidUrl_shouldFireNativeFailAndNotStartAsyncTask() throws Exception {
+    public void requestNativeAd_withInvalidUrl_shouldFireNativeFailAndNotStartAsyncTask() {
         Robolectric.getUiThreadScheduler().pause();
 
         subject.requestNativeAd("//\\//\\::::");
 
-        verify(moPubNativeListener).onNativeFail(any(NativeErrorCode.class));
+        verify(mockNetworkListener).onNativeFail(any(NativeErrorCode.class));
         assertThat(wasDownloadTaskExecuted()).isFalse();
     }
 
     @Test
-    public void requestNativeAd_withNullUrl_shouldFireNativeFailAndNotStartAsyncTask() throws Exception {
+    public void requestNativeAd_withNullUrl_shouldFireNativeFailAndNotStartAsyncTask() {
         Robolectric.getUiThreadScheduler().pause();
 
         subject.requestNativeAd(null);
 
-        verify(moPubNativeListener).onNativeFail(any(NativeErrorCode.class));
+        verify(mockNetworkListener).onNativeFail(any(NativeErrorCode.class));
         assertThat(wasDownloadTaskExecuted()).isFalse();
     }
 

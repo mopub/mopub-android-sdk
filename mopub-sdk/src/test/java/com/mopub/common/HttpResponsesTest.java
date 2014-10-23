@@ -37,13 +37,6 @@ public class HttpResponsesTest {
     }
 
     @Test
-    public void asBitmap_withNullResponse_shouldReturnNull() throws Exception {
-        final Bitmap bitmap = HttpResponses.asBitmap(null);
-
-        assertThat(bitmap).isNull();
-    }
-
-    @Test
     public void asJsonObject_withEmptyJsonString_shouldReturnEmptyJsonObjectAndCloseStream() throws Exception {
         String jsonData = "{}";
         when(downloadResponse1.getByteArray()).thenReturn(jsonData.getBytes());

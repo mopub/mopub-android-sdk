@@ -3,10 +3,9 @@ package com.mopub.common;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
-
 import com.mopub.common.factories.MethodBuilderFactory;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
-import com.mopub.common.util.MoPubLog;
 
 import java.lang.ref.WeakReference;
 
