@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ImageView;
@@ -13,6 +12,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.mopub.common.util.Dips;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Utils;
 import com.mopub.mobileads.resource.TextDrawable;
 
@@ -184,7 +184,7 @@ class ToolbarWidget extends RelativeLayout {
             final TextDrawable textDrawable = (TextDrawable) mImageView.getDrawable();
             textDrawable.updateText(text);
         } catch (Exception e) {
-            Log.d("MoPub", "Unable to update ToolbarWidget text.");
+            MoPubLog.d("Unable to update ToolbarWidget text.");
         }
     }
 

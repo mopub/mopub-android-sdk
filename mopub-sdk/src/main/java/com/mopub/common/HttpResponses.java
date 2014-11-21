@@ -1,12 +1,14 @@
 package com.mopub.common;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import static android.graphics.BitmapFactory.decodeByteArray;
+
 public final class HttpResponses {
+
     private HttpResponses() {}
 
     public static Bitmap asBitmap(final DownloadResponse downloadResponse) {
@@ -15,7 +17,7 @@ public final class HttpResponses {
         }
 
         final byte[] bytes = downloadResponse.getByteArray();
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        return decodeByteArray(bytes, 0, bytes.length);
     }
 
     public static JSONObject asJsonObject(final DownloadResponse downloadResponse) {

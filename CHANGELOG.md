@@ -1,4 +1,54 @@
-## Version 2.3 (Jul 17, 2014)
+## Version 3.2.2 (October 29, 2014)
+  - **Bug Fix** Fixes a bug in fetching the Google Advertising ID from Google Play Services.
+
+## Version 3.2.1 (October 21, 2014)
+  - **Bug Fix** Fixes a bug in processing certain HTTP headers for Native Ads.
+
+## Version 3.2.0 (October 17, 2014)
+
+  - **Updated SDK License** Visit [http://www.mopub.com/legal/sdk-license-agreement/](http://www.mopub.com/legal/sdk-license-agreement/) for details.
+  - **Bug Fixes**
+
+## Version 3.1.0 (October 9, 2014)
+
+  - **Updated Facebook SDK Compatibility to 3.18.1**
+  Provided Custom Events for Facebook Banners, Interstitials and Native Ads (included
+  in the extras/ folder) are now compatible with the latest SDK release from Facebook (3.18.1).
+  - **Updated API for Native Ads Custom Event writers**
+  If you are mediating Facebook or InMobi native ads, this change requires you to copy
+  FacebookNative.java and InMobiNative.java custom events from the extras/ folder to
+  com.mopub.nativeads package for compatibility.
+
+## Version 3.0.0 (September 30, 2014)
+
+  - **Location Settings are now SDK-wide**
+    - Calls to `MoPubView#setLocationAwareness` and `MoPubInterstial#setLocationAwareness` are
+    deprecated in favor of `MoPub#setLocationAwareness`
+    - Calls to `MoPubView#setLocationPrecision` and `MoPubInterstitial#setLocationPrecision` are
+    deprecated in favor of `MoPub#setLocationPrecision`
+    - Calls to any of these methods have the effect of setting location awareness and precision
+    globally for the SDK
+  - **Build target SDK is now API Level 19.** If you are building the MoPub SDK from source,
+  modify your dependencies to reference Android 4.4.2, API Level 19. This does not affect the
+  minimum device API level, which remains at API Level 9.
+  - **Source-level support for Gradle projects.** The SDK source now includes a build.gradle file
+   you can use to build source as part of your Gradle project.
+  - **The SDK now uses Play Services 5.0.89**
+  - **Bug fixes:**
+    - Millennial Interstitial caching now properly handles request failures
+    - Fixed bug preventing native ads from loading after a request failure
+
+## Version 2.4.0 (August 28, 2014)
+
+  - **Minimum Android version now at API Level 9.** To use the new SDK, your app must run on Android 2.3.1 (Version 9, Gingerbread) or higher.
+  - **Simplified APIs for inserting native ads.** See [Native Ads Integration](https://github.com/mopub/mopub-android-sdk/wiki/Native-Ads-Integration) for details.
+  - **Automatic ad caching for smooth scrolling.** For native ads, the SDK will now automatically pre-load ads, resulting in smoother scrolling.
+  - **Performance improvements** The SDK now makes more efficient use of memory for image caching and avoids allocating temporary objects while scrolling, resulting in fewer garbage collections.
+  - **Sample app improvements.** An improved sample app allows saving ad unit IDs for testing.
+  - **Bug fixes:**
+    - Banner auto-refresh is now properly re-enabled when resuming your app.
+
+## Version 2.3 (July 17, 2014)
 
   - **Improved impression tracking for Native Ads** Impression tracking for native ads is now more accurate and more efficient.
   - **Streamlined Maven Build and Dependencies** MoPub's Android SDK now depends on the Android v4 Support Library shipped with the Android Build tools. The MoPub Sample App also depends on Google Play Services to use the Android Advertising ID. We recommend building against Play Services in your app as well. For integration instructions, see the [wiki](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started).
@@ -7,7 +57,7 @@
   - Fixed intermittent NullPointerException in MoPubNative#requestNativeAd; fixes [Github issue #97] (https://github.com/mopub/mopub-android-sdk/issues/97)
   - Fixed an issue where MRAID interstitials could be not be closed.
 
-## Version 2.2 (Jun 19, 2014)
+## Version 2.2 (June 19, 2014)
 
   - **Native ads mediation** release; integration instructions and documentation are available on the [GitHub wiki](https://github.com/mopub/mopub-android-sdk/wiki/Integrating-Native-Third-Party-Ad-Networks). Added custom event native implementations to the native extras directory of the SDK (`/extras/src/com/mopub/nativeads`), with initial support for the following networks:
   	- Facebook Audience Network (`FacebookNative.java`)
@@ -25,7 +75,7 @@
     - Added support for companion banners (shown upon video completion)
   - Added Logcat warnings (and Toasts for debug builds) in cases where all necessary Activity permissions haven't been added to the `AndroidManifest`
 
-## Version 2.0 (Apr 22, 2014)
+## Version 2.0 (April 22, 2014)
 
   - **Native Ads** public release; integration instructions and documentation available on the [GitHub wiki](https://github.com/mopub/mopub-android-sdk/wiki/Native-Ads-Integration)
   - Changed minimum supported Android version to Froyo (Android 2.2, API level 8)
@@ -46,7 +96,7 @@
   - Upgraded the bundled `android-support-v4` library to r19.1.
       - **Note for Maven users:** Newer versions of the `android-support-v4` artifact are unavailable on Maven central, so we have included a small script to update the version in your local artifact repository. Please navigate to the `mopub-sdk` directory, and run `scripts/mavenize_support_library`.
       
-###### Version 2.0.1 (Apr 30, 2014)
+###### Version 2.0.1 (April 30, 2014)
 
   - Fixed cases where VAST Video Interstitials were failing to fire `InterstitialAdListener` callbacks; fixes [GitHub issue #78](https://github.com/mopub/mopub-android-sdk/issues/78)
   - Simplified click tracking logic for HTML ads
@@ -66,7 +116,7 @@
   - All `WebView`s are removed from their parents before `destroy()`; fixes [GitHub issue #38](https://github.com/mopub/mopub-android-sdk/issues/38)
   - Removed previously-deprecated `HTML5AdView`
   
-### Version 1.17.3 (Mar 19, 2014)
+### Version 1.17.3 (March 19, 2014)
 
   - Added safeguards to prevent two different `MoPubInterstitial` objects from listening in on one other's lifecycle callbacks
   - Disabled Javascript loading into `destroy()`ed `WebView`s; fixes [GitHub issue #62](https://github.com/mopub/mopub-android-sdk/issues/62)
@@ -74,27 +124,27 @@
   - MRAID ads that utilize `mraid.open()` now correctly record a click event
   - Added missing `FLAG_ACTIVITY_NEW_TASK` to `VastVideoView`'s intent creation; fixes part of [GitHub issue #56](https://github.com/mopub/mopub-android-sdk/issues/56)
   
-###### Version 1.17.3.1 (Mar 24, 2014)
+###### Version 1.17.3.1 (March 24, 2014)
 
   - Restricted use of methods and fields that require API 4+ (`WebView#removeJavascriptInterface` and `ConnectivityManager`'s connection types)
   
-### Version 1.17.2 (Feb 20, 2014)
+### Version 1.17.2 (February 20, 2014)
 
   - Updated InMobi custom events to support InMobi SDK 4.0.3+ only
   - MRAID viewable property now correctly updates on viewability change
   - `MraidView` properly handles null schemes; fixes [GitHub issue #63](https://github.com/mopub/mopub-android-sdk/pull/63)
   - Internal disk LRU cache correctly hashes keys when checking for existing files
   
-### Version 1.17.1 (Jan 23, 2014)
+### Version 1.17.1 (January 23, 2014)
 
   - Added custom events for Google Play Services. `GooglePlayServicesBanner` and `GooglePlayServicesInterstitial` can be found in the extras directory of the SDK (`/extras/src/com/mopub/mobileads`)
   - Resolved issues with missing annotations on `addJavascriptInterface` when `targetSdkVersion` is set to API level 17 or above
   - Updated MoPub sample application to allow in-app text entry of ad unit IDs
     
-###### Version 1.17.1.1 (Feb 5, 2014)
+###### Version 1.17.1.1 (February 5, 2014)
   - Fixed bug that caused clicks to not be recorded in the MoPub UI (introduced in 1.17.1)
   
-## Version 1.16 (Oct 16, 2013)
+## Version 1.16 (October 16, 2013)
 
   - Improved creative controls
     - Creative flagging
@@ -108,7 +158,7 @@
   - Simplified internal construction and handling of `WebView`s by removing `WebViewPool` and its subclasses
   - Updated mraid.getVersion() to return 2.0
 
-## Version 1.15 (Aug 21, 2013)
+## Version 1.15 (August 21, 2013)
 
 Includes support for ads in the MRAID 2.0 format. MRAID 2.0 allows advertisers to create ads with rich media functionality, including adding calendar events, storing pictures and playing videos in the native video player. To learn more about MRAID 2.0, read our [help article](http://j.mp/16MKSci).
 
@@ -124,7 +174,7 @@ To correctly display ads that ask the user to save a picture (storePicture ads),
 To allow users to play videos using the native video player:  
 * Declare activity `com.mopub.mobileads.MraidVideoPlayerActivity`. This activity is required to support playing videos in the native player and we strongly recommend adding it.
  
-### Version 1.15.2 (Sep 11, 2013) 
+### Version 1.15.2 (September 11, 2013) 
   - Allowed Facebook Support to be disabled optionally with `setFacebookSupported(false)`: 
   	- Use `MoPubInterstitial.setFacebookSupported(false);` for interstitials 
   	- Use `MoPubView.setFacebookSupported(false);` for banners 
@@ -138,19 +188,19 @@ To allow users to play videos using the native video player:
   - Fixed MRAID 2.0 `storePicture` command's messaging when a picture either fails to download or fails to save to device 
   - Expanded MRAID 2.0 `createCalendarEvent` command to support both minute- and second-level granularity  
 
-###### Version 1.15.2.1 (Sep 13, 2013)
+###### Version 1.15.2.1 (September 13, 2013)
   - Made the SDK more resilient to creatives that improperly use the `mopubnativebrowser://` scheme; fixes [GitHub issue #36](https://github.com/mopub/mopub-android-sdk/issues/36)
    
-###### Version 1.15.2.2 (Sep 20, 2013)
+###### Version 1.15.2.2 (September 20, 2013)
   - Removed `WebSettings.setPluginsEnabled()` so the SDK builds against Android API 18; fixes [GitHub issue #28](https://github.com/mopub/mopub-android-sdk/issues/28)
   - AdMob banners are now removed from the view hierarchy before they are destroyed; fixes the reopened [GitHub issue #23](https://github.com/mopub/mopub-android-sdk/issues/23)
   - Prevent ads from launching system features, such as a browser view, until the user has interacted with the ad.
  
-### Version 1.15.1 (Aug 27, 2013)
+### Version 1.15.1 (August 27, 2013)
   - Updated documentation to remove the requirement for certain AndroidManifest permissions
   - Fixed minor bug with MRAID 2.0 `storePicture` command where the user sees a false download completed message
   
-###### Version 1.15.1.1 (Sep 4, 2013)
+###### Version 1.15.1.1 (September 4, 2013)
   - Made the SDK more resilient to unexpected Flash creatives
 
 ## Version 1.14 (May 28, 2013)
@@ -252,4 +302,3 @@ To allow users to play videos using the native video player:
   - Added support for custom events
   - Added network connectivity check before loading an ad
   - Added `OnAdPresentedOverlay` listener methods
-  - Removed unnecessary permissions from the library's manifest

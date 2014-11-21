@@ -1,26 +1,30 @@
 package com.mopub.nativeads;
 
 import android.graphics.Bitmap;
-import android.view.View;
 import android.widget.ImageView;
 
-import com.mopub.common.util.MoPubLog;
+import com.mopub.common.VisibleForTesting;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Utils;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import static com.mopub.nativeads.ImageService.ImageServiceListener;
 
 class ImageViewService {
-    // random large number so we hopefully don't collide with something a pub is using
-    private static final int VIEW_TAG_MOPUB_KEY = 817491827;
+    // This is used instead of View.setTag, which causes a memory leak in 2.3
+    // and earlier: https://code.google.com/p/android/issues/detail?id=18273
+    private static final WeakHashMap<ImageView, Long> sImageViewRequestIds =
+            new WeakHashMap<ImageView, Long>();
 
     private ImageViewService(){}
 
     static void loadImageView(final String url, final ImageView imageView) {
         if (imageView == null) {
+            MoPubLog.d("Attempted to load an image into a null ImageView");
             return;
         }
 
@@ -29,8 +33,8 @@ class ImageViewService {
 
         if (url != null) {
             // Unique id to identify this async image request
-            setImageViewUniqueId(imageView);
-            long uniqueId = getImageViewUniqueId(imageView);
+            long uniqueId = Utils.generateUniqueId();
+            sImageViewRequestIds.put(imageView, uniqueId);
 
             // Async call to get image from memory cache, disk and then network
             ImageService.get(
@@ -57,7 +61,7 @@ class ImageViewService {
             if (imageView == null || bitmaps == null || !bitmaps.containsKey(mUrl)) {
                 return;
             }
-            final Long uniqueId = getImageViewUniqueId(imageView);
+            final Long uniqueId = sImageViewRequestIds.get(imageView);
             if (uniqueId != null && mUniqueId == uniqueId) {
                 imageView.setImageBitmap(bitmaps.get(mUrl));
             }
@@ -69,27 +73,15 @@ class ImageViewService {
         }
     }
 
-    static void setImageViewUniqueId(final ImageView imageView) {
-        if (imageView != null) {
-            setViewTag(imageView, Utils.generateUniqueId());
-        }
-    }
-
+    @VisibleForTesting
+    @Deprecated
     static Long getImageViewUniqueId(final ImageView imageView) {
-        if (imageView != null) {
-            Object object = getViewTag(imageView);
-            if (object instanceof Long) {
-                return (Long) object;
-            }
-        }
-        return null;
+        return sImageViewRequestIds.get(imageView);
     }
 
-    static void setViewTag(final View view, final Object object) {
-        view.setTag(VIEW_TAG_MOPUB_KEY, object);
-    }
-
-    static Object getViewTag(final View view) {
-        return view.getTag(VIEW_TAG_MOPUB_KEY);
+    @VisibleForTesting
+    @Deprecated
+    static void setImageViewUniqueId(final ImageView imageView, final long uniqueId) {
+        sImageViewRequestIds.put(imageView, uniqueId);
     }
 }

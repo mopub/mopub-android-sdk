@@ -8,23 +8,20 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.media.MediaPlayer;
-import android.os.Build;
+import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.VideoView;
-
 import com.mopub.common.MoPubBrowser;
+import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Dips;
 import com.mopub.common.util.Drawables;
-import com.mopub.common.util.VersionCode;
 import com.mopub.mobileads.test.support.GestureUtils;
-import com.mopub.mobileads.test.support.SdkTestRunner;
 import com.mopub.mobileads.util.vast.VastCompanionAd;
 import com.mopub.mobileads.util.vast.VastVideoConfiguration;
-
 import org.apache.http.HttpRequest;
 import org.apache.maven.artifact.ant.shaded.ReflectionUtils;
 import org.junit.After;
@@ -34,14 +31,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLocalBroadcastManager;
 import org.robolectric.shadows.ShadowVideoView;
 import org.robolectric.tester.org.apache.http.RequestMatcher;
 import org.robolectric.tester.org.apache.http.TestHttpResponse;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.*;
+import java.util.*;
 
 import static android.media.MediaPlayer.OnPreparedListener;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
@@ -499,6 +496,8 @@ public class VastVideoViewControllerTest {
         stub(mediaPlayer.getDuration()).toReturn(1000);
         setMediaPlayer(mediaPlayer);
 
+        // this callback is typically called when the media filed is loaded and ready to play
+        // invoke this manually since we are using a mock url and don't want to wait
         final OnPreparedListener onPreparedListener = getShadowVideoView().getOnPreparedListener();
         onPreparedListener.onPrepared(null);
 
@@ -628,12 +627,11 @@ public class VastVideoViewControllerTest {
         assertThat(subject.getIsVideoProgressShouldBeChecked()).isFalse();
     }
 
+    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
     @Test
     public void onError_withVideoFilePermissionErrorBelowJellyBean_shouldRetryPlayingTheVideo() throws Exception {
         File file = new File("disk_video_path");
         file.createNewFile();
-
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", VersionCode.ICE_CREAM_SANDWICH_MR1.getApiLevel());
 
         initializeSubject();
 
@@ -648,13 +646,12 @@ public class VastVideoViewControllerTest {
         file.delete();
     }
 
+    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
     @Test
     public void retryMediaPlayer_withVideoFilePermissionErrorAndBelowJellyBean_shouldReturnTrue() throws Exception {
         File file = new File("disk_video_path");
         file.createNewFile();
 
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", VersionCode.ICE_CREAM_SANDWICH_MR1.getApiLevel());
-
         initializeSubject();
 
         assertThat(subject.getVideoRetries()).isEqualTo(0);
@@ -664,13 +661,12 @@ public class VastVideoViewControllerTest {
         file.delete();
     }
 
+    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
     @Test
     public void retryMediaPlayer_shouldNotRunMoreThanOnce() throws Exception {
         File file = new File("disk_video_path");
         file.createNewFile();
 
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", VersionCode.ICE_CREAM_SANDWICH_MR1.getApiLevel());
-
         initializeSubject();
 
         assertThat(subject.getVideoRetries()).isEqualTo(0);
@@ -683,12 +679,11 @@ public class VastVideoViewControllerTest {
         file.delete();
     }
 
+    @Config(reportSdk = VERSION_CODES.JELLY_BEAN)
     @Test
     public void retryMediaPlayer_withAndroidVersionAboveJellyBean_shouldReturnFalse() throws Exception {
         File file = new File("disk_video_path");
         file.createNewFile();
-
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", VersionCode.JELLY_BEAN.getApiLevel());
 
         initializeSubject();
 
@@ -699,12 +694,11 @@ public class VastVideoViewControllerTest {
         file.delete();
     }
 
+    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void retryMediaPlayer_withOtherVideoError_shouldReturnFalse() throws Exception {
         File file = new File("disk_video_path");
         file.createNewFile();
-
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", VersionCode.ICE_CREAM_SANDWICH.getApiLevel());
 
         initializeSubject();
 
@@ -715,15 +709,13 @@ public class VastVideoViewControllerTest {
         file.delete();
     }
 
+    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void retryMediaPlayer_withExceptionThrown_shouldReturnFalseAndIncrementRetryCount() throws Exception {
         File file = new File("disk_video_path");
         if (file.exists()){
             assertThat(file.delete()).isTrue();
         }
-
-        // No file will cause FileInputStream to throw
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", VersionCode.ICE_CREAM_SANDWICH.getApiLevel());
 
         initializeSubject();
 
@@ -1028,12 +1020,11 @@ public class VastVideoViewControllerTest {
         assertThat(getShadowVideoView().getPrevVideoState()).isNotEqualTo(ShadowVideoView.START);
     }
 
+    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
     @Test
     public void onResume_shouldResetVideoRetryCountToZero() throws Exception {
         File file = new File("disk_video_path");
         file.createNewFile();
-
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", VersionCode.ICE_CREAM_SANDWICH_MR1.getApiLevel());
 
         initializeSubject();
 

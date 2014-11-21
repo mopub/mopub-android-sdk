@@ -5,18 +5,25 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.mopub.common.util.MoPubLog;
+import com.mopub.common.VisibleForTesting;
+import com.mopub.common.logging.MoPubLog;
 
 import java.lang.ref.WeakReference;
 
 import static com.mopub.nativeads.MoPubNative.MoPubNativeListener;
 
+/**
+ * @deprecated As of release 2.4, use {@link com.mopub.nativeads.MoPubAdAdapter} or
+ * {@link com.mopub.nativeads.MoPubStreamAdPlacer} instead
+ */
+@Deprecated
 public final class AdapterHelper {
     private final WeakReference<Activity> mActivity;
     private final Context mApplicationContext;
     private final int mStart;
     private final int mInterval;
 
+    @Deprecated
     public AdapterHelper(final Context context, final int start, final int interval) throws IllegalArgumentException {
         if (context == null) {
             throw new IllegalArgumentException("Illegal argument: Context was null.");
@@ -34,6 +41,7 @@ public final class AdapterHelper {
         mInterval = interval;
     }
 
+    @Deprecated
     public View getAdView(final View convertView,
             final ViewGroup parent,
             final NativeResponse nativeResponse,
@@ -57,15 +65,18 @@ public final class AdapterHelper {
     }
 
     // Total number of content rows + ad rows
+    @Deprecated
     public int shiftedCount(final int originalCount) {
         return originalCount + numberOfAdsThatCouldFitWithContent(originalCount);
     }
 
     // Shifted position of content in the backing list
+    @Deprecated
     public int shiftedPosition(final int position) {
         return position - numberOfAdsSeenUpToPosition(position);
     }
 
+    @Deprecated
     public boolean isAdPosition(final int position) {
         if (position < mStart) {
             return false;
@@ -106,6 +117,7 @@ public final class AdapterHelper {
 
     // Testing
     @Deprecated
+    @VisibleForTesting
     void clearActivityContext() {
         mActivity.clear();
     }

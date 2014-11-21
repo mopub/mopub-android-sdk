@@ -7,7 +7,8 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+
+import com.mopub.common.logging.MoPubLog;
 
 import java.util.List;
 
@@ -100,7 +101,7 @@ public class IntentUtils {
         // If there are no relevant activities, don't follow the link
         if (!IntentUtils.deviceCanHandleIntent(context, intent)) {
             if (logError) {
-                Log.w("MoPub", "Could not handle application specific action: " + url + ". " +
+                MoPubLog.w("Could not handle application specific action: " + url + ". " +
                         "You may be running in the emulator or another device which does not " +
                         "have the required application.");
             }

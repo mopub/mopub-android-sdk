@@ -1,46 +1,12 @@
-/*
- * Copyright (c) 2010-2013, MoPub Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *  Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- *
- *  Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the distribution.
- *
- *  Neither the name of 'MoPub Inc.' nor the names of its contributors
- *   may be used to endorse or promote products derived from this software
- *   without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package com.mopub.common;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Looper;
 
 import com.mopub.common.factories.MethodBuilderFactory;
+import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
-import com.mopub.mobileads.test.support.SdkTestRunner;
-import com.mopub.mobileads.test.support.ThreadUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -73,12 +39,15 @@ public class GpsHelperTest {
         public static final String ADVERTISING_ID = "38400000-8cf0-11bd-b23e-10b96e40000d";
         public static final boolean LIMIT_AD_TRACKING_ENABLED = true;
 
+        public String mAdId = ADVERTISING_ID;
+        public boolean mLimitAdTrackingEnabled = LIMIT_AD_TRACKING_ENABLED;
+
         public String getId() {
-            return ADVERTISING_ID;
+            return mAdId;
         }
 
         public boolean isLimitAdTrackingEnabled() {
-            return LIMIT_AD_TRACKING_ENABLED;
+            return mLimitAdTrackingEnabled;
         }
     }
 
@@ -107,164 +76,151 @@ public class GpsHelperTest {
     }
 
     @Test
-    public void isGpsAvailable_whenGooglePlayServicesIsLinked_shouldReturnTrue() throws Exception {
+    public void isPlayServicesAvailable_whenGooglePlayServicesIsLinked_shouldReturnTrue() throws Exception {
         GpsHelper.setClassNamesForTesting();
         when(methodBuilder.execute()).thenReturn(GpsHelper.GOOGLE_PLAY_SUCCESS_CODE);
-        assertThat(GpsHelper.isGpsAvailable(context)).isTrue();
+        assertThat(GpsHelper.isPlayServicesAvailable(context)).isTrue();
     }
 
     @Test
-    public void isGpsAvailable_whenGooglePlayServicesReturnsNonSuccessCode_shouldReturnFalse() throws Exception {
+    public void isPlayServicesAvailable_whenGooglePlayServicesReturnsNonSuccessCode_shouldReturnFalse() throws Exception {
         GpsHelper.setClassNamesForTesting();
         when(methodBuilder.execute()).thenReturn(GpsHelper.GOOGLE_PLAY_SUCCESS_CODE + 1);
-        assertThat(GpsHelper.isGpsAvailable(context)).isFalse();
+        assertThat(GpsHelper.isPlayServicesAvailable(context)).isFalse();
     }
 
     @Test
-    public void isGpsAvailable_whenGooglePlayServicesReturnsNull_shouldReturnFalse() throws Exception {
+    public void isPlayServicesAvailable_whenGooglePlayServicesReturnsNull_shouldReturnFalse() throws Exception {
         GpsHelper.setClassNamesForTesting();
         when(methodBuilder.execute()).thenReturn(null);
-        assertThat(GpsHelper.isGpsAvailable(context)).isFalse();
+        assertThat(GpsHelper.isPlayServicesAvailable(context)).isFalse();
     }
 
     @Test
-    public void isGpsAvailable_whenGooglePlayServicesIsNotLinked_shouldReturnFalse() throws Exception {
-        assertThat(GpsHelper.isGpsAvailable(context)).isFalse();
+    public void isPlayServicesAvailable_whenGooglePlayServicesIsNotLinked_shouldReturnFalse() throws Exception {
+        assertThat(GpsHelper.isPlayServicesAvailable(context)).isFalse();
     }
 
     @Test
-    public void asyncFetchAdvertisingInfo_whenGooglePlayServicesIsLinked_shouldInvokeCallbackOnMainLooper() throws Exception {
+    public void fetchAdvertisingInfoAsync_whenGooglePlayServicesIsLinked_shouldInvokeCallbackOnMainLooper() throws Exception {
         GpsHelper.setClassNamesForTesting();
         when(methodBuilder.execute()).thenReturn(
                 adInfo,
-                adInfo.ADVERTISING_ID,
-                adInfo.LIMIT_AD_TRACKING_ENABLED
+                adInfo.mAdId,
+                adInfo.mLimitAdTrackingEnabled
         );
 
-        GpsHelper.asyncFetchAdvertisingInfo(context, semaphoreGpsHelperListener);
+        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
         safeAcquireSemaphore();
         assertThat(gpsHelperListenerCallbackLooper).isEqualTo(Looper.getMainLooper());
     }
 
     @Test
-    public void asyncFetchAdvertisingInfo_whenGooglePlayServicesIsLinked_shouldPopulateSharedPreferences() throws Exception {
-        verifyCleanSharedPreferences(context);
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.execute()).thenReturn(
-                adInfo,
-                adInfo.ADVERTISING_ID,
-                adInfo.LIMIT_AD_TRACKING_ENABLED
-        );
-
-        GpsHelper.asyncFetchAdvertisingInfo(context, semaphoreGpsHelperListener);
-        safeAcquireSemaphore();
-        verifySharedPreferences(context, adInfo);
-    }
-
-    @Test
-    public void asyncFetchAdvertisingInfo_whenReflectedMethodCallThrows_shouldNotPopulateSharedPreferences() throws Exception {
-        verifyCleanSharedPreferences(context);
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.execute()).thenThrow(new Exception());
-
-        GpsHelper.asyncFetchAdvertisingInfo(context, semaphoreGpsHelperListener);
-        safeAcquireSemaphore();
-        verifyCleanSharedPreferences(context);
-    }
-
-    @Test
-    public void asyncFetchAdvertisingInfo_whenReflectedMethodCallReturnsNull_shouldNotPopulateSharedPreferences() throws Exception {
-        verifyCleanSharedPreferences(context);
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.execute()).thenReturn(null);
-
-        GpsHelper.asyncFetchAdvertisingInfo(context, semaphoreGpsHelperListener);
-        safeAcquireSemaphore();
-        verifyCleanSharedPreferences(context);
-    }
-
-    @Test
-    public void asyncFetchAdvertisingInfoIfNotCached_whenGooglePlayServicesIsLinkedAndSharedPreferencesIsClean_shouldPopulateSharedPreferences() throws Exception {
-        verifyCleanSharedPreferences(context);
+    public void fetchAdvertisingInfoAsync_whenGooglePlayServicesIsLinked_shouldPopulateClientMetadata() throws Exception {
+        verifyCleanClientMetadata(context);
         GpsHelper.setClassNamesForTesting();
         when(methodBuilder.execute()).thenReturn(
                 GpsHelper.GOOGLE_PLAY_SUCCESS_CODE,
                 adInfo,
-                adInfo.ADVERTISING_ID,
-                adInfo.LIMIT_AD_TRACKING_ENABLED
+                adInfo.mAdId,
+                adInfo.mLimitAdTrackingEnabled
         );
 
-        GpsHelper.asyncFetchAdvertisingInfoIfNotCached(context, semaphoreGpsHelperListener);
+        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
         safeAcquireSemaphore();
-        verifySharedPreferences(context, adInfo);
+        verifyClientMetadata(context, adInfo);
     }
 
     @Test
-    public void asyncFetchAdvertisingInfoIfNotCached_whenGooglePlayServicesLinkedAndSharedPreferencesIsPopulated_shouldNotRePopulateSharedPreferences() throws Exception {
-        verifyCleanSharedPreferences(context);
-        populateAndVerifySharedPreferences(context, adInfo);
+    public void fetchAdvertisingInfoAsync_whenReflectedMethodCallThrows_shouldNotPopulateClientMetadata() throws Exception {
+        verifyCleanClientMetadata(context);
+        GpsHelper.setClassNamesForTesting();
+        when(methodBuilder.execute()).thenThrow(new Exception());
+
+        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
+        safeAcquireSemaphore();
+        verifyCleanClientMetadata(context);
+    }
+
+    @Test
+    public void fetchAdvertisingInfoAsync_whenReflectedMethodCallReturnsNull_shouldNotPopulateClientMetadata() throws Exception {
+        verifyCleanClientMetadata(context);
+        GpsHelper.setClassNamesForTesting();
+        when(methodBuilder.execute()).thenReturn(null);
+
+        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
+        safeAcquireSemaphore();
+        verifyCleanClientMetadata(context);
+    }
+
+    @Test
+    public void fetchAdvertisingInfoAsync_whenGooglePlayServicesIsLinkedAndClientMetadataIsClean_shouldPopulateClientMetadata() throws Exception {
+        verifyCleanClientMetadata(context);
         GpsHelper.setClassNamesForTesting();
         when(methodBuilder.execute()).thenReturn(
-                GpsHelper.GOOGLE_PLAY_SUCCESS_CODE
+                GpsHelper.GOOGLE_PLAY_SUCCESS_CODE,
+                adInfo,
+                adInfo.mAdId,
+                adInfo.mLimitAdTrackingEnabled
         );
 
-        GpsHelper.asyncFetchAdvertisingInfoIfNotCached(context, semaphoreGpsHelperListener);
+        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
         safeAcquireSemaphore();
-        verify(methodBuilder).execute();
+        verifyClientMetadata(context, adInfo);
     }
 
     @Test
-    public void asyncFetchAdvertisingInfoIfNotCached_whenGooglePlayServicesIsNotLinked_shouldNotPopulateSharedPreferences() throws Exception {
-        verifyCleanSharedPreferences(context);
+    public void fetchAdvertisingInfoAsync_whenGooglePlayServicesLinkedAndClientMetadataIsPopulated_shouldRePopulateClientMetadata() throws Exception {
+        verifyCleanClientMetadata(context);
+        populateAndVerifyClientMetadata(context, adInfo);
+        adInfo.mLimitAdTrackingEnabled = false;
+        GpsHelper.setClassNamesForTesting();
+        when(methodBuilder.execute()).thenReturn(
+                GpsHelper.GOOGLE_PLAY_SUCCESS_CODE,
+                adInfo,
+                adInfo.mAdId,
+                adInfo.mLimitAdTrackingEnabled
+        );
+
+        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
+        safeAcquireSemaphore();
+        verifyClientMetadata(context, adInfo);
+    }
+
+    @Test
+    public void fetchAdvertisingInfoAsync_whenGooglePlayServicesIsNotLinked_shouldNotPopulateClientMetadata() throws Exception {
+        verifyCleanClientMetadata(context);
         GpsHelper.setClassNamesForTesting();
         when(methodBuilder.execute()).thenReturn(
                 GpsHelper.GOOGLE_PLAY_SUCCESS_CODE + 1
         );
 
-        GpsHelper.asyncFetchAdvertisingInfoIfNotCached(context, semaphoreGpsHelperListener);
+        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
         safeAcquireSemaphore();
-        verifyCleanSharedPreferences(context);
+        verifyCleanClientMetadata(context);
     }
 
     @Test
-    public void isSharedPreferencesPopulated_whenContainsAdvertisingIdKeyAndIsLimitAdTrackingEnabledKey_shouldReturnTrue() throws Exception {
-        verifyCleanSharedPreferences(context);
-        populateAndVerifySharedPreferences(context, adInfo);
-        assertThat(GpsHelper.isSharedPreferencesPopluated(context)).isTrue();
+    public void isClientMetadataPopulated_whenContainsAdvertisingIdKeyAndIsLimitAdTrackingEnabledKey_shouldReturnTrue() throws Exception {
+        verifyCleanClientMetadata(context);
+        populateAndVerifyClientMetadata(context, adInfo);
+        assertThat(GpsHelper.isClientMetadataPopulated(context)).isTrue();
     }
 
     @Test
-    public void isSharedPreferencesPopulated_whenDoesntContainBothKeys_shouldReturnFalse() throws Exception {
-        verifyCleanSharedPreferences(context);
-        SharedPreferencesHelper.getSharedPreferences(context)
-                .edit()
-                .putString(GpsHelper.ADVERTISING_ID_KEY, adInfo.ADVERTISING_ID)
-                .commit();
-        assertThat(GpsHelper.isSharedPreferencesPopluated(context)).isFalse();
-
-        SharedPreferencesHelper.getSharedPreferences(context).edit().clear().commit();
-        verifyCleanSharedPreferences(context);
-        SharedPreferencesHelper.getSharedPreferences(context)
-                .edit()
-                .putBoolean(GpsHelper.IS_LIMIT_AD_TRACKING_ENABLED_KEY, adInfo.LIMIT_AD_TRACKING_ENABLED)
-                .commit();
-        assertThat(GpsHelper.isSharedPreferencesPopluated(context)).isFalse();
+    public void isClientMetadataPopulated_whenClean_shouldReturnFalse() throws Exception {
+        verifyCleanClientMetadata(context);
+        assertThat(GpsHelper.isClientMetadataPopulated(context)).isFalse();
     }
 
     @Test
-    public void isSharedPreferencesPopulated_whenClean_shouldReturnFalse() throws Exception {
-        verifyCleanSharedPreferences(context);
-        assertThat(GpsHelper.isSharedPreferencesPopluated(context)).isFalse();
-    }
-
-    @Test
-    public void updateSharedPreferences_whenPassingInValidAdInfoObject_shouldUpdateSharedPreferences() throws Exception {
+    public void updateClientMetadata_whenPassingInValidAdInfoObject_shouldUpdateClientMetadata() throws Exception {
         // Use the real MethodBuilderFactory for this test, not the mock one
         // Most mocks are set by default in SdkTestRunner setup
         MethodBuilderFactory.setInstance(new MethodBuilderFactory());
-        verifyCleanSharedPreferences(context);
-        GpsHelper.updateSharedPreferences(context, adInfo);
-        verifySharedPreferences(context, adInfo);
+        verifyCleanClientMetadata(context);
+        GpsHelper.updateClientMetadata(context, adInfo);
+        verifyClientMetadata(context, adInfo);
     }
 
     @Test
@@ -308,29 +264,6 @@ public class GpsHelperTest {
     }
 
     @Test
-    public void getAdvertisingId_whenGooglePlayServicesIsLinkedAndAdvertisingIdIsCached_shouldReturnAdvertisingId() throws Exception {
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.execute()).thenReturn(GpsHelper.GOOGLE_PLAY_SUCCESS_CODE);
-        SharedPreferencesHelper.getSharedPreferences(context)
-                .edit()
-                .putString(GpsHelper.ADVERTISING_ID_KEY, adInfo.ADVERTISING_ID)
-                .commit();
-        assertThat(GpsHelper.getAdvertisingId(context)).isEqualTo(adInfo.ADVERTISING_ID);
-    }
-
-    @Test
-    public void getAdvertisingId_whenGooglePlayServicesIsLinkedAndAdInfoIsNotCached_shouldReturnNull() throws Exception {
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.execute()).thenReturn(GpsHelper.GOOGLE_PLAY_SUCCESS_CODE);
-        assertThat(GpsHelper.getAdvertisingId(context)).isNull();
-    }
-
-    @Test
-    public void getAdvertisingId_whenGooglePlayServicesIsNotLinked_shouldReturnNull() throws Exception {
-        assertThat(GpsHelper.getAdvertisingId(context)).isNull();
-    }
-
-    @Test
     public void isLimitAdTrackingEnabled_whenGooglePlayServicesIsLinkedAndLimitAdTrackingIsCached_shouldReturnLimitAdTracking() throws Exception {
         GpsHelper.setClassNamesForTesting();
         when(methodBuilder.execute()).thenReturn(GpsHelper.GOOGLE_PLAY_SUCCESS_CODE);
@@ -353,13 +286,10 @@ public class GpsHelperTest {
         assertThat(GpsHelper.isLimitAdTrackingEnabled(context)).isFalse();
     }
 
-    static public void populateAndVerifySharedPreferences(Context context, TestAdInfo adInfo) {
-        SharedPreferencesHelper.getSharedPreferences(context)
-                .edit()
-                .putString(GpsHelper.ADVERTISING_ID_KEY, adInfo.ADVERTISING_ID)
-                .putBoolean(GpsHelper.IS_LIMIT_AD_TRACKING_ENABLED_KEY, adInfo.LIMIT_AD_TRACKING_ENABLED)
-                .commit();
-        verifySharedPreferences(context, adInfo);
+    static public void populateAndVerifyClientMetadata(Context context, TestAdInfo adInfo) {
+        ClientMetadata clientMetadata = ClientMetadata.getInstance(context);
+        clientMetadata.setAdvertisingInfo(adInfo.getId(), adInfo.isLimitAdTrackingEnabled());
+        verifyClientMetadata(context, adInfo);
     }
 
     private void safeAcquireSemaphore() throws Exception {
@@ -368,18 +298,15 @@ public class GpsHelperTest {
         semaphore.acquire();
     }
 
-    static public void verifySharedPreferences(Context context, TestAdInfo adInfo) {
-        SharedPreferences sharedPreferences = SharedPreferencesHelper.getSharedPreferences(context);
-        assertThat(sharedPreferences.contains(GpsHelper.ADVERTISING_ID_KEY)).isTrue();
-        assertThat(sharedPreferences.getString(GpsHelper.ADVERTISING_ID_KEY, null)).isEqualTo(adInfo.ADVERTISING_ID);
-        assertThat(sharedPreferences.contains(GpsHelper.IS_LIMIT_AD_TRACKING_ENABLED_KEY)).isTrue();
-        assertThat(sharedPreferences.getBoolean(GpsHelper.IS_LIMIT_AD_TRACKING_ENABLED_KEY, false)).isEqualTo(adInfo.LIMIT_AD_TRACKING_ENABLED);
+    static public void verifyClientMetadata(Context context, TestAdInfo adInfo) {
+        ClientMetadata clientMetadata = ClientMetadata.getInstance(context);
+        assertThat(clientMetadata.getAdvertisingId()).isEqualTo("ifa:" + adInfo.getId());
+        assertThat(clientMetadata.isDoNotTrackSet()).isEqualTo(adInfo.isLimitAdTrackingEnabled());
     }
 
-    static public void verifyCleanSharedPreferences(Context context) {
-        SharedPreferences sharedPreferences = SharedPreferencesHelper.getSharedPreferences(context);
-        assertThat(sharedPreferences.contains(GpsHelper.ADVERTISING_ID_KEY)).isFalse();
-        assertThat(sharedPreferences.contains(GpsHelper.IS_LIMIT_AD_TRACKING_ENABLED_KEY)).isFalse();
+    static public void verifyCleanClientMetadata(Context context) {
+        ClientMetadata clientMetadata = ClientMetadata.getInstance(context);
+        assertThat(clientMetadata.isAdvertisingInfoSet()).isFalse();
     }
 }
 

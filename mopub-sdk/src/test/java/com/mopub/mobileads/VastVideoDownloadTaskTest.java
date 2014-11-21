@@ -4,7 +4,7 @@ import android.app.Activity;
 
 import com.mopub.common.CacheService;
 import com.mopub.common.CacheServiceTest;
-import com.mopub.mobileads.test.support.SdkTestRunner;
+import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 
 import org.junit.After;

@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.mopub.mobileads.resource.TextDrawable;
-import com.mopub.mobileads.test.support.SdkTestRunner;
+import com.mopub.common.test.support.SdkTestRunner;
 
 import org.junit.Before;
 import org.junit.Test;

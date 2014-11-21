@@ -1,35 +1,3 @@
-/*
- * Copyright (c) 2010-2013, MoPub Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *  Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- *
- *  Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the distribution.
- *
- *  Neither the name of 'MoPub Inc.' nor the names of its contributors
- *   may be used to endorse or promote products derived from this software
- *   without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -41,18 +9,16 @@ import android.view.Gravity;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
-
 import com.mopub.common.GpsHelper;
 import com.mopub.common.GpsHelperTest;
 import com.mopub.common.MoPub;
 import com.mopub.common.SharedPreferencesHelper;
+import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
 import com.mopub.mobileads.factories.HttpClientFactory;
-import com.mopub.mobileads.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestAdFetcherFactory;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 import com.mopub.mobileads.test.support.ThreadUtils;
-
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -276,6 +242,7 @@ public class AdViewControllerTest {
         }
     }
 
+    // this test for impressionUrl is unnecessary (since we're catching the NullPointerException)
     @Test
     public void trackImpression_shouldDoNothingIfImpressionUrlNotSpecified() throws Exception {
         subject.configureUsingHttpResponse(response);
@@ -314,6 +281,7 @@ public class AdViewControllerTest {
         }
     }
 
+    // this test for clickthroughUrl is unnecessary (since we're catching the NullPointerException)
     @Test
     public void trackImpression_shouldDoNothingIfClickthroughUrlNotSpecified() throws Exception {
         subject.configureUsingHttpResponse(response);
@@ -378,7 +346,7 @@ public class AdViewControllerTest {
     @Test
     public void loadAd_whenGooglePlayServicesIsLinkedAndAdInfoIsNotCached_shouldCacheAdInfoBeforeFetchingAd() throws Exception {
         SharedPreferencesHelper.getSharedPreferences(context).edit().clear().commit();
-        GpsHelperTest.verifyCleanSharedPreferences(context);
+        GpsHelperTest.verifyCleanClientMetadata(context);
 
         GpsHelper.setClassNamesForTesting();
         GpsHelperTest.TestAdInfo adInfo = new GpsHelperTest.TestAdInfo();
@@ -401,13 +369,12 @@ public class AdViewControllerTest {
         Thread.sleep(500);
 
         verify(mockAdViewControllerGpsHelperListener).onFetchAdInfoCompleted();
-        GpsHelperTest.verifySharedPreferences(context, adInfo);
+        GpsHelperTest.verifyClientMetadata(context, adInfo);
     }
 
     @Test
     public void loadAd_whenGooglePlayServicesIsNotLinked_shouldFetchAdFast() throws Exception {
-        SharedPreferencesHelper.getSharedPreferences(context).edit().clear().commit();
-        GpsHelperTest.verifyCleanSharedPreferences(context);
+        GpsHelperTest.verifyCleanClientMetadata(context);
 
         GpsHelper.setClassNamesForTesting();
         when(methodBuilder.setStatic(any(Class.class))).thenReturn(methodBuilder);
@@ -424,19 +391,22 @@ public class AdViewControllerTest {
         // no need to sleep since it run the callback without an async task
 
         verify(mockAdViewControllerGpsHelperListener).onFetchAdInfoCompleted();
-        GpsHelperTest.verifyCleanSharedPreferences(context);
+        GpsHelperTest.verifyCleanClientMetadata(context);
     }
 
     @Test
     public void loadAd_whenGooglePlayServicesIsLinkedAndAdInfoIsCached_shouldFetchAdFast() throws Exception {
         GpsHelperTest.TestAdInfo adInfo = new GpsHelperTest.TestAdInfo();
-        GpsHelperTest.populateAndVerifySharedPreferences(context, adInfo);
+        GpsHelperTest.populateAndVerifyClientMetadata(context, adInfo);
         GpsHelper.setClassNamesForTesting();
 
         when(methodBuilder.setStatic(any(Class.class))).thenReturn(methodBuilder);
         when(methodBuilder.addParam(any(Class.class), any())).thenReturn(methodBuilder);
         when(methodBuilder.execute()).thenReturn(
-                GpsHelper.GOOGLE_PLAY_SUCCESS_CODE
+                GpsHelper.GOOGLE_PLAY_SUCCESS_CODE,
+                adInfo,
+                adInfo.mAdId,
+                adInfo.mLimitAdTrackingEnabled
         );
 
         final AdViewController.AdViewControllerGpsHelperListener mockAdViewControllerGpsHelperListener
@@ -448,7 +418,7 @@ public class AdViewControllerTest {
         // no need to sleep since it run the callback without an async task
 
         verify(mockAdViewControllerGpsHelperListener).onFetchAdInfoCompleted();
-        GpsHelperTest.verifySharedPreferences(context, adInfo);
+        GpsHelperTest.verifyClientMetadata(context, adInfo);
     }
 
     @Test
@@ -536,7 +506,7 @@ public class AdViewControllerTest {
                 subject.setAdContentView(view);
             }
         }).start();
-        ThreadUtils.pause(10);
+        ThreadUtils.pause(100);
         Robolectric.runUiThreadTasks();
 
         verify(moPubView).removeAllViews();

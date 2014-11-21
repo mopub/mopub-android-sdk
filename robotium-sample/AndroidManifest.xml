@@ -3,7 +3,9 @@
       package="com.mopub.mobileads.robotium"
       android:versionCode="1"
       android:versionName="1.0">
-    <uses-sdk android:minSdkVersion="8" />
+    <uses-sdk
+        android:minSdkVersion="9"
+        android:targetSdkVersion="19"/>
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -18,9 +20,14 @@
 	        </intent-filter>
 	    </activity>
 
-        <activity android:name="com.mopub.mobileads.MoPubActivity" android:configChanges="keyboardHidden|orientation"/>
-        <activity android:name="com.mopub.mobileads.MraidActivity" android:configChanges="keyboardHidden|orientation"/>
-        <activity android:name="com.mopub.common.MoPubBrowser" android:configChanges="keyboardHidden|orientation"/>
+        <activity android:name="com.mopub.mobileads.MoPubActivity"
+                android:configChanges="keyboardHidden|orientation"/>
+        <activity android:name="com.mopub.mobileads.MraidActivity"
+                android:configChanges="keyboardHidden|orientation"/>
+        <activity android:name="com.mopub.common.MoPubBrowser"
+                android:configChanges="keyboardHidden|orientation"/>
+        <activity android:name="com.mopub.mobileads.MraidVideoPlayerActivity"
+                android:configChanges="keyboardHidden|orientation"/>
     </application>
 
 </manifest>

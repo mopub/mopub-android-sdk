@@ -1,39 +1,7 @@
-/*
- * Copyright (c) 2010-2013, MoPub Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *  Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- *
- *  Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the distribution.
- *
- *  Neither the name of 'MoPub Inc.' nor the names of its contributors
- *   may be used to endorse or promote products derived from this software
- *   without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package com.mopub.mobileads;
 
 import android.os.AsyncTask;
-import android.util.Log;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.mobileads.factories.HttpClientFactory;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -41,10 +9,10 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ClientConnectionManager;
 
-import static com.mopub.mobileads.util.HttpResponses.extractHeader;
 import static com.mopub.common.util.ResponseHeader.AD_TYPE;
 import static com.mopub.common.util.ResponseHeader.USER_AGENT;
 import static com.mopub.common.util.ResponseHeader.WARMUP;
+import static com.mopub.mobileads.util.HttpResponses.extractHeader;
 
 public class AdFetchTask extends AsyncTask<String, Void, AdLoadTask> {
     private TaskTracker mTaskTracker;
@@ -100,7 +68,7 @@ public class AdFetchTask extends AsyncTask<String, Void, AdLoadTask> {
     private boolean responseContainsContent(HttpResponse response) {
         // Ensure that the ad is not warming up.
         if ("1".equals(extractHeader(response, WARMUP))) {
-            Log.d("MoPub", "Ad Unit (" + mAdViewController.getAdUnitId() + ") is still warming up. " +
+            MoPubLog.d("Ad Unit (" + mAdViewController.getAdUnitId() + ") is still warming up. " +
                     "Please try again in a few minutes.");
             mFetchStatus = AdFetcher.FetchStatus.AD_WARMING_UP;
             return false;
@@ -109,7 +77,7 @@ public class AdFetchTask extends AsyncTask<String, Void, AdLoadTask> {
         // Ensure that the ad type header is valid and not "clear".
         String adType = extractHeader(response, AD_TYPE);
         if ("clear".equals(adType)) {
-            Log.d("MoPub", "No inventory found for adunit (" + mAdViewController.getAdUnitId() + ").");
+            MoPubLog.d("No ads found for adunit (" + mAdViewController.getAdUnitId() + ").");
             mFetchStatus = AdFetcher.FetchStatus.CLEAR_AD_TYPE;
             return false;
         }
@@ -119,7 +87,7 @@ public class AdFetchTask extends AsyncTask<String, Void, AdLoadTask> {
 
     private boolean isResponseValid(HttpResponse response) {
         if (response == null || response.getEntity() == null) {
-            Log.d("MoPub", "MoPub server returned null response.");
+            MoPubLog.d("MoPub server returned null response.");
             mFetchStatus = AdFetcher.FetchStatus.INVALID_SERVER_RESPONSE_NOBACKOFF;
             return false;
         }
@@ -128,14 +96,14 @@ public class AdFetchTask extends AsyncTask<String, Void, AdLoadTask> {
 
         // Client and Server HTTP errors should result in an exponential backoff
         if (statusCode >= 400) {
-            Log.d("MoPub", "Server error: returned HTTP status code " + Integer.toString(statusCode) +
+            MoPubLog.d("Server error: returned HTTP status code " + Integer.toString(statusCode) +
                     ". Please try again.");
             mFetchStatus = AdFetcher.FetchStatus.INVALID_SERVER_RESPONSE_BACKOFF;
             return false;
         }
         // Other non-200 HTTP status codes should still fail
         else if (statusCode != HttpStatus.SC_OK) {
-            Log.d("MoPub", "MoPub server returned invalid response: HTTP status code " +
+            MoPubLog.d("MoPub server returned invalid response: HTTP status code " +
                     Integer.toString(statusCode) + ".");
             mFetchStatus = AdFetcher.FetchStatus.INVALID_SERVER_RESPONSE_NOBACKOFF;
             return false;
@@ -152,7 +120,7 @@ public class AdFetchTask extends AsyncTask<String, Void, AdLoadTask> {
         }
 
         if (mAdViewController == null || mAdViewController.isDestroyed()) {
-            Log.d("MoPub", "Error loading ad: AdViewController has already been GCed or destroyed.");
+            MoPubLog.d("Error loading ad: AdViewController has already been GCed or destroyed.");
             return false;
         }
         return true;
@@ -161,7 +129,7 @@ public class AdFetchTask extends AsyncTask<String, Void, AdLoadTask> {
     @Override
     protected void onPostExecute(AdLoadTask adLoadTask) {
         if (!isMostCurrentTask()) {
-            Log.d("MoPub", "Ad response is stale.");
+            MoPubLog.d("Ad response is stale.");
             cleanup();
             return;
         }
@@ -178,7 +146,7 @@ public class AdFetchTask extends AsyncTask<String, Void, AdLoadTask> {
 
         if (adLoadTask == null) {
             if (mException != null) {
-                Log.d("MoPub", "Exception caught while loading ad: " + mException);
+                MoPubLog.d("Exception caught while loading ad: " + mException);
             }
 
             MoPubErrorCode errorCode;
@@ -228,14 +196,14 @@ public class AdFetchTask extends AsyncTask<String, Void, AdLoadTask> {
     @Override
     protected void onCancelled() {
         if (!isMostCurrentTask()) {
-            Log.d("MoPub", "Ad response is stale.");
+            MoPubLog.d("Ad response is stale.");
             cleanup();
             return;
         }
 
-        Log.d("MoPub", "Ad loading was cancelled.");
+        MoPubLog.d("Ad loading was cancelled.");
         if (mException != null) {
-            Log.d("MoPub", "Exception caught while loading ad: " + mException);
+            MoPubLog.d("Exception caught while loading ad: " + mException);
         }
         mTaskTracker.markTaskCompleted(mTaskId);
         cleanup();

@@ -4,15 +4,14 @@ import android.content.Context;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.Toast;
 
-public class Utils {
-    public static final String LOGTAG = "MoPub Demo";
+class Utils {
+    static final String LOGTAG = "MoPub Sample App";
 
     private Utils() {}
 
-    public static void validateAdUnitId(String adUnitId) throws IllegalArgumentException {
+    static void validateAdUnitId(String adUnitId) throws IllegalArgumentException {
         if (adUnitId == null) {
             throw new IllegalArgumentException("Invalid Ad Unit ID: null ad unit.");
         } else if (adUnitId.length() == 0) {
@@ -24,17 +23,17 @@ public class Utils {
         }
     }
 
-    public static void hideSoftKeyboard(final EditText editText) {
-        InputMethodManager inputMethodManager =
-                (InputMethodManager) editText.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
+    static void hideSoftKeyboard(final View view) {
+        final InputMethodManager inputMethodManager =
+                (InputMethodManager) view.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
-    public static boolean isAlphaNumeric(String input) {
+    static boolean isAlphaNumeric(final String input) {
         return input.matches("^[a-zA-Z0-9-_]*$");
     }
 
-    public static void logToast(Context context, String message) {
+    static void logToast(Context context, String message) {
         Log.d(LOGTAG, message);
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }

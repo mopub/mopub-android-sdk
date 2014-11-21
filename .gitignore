@@ -1,21 +1,24 @@
+*.aar
+*.apk
+*.iml
+*.orig
+*.pyc
+*.swp
 .DS_Store
 .git.bak/
-.idea/workspace.xml
-.idea/uiDesigner.xml
+.gradle/
+.idea/
 ant_build/
 bin/
-gen/
-out/
-tmp/
+build/
 classes/
+gen-external-apklibs/
+gen/
 local.properties
+out/
+proguard_logs/
 target/
-*.orig
-*.iml
-**/*.iml
-mopub-sdk/mopub-sdk.iml
-mopub-sample/mopub-sample.iml
-robotium-sample/robotium-sample.iml
+tmp/
 
 #built application files
 *.apk

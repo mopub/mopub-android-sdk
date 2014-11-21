@@ -2,6 +2,7 @@ package com.mopub.nativeads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -9,7 +10,6 @@ import com.inmobi.commons.InMobi;
 import com.inmobi.monetization.IMErrorCode;
 import com.inmobi.monetization.IMNative;
 import com.inmobi.monetization.IMNativeListener;
-import com.mopub.common.util.MoPubLog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,11 +25,8 @@ import static com.mopub.common.util.Numbers.parseDouble;
 /*
  * Tested with InMobi SDK 4.4.1
  */
-class InMobiNative extends CustomEventNative implements IMNativeListener {
+class InMobiNative extends CustomEventNative {
     private static final String APP_ID_KEY = "app_id";
-
-    private Context mContext;
-    private CustomEventNativeListener mCustomEventNativeListener;
 
     // CustomEventNative implementation
     @Override
@@ -37,8 +34,6 @@ class InMobiNative extends CustomEventNative implements IMNativeListener {
             final CustomEventNativeListener customEventNativeListener,
             final Map<String, Object> localExtras,
             final Map<String, String> serverExtras) {
-
-        mContext = context;
 
         if (!(context instanceof Activity)) {
             customEventNativeListener.onNativeAdFailed(NativeErrorCode.NATIVE_ADAPTER_CONFIGURATION_ERROR);
@@ -54,66 +49,11 @@ class InMobiNative extends CustomEventNative implements IMNativeListener {
             return;
         }
 
-        mCustomEventNativeListener = customEventNativeListener;
-
         InMobi.initialize(activity, appId);
-        final IMNative imNative = new IMNative(this);
-        imNative.loadAd();
-    }
-
-    // IMNativeListener implementation
-    @Override
-    public void onNativeRequestSucceeded(final IMNative imNative) {
-        if (imNative == null) {
-            mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_INVALID_STATE);
-            return;
-        }
-
-        final InMobiForwardingNativeAd inMobiForwardingNativeAd;
-        try {
-            inMobiForwardingNativeAd = new InMobiForwardingNativeAd(imNative);
-        } catch (IllegalArgumentException e) {
-            mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
-            return;
-        } catch (JSONException e) {
-            mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.INVALID_JSON);
-            return;
-        }
-
-        final List<String> imageUrls = new ArrayList<String>();
-        final String mainImageUrl = inMobiForwardingNativeAd.getMainImageUrl();
-        if (mainImageUrl != null) {
-            imageUrls.add(mainImageUrl);
-        }
-        final String iconUrl = inMobiForwardingNativeAd.getIconImageUrl();
-        if (iconUrl != null) {
-            imageUrls.add(iconUrl);
-        }
-
-        preCacheImages(mContext, imageUrls, new ImageListener() {
-            @Override
-            public void onImagesCached() {
-                mCustomEventNativeListener.onNativeAdLoaded(inMobiForwardingNativeAd);
-            }
-
-            @Override
-            public void onImagesFailedToCache(NativeErrorCode errorCode) {
-                mCustomEventNativeListener.onNativeAdFailed(errorCode);
-            }
-        });
-    }
-
-    @Override
-    public void onNativeRequestFailed(final IMErrorCode errorCode) {
-        if (errorCode == IMErrorCode.INVALID_REQUEST) {
-            mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_INVALID_REQUEST);
-        } else if (errorCode == IMErrorCode.INTERNAL_ERROR || errorCode == IMErrorCode.NETWORK_ERROR) {
-            mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_INVALID_STATE);
-        } else if (errorCode == IMErrorCode.NO_FILL) {
-            mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_NO_FILL);
-        } else {
-            mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
-        }
+        final InMobiForwardingNativeAd inMobiForwardingNativeAd =
+                new InMobiForwardingNativeAd(context, customEventNativeListener);
+        inMobiForwardingNativeAd.setIMNative(new IMNative(inMobiForwardingNativeAd));
+        inMobiForwardingNativeAd.loadAd();
     }
 
     private boolean extrasAreValid(final Map<String, String> serverExtras) {
@@ -121,7 +61,7 @@ class InMobiNative extends CustomEventNative implements IMNativeListener {
         return (placementId != null && placementId.length() > 0);
     }
 
-    static class InMobiForwardingNativeAd extends BaseForwardingNativeAd {
+    static class InMobiForwardingNativeAd extends BaseForwardingNativeAd implements IMNativeListener {
         static final int IMPRESSION_MIN_TIME_VIEWED = 0;
 
         // Modifiable keys
@@ -136,16 +76,99 @@ class InMobiNative extends CustomEventNative implements IMNativeListener {
         // Constant keys
         static final String URL = "url";
 
-        private final IMNative mImNative;
+        private final Context mContext;
+        private final CustomEventNativeListener mCustomEventNativeListener;
+        private IMNative mImNative;
 
-        InMobiForwardingNativeAd(final IMNative imNative) throws IllegalArgumentException, JSONException {
+        InMobiForwardingNativeAd(final Context context,
+                final CustomEventNativeListener customEventNativeListener) {
+            mContext = context.getApplicationContext();
+            mCustomEventNativeListener = customEventNativeListener;
+        }
+
+        void setIMNative(final IMNative imNative) {
+            mImNative = imNative;
+        }
+
+        void loadAd() {
+            mImNative.loadAd();
+        }
+
+        // IMNativeListener implementation
+        @Override
+        public void onNativeRequestSucceeded(final IMNative imNative) {
             if (imNative == null) {
-                throw new IllegalArgumentException("InMobi Native Ad cannot be null");
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_INVALID_STATE);
+                return;
             }
 
-            mImNative = imNative;
+            try {
+                parseJson(imNative);
+            } catch (JSONException e) {
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.INVALID_JSON);
+                return;
+            }
 
-            final JSONTokener jsonTokener = new JSONTokener(mImNative.getContent());
+            final List<String> imageUrls = new ArrayList<String>();
+            final String mainImageUrl = getMainImageUrl();
+            if (mainImageUrl != null) {
+                imageUrls.add(mainImageUrl);
+            }
+
+            final String iconUrl = getIconImageUrl();
+            if (iconUrl != null) {
+                imageUrls.add(iconUrl);
+            }
+
+            preCacheImages(mContext, imageUrls, new ImageListener() {
+                @Override
+                public void onImagesCached() {
+                    mCustomEventNativeListener.onNativeAdLoaded(InMobiForwardingNativeAd.this);
+                }
+
+                @Override
+                public void onImagesFailedToCache(NativeErrorCode errorCode) {
+                    mCustomEventNativeListener.onNativeAdFailed(errorCode);
+                }
+            });
+        }
+
+        @Override
+        public void onNativeRequestFailed(final IMErrorCode errorCode) {
+            if (errorCode == IMErrorCode.INVALID_REQUEST) {
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_INVALID_REQUEST);
+            } else if (errorCode == IMErrorCode.INTERNAL_ERROR || errorCode == IMErrorCode.NETWORK_ERROR) {
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_INVALID_STATE);
+            } else if (errorCode == IMErrorCode.NO_FILL) {
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_NO_FILL);
+            } else {
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
+            }
+        }
+
+        @Override
+        public void prepare(final View view) {
+            if (view != null && view instanceof ViewGroup) {
+                mImNative.attachToView((ViewGroup) view);
+            } else if (view != null && view.getParent() instanceof ViewGroup) {
+                mImNative.attachToView((ViewGroup) view.getParent());
+            } else {
+                Log.e("MoPub", "InMobi did not receive ViewGroup to attachToView, unable to record impressions");
+            }
+        }
+
+        @Override
+        public void handleClick(final View view) {
+            mImNative.handleClick(null);
+        }
+
+        @Override
+        public void destroy() {
+            mImNative.detachFromView();
+        }
+
+        void parseJson(final IMNative imNative) throws JSONException  {
+            final JSONTokener jsonTokener = new JSONTokener(imNative.getContent());
             final JSONObject jsonObject = new JSONObject(jsonTokener);
 
             setTitle(getJsonValue(jsonObject, TITLE, String.class));
@@ -167,30 +190,10 @@ class InMobiNative extends CustomEventNative implements IMNativeListener {
             try {
                 setStarRating(parseDouble(jsonObject.opt(RATING)));
             } catch (ClassCastException e) {
-                MoPubLog.d("Unable to set invalid star rating for InMobi Native.");
+                Log.d("MoPub", "Unable to set invalid star rating for InMobi Native.");
             }
             setImpressionMinTimeViewed(IMPRESSION_MIN_TIME_VIEWED);
         }
 
-        @Override
-        public void prepareImpression(final View view) {
-            if (view != null && view instanceof ViewGroup) {
-                mImNative.attachToView((ViewGroup) view);
-            } else if (view != null && view.getParent() instanceof ViewGroup) {
-                mImNative.attachToView((ViewGroup) view.getParent());
-            } else {
-                MoPubLog.e("InMobi did not receive ViewGroup to attachToView, unable to record impressions");
-            }
-        }
-
-        @Override
-        public void handleClick(final View view) {
-            mImNative.handleClick(null);
-        }
-
-        @Override
-        public void destroy() {
-            mImNative.detachFromView();
-        }
     }
 }

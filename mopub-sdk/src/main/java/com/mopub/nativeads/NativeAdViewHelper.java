@@ -1,21 +1,36 @@
 package com.mopub.nativeads;
 
 import android.content.Context;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 
-import com.mopub.common.util.MoPubLog;
+import com.mopub.common.VisibleForTesting;
+import com.mopub.common.logging.MoPubLog;
+
+import java.util.WeakHashMap;
 
 import static android.view.View.GONE;
-import static android.view.View.OnClickListener;
-import static android.view.View.VISIBLE;
 import static com.mopub.nativeads.MoPubNative.MoPubNativeListener;
 
+/**
+ * @deprecated As of release 2.4, use {@link com.mopub.nativeads.MoPubNativeAdRenderer} instead
+ */
+@Deprecated
 class NativeAdViewHelper {
     private NativeAdViewHelper() {}
 
+    // Because the impression tracker requires tracking drawing views,
+    // each context requires a separate impression tracker. To avoid leaking, keep weak references.
+    @VisibleForTesting
+    static final WeakHashMap<Context, ImpressionTracker> sImpressionTrackerMap =
+            new WeakHashMap<Context, ImpressionTracker>();
+
+    // Used to keep track of the last NativeResponse a view was associated with in order to clean
+    // up its state before associating with a new NativeResponse
+    static private final WeakHashMap<View, NativeResponse> sNativeResponseMap =
+            new WeakHashMap<View, NativeResponse>();
+
+    @Deprecated
     static View getAdView(View convertView,
                           final ViewGroup parent,
                           final Context context,
@@ -28,15 +43,12 @@ class NativeAdViewHelper {
             return new View(context);
         }
 
+        final MoPubNativeAdRenderer moPubNativeAdRenderer = new MoPubNativeAdRenderer(viewBinder);
         if (convertView == null) {
-            convertView = createConvertView(context, parent, viewBinder);
+            convertView = moPubNativeAdRenderer.createAdView(context, parent);
         }
 
-        final NativeViewHolder nativeViewHolder = getOrCreateNativeViewHolder(convertView, viewBinder);
-
-        // Clean up previous state of view
-        removeClickListeners(convertView, nativeViewHolder);
-        ImpressionTrackingManager.removeView(convertView);
+        clearNativeResponse(context, convertView);
 
         if (nativeResponse == null) {
             // If we don't have content for the view, then hide the view for now
@@ -45,92 +57,38 @@ class NativeAdViewHelper {
         } else if (nativeResponse.isDestroyed()) {
             MoPubLog.d("NativeResponse is destroyed, returning hidden view.");
             convertView.setVisibility(GONE);
-        } else if (nativeViewHolder == null) {
-            MoPubLog.d("Could not create NativeViewHolder, returning hidden view.");
-            convertView.setVisibility(GONE);
         } else {
-            populateConvertViewSubViews(convertView, nativeViewHolder, nativeResponse, viewBinder);
-            attachClickListeners(convertView, nativeViewHolder, nativeResponse);
-            convertView.setVisibility(VISIBLE);
-            nativeResponse.prepareImpression(convertView);
+            prepareNativeResponse(context, convertView, nativeResponse);
+            moPubNativeAdRenderer.renderAdView(convertView, nativeResponse);
         }
 
         return convertView;
     }
 
-    private static View createConvertView(final Context context, final ViewGroup parent, final ViewBinder viewBinder) {
-        final View convertView = LayoutInflater
-                .from(context)
-                .inflate(viewBinder.layoutId, parent, false);
-        return convertView;
-    }
-
-    static NativeViewHolder getOrCreateNativeViewHolder(final View convertView, final ViewBinder viewBinder) {
-        // Create view holder and put it in the view tag
-        Object object = ImageViewService.getViewTag(convertView);
-        if (object == null || !(object instanceof NativeViewHolder)) {
-            final NativeViewHolder nativeViewHolder = NativeViewHolder.fromViewBinder(convertView, viewBinder);
-            ImageViewService.setViewTag(convertView, nativeViewHolder);
-            return nativeViewHolder;
-        } else {
-            return (NativeViewHolder) object;
+    private static void clearNativeResponse(final Context context, final View view) {
+        getImpressionTracker(context).removeView(view);
+        final NativeResponse nativeResponse = sNativeResponseMap.get(view);
+        if (nativeResponse != null) {
+            nativeResponse.clear(view);
         }
     }
 
-    private static void populateConvertViewSubViews(final View convertView,
-            final NativeViewHolder nativeViewHolder,
-            final NativeResponse nativeResponse,
-            final ViewBinder viewBinder) {
-        nativeViewHolder.update(nativeResponse);
-        nativeViewHolder.updateExtras(convertView, nativeResponse, viewBinder);
-    }
-
-    private static void removeClickListeners(final View view,
-                                             final NativeViewHolder nativeViewHolder) {
-        if (view == null) {
-            return;
-        }
-
-        view.setOnClickListener(null);
-        setCtaClickListener(nativeViewHolder, null);
-    }
-
-    private static void attachClickListeners(final View view,
-            final NativeViewHolder nativeViewHolder,
+    private static void prepareNativeResponse(final Context context,
+            final View view,
             final NativeResponse nativeResponse) {
-        if (view == null || nativeResponse == null) {
-            return;
+        sNativeResponseMap.put(view, nativeResponse);
+        if (!nativeResponse.isOverridingImpressionTracker()) {
+            getImpressionTracker(context).addView(view, nativeResponse);
         }
-
-        final NativeViewClickListener nativeViewClickListener
-                = new NativeViewClickListener(nativeResponse);
-        view.setOnClickListener(nativeViewClickListener);
-        setCtaClickListener(nativeViewHolder, nativeViewClickListener);
+        nativeResponse.prepare(view);
     }
 
-    private static void setCtaClickListener(final NativeViewHolder nativeViewHolder,
-            final NativeViewClickListener nativeViewClickListener) {
-        if (nativeViewHolder == null || nativeViewClickListener == null) {
-            return;
+    private static ImpressionTracker getImpressionTracker(final Context context) {
+        ImpressionTracker impressionTracker = sImpressionTrackerMap.get(context);
+        if (impressionTracker == null) {
+            impressionTracker = new ImpressionTracker(context);
+            sImpressionTrackerMap.put(context, impressionTracker);
         }
-
-        // CTA widget could be a button and buttons don't inherit click listeners from parents
-        // So we have to set it manually here if so
-        if (nativeViewHolder.callToActionView != null && nativeViewHolder.callToActionView instanceof Button) {
-            nativeViewHolder.callToActionView.setOnClickListener(nativeViewClickListener);
-        }
-    }
-
-    static class NativeViewClickListener implements OnClickListener {
-        private final NativeResponse mNativeResponse;
-
-        NativeViewClickListener(final NativeResponse nativeResponse) {
-            mNativeResponse = nativeResponse;
-        }
-
-        @Override
-        public void onClick(View view) {
-            mNativeResponse.handleClick(view);
-        }
+        return impressionTracker;
     }
 }

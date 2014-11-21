@@ -4,7 +4,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.mopub.common.util.MoPubLog;
+import com.mopub.common.logging.MoPubLog;
 
 class NativeViewHolder {
     TextView titleView;
@@ -17,7 +17,7 @@ class NativeViewHolder {
     private NativeViewHolder() {}
 
     static NativeViewHolder fromViewBinder(final View view, final ViewBinder viewBinder) {
-        NativeViewHolder nativeViewHolder = new NativeViewHolder();
+        final NativeViewHolder nativeViewHolder = new NativeViewHolder();
 
         try {
             nativeViewHolder.titleView = (TextView) view.findViewById(viewBinder.titleId);

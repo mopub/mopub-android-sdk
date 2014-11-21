@@ -1,9 +1,7 @@
 package com.mopub.nativeads;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,27 +31,6 @@ public abstract class CustomEventNative {
             final CustomEventNativeListener customEventNativeListener,
             final Map<String, Object> localExtras,
             final Map<String, String> serverExtras);
-
-    /**
-     * Pre caches the given set of image urls. We recommend using this method to warm the image
-     * cache before calling {@link CustomEventNativeListener#onNativeAdLoaded}. Doing so will
-     * force images to cache before displaying the ad.
-     */
-    final void preCacheImages(final Context context,
-            final List<String> imageUrls,
-            final ImageListener imageListener) {
-        ImageService.get(context, imageUrls, new ImageService.ImageServiceListener() {
-            @Override
-            public void onSuccess(final Map<String, Bitmap> bitmaps) {
-                imageListener.onImagesCached();
-            }
-
-            @Override
-            public void onFail() {
-                imageListener.onImagesFailedToCache(NativeErrorCode.IMAGE_DOWNLOAD_FAILURE);
-            }
-        });
-    }
 
     public interface ImageListener {
         /**

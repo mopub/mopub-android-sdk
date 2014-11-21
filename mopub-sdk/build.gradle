@@ -1,25 +1,57 @@
-apply plugin: 'android-library'
+// This buildscript will assemble the MoPub SDK into an AAR.
+
+repositories {
+    mavenCentral()
+}
+
+apply plugin: 'com.android.library'
+
+group = 'com.mopub'
+
+description = '''MoPub SDK'''
 
 android {
     compileSdkVersion 19
-    buildToolsVersion "19.1.0"
+    buildToolsVersion '19.1.0'
 
     defaultConfig {
-        applicationId "com.mopub.mobileads"
-        minSdkVersion 11
+        versionCode 1
+        versionName "3.2.2"
+        minSdkVersion 9
         targetSdkVersion 19
+        consumerProguardFiles 'proguard.txt'
     }
 
-    dependencies {
-        compile 'com.android.support:support-v4:20.0.+'
-        compile 'com.google.android.gms:play-services:5.0.89'
-        compile files('libs/MMSDK-5.3.0.jar')
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src/main/java']
+            resources.srcDirs = ['src/main/java']
+            aidl.srcDirs = ['src/main']
+            renderscript.srcDirs = ['src/main']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+        }
     }
 
     buildTypes {
         release {
             runProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard.txt')
         }
     }
+
+    // Note: You will also need a local.properties file to set the location of the SDK in the same 
+    // way that the existing SDK requires, using the sdk.dir property.
+    // Alternatively, you can set an environment variable called ANDROID_HOME. There is no 
+    // difference between the two methods, you can use the one you prefer.
 }
+
+dependencies {
+    compile 'com.android.support:support-v4:19.1.+'
+}
+
+// Don't run the Robolectric Unit Tests. They don't build properly in Gradle or Android Studio in this version.
+check.dependsOn.remove("test")
+check.dependsOn.remove("testDebug")
+

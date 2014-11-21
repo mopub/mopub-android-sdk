@@ -1,57 +1,30 @@
-/*
- * Copyright (c) 2010-2013, MoPub Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *  Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- *
- *  Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the distribution.
- *
- *  Neither the name of 'MoPub Inc.' nor the names of its contributors
- *   may be used to endorse or promote products derived from this software
- *   without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package com.mopub.mobileads;
 
 import android.os.Build;
+import android.os.Build.VERSION_CODES;
+
+import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.factories.AdFetchTaskFactory;
-import com.mopub.mobileads.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestAdFetchTaskFactory;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
+
 import org.apache.http.HttpResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Executor;
 
 import static com.mopub.common.util.ResponseHeader.AD_TYPE;
 import static com.mopub.common.util.ResponseHeader.CUSTOM_EVENT_DATA;
 import static com.mopub.common.util.ResponseHeader.CUSTOM_EVENT_NAME;
 import static com.mopub.common.util.ResponseHeader.FULL_AD_TYPE;
 import static com.mopub.common.util.ResponseHeader.NATIVE_PARAMS;
-import static com.mopub.common.util.VersionCode.HONEYCOMB_MR2;
+import static com.mopub.common.util.VersionCode.GINGERBREAD;
 import static com.mopub.common.util.VersionCode.ICE_CREAM_SANDWICH;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -127,21 +100,21 @@ public class AdFetcherTest {
         verify(moPubInterstitialView).loadCustomEvent(eq(paramsMap));
     }
 
+    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
-    public void fetchAdForUrl_whenApiLevelIsAtLeastICS_shouldExecuteUsingAnExecutor() throws Exception {
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", ICE_CREAM_SANDWICH.getApiLevel());
+    public void fetchAdForUrl_atLeastIcs_shouldExecuteUsingAnExecutor() throws Exception {
         AdFetchTaskFactory.setInstance(new TestAdFetchTaskFactory());
         AdFetchTask adFetchTask = TestAdFetchTaskFactory.getSingletonMock();
 
         subject.fetchAdForUrl("some url");
 
-        verify(adFetchTask).executeOnExecutor(eq(AdFetchTask.THREAD_POOL_EXECUTOR), eq("some url"));
+        verify(adFetchTask).executeOnExecutor(any(Executor.class), eq("some url"));
         verify(adFetchTask, never()).execute(anyString());
     }
 
+    @Config(reportSdk = VERSION_CODES.GINGERBREAD_MR1)
     @Test
-    public void fetchAdForUrl_whenApiLevelIsBelowICS_shouldExecuteWithoutAnExecutor() throws Exception {
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", HONEYCOMB_MR2.getApiLevel());
+    public void fetchAdForUrl_beforeHoneycomb_shouldExecuteWithoutAnExecutor() throws Exception {
         AdFetchTaskFactory.setInstance(new TestAdFetchTaskFactory());
         AdFetchTask adFetchTask = TestAdFetchTaskFactory.getSingletonMock();
 

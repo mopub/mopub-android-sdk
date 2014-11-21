@@ -5,7 +5,7 @@ import android.content.Context;
 import android.os.Build;
 
 import com.mopub.common.MoPub;
-import com.mopub.mobileads.test.support.SdkTestRunner;
+import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.TestDateAndTime;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 import org.junit.Before;

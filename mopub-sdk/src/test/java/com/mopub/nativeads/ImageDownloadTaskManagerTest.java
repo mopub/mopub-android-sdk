@@ -1,8 +1,7 @@
 package com.mopub.nativeads;
 
-import android.graphics.Bitmap;
-
-import com.mopub.nativeads.test.support.SdkTestRunner;
+import com.mopub.common.DownloadResponse;
+import com.mopub.common.test.support.SdkTestRunner;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -11,6 +10,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
+import static com.mopub.nativeads.TaskManager.TaskManagerListener;
 import static junit.framework.Assert.fail;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyMap;
@@ -31,15 +32,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
 public class ImageDownloadTaskManagerTest {
 
     private ImageDownloadTaskManager subject;
-    private ImageDownloadTaskManager.ImageTaskManagerListener mMockImageTaskManagerListener;
+    @Mock private TaskManagerListener<DownloadResponse> mMockImageTaskManagerListener;
     private Semaphore semaphore;
-    private Map<String, Bitmap> networkImages;
+    private Map<String, DownloadResponse> networkImages;
+    private int testMaxWidth;
     private FakeHttpLayer fakeHttpLayer;
     private String url1;
     private String url2;
@@ -47,12 +48,11 @@ public class ImageDownloadTaskManagerTest {
     @Before
     public void setUp() throws Exception {
         semaphore = new Semaphore(0);
-        mMockImageTaskManagerListener = mock(ImageDownloadTaskManager.ImageTaskManagerListener.class);
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Object[] args = invocationOnMock.getArguments();
-                Map<String, Bitmap> map = (Map)args[0];
+                Map<String, DownloadResponse> map = (Map)args[0];
                 ImageDownloadTaskManagerTest.this.networkImages = map;
                 semaphore.release();
                 return null;
@@ -65,6 +65,7 @@ public class ImageDownloadTaskManagerTest {
                 return null;
             }
         }).when(mMockImageTaskManagerListener).onFail();
+        testMaxWidth = 30;
 
         fakeHttpLayer = Robolectric.getFakeHttpLayer();
         url1 = "http://www.mopub.com/";
@@ -75,7 +76,8 @@ public class ImageDownloadTaskManagerTest {
     public void constructor_withValidUrlListAndListener_shouldReturnNewImageDownloadTaskManager() throws Exception {
         subject = new ImageDownloadTaskManager(
                 Arrays.asList(url1, url2),
-                mMockImageTaskManagerListener
+                mMockImageTaskManagerListener,
+                testMaxWidth
         );
     }
 
@@ -83,7 +85,8 @@ public class ImageDownloadTaskManagerTest {
     public void constructor_withEmptyUrlListAndListener_shouldReturnNewImageDownloadTaskManager() throws Exception {
         subject = new ImageDownloadTaskManager(
                 new ArrayList<String>(),
-                mMockImageTaskManagerListener
+                mMockImageTaskManagerListener,
+                testMaxWidth
         );
     }
 
@@ -92,7 +95,8 @@ public class ImageDownloadTaskManagerTest {
         try {
             subject = new ImageDownloadTaskManager(
                     Arrays.asList("BAD URL", url2),
-                    mMockImageTaskManagerListener
+                    mMockImageTaskManagerListener,
+                    testMaxWidth
             );
             fail("ImageDownloadTaskManager didn't throw an illegal argument exception");
         } catch (IllegalArgumentException e) {
@@ -102,7 +106,8 @@ public class ImageDownloadTaskManagerTest {
         try {
             subject = new ImageDownloadTaskManager(
                     Arrays.asList(url1, null),
-                    mMockImageTaskManagerListener
+                    mMockImageTaskManagerListener,
+                    testMaxWidth
             );
             fail("ImageDownloadTaskManager didn't throw an illegal argument exception");
         } catch (IllegalArgumentException e) {
@@ -115,7 +120,8 @@ public class ImageDownloadTaskManagerTest {
         try {
             subject = new ImageDownloadTaskManager(
                     null,
-                    mMockImageTaskManagerListener
+                    mMockImageTaskManagerListener,
+                    testMaxWidth
             );
             fail("ImageDownloadTaskManager didn't throw an illegal argument exception");
         } catch (IllegalArgumentException e) {
@@ -125,7 +131,8 @@ public class ImageDownloadTaskManagerTest {
         try {
             subject = new ImageDownloadTaskManager(
                     Arrays.asList(url1, url2),
-                    null
+                    null,
+                    testMaxWidth
             );
             fail("ImageDownloadTaskManager didn't throw an illegal argument exception");
         } catch (IllegalArgumentException e) {
@@ -134,34 +141,26 @@ public class ImageDownloadTaskManagerTest {
     }
 
     @Test
-    public void execute_withValidUrlListAndListenerAndHttpResponses_shouldReturnMapOfUrlToBitmap() throws Exception {
+    public void execute_withValidUrlListAndListenerAndHttpResponses_shouldReturnMapOfUrlToDownloadResponse() throws Exception {
         subject = new ImageDownloadTaskManager(
                 Arrays.asList(url1, url2),
-                mMockImageTaskManagerListener
+                mMockImageTaskManagerListener,
+                testMaxWidth
         );
 
         String imageData1 = "image_data_1";
-        Robolectric.addHttpResponseRule(
-                url1,
-                new TestHttpResponse(200, imageData1)
-        );
-
         String imageData2 = "image_data_2";
-        Robolectric.addHttpResponseRule(
-                url2,
-                new TestHttpResponse(200, imageData2)
-        );
+        fakeHttpLayer.addPendingHttpResponse(200, imageData1);
+        fakeHttpLayer.addPendingHttpResponse(200, imageData2);
 
         subject.execute();
         semaphore.acquire();
 
         assertThat(networkImages.keySet()).containsOnly(url1, url2);
 
-        Bitmap bitmap1 = networkImages.get(url1);
-        assertThat(shadowOf(bitmap1).getCreatedFromBytes()).isEqualTo(imageData1.getBytes());
-
-        Bitmap bitmap2 = networkImages.get(url2);
-        assertThat(shadowOf(bitmap2).getCreatedFromBytes()).isEqualTo(imageData2.getBytes());
+        // These statements will fail if the objects are not of the correct type.
+        DownloadResponse bitmap1 = networkImages.get(url1);
+        DownloadResponse bitmap2 = networkImages.get(url2);
 
         verify(mMockImageTaskManagerListener).onSuccess(anyMap());
         verify(mMockImageTaskManagerListener, never()).onFail();
@@ -171,7 +170,8 @@ public class ImageDownloadTaskManagerTest {
     public void execute_withEmptyUrlList_shouldReturnEmptyMap() throws Exception {
         subject = new ImageDownloadTaskManager(
                 new ArrayList<String>(),
-                mMockImageTaskManagerListener
+                mMockImageTaskManagerListener,
+                testMaxWidth
         );
 
         subject.execute();
@@ -186,7 +186,8 @@ public class ImageDownloadTaskManagerTest {
     public void execute_withSingleNon200Response_shouldFailAllTasks() throws Exception {
         subject = new ImageDownloadTaskManager(
                 Arrays.asList(url1, url1, url1, url1, url1),
-                mMockImageTaskManagerListener
+                mMockImageTaskManagerListener,
+                testMaxWidth
         );
 
         fakeHttpLayer.addPendingHttpResponse(200, "");
@@ -206,7 +207,8 @@ public class ImageDownloadTaskManagerTest {
     public void execute_withMultipleNon200Response_shouldFailAllTasks() throws Exception {
         subject = new ImageDownloadTaskManager(
                 Arrays.asList(url1, url1, url1, url1, url1),
-                mMockImageTaskManagerListener
+                mMockImageTaskManagerListener,
+                testMaxWidth
         );
 
         fakeHttpLayer.addPendingHttpResponse(599, "");
@@ -227,7 +229,8 @@ public class ImageDownloadTaskManagerTest {
     public void execute_withSingleInvalidHttpResponse_shouldFailAllTasks() throws Exception {
         subject = new ImageDownloadTaskManager(
                 Arrays.asList(url1, url1, url1, url1, url1),
-                mMockImageTaskManagerListener
+                mMockImageTaskManagerListener,
+                testMaxWidth
         );
 
         fakeHttpLayer.addPendingHttpResponse(200, "");

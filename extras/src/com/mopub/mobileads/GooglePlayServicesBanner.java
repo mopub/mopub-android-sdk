@@ -19,7 +19,7 @@ import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_NO_FILL;
 
 /*
- * Compatible with version 5.0.77 of the Google Play Services SDK.
+ * Compatible with version 5.0.89 of the Google Play Services SDK.
  */
 
 // Note: AdMob ads will now use this class as Google has deprecated the AdMob SDK.
@@ -43,7 +43,6 @@ class GooglePlayServicesBanner extends CustomEventBanner {
             final Map<String, Object> localExtras,
             final Map<String, String> serverExtras) {
         mBannerListener = customEventBannerListener;
-
         final String adUnitId;
         final int adWidth;
         final int adHeight;
@@ -71,7 +70,12 @@ class GooglePlayServicesBanner extends CustomEventBanner {
 
         final AdRequest adRequest = new AdRequest.Builder().build();
 
-        mGoogleAdView.loadAd(adRequest);
+        try {
+            mGoogleAdView.loadAd(adRequest);
+        } catch (NoClassDefFoundError e) {
+            // This can be thrown by Play Services on Honeycomb.
+            mBannerListener.onBannerFailed(NETWORK_NO_FILL);
+        }
     }
 
     @Override

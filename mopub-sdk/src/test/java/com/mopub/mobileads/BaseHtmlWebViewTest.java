@@ -1,47 +1,19 @@
-/*
- * Copyright (c) 2010-2013, MoPub Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *
- *  Redistributions of source code must retain the above copyright
- *   notice, this list of conditions and the following disclaimer.
- *
- *  Redistributions in binary form must reproduce the above copyright
- *   notice, this list of conditions and the following disclaimer in the
- *   documentation and/or other materials provided with the distribution.
- *
- *  Neither the name of 'MoPub Inc.' nor the names of its contributors
- *   may be used to endorse or promote products derived from this software
- *   without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.os.Build;
+import android.os.Build.VERSION_CODES;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import com.mopub.mobileads.test.support.SdkTestRunner;
+
+import com.mopub.common.test.support.SdkTestRunner;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowWebView;
 
 import static android.webkit.WebSettings.PluginState;
@@ -70,14 +42,39 @@ public class BaseHtmlWebViewTest {
         touchUp = createMotionEvent(MotionEvent.ACTION_UP);
     }
 
+    @Config(reportSdk = VERSION_CODES.JELLY_BEAN_MR2)
     @Test
-    public void shouldEnablePluginsBasedOnApiLevel() throws Exception {
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", ICE_CREAM_SANDWICH.getApiLevel());
+    public void pluginState_atLeastJellybeanMr2_shouldDefaultToOff_shouldNeverBeEnabled()  {
+        subject = new BaseHtmlWebView(new Activity(), adConfiguration);
+        assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.OFF);
+
+        subject.enablePlugins(true);
+        assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.OFF);
+    }
+
+    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Test
+    public void pluginState_atLeastIcsButBelowJellybeanMr2_shouldDefaultToOn_shouldAllowToggling() {
         subject = new BaseHtmlWebView(new Activity(), adConfiguration);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.ON);
 
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", HONEYCOMB_MR2.getApiLevel());
+        subject.enablePlugins(false);
+        assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.OFF);
+
+        subject.enablePlugins(true);
+        assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.ON);
+    }
+
+    @Config(reportSdk = VERSION_CODES.GINGERBREAD_MR1)
+    @Test
+    public void pluginState_beforeIcs_shouldDefaultToOff_shouldAllowToggling() {
         subject = new BaseHtmlWebView(new Activity(), adConfiguration);
+        assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.OFF);
+
+        subject.enablePlugins(true);
+        assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.ON);
+
+        subject.enablePlugins(false);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.OFF);
     }
 

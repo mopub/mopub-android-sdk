@@ -6,23 +6,19 @@ import android.view.View;
 import com.facebook.ads.Ad;
 import com.facebook.ads.AdError;
 import com.facebook.ads.AdListener;
+import com.facebook.ads.ImpressionListener;
 import com.facebook.ads.NativeAd;
 import com.facebook.ads.NativeAd.Rating;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /*
- * Tested with Facebook SDK 3.14.1
+ * Tested with Facebook SDK 3.18.1
  */
-public class FacebookNative extends CustomEventNative implements AdListener {
+public class FacebookNative extends CustomEventNative {
     private static final String PLACEMENT_ID_KEY = "placement_id";
-
-    private Context mContext;
-    private NativeAd mNativeAd;
-    private CustomEventNativeListener mCustomEventNativeListener;
 
     // CustomEventNative implementation
     @Override
@@ -30,8 +26,6 @@ public class FacebookNative extends CustomEventNative implements AdListener {
             final CustomEventNativeListener customEventNativeListener,
             final Map<String, Object> localExtras,
             final Map<String, String> serverExtras) {
-
-        mContext = context.getApplicationContext();
 
         final String placementId;
         if (extrasAreValid(serverExtras)) {
@@ -41,63 +35,10 @@ public class FacebookNative extends CustomEventNative implements AdListener {
             return;
         }
 
-        mCustomEventNativeListener = customEventNativeListener;
-
-        mNativeAd = new NativeAd(context, placementId);
-        mNativeAd.setAdListener(this);
-        mNativeAd.loadAd();
-    }
-
-    // AdListener implementation
-    @Override
-    public void onAdLoaded(final Ad ad) {
-        // This identity check is from Facebook's Native API sample code:
-        // https://developers.facebook.com/docs/audience-network/android/native-api
-        if (!mNativeAd.equals(ad) || !mNativeAd.isAdLoaded()) {
-            mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_INVALID_STATE);
-            return;
-        }
-
         final FacebookForwardingNativeAd facebookForwardingNativeAd =
-                new FacebookForwardingNativeAd(mNativeAd);
-
-        final List<String> imageUrls = new ArrayList<String>();
-        final String mainImageUrl = facebookForwardingNativeAd.getMainImageUrl();
-        if (mainImageUrl != null) {
-            imageUrls.add(facebookForwardingNativeAd.getMainImageUrl());
-        }
-        final String iconUrl = facebookForwardingNativeAd.getIconImageUrl();
-        if (iconUrl != null) {
-            imageUrls.add(facebookForwardingNativeAd.getIconImageUrl());
-        }
-
-        preCacheImages(mContext, imageUrls, new ImageListener() {
-            @Override
-            public void onImagesCached() {
-                mCustomEventNativeListener.onNativeAdLoaded(facebookForwardingNativeAd);
-            }
-
-            @Override
-            public void onImagesFailedToCache(NativeErrorCode errorCode) {
-                mCustomEventNativeListener.onNativeAdFailed(errorCode);
-            }
-        });
-    }
-
-    @Override
-    public void onError(final Ad ad, final AdError error) {
-        if (error == AdError.NO_FILL) {
-            mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_NO_FILL);
-        } else if (error == AdError.INTERNAL_ERROR) {
-            mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_INVALID_STATE);
-        } else {
-            mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
-        }
-    }
-
-    @Override
-    public void onAdClicked(final Ad ad) {
-        // not used
+                new FacebookForwardingNativeAd(context,
+                        new NativeAd(context, placementId), customEventNativeListener);
+        facebookForwardingNativeAd.loadAd();
     }
 
     private boolean extrasAreValid(final Map<String, String> serverExtras) {
@@ -105,45 +46,109 @@ public class FacebookNative extends CustomEventNative implements AdListener {
         return (placementId != null && placementId.length() > 0);
     }
 
-    static class FacebookForwardingNativeAd extends BaseForwardingNativeAd {
+    static class FacebookForwardingNativeAd extends BaseForwardingNativeAd implements AdListener, ImpressionListener {
         private static final String SOCIAL_CONTEXT_FOR_AD = "socialContextForAd";
-        private static final String APP_RATING_FOR_AD = "appRatingForAd";
-        private static final int IMPRESSION_MIN_TIME_VIEWED = 0;
 
+        private final Context mContext;
         private final NativeAd mNativeAd;
+        private final CustomEventNativeListener mCustomEventNativeListener;
 
-        FacebookForwardingNativeAd(final NativeAd nativeAd) {
-            if (nativeAd == null) {
-                throw new IllegalArgumentException("Facebook NativeAd cannot be null");
+        FacebookForwardingNativeAd(final Context context,
+                final NativeAd nativeAd,
+                final CustomEventNativeListener customEventNativeListener) {
+            mContext = context.getApplicationContext();
+            mNativeAd = nativeAd;
+            mCustomEventNativeListener = customEventNativeListener;
+        }
+
+        void loadAd() {
+            mNativeAd.setAdListener(this);
+            mNativeAd.setImpressionListener(this);
+            mNativeAd.loadAd();
+        }
+
+        // AdListener
+        @Override
+        public void onAdLoaded(final Ad ad) {
+            // This identity check is from Facebook's Native API sample code:
+            // https://developers.facebook.com/docs/audience-network/android/native-api
+            if (!mNativeAd.equals(ad) || !mNativeAd.isAdLoaded()) {
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_INVALID_STATE);
+                return;
             }
 
-            mNativeAd = nativeAd;
+            setTitle(mNativeAd.getAdTitle());
+            setText(mNativeAd.getAdBody());
 
-            setTitle(nativeAd.getAdTitle());
-            setText(nativeAd.getAdBody());
-
-            NativeAd.Image coverImage = nativeAd.getAdCoverImage();
+            NativeAd.Image coverImage = mNativeAd.getAdCoverImage();
             setMainImageUrl(coverImage == null ? null : coverImage.getUrl());
 
-            NativeAd.Image icon = nativeAd.getAdIcon();
+            NativeAd.Image icon = mNativeAd.getAdIcon();
             setIconImageUrl(icon == null ? null : icon.getUrl());
 
-            setCallToAction(nativeAd.getAdCallToAction());
-            setStarRating(getDoubleRating(nativeAd.getAdStarRating()));
+            setCallToAction(mNativeAd.getAdCallToAction());
+            setStarRating(getDoubleRating(mNativeAd.getAdStarRating()));
 
-            addExtra(SOCIAL_CONTEXT_FOR_AD, nativeAd.getAdSocialContext());
+            addExtra(SOCIAL_CONTEXT_FOR_AD, mNativeAd.getAdSocialContext());
 
-            setImpressionMinTimeViewed(IMPRESSION_MIN_TIME_VIEWED);
+            final List<String> imageUrls = new ArrayList<String>();
+            final String mainImageUrl = getMainImageUrl();
+            if (mainImageUrl != null) {
+                imageUrls.add(getMainImageUrl());
+            }
+            final String iconUrl = getIconImageUrl();
+            if (iconUrl != null) {
+                imageUrls.add(getIconImageUrl());
+            }
+
+            preCacheImages(mContext, imageUrls, new ImageListener() {
+                @Override
+                public void onImagesCached() {
+                    mCustomEventNativeListener.onNativeAdLoaded(FacebookForwardingNativeAd.this);
+                }
+
+                @Override
+                public void onImagesFailedToCache(NativeErrorCode errorCode) {
+                    mCustomEventNativeListener.onNativeAdFailed(errorCode);
+                }
+            });
         }
 
         @Override
-        public void recordImpression() {
-            mNativeAd.logImpression();
+        public void onError(final Ad ad, final AdError adError) {
+            if (adError == null) {
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
+            } else if (adError.getErrorCode() == AdError.NO_FILL.getErrorCode()) {
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_NO_FILL);
+            } else if (adError.getErrorCode() == AdError.INTERNAL_ERROR.getErrorCode()) {
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.NETWORK_INVALID_STATE);
+            } else {
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
+            }
         }
 
         @Override
-        public void handleClick(final View view) {
-            mNativeAd.handleClick();
+        public void onAdClicked(final Ad ad) {
+            notifyAdClicked();
+        }
+
+        // ImpressionListener
+        @Override
+        public void onLoggingImpression(final Ad ad) {
+            notifyAdImpressed();
+        }
+
+        // BaseForwardingNativeAd
+        @Override
+        public void prepare(final View view) {
+            mNativeAd.registerViewForInteraction(view);
+            setOverridingClickTracker(true);
+            setOverridingImpressionTracker(true);
+        }
+
+        @Override
+        public void clear(final View view) {
+            mNativeAd.unregisterView();
         }
 
         @Override
@@ -151,7 +156,7 @@ public class FacebookNative extends CustomEventNative implements AdListener {
             mNativeAd.destroy();
         }
 
-        private static Double getDoubleRating(final Rating rating) {
+        private Double getDoubleRating(final Rating rating) {
             if (rating == null) {
                 return null;
             }

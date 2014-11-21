@@ -1,8 +1,7 @@
 package com.mopub.nativeads;
 
-import com.mopub.nativeads.test.support.SdkTestRunner;
+import com.mopub.common.test.support.SdkTestRunner;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,11 +16,6 @@ public class BaseForwardingNativeAdTest {
     @Before
     public void setUp() throws Exception {
         subject = new BaseForwardingNativeAd() {};
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        ImpressionTrackingManager.clearTracking();
     }
 
     @Test
@@ -46,7 +40,7 @@ public class BaseForwardingNativeAdTest {
         subject.setImpressionMinTimeViewed(-1);
         assertThat(subject.getImpressionMinTimeViewed()).isEqualTo(250);
     }
-    
+
     @Test
     public void setStarRating_withinValidRange_shouldSetStarRating() throws Exception {
         subject.setStarRating(0.0);
@@ -84,7 +78,7 @@ public class BaseForwardingNativeAdTest {
         subject.setStarRating(Double.NEGATIVE_INFINITY);
         assertThat(subject.getStarRating()).isEqualTo(initialStarRating);
     }
-    
+
     @Test
     public void setStarRating_withValuesOutsideOfValidRange_shouldNotSetStarRating() throws Exception {
         // First, set star rating to a valid value

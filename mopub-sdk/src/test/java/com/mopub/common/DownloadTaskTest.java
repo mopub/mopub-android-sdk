@@ -1,5 +1,6 @@
 package com.mopub.common;
 
+import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.ResponseHeader;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 
@@ -9,42 +10,32 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.tester.org.apache.http.FakeHttpLayer;
-
-import java.util.concurrent.Semaphore;
 
 import static junit.framework.Assert.fail;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(SdkTestRunner.class)
 public class DownloadTaskTest {
 
+    @Mock private DownloadTask.DownloadTaskListener mockDownloadTaskListener;
+    @Captor private ArgumentCaptor<DownloadResponse> responseCaptor;
+
     private DownloadTask mDownloadTask;
-    private DownloadTask.DownloadTaskListener mDownloadTaskListener;
-    private Semaphore mSemaphore;
-    private String mUrl;
-    private DownloadResponse mDownloadResponse;
     private HttpGet httpGet;
     private String mTestResponse;
     private FakeHttpLayer mFakeHttpLayer;
     private TestHttpResponseWithHeaders mTestHttpResponseWithHeaders;
 
     @Before
-    public void setUp() throws Exception {
-        mSemaphore = new Semaphore(0);
-
-        mDownloadTaskListener = new DownloadTask.DownloadTaskListener() {
-            @Override
-            public void onComplete(String url, DownloadResponse response) {
-                mUrl = url;
-                mDownloadResponse = response;
-                mSemaphore.release();
-            }
-        };
-        mDownloadTask = spy(new DownloadTask(mDownloadTaskListener));
+    public void setUp() {
+        mDownloadTask = new DownloadTask(mockDownloadTaskListener);
         try {
             httpGet = new HttpGet("http://www.mopub.com/");
         } catch (IllegalArgumentException e) {
@@ -60,77 +51,80 @@ public class DownloadTaskTest {
     }
 
     @Test
-    public void execute_whenDownloadTaskAndHttpClientCompleteSuccessfully_shouldReturn200HttpResponse() throws Exception {
+    public void execute_whenDownloadTaskAndHttpClientCompleteSuccessfully_shouldReturn200HttpResponse() {
         mFakeHttpLayer.addPendingHttpResponse(mTestHttpResponseWithHeaders);
         mDownloadTask.execute(httpGet);
-        mSemaphore.acquire();
-        assertThat(mUrl).isEqualTo(httpGet.getURI().toString());
-        assertThat(mDownloadResponse.getStatusCode()).isEqualTo(200);
-        assertThat(mDownloadResponse.getFirstHeader(ResponseHeader.IMPRESSION_URL)).isEqualTo("moPubImpressionTrackerUrl");
-        assertThat(mDownloadResponse.getFirstHeader(ResponseHeader.CLICKTHROUGH_URL)).isEqualTo("moPubClickTrackerUrl");
-        assertThat(HttpResponses.asResponseString(mDownloadResponse)).isEqualTo(mTestResponse);
+
+        verify(mockDownloadTaskListener).onComplete(eq(httpGet.getURI().toString()),
+                responseCaptor.capture());
+        DownloadResponse response = responseCaptor.getValue();
+        assertThat(response.getStatusCode()).isEqualTo(200);
+        assertThat(response.getFirstHeader(ResponseHeader.IMPRESSION_URL)).isEqualTo("moPubImpressionTrackerUrl");
+        assertThat(response.getFirstHeader(ResponseHeader.CLICKTHROUGH_URL)).isEqualTo("moPubClickTrackerUrl");
+        assertThat(HttpResponses.asResponseString(response)).isEqualTo(mTestResponse);
     }
 
     @Test
-    public void execute_whenDownloadTaskCompletesSuccessfullyAndHttpClientTimesOut_shouldReturn599HttpResponse() throws Exception {
+    public void execute_whenDownloadTaskCompletesSuccessfullyAndHttpClientTimesOut_shouldReturn599HttpResponse() {
         mFakeHttpLayer.addPendingHttpResponse(599, "");
         mDownloadTask.execute(httpGet);
-        mSemaphore.acquire();
-        assertThat(mUrl).isEqualTo(httpGet.getURI().toString());
-        assertThat(mDownloadResponse.getStatusCode()).isEqualTo(599);
-        assertThat(HttpResponses.asResponseString(mDownloadResponse)).isEqualTo("");
+
+        verify(mockDownloadTaskListener).onComplete(eq(httpGet.getURI().toString()),
+                responseCaptor.capture());
+        DownloadResponse response = responseCaptor.getValue();
+        assertThat(response.getStatusCode()).isEqualTo(599);
+        assertThat(HttpResponses.asResponseString(response)).isEqualTo("");
     }
 
     @Test
-    public void execute_whenDownloadTaskIsCancelledBeforeExecute_shouldReturnNullHttpReponseAndNullUrl() throws Exception {
+    public void execute_whenDownloadTaskIsCancelledBeforeExecute_shouldReturnNullHttpReponseAndNullUrl() {
         mFakeHttpLayer.addPendingHttpResponse(200, mTestResponse);
         mDownloadTask.cancel(true);
         mDownloadTask.execute(httpGet);
-        mSemaphore.acquire();
-        assertThat(mUrl).isEqualTo(null);
-        assertThat(mDownloadResponse).isEqualTo(null);
+
+        verify(mockDownloadTaskListener).onComplete(null, null);
     }
 
     @Ignore("pending")
     @Test
-    public void execute_whenDownloadTaskIsCancelledDuringDoInBackground_shouldReturnNullHttpReponse() throws Exception {
         // need a way to reliably cancel task during doInBackground
+    public void execute_whenDownloadTaskIsCancelledDuringDoInBackground_shouldReturnNullHttpReponse() {
     }
 
     @Ignore("pending")
     @Test
-    public void execute_whenHttpUriRequestThrowsIOException_shouldCancelTaskAndReturnNullHttpResponse() throws Exception {
+    public void execute_whenHttpUriRequestThrowsIOException_shouldCancelTaskAndReturnNullHttpResponse() {
         // need a way to force HttpUriRequest to throw on execute
     }
 
     @Test
-    public void execute_whenHttpUriRequestIsNull_shouldReturnNullHttpReponseAndNullUrl() throws Exception {
+    public void execute_whenHttpUriRequestIsNull_shouldReturnNullHttpReponseAndNullUrl() {
         mDownloadTask.execute((HttpUriRequest) null);
-        mSemaphore.acquire();
-        assertThat(mUrl).isEqualTo(null);
-        assertThat(mDownloadResponse).isEqualTo(null);
+        verify(mockDownloadTaskListener).onComplete(null, null);
     }
 
     @Test
-    public void execute_whenHttpUriRequestIsNullArray_shouldReturnNullHttpReponseAndNullUrl() throws Exception {
-        mDownloadTask.execute((HttpUriRequest[])null);
-        mSemaphore.acquire();
-        assertThat(mUrl).isEqualTo(null);
-        assertThat(mDownloadResponse).isEqualTo(null);
+    public void execute_whenHttpUriRequestIsNullArray_shouldReturnNullHttpReponseAndNullUrl() {
+        mDownloadTask.execute((HttpUriRequest[]) null);
+        verify(mockDownloadTaskListener).onComplete(null, null);
     }
 
     @Test
-    public void execute_whenHttpUriRequestIsArray_shouldOnlyReturnFirstResponse() throws Exception {
+    public void execute_whenHttpUriRequestIsArray_shouldOnlyReturnFirstResponse() {
         mFakeHttpLayer.addPendingHttpResponse(200, mTestResponse);
         mFakeHttpLayer.addPendingHttpResponse(500, "");
         mDownloadTask.execute(httpGet, new HttpGet("http://www.twitter.com/"));
-        mSemaphore.acquire();
-        assertThat(mDownloadResponse.getStatusCode()).isEqualTo(200);
-        assertThat(HttpResponses.asResponseString(mDownloadResponse)).isEqualTo(mTestResponse);
+
+        verify(mockDownloadTaskListener).onComplete(eq(httpGet.getURI().toString()),
+                responseCaptor.capture());
+        DownloadResponse response = responseCaptor.getValue();
+
+        assertThat(response.getStatusCode()).isEqualTo(200);
+        assertThat(HttpResponses.asResponseString(response)).isEqualTo(mTestResponse);
     }
 
     @Test
-    public void downLoadTask_whenConstructedWithNullListener_shouldThrowIllegalArgumentException() throws Exception {
+    public void downLoadTask_whenConstructedWithNullListener_shouldThrowIllegalArgumentException() {
         try {
             new DownloadTask(null);
             fail("DownloadTask didn't throw IllegalArgumentException when constructed with null");
