@@ -11,14 +11,14 @@ group = 'com.mopub'
 description = '''MoPub SDK'''
 
 android {
-    compileSdkVersion 19
-    buildToolsVersion '19.1.0'
+    compileSdkVersion rootProject.compileSdkVersion
+    buildToolsVersion rootProject.buildToolsVersion
 
     defaultConfig {
         versionCode 1
         versionName "3.2.2"
-        minSdkVersion 9
-        targetSdkVersion 19
+        minSdkVersion rootProject.minSdkVersion
+        targetSdkVersion rootProject.targetSdkVersion
         consumerProguardFiles 'proguard.txt'
     }
 
@@ -36,8 +36,8 @@ android {
 
     buildTypes {
         release {
-            runProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard.txt')
+//            runProguard false
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard.txt')
         }
     }
 
@@ -48,10 +48,11 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:19.1.+'
+    compile rootProject.supportV4
+    compile rootProject.playServices
+    compile files('libs/MMSDK-5.3.0.jar')
 }
 
 // Don't run the Robolectric Unit Tests. They don't build properly in Gradle or Android Studio in this version.
 check.dependsOn.remove("test")
 check.dependsOn.remove("testDebug")
-
