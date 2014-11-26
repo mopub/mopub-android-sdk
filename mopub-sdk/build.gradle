@@ -16,15 +16,9 @@ android {
 
     defaultConfig {
         versionCode 1
-<<<<<<< HEAD
         versionName "3.2.2"
-        minSdkVersion 9
-        targetSdkVersion 19
-=======
-        versionName "3.2.1"
         minSdkVersion rootProject.minSdkVersion
         targetSdkVersion rootProject.targetSdkVersion
->>>>>>> 7e5037ee8a37e1b6ed2fb57fca42ad9fd02bb0c7
         consumerProguardFiles 'proguard.txt'
     }
 
@@ -42,8 +36,8 @@ android {
 
     buildTypes {
         release {
-            runProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard.txt')
+//            runProguard false
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard.txt')
         }
     }
 
@@ -62,7 +56,3 @@ dependencies {
 // Don't run the Robolectric Unit Tests. They don't build properly in Gradle or Android Studio in this version.
 check.dependsOn.remove("test")
 check.dependsOn.remove("testDebug")
-<<<<<<< HEAD
-
-=======
->>>>>>> 7e5037ee8a37e1b6ed2fb57fca42ad9fd02bb0c7
