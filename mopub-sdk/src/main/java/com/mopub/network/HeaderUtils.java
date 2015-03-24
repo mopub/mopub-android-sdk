@@ -55,6 +55,10 @@ public class HeaderUtils {
     }
 
     private static Integer formatIntHeader(String headerValue) {
+        if (headerValue == null) {
+            return null;
+        }
+
         NumberFormat numberFormat = NumberFormat.getInstance(Locale.US);
         numberFormat.setParseIntegerOnly(true);
 
