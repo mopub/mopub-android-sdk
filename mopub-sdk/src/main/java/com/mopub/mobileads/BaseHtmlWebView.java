@@ -30,6 +30,28 @@ public class BaseHtmlWebView extends BaseWebView implements UserClickListener {
             enablePlugins(true);
         }
         setBackgroundColor(Color.TRANSPARENT);
+
+        // Setup Javascript interface for webview
+        setupJSInterface(this);
+    }
+
+    private void setupJSInterface(WebView webView) {
+        JSInterface jsInterface = new JSInterface();
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.addJavascriptInterface(jsInterface, "JSInterface");
+    }
+
+    /**
+     * Interface for methods that can be invoked from Javascript
+     */
+    public class JSInterface {
+        /**
+         * Check if the intent can be handled by the device
+         */
+        @JavascriptInterface
+        public boolean canHandleIntentUrl(String intent){
+            return Intents.canHandleApplicationUrl(getContext(), intent);
+        }
     }
 
     public void init(boolean isScrollable) {
