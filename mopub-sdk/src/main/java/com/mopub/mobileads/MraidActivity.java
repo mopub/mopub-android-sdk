@@ -1,5 +1,6 @@
 package com.mopub.mobileads;
 
+import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -38,13 +39,18 @@ import static com.mopub.mobileads.EventForwardingBroadcastReceiver.broadcastActi
 public class MraidActivity extends BaseInterstitialActivity {
     @Nullable private MraidController mMraidController;
     @Nullable private MraidWebViewDebugListener mDebugListener;
-
+@SuppressLint({"SetJavaScriptEnabled"})
     public static void preRenderHtml(@NonNull final Context context,
             @NonNull final CustomEventInterstitialListener customEventInterstitialListener,
             @NonNull final String htmlData) {
         BaseWebView dummyWebView = new BaseWebView(context);
 
         dummyWebView.enablePlugins(false);
+
+        dummyWebView.getSettings().setJavaScriptEnabled(true);
+        dummyWebView.getSettings().setDomStorageEnabled(true);
+        dummyWebView.getSettings().setAppCacheEnabled(true);
+
         dummyWebView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(final WebView view, final String url) {
