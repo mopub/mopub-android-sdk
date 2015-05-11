@@ -100,6 +100,7 @@ public class MoPubBrowser extends Activity {
                 }
 
                 final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 if (isDeepLink(url) && deviceCanHandleIntent(MoPubBrowser.this, intent)) {
                     startActivity(intent);
                     finish();
