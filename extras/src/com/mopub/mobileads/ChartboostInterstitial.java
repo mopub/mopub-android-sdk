@@ -68,6 +68,7 @@ class ChartboostInterstitial extends CustomEventInterstitial {
         Activity activity = (Activity) context;
 
         Chartboost.startWithAppId(activity, appId, appSignature);
+        Chartboost.setFramework(Chartboost.CBFramework.CBFrameworkMoPub);
         Chartboost.setImpressionsUseActivities(false);
         Chartboost.setDelegate(getDelegate());
         Chartboost.setShouldRequestInterstitialsInFirstSession(true);

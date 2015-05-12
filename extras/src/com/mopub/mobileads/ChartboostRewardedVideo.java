@@ -76,6 +76,7 @@ public class ChartboostRewardedVideo extends CustomEventRewardedVideo {
             final String appSignature = serverExtras.get(APP_SIGNATURE_KEY);
 
             Chartboost.startWithAppId(launcherActivity, appId, appSignature);
+            Chartboost.setFramework(Chartboost.CBFramework.CBFrameworkMoPub);
             Chartboost.setImpressionsUseActivities(false);
             Chartboost.setDelegate((SingletonChartboostDelegate) getVideoListenerForSdk());
             Chartboost.setShouldRequestInterstitialsInFirstSession(true);
