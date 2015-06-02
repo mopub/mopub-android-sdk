@@ -106,6 +106,10 @@ public class MraidBridge {
         mMraidWebView = mraidWebView;
         mMraidWebView.getSettings().setJavaScriptEnabled(true);
 
+        if (android.os.Build.VERSION.SDK_INT>=17) {
+            mMraidWebView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+        }
+
         mMraidWebView.loadUrl("javascript:" + FILTERED_JAVASCRIPT_SOURCE);
         mMraidWebView.setScrollContainer(false);
         mMraidWebView.setVerticalScrollBarEnabled(false);
