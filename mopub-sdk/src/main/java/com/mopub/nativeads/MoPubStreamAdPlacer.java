@@ -426,7 +426,10 @@ public class MoPubStreamAdPlacer {
 
         return view;
     }
+    public View getAdView(@Nullable final ViewGroup parent) {
+        return mAdRenderer.createAdView(mContext, parent);
 
+    }
     /**
      * Removes ads in the given range from [originalStartPosition, originalEndPosition).
      *
