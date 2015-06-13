@@ -16,6 +16,8 @@ import static com.mopub.common.Constants.HTTP;
 import static com.mopub.common.Constants.HTTPS;
 import static com.mopub.common.UrlHandler.MoPubSchemeListener;
 
+import java.net.URISyntaxException;
+
 /**
  * {@code UrlAction} describes the different kinds of actions for URLs that {@link UrlHandler} can
  * potentially perform and how to match against each URL.
@@ -186,7 +188,16 @@ public enum UrlAction {
         public boolean shouldTryHandlingUrl(@NonNull final Uri uri) {
             final String scheme = uri.getScheme();
             final String host = uri.getHost();
-            return !TextUtils.isEmpty(scheme) && !TextUtils.isEmpty(host);
+
+            //
+            // Host is optional if intent (adding if, since not sure which other Uri come through here)
+            // https://developer.chrome.com/multidevice/android/intents#syntax
+            //
+            if (scheme.equals("intent")) {
+                return !TextUtils.isEmpty(scheme);
+            } else {
+                return !TextUtils.isEmpty(scheme) && !TextUtils.isEmpty(host);
+            }
         }
 
         @Override
@@ -194,7 +205,22 @@ public enum UrlAction {
                 final boolean skipShowMoPubBrowser,
                 @Nullable final MoPubSchemeListener moPubSchemeListener)
                 throws IntentNotResolvableException {
-            Intents.launchApplicationUrl(context, uri);
+
+                final String scheme = uri.getScheme();
+                if (scheme.equals("intent")) {
+                    try {
+                        Intent intentFromUri = Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME);
+
+                        // Intents should be created then started, and not passing the uri around.
+                        // This way you can parse it according to each FOLLOW_DEEP_LINK
+                        Intents.launchIntent(context, intentFromUri);
+                    } catch(URISyntaxException ex) {
+                        throw new IntentNotResolvableException("URISyntaxException");
+                    }
+
+                } else {
+                    Intents.launchApplicationUrl(context, uri);
+                }
         }
     },
 

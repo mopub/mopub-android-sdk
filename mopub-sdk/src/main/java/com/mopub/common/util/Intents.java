@@ -73,6 +73,10 @@ public class Intents {
         }
     }
 
+    public static boolean canHandleIntent(final Context context, final Intent intent) {
+        return canHandleIntent(context, intent, true);
+    }
+
     public static boolean canHandleApplicationUrl(final Context context, final Uri uri) {
         return canHandleApplicationUrl(context, uri, true);
     }
@@ -94,6 +98,25 @@ public class Intents {
 
         return true;
     }
+
+    public static boolean canHandleIntent(final Context context, final Intent intent,
+                                          final boolean logError) {
+        // Determine which activities can handle the intent
+
+        // If there are no relevant activities, don't follow the link
+        if (!Intents.deviceCanHandleIntent(context, intent)) {
+
+            if (logError) {
+                MoPubLog.w("Could not handle application specific action: " + intent + ". " +
+                        "You may be running in the emulator or another device which does not " +
+                        "have the required application.");
+            }
+            return false;
+        }
+
+        return true;
+    }
+
 
     /**
      * Native Browser Scheme URLs provide a means for advertisers to include links that click out to
@@ -220,6 +243,16 @@ public class Intents {
         launchIntentForUserClick(context, intent, errorMessage);
     }
 
+    public static void launchCustomIntent(Context context, @NonNull final Intent intent,
+            @NonNull final String errorMessage) throws IntentNotResolvableException {
+
+        if (!(context instanceof Activity)) {
+            intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+        }
+
+        launchIntentForUserClick(context, intent, errorMessage);
+    }
+
     public static void launchActionViewIntent(Context context, @NonNull final Uri uri,
             @NonNull final String errorMessage) throws IntentNotResolvableException {
         final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
@@ -253,5 +286,20 @@ public class Intents {
                     "action: " + uri + "\n\tYou may be running in the emulator or another " +
                     "device which does not have the required application.");
         }
+    }
+
+
+    public static void launchIntent(@NonNull final Context context,
+            @NonNull final Intent intent) throws IntentNotResolvableException {
+        if (Intents.canHandleIntent(context, intent)) {
+            final String errorMessage = "Unable to open intent : " + intent;
+            Intents.launchCustomIntent(context, intent, errorMessage);
+
+        } else {
+            throw new IntentNotResolvableException("Could not handle application specific " +
+                    "action: " + intent + "\n\tYou may be running in the emulator or another " +
+                    "device which does not have the required application.");
+        }
+
     }
 }
