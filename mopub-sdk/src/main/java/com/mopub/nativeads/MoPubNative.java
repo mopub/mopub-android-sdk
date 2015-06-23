@@ -12,6 +12,7 @@ import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.ManifestUtils;
+import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.network.AdRequest;
 import com.mopub.network.AdResponse;
 import com.mopub.network.MoPubNetworkError;
@@ -211,7 +212,7 @@ public class MoPubNative {
             return;
         }
 
-        mNativeRequest = new AdRequest(endpointUrl, AdFormat.NATIVE, mAdUnitId, mVolleyListener);
+        mNativeRequest = new AdRequest(endpointUrl, AdFormat.NATIVE, mAdUnitId, context, mVolleyListener);
         RequestQueue requestQueue = Networking.getRequestQueue(context);
         requestQueue.add(mNativeRequest);
     }
@@ -266,6 +267,11 @@ public class MoPubNative {
                     mMoPubNativeNetworkListener.onNativeFail(INVALID_JSON);
                     return;
                 case WARMING_UP:
+                    // Used for the sample app to signal a toast.
+                    // This is not customer-facing except in the sample app.
+                    MoPubLog.c(MoPubErrorCode.WARMUP.toString());
+                    mMoPubNativeNetworkListener.onNativeFail(EMPTY_AD_RESPONSE);
+                    return;
                 case NO_FILL:
                     mMoPubNativeNetworkListener.onNativeFail(EMPTY_AD_RESPONSE);
                     return;
@@ -279,6 +285,9 @@ public class MoPubNative {
             NetworkResponse response = volleyError.networkResponse;
             if (response != null && response.statusCode >= 500 && response.statusCode < 600) {
                 mMoPubNativeNetworkListener.onNativeFail(SERVER_ERROR_RESPONSE_CODE);
+            } else if (response == null && !DeviceUtils.isNetworkAvailable(mContext.get())) {
+                MoPubLog.c(String.valueOf(MoPubErrorCode.NO_CONNECTION.toString()));
+                mMoPubNativeNetworkListener.onNativeFail(CONNECTION_ERROR);
             } else {
                 mMoPubNativeNetworkListener.onNativeFail(UNSPECIFIED);
             }

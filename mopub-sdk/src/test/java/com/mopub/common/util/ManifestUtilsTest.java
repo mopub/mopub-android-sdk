@@ -48,7 +48,7 @@ public class ManifestUtilsTest {
 
     @Before
     public void setUp() throws Exception {
-        context = spy(new Activity());
+        context = spy(Robolectric.buildActivity(Activity.class).create().get());
 
         requiredWebViewSdkActivities = ManifestUtils.getRequiredWebViewSdkActivities();
         requiredNativeSdkActivities = ManifestUtils.getRequiredNativeSdkActivities();

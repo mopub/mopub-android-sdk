@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class HeaderUtils {
+    @Nullable
     public static String extractHeader(Map<String, String> headers, ResponseHeader responseHeader) {
         return headers.get(responseHeader.getKey());
     }

@@ -145,10 +145,10 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
         VastCompanionAd vastCompanionAd = mock(VastCompanionAd.class, withSettings().serializable());
         VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
         vastVideoConfiguration.setNetworkMediaFileUrl(videoUrl);
-        vastVideoConfiguration.addStartTrackers(Arrays.asList("start"));
-        vastVideoConfiguration.addFirstQuartileTrackers(Arrays.asList("first"));
-        vastVideoConfiguration.addMidpointTrackers(Arrays.asList("mid"));
-        vastVideoConfiguration.addThirdQuartileTrackers(Arrays.asList("third"));
+        vastVideoConfiguration.addAbsoluteTrackers(Arrays.asList(new VastAbsoluteProgressTracker("start", 2000)));
+        vastVideoConfiguration.addFractionalTrackers(Arrays.asList(new VastFractionalProgressTracker("first", 0.25f),
+                new VastFractionalProgressTracker("mid", 0.5f),
+                new VastFractionalProgressTracker("third", 0.75f)));
         vastVideoConfiguration.addCompleteTrackers(Arrays.asList("complete"));
         vastVideoConfiguration.addImpressionTrackers(Arrays.asList("imp"));
         vastVideoConfiguration.setClickThroughUrl("clickThrough");

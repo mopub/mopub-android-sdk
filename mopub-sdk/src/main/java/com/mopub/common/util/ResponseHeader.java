@@ -15,6 +15,7 @@ public enum ResponseHeader {
     REDIRECT_URL("X-Launchpage"),
     NATIVE_PARAMS("X-Nativeparams"),
     NETWORK_TYPE("X-Networktype"),
+    ORIENTATION("X-Orientation"),
     REFRESH_TIME("X-Refreshtime"),
     SCROLLABLE("X-Scrollable"),
     WARMUP("X-Warmup"),
@@ -22,6 +23,7 @@ public enum ResponseHeader {
 
     LOCATION("Location"),
     USER_AGENT("User-Agent"),
+    ACCEPT_LANGUAGE("Accept-Language"),
 
     @Deprecated CUSTOM_SELECTOR("X-Customselector");
 

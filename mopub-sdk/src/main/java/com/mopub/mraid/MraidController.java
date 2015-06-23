@@ -10,10 +10,8 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
-import android.net.Uri;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
-import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -30,24 +28,23 @@ import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
 import com.mopub.common.AdReport;
+import com.mopub.common.UrlHandler;
 import com.mopub.common.CloseableLayout;
 import com.mopub.common.CloseableLayout.ClosePosition;
 import com.mopub.common.CloseableLayout.OnCloseListener;
-import com.mopub.common.MoPubBrowser;
 import com.mopub.common.Preconditions;
+import com.mopub.common.UrlAction;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.Dips;
-import com.mopub.common.util.Intents;
 import com.mopub.common.util.Views;
-import com.mopub.exceptions.IntentNotResolvableException;
-import com.mopub.exceptions.UrlParseException;
 import com.mopub.mobileads.MraidVideoPlayerActivity;
 import com.mopub.mobileads.util.WebViews;
 import com.mopub.mraid.MraidBridge.MraidBridgeListener;
 import com.mopub.mraid.MraidBridge.MraidWebView;
 
+import java.lang.ref.WeakReference;
 import java.net.URI;
 
 import static android.content.pm.ActivityInfo.CONFIG_ORIENTATION;
@@ -69,7 +66,12 @@ public class MraidController {
         public void useCustomCloseChanged(boolean useCustomClose);
     }
 
-    @Nullable private Activity mActivity;
+    /**
+     * Holds a weak reference to the activity if the context that is passed in is an activity.
+     * While this field is never null, the reference could become null. This reference starts out
+     * null if the passed-in context is not an activity.
+     */
+    @NonNull private final WeakReference<Activity> mWeakActivity;
     @NonNull private final Context mContext;
     @NonNull private final PlacementType mPlacementType;
 
@@ -131,10 +133,15 @@ public class MraidController {
             @NonNull PlacementType placementType,
             @NonNull MraidBridge bridge, @NonNull MraidBridge twoPartBridge,
             @NonNull ScreenMetricsWaiter screenMetricsWaiter) {
-        mContext = context;
+        mContext = context.getApplicationContext();
+        Preconditions.checkNotNull(mContext);
         mAdReport = adReport;
-        if (mContext instanceof Activity) {
-            mActivity = (Activity) mContext;
+        if (context instanceof Activity) {
+            mWeakActivity = new WeakReference<Activity>((Activity) context);
+        } else {
+            // Make sure mWeakActivity itself is never null, though the reference
+            // it's pointing to could be null.
+            mWeakActivity = new WeakReference<Activity>(null);
         }
 
         mPlacementType = placementType;
@@ -277,7 +284,7 @@ public class MraidController {
                 final boolean allowOffscreen) throws MraidCommandException {
             throw new MraidCommandException("Not allowed to resize from an expanded state");
         }
-        
+
         @Override
         public void onExpand(@Nullable final URI uri, final boolean shouldUseCustomClose) {
             // The MRAID spec dictates that this is ignored rather than firing an error
@@ -440,11 +447,12 @@ public class MraidController {
 
     private boolean isInlineVideoAvailable() {
         //noinspection SimplifiableIfStatement
-        if (mActivity == null || getCurrentWebView() == null) {
+        final Activity activity = mWeakActivity.get();
+        if (activity == null || getCurrentWebView() == null) {
             return false;
         }
 
-        return mMraidNativeCommandHandler.isInlineVideoAvailable(mActivity, getCurrentWebView());
+        return mMraidNativeCommandHandler.isInlineVideoAvailable(activity, getCurrentWebView());
     }
 
     @VisibleForTesting
@@ -695,9 +703,9 @@ public class MraidController {
 
         if (!resizeRect.contains(closeRect)) {
             throw new MraidCommandException("resizeProperties specified a size ("
-            + widthDips + ", " + height +") and offset ("
-            + offsetXDips + ", " + offsetYDips + ") that don't allow the close region to appear "
-            + "within the resized ad.");
+                    + widthDips + ", " + height + ") and offset ("
+                    + offsetXDips + ", " + offsetYDips + ") that don't allow the close region to appear "
+                    + "within the resized ad.");
         }
 
         // Resized ads always rely on the creative's close button (as if useCustomClose were true)
@@ -844,16 +852,17 @@ public class MraidController {
 
     @VisibleForTesting
     void lockOrientation(final int screenOrientation) throws MraidCommandException {
-        if (mActivity == null || !shouldAllowForceOrientation(mForceOrientation)) {
+        final Activity activity = mWeakActivity.get();
+        if (activity == null || !shouldAllowForceOrientation(mForceOrientation)) {
             throw new MraidCommandException("Attempted to lock orientation to unsupported value: " +
                     mForceOrientation.name());
         }
 
         if (mOriginalActivityOrientation == null) {
-            mOriginalActivityOrientation = mActivity.getRequestedOrientation();
+            mOriginalActivityOrientation = activity.getRequestedOrientation();
         }
 
-        mActivity.setRequestedOrientation(screenOrientation);
+        activity.setRequestedOrientation(screenOrientation);
     }
 
     @VisibleForTesting
@@ -864,14 +873,15 @@ public class MraidController {
                 // orientation lock should be removed
                 unApplyOrientation();
             } else {
-                if (mActivity == null) {
+                final Activity activity = mWeakActivity.get();
+                if (activity == null) {
                     throw new MraidCommandException("Unable to set MRAID expand orientation to " +
                             "'none'; expected passed in Activity Context.");
                 }
 
                 // If screen orientation cannot be changed and we can obtain the current
                 // screen orientation, locking it to the current orientation is a best effort
-                lockOrientation(DeviceUtils.getScreenOrientation(mActivity));
+                lockOrientation(DeviceUtils.getScreenOrientation(activity));
             }
         } else {
             // Otherwise, we have a valid, non-NONE orientation. Lock the screen based on this value
@@ -881,8 +891,9 @@ public class MraidController {
 
     @VisibleForTesting
     void unApplyOrientation() {
-        if (mActivity != null && mOriginalActivityOrientation != null) {
-            mActivity.setRequestedOrientation(mOriginalActivityOrientation);
+        final Activity activity = mWeakActivity.get();
+        if (activity != null && mOriginalActivityOrientation != null) {
+            activity.setRequestedOrientation(mOriginalActivityOrientation);
         }
         mOriginalActivityOrientation = null;
     }
@@ -895,15 +906,16 @@ public class MraidController {
             return true;
         }
 
-        // If we can't obtain an Activity context, return false
-        if (mActivity == null) {
+        final Activity activity = mWeakActivity.get();
+        // If we can't obtain an Activity, return false
+        if (activity == null) {
             return false;
         }
 
         final ActivityInfo activityInfo;
         try {
-            activityInfo = mActivity.getPackageManager().getActivityInfo(
-                    new ComponentName(mActivity, mActivity.getClass()), 0);
+            activityInfo = activity.getPackageManager().getActivityInfo(
+                    new ComponentName(activity, activity.getClass()), 0);
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
@@ -960,6 +972,7 @@ public class MraidController {
         // -1 until this gets set at least once
         private int mLastRotation = -1;
 
+        @Override
         public void onReceive(Context context, Intent intent) {
             if (mContext == null) {
                 return;
@@ -976,9 +989,12 @@ public class MraidController {
         }
 
         public void register(@NonNull final Context context) {
-            mContext = context;
-            mContext.registerReceiver(this,
-                    new IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED));
+            Preconditions.checkNotNull(context);
+            mContext = context.getApplicationContext();
+            if (mContext != null) {
+                mContext.registerReceiver(this,
+                        new IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED));
+            }
         }
 
         public void unregister() {
@@ -1015,51 +1031,19 @@ public class MraidController {
      * corresponding application, and all other links in the MoPub in-app browser.
      */
     @VisibleForTesting
-    void handleOpen(@NonNull String url) {
-        MoPubLog.d("Opening url: " + url);
-
+    void handleOpen(@NonNull final String url) {
         if (mMraidListener != null) {
             mMraidListener.onOpen();
         }
 
-        // MoPubNativeBrowser URLs
-        if (Intents.isNativeBrowserScheme(url)) {
-            try {
-                final Intent intent = Intents.intentForNativeBrowserScheme(url);
-                Intents.startActivity(mContext, intent);
-            } catch (UrlParseException e) {
-                MoPubLog.d("Unable to load mopub native browser url: " + url + ". "
-                        + e.getMessage());
-            } catch (IntentNotResolvableException e) {
-                MoPubLog.d("Unable to load mopub native browser url: " + url + ". "
-                        + e.getMessage());
-            }
-
-            return;
-        }
-
-        // Non-http(s) URLs
-        if (!Intents.isHttpUrl(url) && Intents.canHandleApplicationUrl(mContext, url)) {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-
-            try {
-                Intents.startActivity(mContext, intent);
-            } catch (IntentNotResolvableException e) {
-                MoPubLog.d("Unable to resolve application url: " + url);
-            }
-
-            return;
-        }
-
-        final Bundle extras = new Bundle();
-        extras.putString(MoPubBrowser.DESTINATION_URL_KEY, url);
-
-        final Intent intent = Intents.getStartActivityIntent(mContext, MoPubBrowser.class, extras);
-        try {
-            Intents.startActivity(mContext, intent);
-        } catch (IntentNotResolvableException e) {
-            MoPubLog.d("Unable to launch intent for URL: " + url +  ".");
-        }
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(
+                        UrlAction.IGNORE_ABOUT_SCHEME,
+                        UrlAction.OPEN_NATIVE_BROWSER,
+                        UrlAction.OPEN_IN_APP_BROWSER,
+                        UrlAction.HANDLE_SHARE_TWEET,
+                        UrlAction.FOLLOW_DEEP_LINK)
+                .build().handleUrl(mContext, url);
     }
 
     @VisibleForTesting

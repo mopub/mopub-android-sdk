@@ -20,7 +20,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@Config(manifest=Config.NONE)
 @RunWith(SdkTestRunner.class)
 public class PlacementDataTest {
     private PlacementData noAds;

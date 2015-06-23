@@ -28,6 +28,7 @@ public class MoPubBrowserTest {
 
         mockWebView = mock(WebView.class);
         subject.setWebView(mockWebView);
+        // In the Gradle testing regime we will change these to build MoPubBrowser as an activity using Robolectric.
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)

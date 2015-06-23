@@ -1,7 +1,6 @@
 package com.mopub.nativeads;
 
 import android.content.Context;
-import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -9,9 +8,6 @@ import android.text.TextUtils;
 import com.mopub.common.AdUrlGenerator;
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.Constants;
-import com.mopub.common.LocationService;
-import com.mopub.common.MoPub;
-import com.mopub.common.util.DateAndTime;
 
 class NativeUrlGenerator extends AdUrlGenerator {
     @Nullable private String mDesiredAssets;
@@ -48,41 +44,12 @@ class NativeUrlGenerator extends AdUrlGenerator {
     public String generateUrlString(final String serverHostname) {
         initUrlString(serverHostname, Constants.AD_HANDLER);
 
-        setAdUnitId(mAdUnitId);
-
-        setKeywords(mKeywords);
-
-        setLocation(mLocation);
-
         ClientMetadata clientMetadata = ClientMetadata.getInstance(mContext);
-        setSdkVersion(clientMetadata.getSdkVersion());
-
-        setDeviceInfo(clientMetadata.getDeviceManufacturer(),
-                clientMetadata.getDeviceModel(),
-                clientMetadata.getDeviceProduct());
-
-        setTimezone(DateAndTime.getTimeZoneOffsetString());
-
-        setOrientation(clientMetadata.getOrientationString());
-
-        setDensity(clientMetadata.getDensity());
-
-        String networkOperator = clientMetadata.getNetworkOperatorForUrl();
-        setMccCode(networkOperator);
-        setMncCode(networkOperator);
-
-        setIsoCountryCode(clientMetadata.getIsoCountryCode());
-        setCarrierName(clientMetadata.getNetworkOperatorName());
-
-        setNetworkType(clientMetadata.getActiveNetworkType());
-
-        setAppVersion(clientMetadata.getAppVersion());
+        addBaseParams(clientMetadata);
 
         setDesiredAssets();
 
         setSequenceNumber();
-
-        appendAdvertisingInfoTemplates();
 
         return getFinalUrlString();
     }

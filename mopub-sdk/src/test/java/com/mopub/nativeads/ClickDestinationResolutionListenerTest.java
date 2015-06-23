@@ -34,6 +34,7 @@ public class ClickDestinationResolutionListenerTest {
     public void setUp() throws Exception {
         context = spy(Robolectric.buildActivity(Activity.class).create().get());
         when(context.getApplicationContext()).thenReturn(context);
+        when(context.getPackageName()).thenReturn("testPackageName");
         mockIterator = mock(Iterator.class);
         mockSpinningProgressView = mock(SpinningProgressView.class);
 
@@ -87,7 +88,7 @@ public class ClickDestinationResolutionListenerTest {
 
     @Test
     public void onSuccess_withAppStoreUrl_shouldStartAppStoreIntent_shouldRemoveSpinningProgressView() {
-        String appStoreUrl = "play.google.com";
+        final String appStoreUrl = "play.google.com/";
         Robolectric.packageManager.addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW,
                 Uri.parse(appStoreUrl)), new ResolveInfo());
 
@@ -95,7 +96,7 @@ public class ClickDestinationResolutionListenerTest {
 
         Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
-        assertThat(intent.getDataString()).isEqualTo("play.google.com");
+        assertThat(intent.getDataString()).isEqualTo(appStoreUrl);
         verify(mockSpinningProgressView).removeFromRoot();
     }
 
@@ -110,7 +111,7 @@ public class ClickDestinationResolutionListenerTest {
 
         Intent intent = intentCaptor.getValue();
 
-        assertThat(intent.getComponent().getPackageName()).isEqualTo("com.mopub.mobileads");
+        assertThat(intent.getComponent().getPackageName()).isEqualTo("testPackageName");
         assertThat(intent.getComponent().getClassName()).isEqualTo("com.mopub.common.MoPubBrowser");
         assertThat(intent.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(httpUrl);
         verify(mockSpinningProgressView).removeFromRoot();
@@ -127,9 +128,19 @@ public class ClickDestinationResolutionListenerTest {
 
         Intent intent = intentCaptor.getValue();
 
-        assertThat(intent.getComponent().getPackageName()).isEqualTo("com.mopub.mobileads");
+        assertThat(intent.getComponent().getPackageName()).isEqualTo("testPackageName");
         assertThat(intent.getComponent().getClassName()).isEqualTo("com.mopub.common.MoPubBrowser");
         assertThat(intent.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(httpsUrl);
+        verify(mockSpinningProgressView).removeFromRoot();
+    }
+
+    @Test
+    public void onSuccess_withAboutBlankUrl_shouldFailSilently_shouldRemoveSpinningProgressView() {
+        String url = "about:blank";
+
+        subject.onSuccess(url);
+
+        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
         verify(mockSpinningProgressView).removeFromRoot();
     }
 }

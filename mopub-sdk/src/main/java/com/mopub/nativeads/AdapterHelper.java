@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.mopub.common.Preconditions;
-import com.mopub.common.Preconditions.NoThrow;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 
@@ -44,19 +43,14 @@ public final class AdapterHelper {
     @NonNull
     public View getAdView(@Nullable final View convertView,
             @Nullable final ViewGroup parent,
-            @NonNull final NativeResponse nativeResponse,
-            @NonNull final ViewBinder viewBinder,
+            @Nullable final NativeResponse nativeResponse,
+            @Nullable final ViewBinder viewBinder,
             @Nullable @SuppressWarnings("unused") final MoPubNativeListener moPubNativeListener) {
         final Activity activity = mActivity.get();
         if (activity == null) {
             MoPubLog.w("Weak reference to Activity Context in"
                     + " AdapterHelper became null. Returning empty view.");
             return new View(mApplicationContext);
-        }
-
-        if (!NoThrow.checkNotNull(nativeResponse, "NativeResponse is null. Returning an empty view")
-                || !NoThrow.checkNotNull(viewBinder, "ViewBinder is null. Returning empty view")) {
-            return new View(activity);
         }
 
         return NativeAdViewHelper.getAdView(

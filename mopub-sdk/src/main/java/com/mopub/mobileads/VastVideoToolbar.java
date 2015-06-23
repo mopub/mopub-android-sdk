@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
+import com.mopub.common.VisibleForTesting;
 import com.mopub.common.util.Dips;
 import com.mopub.common.util.Utils;
 import com.mopub.mobileads.resource.CloseButtonDrawable;
@@ -16,7 +17,7 @@ import static android.graphics.Color.BLACK;
 import static android.view.Gravity.CENTER_VERTICAL;
 import static android.view.Gravity.LEFT;
 import static android.view.Gravity.RIGHT;
-import static android.view.ViewGroup.LayoutParams.FILL_PARENT;
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 class VastVideoToolbar extends LinearLayout {
     private static final int TOOLBAR_HEIGHT_DIPS = 44;
@@ -42,7 +43,7 @@ class VastVideoToolbar extends LinearLayout {
 
         final int videoToolbarHeight = Dips.dipsToIntPixels(TOOLBAR_HEIGHT_DIPS, getContext());
         final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                FILL_PARENT,
+                MATCH_PARENT,
                 videoToolbarHeight);
         setLayoutParams(layoutParams);
 
@@ -60,15 +61,36 @@ class VastVideoToolbar extends LinearLayout {
         addView(mCloseButtonWidget);
     }
 
-    String getDisplaySeconds(final long millisecondsRemaining) {
-        return String.valueOf(Math.round(Math.ceil(millisecondsRemaining / 1000f)));
+    /**
+     * Rounds up to the nearest full second. Formally, this is the long
+     * closest to negative infinity above or equal to millis, in milliseconds,
+     * converted to seconds.
+     *
+     * @param millis Time in milliseconds
+     * @return Time in seconds, rounded up.
+     */
+    @VisibleForTesting
+    long convertMillisecondsToSecondsRoundedUp(final long millis) {
+        return Math.round(Math.ceil(millis / 1000f));
     }
 
+    @VisibleForTesting
     void updateDurationWidget(final int remainingTime) {
         if (remainingTime >= THRESHOLD_FOR_HIDING_VIDEO_DURATION) {
-            mDurationWidget.updateText("Ends in " + getDisplaySeconds(remainingTime) + " seconds");
+            mDurationWidget.updateText("Ends in " + formatTime(remainingTime));
         } else if (remainingTime >= 0) {
             mDurationWidget.updateText("Thanks for watching");
+        }
+    }
+
+    @VisibleForTesting
+    String formatTime(final long milliseconds) {
+        final long seconds = convertMillisecondsToSecondsRoundedUp(milliseconds);
+
+        if (seconds == 1) {
+            return "1 second";
+        } else {
+            return String.valueOf(seconds) + " seconds";
         }
     }
 
@@ -78,7 +100,20 @@ class VastVideoToolbar extends LinearLayout {
             mCountdownWidget.setVisibility(View.VISIBLE);
         }
 
-        mCountdownWidget.updateImageText(getDisplaySeconds(remainingTime));
+        mCountdownWidget.updateImageText(String.valueOf(convertMillisecondsToSecondsRoundedUp(
+                remainingTime)));
+    }
+
+    void updateLearnMoreButtonText(final String customCtaText) {
+        mLearnMoreWidget.updateText(customCtaText);
+    }
+
+    void updateCloseButtonText(final String customSkipText) {
+        mCloseButtonWidget.updateText(customSkipText);
+    }
+
+    void updateCloseButtonIcon(final String customCloseIconUrl) {
+        mCloseButtonWidget.updateImage(customCloseIconUrl);
     }
 
     void makeInteractable() {

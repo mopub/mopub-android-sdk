@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 /*
- * Tested with Facebook SDK 3.18.1
+ * Tested with Facebook SDK 3.23.1
  */
 public class FacebookNative extends CustomEventNative {
     private static final String PLACEMENT_ID_KEY = "placement_id";

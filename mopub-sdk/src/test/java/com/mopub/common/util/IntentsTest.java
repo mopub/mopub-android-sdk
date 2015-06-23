@@ -121,31 +121,85 @@ public class IntentsTest {
     public void intentForNativeBrowserScheme_shouldProperlyHandleEncodedUrls() throws UrlParseException {
         Intent intent;
 
-        intent = Intents.intentForNativeBrowserScheme("mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.example.com");
+        intent = Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.example.com"));
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
         assertThat(intent.getDataString()).isEqualTo("http://www.example.com");
 
-        intent = Intents.intentForNativeBrowserScheme("mopubnativebrowser://navigate?url=http://www.example.com/?query=1&two=2");
+        intent = Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://navigate?url=http://www.example.com/?query=1&two=2"));
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
         assertThat(intent.getDataString()).isEqualTo("http://www.example.com/?query=1");
 
-        intent = Intents.intentForNativeBrowserScheme("mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.example.com%2F%3Fquery%3D1%26two%3D2");
+        intent = Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.example.com%2F%3Fquery%3D1%26two%3D2"));
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
         assertThat(intent.getDataString()).isEqualTo("http://www.example.com/?query=1&two=2");
     }
 
     @Test(expected = UrlParseException.class)
     public void intentForNativeBrowserScheme_whenNotMoPubNativeBrowser_shouldThrowException() throws UrlParseException {
-        Intents.intentForNativeBrowserScheme("mailto://navigate?url=http://www.example.com");
+        Intents.intentForNativeBrowserScheme(Uri.parse("mailto://navigate?url=http://www.example.com"));
     }
 
     @Test(expected = UrlParseException.class)
     public void intentForNativeBrowserScheme_whenNotNavigate_shouldThrowException() throws UrlParseException {
-        Intents.intentForNativeBrowserScheme("mopubnativebrowser://getout?url=http://www.example.com");
+        Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://getout?url=http://www.example.com"));
     }
 
     @Test(expected = UrlParseException.class)
     public void intentForNativeBrowserScheme_whenUrlParameterMissing_shouldThrowException() throws UrlParseException {
-        Intents.intentForNativeBrowserScheme("mopubnativebrowser://navigate");
+        Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://navigate"));
+    }
+
+    @Test
+    public void intentForShareTweetScheme_whenValidUri_shouldReturnShareTweetIntent() throws UrlParseException {
+        Intent intent;
+        final String shareMessage = "Check out @SpaceX's Tweet: https://twitter.com/SpaceX/status/596026229536460802";
+
+        intent = Intents.intentForShareTweet(Uri.parse("mopubshare://tweet?screen_name=SpaceX&tweet_id=596026229536460802"));
+        assertThat(intent.getAction()).isEqualTo(Intent.ACTION_SEND);
+        assertThat(intent.getType()).isEqualTo("text/plain");
+        assertThat(intent.getStringExtra(Intent.EXTRA_SUBJECT)).isEqualTo(shareMessage);
+        assertThat(intent.getStringExtra(Intent.EXTRA_TEXT)).isEqualTo(shareMessage);
+    }
+
+    @Test(expected = UrlParseException.class)
+    public void intentForShareTweetScheme_whenWrongScheme_shouldThrowException() throws UrlParseException {
+        Intents.intentForShareTweet(Uri.parse("mailto://tweet?screen_name=SpaceX&tweet_id=596026229536460802"));
+    }
+
+    @Test(expected = UrlParseException.class)
+    public void intentForShareTweetScheme_whenWrongHost_shouldThrowException() throws UrlParseException {
+        Intents.intentForShareTweet(Uri.parse("mopubshare://twat?screen_name=SpaceX&tweet_id=596026229536460802"));
+    }
+
+    @Test(expected = UrlParseException.class)
+    public void intentForShareTweetScheme_whenScreenNameParameterMissing_shouldThrowException() throws UrlParseException {
+        Intents.intentForShareTweet(Uri.parse("mopubshare://tweet?foo=SpaceX&tweet_id=596026229536460802"));
+    }
+
+    @Test(expected = UrlParseException.class)
+    public void intentForShareTweetScheme_whenScreenNameParameterIsEmpty_shouldThrowException() throws UrlParseException {
+        Intents.intentForShareTweet(Uri.parse("mopubshare://tweet?screen_name=&tweet_id=596026229536460802"));
+    }
+
+    @Test(expected = UrlParseException.class)
+    public void intentForShareTweetScheme_whenTweetIdParameterMissing_shouldThrowException() throws UrlParseException {
+        Intents.intentForShareTweet(Uri.parse("mopubshare://tweet?screen_name=SpaceX&bar=596026229536460802"));
+    }
+
+    @Test(expected = UrlParseException.class)
+    public void intentForShareTweetScheme_whenTweetIdParameterIsEmpty_shouldThrowException() throws UrlParseException {
+        Intents.intentForShareTweet(Uri.parse("mopubshare://tweet?screen_name=SpaceX&tweet_id="));
+    }
+
+    @Test
+    public void launchIntentForUserClick_shouldStartActivity() throws Exception {
+        Context context = Robolectric.buildActivity(Activity.class).create().get()
+                .getApplicationContext();
+        Intent intent = mock(Intent.class);
+
+        Intents.launchIntentForUserClick(context, intent, null);
+        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+
+        assertThat(startedActivity).isNotNull();
     }
 }

@@ -5,13 +5,13 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.Nullable;
+import android.util.Base64;
 import android.view.View;
 
 import com.mopub.common.AdReport;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DateAndTime;
 import com.mopub.common.util.Streams;
-import com.mopub.mobileads.util.Base64;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -75,8 +75,8 @@ public class AdAlertReporter {
 
     private void initEmailIntent() {
         Uri emailScheme = Uri.parse(EMAIL_SCHEME);
-        mEmailIntent = new Intent(Intent.ACTION_SEND_MULTIPLE, emailScheme);
-        mEmailIntent.setType("plain/text");
+        mEmailIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+        mEmailIntent.setDataAndType(emailScheme, "plain/text");
         mEmailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{EMAIL_RECIPIENT});
     }
 

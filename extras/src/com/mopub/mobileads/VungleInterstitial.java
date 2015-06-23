@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.vungle.publisher.EventListener;
@@ -12,16 +13,16 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /*
- * Tested with Vungle SDK 3.2.2.
+ * Tested with Vungle SDK 3.3.0
  */
 public class VungleInterstitial extends CustomEventInterstitial implements EventListener {
 
-    public static final String DEFAULT_VUNGLE_APP_ID = "YOUR_DEFAULT_VUNGLE_APP_ID";
+    private static final String DEFAULT_VUNGLE_APP_ID = "YOUR_DEFAULT_VUNGLE_APP_ID";
 
     /*
      * APP_ID_KEY is intended for MoPub internal use. Do not modify.
      */
-    private static final String APP_ID_KEY = "appId";
+    public static final String APP_ID_KEY = "appId";
 
     private final VunglePub mVunglePub;
     private final Handler mHandler;
@@ -30,7 +31,7 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
     private boolean mIsLoading;
 
     public VungleInterstitial() {
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
         mScheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(10);
         mVunglePub = VunglePub.getInstance();
     }
@@ -60,13 +61,13 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
 
         // init clears the event listener.
         mVunglePub.init(context, appId);
-        mVunglePub.setEventListener(this);
+        mVunglePub.setEventListeners(this);
         scheduleOnInterstitialLoaded();
     }
 
     @Override
     protected void showInterstitial() {
-        if (mVunglePub.isCachedAdAvailable()) {
+        if (mVunglePub.isAdPlayable()) {
             mVunglePub.playAd();
         } else {
             Log.d("MoPub", "Tried to show a Vungle interstitial ad before it finished loading. Please try again.");
@@ -75,7 +76,7 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
 
     @Override
     protected void onInvalidate() {
-        mVunglePub.setEventListener(null);
+        mVunglePub.clearEventListeners();
         mScheduledThreadPoolExecutor.shutdownNow();
         mIsLoading = false;
     }
@@ -88,7 +89,7 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-            if (mVunglePub.isCachedAdAvailable()) {
+            if (mVunglePub.isAdPlayable()) {
                 Log.d("MoPub", "Vungle interstitial ad successfully loaded.");
                 mScheduledThreadPoolExecutor.shutdownNow();
                 mHandler.post(new Runnable() {
@@ -136,6 +137,9 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
             public void run() {
                 Log.d("MoPub", "Vungle interstitial ad dismissed.");
                 mCustomEventInterstitialListener.onInterstitialDismissed();
+                if (wasCallToActionClicked) {
+                    mCustomEventInterstitialListener.onInterstitialClicked();
+                }
             }
         });
     }
@@ -146,8 +150,9 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
     }
 
     @Override
-    public void onCachedAdAvailable() {
-        // Due to the inconsistent behavior of this method, we rely on scheduleOnInterstitialLoaded instead.
+    public void onAdPlayableChanged(final boolean playable) {
+        // Do nothing here. After loading is kicked off, we scheduleOnInterstitialLoaded and check until
+        // we have a playable ad or we timeout.
     }
 
     @Deprecated // for testing

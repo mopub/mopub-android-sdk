@@ -26,7 +26,6 @@ public class CloseableLayoutTest {
     private CloseableLayout subject;
 
     @Mock private OnCloseListener mockCloseListener;
-    @Mock private Canvas mockCanvas;
 
     private MotionEvent closeRegionDown;
     private MotionEvent closeRegionUp;
@@ -97,8 +96,8 @@ public class CloseableLayoutTest {
 
         int expectedTop = 0;
         int expectedLeft = (int) (100 - CloseableLayout.CLOSE_REGION_SIZE_DP);
-
-        subject.draw(mockCanvas);
+        Canvas canvas = new Canvas();
+        subject.draw(canvas);
         Rect closeBounds = subject.getCloseBounds();
         assertThat(closeBounds.top).isEqualTo(expectedTop);
         assertThat(closeBounds.bottom).isEqualTo(
@@ -110,12 +109,13 @@ public class CloseableLayoutTest {
 
     @Test
     public void draw_withoutCloseBoundsChanged_shouldNotUpdateCloseBounds() {
-        subject.draw(mockCanvas);
+        Canvas canvas = new Canvas();
+        subject.draw(canvas);
         Rect originalCloseBounds = subject.getCloseBounds();
 
         subject.setCloseBounds(new Rect(40, 41, 42, 43));
         subject.setCloseBoundChanged(false);
-        subject.draw(mockCanvas);
+        subject.draw(canvas);
 
         assertThat(subject.getCloseBounds()).isEqualTo(originalCloseBounds);
     }

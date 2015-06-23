@@ -27,14 +27,15 @@ import org.mockito.Mock;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLocalBroadcastManager;
+import org.robolectric.util.ActivityController;
 
+import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
+import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
-import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.getHtmlInterstitialIntentFilter;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiverTest.getIntentForActionAndIdentifier;
-import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -56,6 +57,7 @@ public class MraidActivityTest {
 
     long testBroadcastIdentifier = 2222;
 
+    ActivityController<TestMraidActivity> activityController;
     TestMraidActivity subject;
 
     // Make a concrete version of the abstract class for testing purposes.
@@ -70,9 +72,10 @@ public class MraidActivityTest {
 
     @Before
     public void setUp() throws Exception {
-        subject = Robolectric.buildActivity(TestMraidActivity.class).get();
+        activityController = Robolectric.buildActivity(TestMraidActivity.class).start();
+        subject = activityController.get();
         subject.mraidWebView = mraidWebView;
-        Robolectric.shadowOf(subject).callOnCreate(null);
+        activityController.create();
     }
 
     @Ignore("Mraid 2.0")
@@ -297,7 +300,7 @@ public class MraidActivityTest {
     @Ignore("Mraid 2.0")
     @Test
     public void onPause_shouldOnPauseMraidView() throws Exception {
-        Robolectric.shadowOf(subject).callOnPause();
+        activityController.pause();
 
         verify(mraidWebView).onPause();
     }

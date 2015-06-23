@@ -8,6 +8,8 @@ import android.support.annotation.Nullable;
 import com.mopub.common.Constants;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.common.util.DeviceUtils;
+import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubClientPositioning;
 import com.mopub.network.MoPubNetworkError;
 import com.mopub.network.Networking;
@@ -88,6 +90,9 @@ class ServerPositioningSource implements PositioningSource {
                 if (!(error instanceof MoPubNetworkError) ||
                         ((MoPubNetworkError) error).getReason().equals(MoPubNetworkError.Reason.WARMING_UP)) {
                     MoPubLog.e("Failed to load positioning data", error);
+                    if (error.networkResponse == null && !DeviceUtils.isNetworkAvailable(mContext)) {
+                        MoPubLog.c(String.valueOf(MoPubErrorCode.NO_CONNECTION.toString()));
+                    }
                 }
 
                 handleFailure();

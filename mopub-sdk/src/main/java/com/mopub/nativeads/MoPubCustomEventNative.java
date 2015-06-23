@@ -48,7 +48,6 @@ public class MoPubCustomEventNative extends CustomEventNative {
             moPubForwardingNativeAd.loadAd();
         } catch (IllegalArgumentException e) {
             customEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
-            MoPubEvents.log(new ErrorEvent.Builder("","").withException(e).build());
         }
     }
 

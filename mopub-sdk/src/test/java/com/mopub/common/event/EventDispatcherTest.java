@@ -2,10 +2,10 @@ package com.mopub.common.event;
 
 import android.app.Activity;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.Message;
 
 import com.mopub.common.test.support.SdkTestRunner;
-import com.ximpleware.extended.parser.WIN1250;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -37,19 +37,13 @@ public class EventDispatcherTest {
         recorders.add(mockEventRecorder1);
         recorders.add(mockEventRecorder2);
     }
-    
-    @Test
-    public void constructor_shouldStartHandlerThread() throws Exception {
-        subject = new EventDispatcher(recorders, mockHandlerThread);
-        verify(mockHandlerThread).start();
-    }
 
     @Test
     public void handler_handleMessage_shouldCallRecordOnAllRecorders() throws Exception {
         Message message = new Message();
         message.obj = mock(Event.class);
 
-        subject = new EventDispatcher(recorders, mockHandlerThread);
+        subject = new EventDispatcher(recorders, Looper.getMainLooper());
         subject.getHandlerCallback().handleMessage(message);
 
         verify(mockEventRecorder1).record(eq((Event) message.obj));
@@ -61,7 +55,7 @@ public class EventDispatcherTest {
         Message message = new Message();
         message.obj = mock(Activity.class);
 
-        subject = new EventDispatcher(recorders, mockHandlerThread);
+        subject = new EventDispatcher(recorders, Looper.getMainLooper());
         subject.getHandlerCallback().handleMessage(message);
 
         verify(mockEventRecorder1, never()).record(any(BaseEvent.class));

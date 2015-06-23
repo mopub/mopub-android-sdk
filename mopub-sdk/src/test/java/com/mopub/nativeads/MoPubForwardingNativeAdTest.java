@@ -7,8 +7,8 @@ import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.nativeads.test.support.MoPubShadowBitmap;
 import com.mopub.nativeads.test.support.MoPubShadowDisplay;
 import com.mopub.network.MaxWidthImageLoader;
+import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
-import com.mopub.volley.RequestQueue;
 import com.mopub.volley.VolleyError;
 import com.mopub.volley.toolbox.ImageLoader;
 
@@ -53,7 +53,7 @@ public class MoPubForwardingNativeAdTest {
     @Mock
     private CustomEventNative.CustomEventNativeListener mockCustomEventNativeListener;
     @Mock
-    private RequestQueue mockRequestQueue;
+    private MoPubRequestQueue mockRequestQueue;
     @Mock
     private MaxWidthImageLoader mockImageLoader;
     @Mock

@@ -6,6 +6,7 @@ import android.view.View;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
 import static com.mopub.common.util.Reflection.MethodBuilder;
@@ -22,7 +23,7 @@ public class ReflectionTest {
 
     @Before
     public void setup(){
-        activity = new Activity();
+        activity = Robolectric.buildActivity(Activity.class).create().get();
         view = new View(activity);
         string = "goat";
     }

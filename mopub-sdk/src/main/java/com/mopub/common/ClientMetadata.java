@@ -5,15 +5,16 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
-import android.view.Display;
-import android.view.WindowManager;
 
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.common.util.DeviceUtils;
+import com.mopub.common.util.Dips;
 import com.mopub.common.util.Utils;
 
 import java.util.Locale;
@@ -86,15 +87,13 @@ public class ClientMetadata {
         }
     }
 
-    private static ClientMetadata sInstance;
+    private static volatile ClientMetadata sInstance;
 
     // Cached client metadata used for generating URLs and events.
     private final String mDeviceManufacturer;
     private final String mDeviceModel;
     private final String mDeviceProduct;
     private final String mDeviceOsVersion;
-    private final int mDeviceScreenWidthPx;
-    private final int mDeviceScreenHeightPx;
     private final String mSdkVersion;
     private final String mAppVersion;
     private final String mAppPackageName;
@@ -137,7 +136,6 @@ public class ClientMetadata {
         return result;
     }
 
-
     // NEVER CALL THIS AS A USER. Get it from the Singletons class.
     public ClientMetadata(Context context) {
         mContext = context.getApplicationContext();
@@ -147,11 +145,6 @@ public class ClientMetadata {
         mDeviceModel = Build.MODEL;
         mDeviceProduct = Build.PRODUCT;
         mDeviceOsVersion = Build.VERSION.RELEASE;
-
-        WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
-        Display display = wm.getDefaultDisplay();
-        mDeviceScreenWidthPx = display.getWidth();
-        mDeviceScreenHeightPx = display.getHeight();
 
         mSdkVersion = MoPub.SDK_VERSION;
 
@@ -357,17 +350,31 @@ public class ClientMetadata {
     }
 
     /**
-     * @return the device screen width in pixels.
+     * @return the device screen width in dips according to current orientation.
      */
-    public int getDeviceScreenWidthPx() {
-        return mDeviceScreenWidthPx;
+    public int getDeviceScreenWidthDip() {
+        return Dips.screenWidthAsIntDips(mContext);
     }
 
     /**
-     * @return the device screen height in pixels.
+     * @return the device screen height in dips according to current orientation.
      */
-    public int getDeviceScreenHeightPx() {
-        return mDeviceScreenHeightPx;
+    public int getDeviceScreenHeightDip() {
+        return Dips.screenHeightAsIntDips(mContext);
+    }
+
+    /**
+     * This tries to get the physical number of pixels on the device. This attempts to include
+     * the pixels in the notification bar and soft buttons. This method only works after
+     * mContext is initialized.
+     *
+     * @return Width and height of the device. This is 0 by 0 if there is no context.
+     */
+    public Point getDeviceDimensions() {
+        if (Preconditions.NoThrow.checkNotNull(mContext)) {
+            return DeviceUtils.getDeviceDimensions(mContext);
+        }
+        return new Point(0, 0);
     }
 
     /**
@@ -396,6 +403,14 @@ public class ClientMetadata {
      */
     public String getAppName() {
         return mAppName;
+    }
+
+    @Deprecated
+    @VisibleForTesting
+    public static void setInstance(ClientMetadata clientMetadata) {
+        synchronized (ClientMetadata.class) {
+            sInstance = clientMetadata;
+        }
     }
 
     @VisibleForTesting

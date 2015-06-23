@@ -1,6 +1,7 @@
 package com.mopub.mobileads;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
@@ -11,10 +12,13 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.mopub.common.util.Dips;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.common.util.Dips;
 import com.mopub.common.util.Utils;
 import com.mopub.mobileads.resource.TextDrawable;
+import com.mopub.network.Networking;
+import com.mopub.volley.VolleyError;
+import com.mopub.volley.toolbox.ImageLoader;
 
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
@@ -105,6 +109,7 @@ class ToolbarWidget extends RelativeLayout {
 
     private TextView mTextView;
     private ImageView mImageView;
+    private final ImageLoader mImageLoader;
 
     private static final int TEXT_PADDING_DIPS = 5;
     private static final int IMAGE_PADDING_DIPS = 5;
@@ -124,6 +129,8 @@ class ToolbarWidget extends RelativeLayout {
         mTextPadding = Dips.dipsToIntPixels(TEXT_PADDING_DIPS, getContext());
         mImagePadding = Dips.dipsToIntPixels(IMAGE_PADDING_DIPS, getContext());
         mImageSideLength = Dips.dipsToIntPixels(IMAGE_SIDE_LENGTH_DIPS, getContext());
+
+        mImageLoader = Networking.getImageLoader(getContext());
 
         setVisibility(builder.visibility);
 
@@ -188,13 +195,48 @@ class ToolbarWidget extends RelativeLayout {
         }
     }
 
-    @Deprecated // for testing
-    TextDrawable getImageViewDrawable() {
-        return (TextDrawable) mImageView.getDrawable();
+    void updateImage(final String imageUrl) {
+        mImageLoader.get(imageUrl, new ImageLoader.ImageListener() {
+            @Override
+            public void onResponse(final ImageLoader.ImageContainer imageContainer,
+                    final boolean isImmediate) {
+                Bitmap bitmap = imageContainer.getBitmap();
+                if (bitmap != null) {
+                    mImageView.setImageBitmap(bitmap);
+                } else {
+                    MoPubLog.d(String.format("%s returned null bitmap", imageUrl));
+                }
+            }
+
+            @Override
+            public void onErrorResponse(final VolleyError volleyError) {
+                MoPubLog.d("Failed to load image.", volleyError);
+            }
+        });
     }
 
     @Deprecated // for testing
-    void setImageViewDrawable(TextDrawable drawable) {
-        mImageView.setImageDrawable((Drawable) drawable);
+    ImageView getImageView() {
+        return mImageView;
+    }
+
+    @Deprecated // for testing
+    void setImageView(ImageView imageView) {
+        mImageView = imageView;
+    }
+
+    @Deprecated // for testing
+    Drawable getImageViewDrawable() {
+        return mImageView.getDrawable();
+    }
+
+    @Deprecated // for testing
+    void setImageViewDrawable(Drawable drawable) {
+        mImageView.setImageDrawable(drawable);
+    }
+
+    @Deprecated // for testing
+    String getTextViewText() {
+        return mTextView.getText().toString();
     }
 }

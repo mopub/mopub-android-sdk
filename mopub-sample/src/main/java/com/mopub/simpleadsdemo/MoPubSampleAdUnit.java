@@ -19,6 +19,7 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
         BANNER("Banner", BannerDetailFragment.class),
         MRECT("Mrect", MrectDetailFragment.class),
         INTERSTITIAL("Interstitial", InterstitialDetailFragment.class),
+        REWARDED_VIDEO("Rewarded Video", RewardedVideoDetailFragment.class),
         LIST_VIEW("Native List View", NativeListViewFragment.class),
         CUSTOM_NATIVE("Native Gallery (Custom Stream)", NativeGalleryFragment.class);
 

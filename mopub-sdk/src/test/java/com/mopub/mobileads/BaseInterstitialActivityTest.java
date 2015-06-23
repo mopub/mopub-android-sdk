@@ -16,8 +16,6 @@ import org.robolectric.Robolectric;
 
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.stub;
 
 @RunWith(SdkTestRunner.class)
 public class BaseInterstitialActivityTest {
@@ -52,8 +50,7 @@ public class BaseInterstitialActivityTest {
 
     @Test
     public void onDestroy_shouldCleanUpContentView() throws Exception {
-        subject = Robolectric.buildActivity(
-                TestInterstitialActivity.class).create().destroy().get();
+        subject = Robolectric.buildActivity(TestInterstitialActivity.class).create().destroy().get();
 
         assertThat(getContentView(subject).getChildCount()).isEqualTo(0);
     }
@@ -85,12 +82,5 @@ public class BaseInterstitialActivityTest {
 
     protected FrameLayout getContentView(BaseInterstitialActivity subject) {
         return (FrameLayout) ((ViewGroup) subject.findViewById(android.R.id.content)).getChildAt(0);
-    }
-
-    protected void resetMockedView(View view) {
-        reset(view);
-        stub(view.getLayoutParams()).toReturn(
-                new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
-                        FrameLayout.LayoutParams.WRAP_CONTENT));
     }
 }

@@ -7,7 +7,8 @@ import com.mopub.common.MoPubReward;
 import java.util.Set;
 
 /**
- * Listener for rewarded video events. Implementers of this interface should be long-lived.
+ * Listener for rewarded video events. Implementers of this interface will receive events for all
+ * rewarded video ad units in the app.:
  */
 public interface MoPubRewardedVideoListener {
 

@@ -17,11 +17,17 @@ import java.util.Map;
  * Tested with Greystripe SDK 2.4.0.
  */
 class GreystripeInterstitial extends CustomEventInterstitial implements GSAdListener {
-    public static final String DEFAULT_GREYSTRIPE_APP_ID = "YOUR_GREYSTRIPE_APP_ID";
+
+    private static final String DEFAULT_GREYSTRIPE_APP_ID = "YOUR_GREYSTRIPE_APP_ID";
+
+    /*
+     * These keys are intended for MoPub internal use. Do not modify.
+     */
+    public static final String APP_ID_KEY = "GUID";
 
     private CustomEventInterstitialListener mInterstitialListener;
     private GSFullscreenAd mGreystripeAd;
-    
+
     /*
      * Abstract methods from CustomEventInterstitial
      */
@@ -32,16 +38,19 @@ class GreystripeInterstitial extends CustomEventInterstitial implements GSAdList
                                     final Map<String, String> serverExtras) {
         mInterstitialListener = interstitialListener;
 
-        /*
-         * You may also pass this String down in the serverExtras Map by specifying Custom Event Data
-         * in MoPub's web interface.
-         */
         String greystripeAppId = DEFAULT_GREYSTRIPE_APP_ID;
-        
+        if (extrasAreValid(serverExtras)) {
+            greystripeAppId = serverExtras.get(APP_ID_KEY);
+        }
+
         mGreystripeAd = new GSFullscreenAd(context, greystripeAppId);
         mGreystripeAd.addListener(this);
-        
+
         mGreystripeAd.fetch();
+    }
+
+    private static boolean extrasAreValid(Map<String, String> extras) {
+        return extras.containsKey(APP_ID_KEY);
     }
 
     @Override
@@ -50,12 +59,12 @@ class GreystripeInterstitial extends CustomEventInterstitial implements GSAdList
             mInterstitialListener.onInterstitialFailed(MoPubErrorCode.NETWORK_INVALID_STATE);
             return;
         }
-        
+
         Log.d("MoPub", "Showing Greystripe interstitial ad.");
         mGreystripeAd.display();
         mInterstitialListener.onInterstitialShown();
     }
-    
+
     @Override
     protected void onInvalidate() {
         mGreystripeAd.removeListener(this);

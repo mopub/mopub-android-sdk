@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.robolectric.Robolectric;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -36,7 +37,7 @@ public class CacheServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         key1 = "http://www.mopub.com/";
         data1 = "image_data_1";
 

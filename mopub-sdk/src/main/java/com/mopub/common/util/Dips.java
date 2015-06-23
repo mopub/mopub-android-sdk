@@ -1,8 +1,11 @@
 package com.mopub.common.util;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
+
+import com.mopub.common.Preconditions;
 
 public class Dips {
     public static float pixelsToFloatDips(final float pixels, final Context context) {
@@ -32,5 +35,17 @@ public class Dips {
 
     public static int asIntPixels(float dips, Context context) {
         return (int) (asFloatPixels(dips, context) + 0.5f);
+    }
+
+    public static int screenWidthAsIntDips(@NonNull Context context) {
+        Preconditions.checkNotNull(context);
+
+        return pixelsToIntDips(context.getResources().getDisplayMetrics().widthPixels, context);
+    }
+
+    public static int screenHeightAsIntDips(@NonNull Context context) {
+        Preconditions.checkNotNull(context);
+
+        return pixelsToIntDips(context.getResources().getDisplayMetrics().heightPixels, context);
     }
 }

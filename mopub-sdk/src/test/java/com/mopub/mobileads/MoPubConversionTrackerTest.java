@@ -3,6 +3,7 @@ package com.mopub.mobileads;
 import android.app.Activity;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
 import com.mopub.network.TrackingRequest;
 import com.mopub.volley.RequestQueue;
@@ -25,7 +26,7 @@ public class MoPubConversionTrackerTest {
     private MoPubConversionTracker subject;
     private Activity context;
     @Mock
-    RequestQueue mockRequestQueue;
+    MoPubRequestQueue mockRequestQueue;
     @Captor
     ArgumentCaptor<TrackingRequest> requestCaptor;
 

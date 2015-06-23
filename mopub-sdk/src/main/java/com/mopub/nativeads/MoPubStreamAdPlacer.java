@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.WeakHashMap;
 
 /**
- * @code MoPubStreamAdPlacer facilitates loading ads and placing them into a content stream.
+ * {@code MoPubStreamAdPlacer} facilitates loading ads and placing them into a content stream.
  *
  * If you are inserting ads into a ListView, we recommend that you use a {@link MoPubAdAdapter}
  * instead of this class.
@@ -214,7 +214,7 @@ public class MoPubStreamAdPlacer {
     /**
      * Start loading ads from the MoPub server, using the given request targeting information.
      *
-     * When loading ads, use {@link MoPubNativeAdLoadedListener#onAdLoaded(int)} will be called for
+     * When loading ads, {@link MoPubNativeAdLoadedListener#onAdLoaded(int)} will be called for
      * each ad that is added to the stream.
      *
      * To refresh ads in your stream, call {@code loadAds} again. When new ads load, they will
@@ -306,7 +306,7 @@ public class MoPubStreamAdPlacer {
      * Inserts ads that should appear in the given range.
      *
      * By default, the ad placer will place ads withing the first 10 positions in your stream,
-     * according the positions you've specified. You can should use this method as your user scrolls
+     * according to the positions you've specified. You can use this method as your user scrolls
      * through your stream to place ads into the currently visible range.
      *
      * This method takes advantage of a short-lived in memory ad cache, and will immediately place
@@ -393,7 +393,7 @@ public class MoPubStreamAdPlacer {
      * This method will attempt to reuse the convertView if it is not {@code null}, and will
      * otherwise create it. See {@link MoPubAdRenderer#createAdView(Context, ViewGroup)}.
      *
-     * @param position The position where to place an ad.
+     * @param position The position to place an ad into.
      * @param convertView A recycled view into which to render data, or {@code null}.
      * @param parent The parent that the view will eventually be attached to.
      * @return The newly placed ad view.
@@ -428,11 +428,11 @@ public class MoPubStreamAdPlacer {
     }
 
     /**
-     * Removes ads in the given range from [startRange, endRange).
+     * Removes ads in the given range from [originalStartPosition, originalEndPosition).
      *
-     * @param originalStartPosition The start position to clear, expressed as the original content
+     * @param originalStartPosition The start position to clear (inclusive), expressed as the original content
      * position before ads were inserted.
-     * @param originalEndPosition The position after end position to clear, expressed as the
+     * @param originalEndPosition The position after end position to clear (exclusive), expressed as the
      * original content position before ads were inserted.
      * @return The number of ads removed.
      */
@@ -547,8 +547,7 @@ public class MoPubStreamAdPlacer {
      *
      * You must call this method so that the placer knows where valid positions are to place ads.
      * After calling this method, the ad placer will call {@link
-     * MoPubNativeAdLoadedListener#onAdLoaded
-     * (int)} each time an ad is loaded in the stream.
+     * MoPubNativeAdLoadedListener#onAdLoaded (int)} each time an ad is loaded in the stream.
      *
      * @param originalCount The original number of items.
      */
@@ -573,7 +572,7 @@ public class MoPubStreamAdPlacer {
      *
      * and you insert an item at position 2, your new stream will look like:
      *
-     * {@code Item0 Ad Item1 Item2 New Item Ad Item3}
+     * {@code Item0 Ad Item1 Item2 NewItem Ad Item3}
      *
      * @param originalPosition The position at which to add an item. If you have an adjusted
      * position, you will need to call {@link #getOriginalPosition} to get this value.
@@ -608,6 +607,14 @@ public class MoPubStreamAdPlacer {
      *
      * Use this method if you are moving an item in your stream and want to have ad positions move
      * as well.
+     *
+     * For example if your stream looks like:
+     *
+     * {@code Item0 Ad Item1 Item2 Ad Item3}
+     *
+     * and you move item at position 2 to position 3, your new stream will look like:
+     *
+     * {@code Item0 Ad Item1 Ad Item3 Item2}
      *
      * @param originalPosition The position from which to move an item. If you have an adjusted
      * position, you will need to call {@link #getOriginalPosition} to get this value.
@@ -644,8 +651,12 @@ public class MoPubStreamAdPlacer {
     }
 
     /**
-     * Attempts to place ads in the range (start, end], returning false if there is no ad available
+     * Attempts to place ads in the range [start, end], returning false if there is no ad available
      * to be placed.
+     *
+     * @param start The start of the range in which to place ads, inclusive.
+     * @param end The end of the range in which to place ads, exclusive.
+     * @return false if there is no ad available to be placed.
      */
     private boolean tryPlaceAdsInRange(final int start, final int end) {
         int position = start;
@@ -668,6 +679,9 @@ public class MoPubStreamAdPlacer {
     /**
      * Attempts to place an ad at the given position, returning false if there is no ad available to
      * be placed.
+     *
+     * @param position The position to place the ad at.
+     * @return false if there is no ad available to be placed.
      */
     private boolean tryPlaceAd(final int position) {
         final NativeResponse adResponse = mAdSource.dequeueAd();

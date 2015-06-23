@@ -1,15 +1,11 @@
 package com.mopub.nativeads;
 
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.support.annotation.NonNull;
 
-import com.mopub.common.MoPubBrowser;
+import com.mopub.common.UrlHandler;
+import com.mopub.common.UrlAction;
 import com.mopub.common.logging.MoPubLog;
-import com.mopub.common.util.Intents;
-import com.mopub.exceptions.IntentNotResolvableException;
-import com.mopub.exceptions.UrlParseException;
 
 import java.lang.ref.WeakReference;
 import java.util.Iterator;
@@ -36,53 +32,31 @@ class ClickDestinationResolutionListener implements UrlResolutionTask.UrlResolut
      */
     @Override
     public void onSuccess(@NonNull final String resolvedUrl) {
-        // Handle MoPubNativeBrowser schemes
-        if (Intents.isNativeBrowserScheme(resolvedUrl)) {
-            try {
-                final Intent intent = Intents.intentForNativeBrowserScheme(resolvedUrl);
-                Intents.startActivity(mContext, intent);
-                removeSpinningProgressView();
-                return;
-            } catch (UrlParseException e) {
-                MoPubLog.d(e.getMessage());
-            } catch (IntentNotResolvableException e) {
-                MoPubLog.d("Could not handle intent for URI: " + resolvedUrl);
-            }
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(
+                        UrlAction.IGNORE_ABOUT_SCHEME,
+                        UrlAction.OPEN_NATIVE_BROWSER,
+                        UrlAction.OPEN_APP_MARKET,
+                        UrlAction.OPEN_IN_APP_BROWSER,
+                        UrlAction.HANDLE_SHARE_TWEET,
+                        UrlAction.FOLLOW_DEEP_LINK)
+                .withResultActions(new UrlHandler.ResultActions() {
+                    @Override
+                    public void urlHandlingSucceeded(@NonNull String url,
+                            @NonNull UrlAction urlAction) {
+                    }
 
-            if (mUrlIterator.hasNext()) {
-                UrlResolutionTask.getResolvedUrl(mUrlIterator.next(), this);
-            } else {
-                removeSpinningProgressView();
-            }
-            return;
-        }
-
-        // Handle Android deeplinks
-        if (Intents.isDeepLink(resolvedUrl)) {
-            final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(resolvedUrl));
-
-            // Open another Android app from the deep link
-            if (Intents.deviceCanHandleIntent(mContext, intent)) {
-                try {
-                    Intents.startActivity(mContext, intent);
-                    return;
-                } catch (IntentNotResolvableException e) {
-                    MoPubLog.d("Could not handle intent with URI: " + resolvedUrl);
-                } finally {
-                    removeSpinningProgressView();
-                }
-            }
-
-            if (mUrlIterator.hasNext()) {
-                UrlResolutionTask.getResolvedUrl(mUrlIterator.next(), this);
-            } else {
-                removeSpinningProgressView();
-            }
-            return;
-        }
-
+                    @Override
+                    public void urlHandlingFailed(@NonNull String url,
+                            @NonNull UrlAction lastFailedUrlAction) {
+                        if (mUrlIterator.hasNext()) {
+                            UrlResolutionTask.getResolvedUrl(mUrlIterator.next(),
+                                    ClickDestinationResolutionListener.this);
+                        }
+                    }
+                })
+                .build().handleUrl(mContext, resolvedUrl);
         removeSpinningProgressView();
-        MoPubBrowser.open(mContext, resolvedUrl);
     }
 
     @Override

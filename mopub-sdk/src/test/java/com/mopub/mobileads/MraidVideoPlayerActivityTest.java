@@ -40,7 +40,7 @@ public class MraidVideoPlayerActivityTest {
 
     @Before
     public void setup() {
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         intent = new Intent(context, MraidVideoPlayerActivity.class);
 
         testBroadcastIdentifier = 1001;

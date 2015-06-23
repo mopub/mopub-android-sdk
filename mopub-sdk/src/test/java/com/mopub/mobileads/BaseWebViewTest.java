@@ -11,6 +11,7 @@ import com.mopub.common.test.support.SdkTestRunner;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowWebView;
 
@@ -27,7 +28,7 @@ public class BaseWebViewTest {
 
     @Before
     public void setup() {
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
     }
 
     @Config(reportSdk = VERSION_CODES.JELLY_BEAN_MR1)

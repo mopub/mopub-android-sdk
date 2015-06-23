@@ -65,7 +65,7 @@ public class VastXmlManagerAggregatorTest {
         assertThat(vastXmlManagers.get(0).getMediaFileUrl()).isEqualTo("https://s3.amazonaws.com/mopub-vast/tapad-video1.mp4");
         assertThat(vastXmlManagers.get(0).getClickThroughUrl()).isEqualTo(null);
         assertThat(vastXmlManagers.get(0).getImpressionTrackers().size()).isEqualTo(4);
-        assertThat(vastXmlManagers.get(0).getVideoFirstQuartileTrackers().size()).isEqualTo(1);
+        assertThat(vastXmlManagers.get(0).getFractionalProgressTrackers().size()).isEqualTo(3);
     }
 
 }

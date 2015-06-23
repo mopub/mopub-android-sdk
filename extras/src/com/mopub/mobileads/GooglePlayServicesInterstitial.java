@@ -10,7 +10,7 @@ import com.google.android.gms.ads.InterstitialAd;
 import java.util.Map;
 
 /*
- * Compatible with version 5.0.89 of the Google Play Services SDK.
+ * Compatible with version 7.0.0 of the Google Play Services SDK.
  */
 
 // Note: AdMob ads will now use this class as Google has deprecated the AdMob SDK.
@@ -19,8 +19,8 @@ public class GooglePlayServicesInterstitial extends CustomEventInterstitial {
     /*
      * These keys are intended for MoPub internal use. Do not modify.
      */
-    private static final String AD_UNIT_ID_KEY = "adUnitID";
-    private static final String LOCATION_KEY = "location";
+    public static final String AD_UNIT_ID_KEY = "adUnitID";
+    public static final String LOCATION_KEY = "location";
 
     private CustomEventInterstitialListener mInterstitialListener;
     private InterstitialAd mGoogleInterstitialAd;
@@ -45,7 +45,9 @@ public class GooglePlayServicesInterstitial extends CustomEventInterstitial {
         mGoogleInterstitialAd.setAdListener(new InterstitialAdListener());
         mGoogleInterstitialAd.setAdUnitId(adUnitId);
 
-        final AdRequest adRequest = new AdRequest.Builder().build();
+        final AdRequest adRequest = new AdRequest.Builder()
+                .setRequestAgent("MoPub")
+                .build();
 
         try {
             mGoogleInterstitialAd.loadAd(adRequest);

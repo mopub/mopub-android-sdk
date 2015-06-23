@@ -11,7 +11,7 @@
 
     <artifactId>mopub-sdk</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>aar</packaging>
     <name>MoPub SDK</name>
     <description>The SDK for MoPub developers.</description>
 
@@ -25,19 +25,20 @@
         <dependency>
             <groupId>com.android.support</groupId>
             <artifactId>support-annotations</artifactId>
-            <version>20.0.0</version>
+            <version>22.0.0</version>
         </dependency>
 
         <dependency>
             <groupId>com.android.support</groupId>
             <artifactId>support-v4</artifactId>
-            <version>19.1.0</version>
+            <version>22.0.0</version>
+            <type>aar</type>
         </dependency>
 
         <dependency>
             <groupId>com.mopub.volley</groupId>
             <artifactId>mopub-volley</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
         </dependency>
 
         <!--test-->
@@ -98,13 +99,15 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>com.jayway.maven.plugins.android.generation2</groupId>
+                <groupId>com.simpligility.maven.plugins</groupId>
                 <artifactId>android-maven-plugin</artifactId>
-                <version>3.8.2</version>
+                <version>4.2.0</version>
                 <configuration>
+                    <androidManifestFile>AndroidManifest.xml</androidManifestFile>
+                    <resourceDirectory>res</resourceDirectory>
                     <sdk>
                         <!-- platform or api level (api level 4 = platform 1.6)-->
-                        <platform>19</platform>
+                        <platform>22</platform>
                     </sdk>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
                 </configuration>

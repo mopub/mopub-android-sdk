@@ -3,7 +3,6 @@ package com.mopub.common.event;
 import android.app.Activity;
 
 import com.mopub.common.ClientMetadata;
-import com.mopub.common.MoPub;
 import com.mopub.common.test.support.SdkTestRunner;
 
 import org.json.JSONArray;
@@ -80,10 +79,10 @@ public class EventSerializerTest {
 
     @Test
     public void serializeAsJson_shouldReturnJsonArrayOfEvents() throws Exception {
-        when(mockEvent.getEventName()).thenReturn("event");
-        when(mockEvent.getEventCategory()).thenReturn("event_category");
-        when(mockErrorEvent.getEventName()).thenReturn("error_event");
-        when(mockErrorEvent.getEventCategory()).thenReturn("error_event_category");
+        when(mockEvent.getName()).thenReturn(BaseEvent.Name.AD_REQUEST);
+        when(mockEvent.getCategory()).thenReturn(BaseEvent.Category.REQUESTS);
+        when(mockErrorEvent.getName()).thenReturn(BaseEvent.Name.IMPRESSION_REQUEST);
+        when(mockErrorEvent.getCategory()).thenReturn(BaseEvent.Category.REQUESTS);
 
         ArrayList<BaseEvent> events = new ArrayList<BaseEvent>();
         events.add(mockEvent);
@@ -93,20 +92,20 @@ public class EventSerializerTest {
         assertThat(jsonArray.length()).isEqualTo(2);
 
         JSONObject jsonObject1 = jsonArray.getJSONObject(0);
-        assertThat(jsonObject1.getString("name")).isEqualTo("event");
-        assertThat(jsonObject1.getString("name_category")).isEqualTo("event_category");
+        assertThat(jsonObject1.getString("name")).isEqualTo(BaseEvent.Name.AD_REQUEST.getName());
+        assertThat(jsonObject1.getString("name_category")).isEqualTo("requests");
 
         JSONObject jsonObject2 = jsonArray.getJSONObject(1);
-        assertThat(jsonObject2.getString("name")).isEqualTo("error_event");
-        assertThat(jsonObject2.getString("name_category")).isEqualTo("error_event_category");
+        assertThat(jsonObject2.getString("name")).isEqualTo("impression_request");
+        assertThat(jsonObject2.getString("name_category")).isEqualTo("requests");
     }
 
     private void populateBaseEventFields(BaseEvent mockBaseEvent) {
         when(mockBaseEvent.getScribeCategory()).thenReturn(BaseEvent.ScribeCategory.EXCHANGE_CLIENT_EVENT);
-        when(mockBaseEvent.getEventName()).thenReturn("event_name");
-        when(mockBaseEvent.getEventCategory()).thenReturn("event_category");
+        when(mockBaseEvent.getName()).thenReturn(BaseEvent.Name.AD_REQUEST);
+        when(mockBaseEvent.getCategory()).thenReturn(BaseEvent.Category.REQUESTS);
         when(mockBaseEvent.getSdkProduct()).thenReturn(BaseEvent.SdkProduct.NATIVE);
-        when(mockBaseEvent.getSdkVersion()).thenReturn("3.3.0");
+        when(mockBaseEvent.getSdkVersion()).thenReturn("3.5.0");
         when(mockBaseEvent.getAdUnitId()).thenReturn("8cf00598d3664adaaeccd800e46afaca");
         when(mockBaseEvent.getAdCreativeId()).thenReturn("3c2b887e2c2a4cd0ae6a925440a62f0d");
         when(mockBaseEvent.getAdType()).thenReturn("html");
@@ -117,14 +116,15 @@ public class EventSerializerTest {
         when(mockBaseEvent.getAppName()).thenReturn("MoPub Sample App");
         when(mockBaseEvent.getAppPackageName()).thenReturn("com.mopub.simpleadsdemo");
         when(mockBaseEvent.getAppVersion()).thenReturn("1.0");
+        when(mockBaseEvent.getObfuscatedClientAdvertisingId()).thenCallRealMethod();
         when(mockBaseEvent.getClientAdvertisingId()).thenReturn("38400000-8cf0-11bd-b23e-10b96e40000d");
         when(mockBaseEvent.getClientDoNotTrack()).thenReturn(false);
         when(mockBaseEvent.getDeviceManufacturer()).thenReturn("LGE");
         when(mockBaseEvent.getDeviceModel()).thenReturn("Nexus 5");
         when(mockBaseEvent.getDeviceProduct()).thenReturn("hammerhead");
         when(mockBaseEvent.getDeviceOsVersion()).thenReturn("5.0");
-        when(mockBaseEvent.getDeviceScreenWidthPx()).thenReturn(1080);
-        when(mockBaseEvent.getDeviceScreenHeightPx()).thenReturn(1920);
+        when(mockBaseEvent.getDeviceScreenWidthDip()).thenReturn(1080);
+        when(mockBaseEvent.getDeviceScreenHeightDip()).thenReturn(1920);
         when(mockBaseEvent.getGeoLat()).thenReturn(37.7833);
         when(mockBaseEvent.getGeoLon()).thenReturn(-122.4183333);
         when(mockBaseEvent.getGeoAccuracy()).thenReturn(10.0);
@@ -148,12 +148,12 @@ public class EventSerializerTest {
         assertThat(jsonObject.getLong("ts")).isEqualTo(1416447053472L);
 
         // Name Details
-        assertThat(jsonObject.getString("name")).isEqualTo("event_name");
-        assertThat(jsonObject.getString("name_category")).isEqualTo("event_category");
+        assertThat(jsonObject.getString("name")).isEqualTo(BaseEvent.Name.AD_REQUEST.getName());
+        assertThat(jsonObject.getString("name_category")).isEqualTo(BaseEvent.Category.REQUESTS.getCategory());
 
         // SDK Details
         assertThat(jsonObject.getInt("sdk_product")).isEqualTo(BaseEvent.SdkProduct.NATIVE.getType());
-        assertThat(jsonObject.getString("sdk_version")).isEqualTo(MoPub.SDK_VERSION);
+        assertThat(jsonObject.getString("sdk_version")).isEqualTo("3.5.0");
 
         // Ad Details
         assertThat(jsonObject.getString("ad_unit_id")).isEqualTo("8cf00598d3664adaaeccd800e46afaca");
@@ -164,13 +164,13 @@ public class EventSerializerTest {
         assertThat(jsonObject.getDouble("ad_height_px")).isEqualTo(50.0);
 
         // App Details
-        assertThat(jsonObject.getInt("app_platform")).isEqualTo(BaseEvent.AppPlatform.ANDROID.getType());
+        assertThat(jsonObject.getInt("app_platform")).isEqualTo(2);
         assertThat(jsonObject.getString("app_name")).isEqualTo("MoPub Sample App");
         assertThat(jsonObject.getString("app_package_name")).isEqualTo("com.mopub.simpleadsdemo");
         assertThat(jsonObject.getString("app_version")).isEqualTo("1.0");
 
         // Client Details
-        assertThat(jsonObject.getString("client_advertising_id")).isEqualTo("38400000-8cf0-11bd-b23e-10b96e40000d");
+        assertThat(jsonObject.getString("client_advertising_id")).isEqualTo("ifa:XXXX");
         assertThat(jsonObject.getBoolean("client_do_not_track")).isEqualTo(false);
 
         // Device Details
@@ -208,3 +208,4 @@ public class EventSerializerTest {
         assertThat(jsonObject.getLong("timestamp_client")).isEqualTo(1416447053472L);
     }
 }
+

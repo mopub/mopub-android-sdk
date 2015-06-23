@@ -67,7 +67,7 @@ public class AdAlertReporterTest {
 
         assertThat(emailIntent.getAction()).isEqualTo(Intent.ACTION_SEND_MULTIPLE);
         assertThat(emailIntent.getType()).isEqualTo("plain/text");
-        assertThat(emailIntent.getDataString()).isEqualTo("mailto:");
+        assertThat(emailIntent.getData().toString()).isEqualTo("mailto:");
         assertThat(emailIntent.getStringArrayExtra(Intent.EXTRA_EMAIL)[0]).isEqualTo(EMAIL_ADDRESS);
     }
 

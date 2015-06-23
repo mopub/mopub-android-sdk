@@ -5,7 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
-import com.mopub.common.event.MoPubEvents;
+import com.mopub.common.event.BaseEvent;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.volley.DefaultRetryPolicy;
 import com.mopub.volley.NetworkResponse;
@@ -20,7 +20,7 @@ import java.util.Arrays;
 public class TrackingRequest extends Request<Void> {
 
     public interface Listener extends Response.ErrorListener {
-        public void onResponse();
+        public void onResponse(@NonNull String url);
     }
 
     @Nullable private final TrackingRequest.Listener mListener;
@@ -49,7 +49,7 @@ public class TrackingRequest extends Request<Void> {
     @Override
     public void deliverResponse(final Void aVoid) {
         if (mListener != null) {
-            mListener.onResponse();
+            mListener.onResponse(getUrl());
         }
     }
 
@@ -63,14 +63,14 @@ public class TrackingRequest extends Request<Void> {
 
     public static void makeTrackingHttpRequest(final Iterable<String> urls,
             final Context context,
-            final MoPubEvents.Type type) {
-        makeTrackingHttpRequest(urls, context, null, type);
+            final BaseEvent.Name name) {
+        makeTrackingHttpRequest(urls, context, null, name);
     }
 
     public static void makeTrackingHttpRequest(final Iterable<String> urls,
             final Context context,
             @Nullable final Listener listener,
-            final MoPubEvents.Type type) {
+            final BaseEvent.Name name) {
         if (urls == null || context == null) {
             return;
         }
@@ -83,10 +83,10 @@ public class TrackingRequest extends Request<Void> {
 
             final TrackingRequest.Listener internalListener = new TrackingRequest.Listener() {
                 @Override
-                public void onResponse() {
+                public void onResponse(@NonNull String url) {
                     MoPubLog.d("Successfully hit tracking endpoint: " + url);
                     if (listener != null) {
-                        listener.onResponse();
+                        listener.onResponse(url);
                     }
                 }
 
@@ -114,16 +114,16 @@ public class TrackingRequest extends Request<Void> {
     }
 
     public static void makeTrackingHttpRequest(final String url,
-            final Context context, final MoPubEvents.Type type) {
-        makeTrackingHttpRequest(url, context, null, type);
+            final Context context, final BaseEvent.Name name) {
+        makeTrackingHttpRequest(url, context, null, name);
     }
 
     public static void makeTrackingHttpRequest(final String url,
             final Context context,
             @Nullable Listener listener,
-            final MoPubEvents.Type type) {
+            final BaseEvent.Name name) {
         if (url != null) {
-            makeTrackingHttpRequest(Arrays.asList(url), context, listener, type);
+            makeTrackingHttpRequest(Arrays.asList(url), context, listener, name);
         }
     }
 }

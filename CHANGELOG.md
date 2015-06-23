@@ -1,3 +1,35 @@
+## Version 3.8.0 (June 1, 2015)
+
+- Updated Chartboost support to 5.3.0. This introduces a new shared class called ChartboostShared. If you are using Chartboost Custom Native Networks you will need to include this class in your build along with ChartboostInterstitial.
+
+## Version 3.7.0 (April 30, 2015)
+
+- Updated GooglePlayServices custom events to depend on the Google Play Services `play-services-ads 7.0.0` API.
+- Vungle support updated to SDK 3.3.3.
+- Updated InMobi and Greystripe custom events to accept application IDs from the MoPub UI.
+  - For InMobi: `{"app_id" : "YOUR_INMOBI_APP_ID"}`
+  - For Greystripe: `{"GUID" : "YOUR GREYSTRIPE_GUID"}`
+
+- Added toasts to the MoPub Sample App for ad load failures due to no connection.
+- Fixed a bug in processing VAST progress trackers in a VAST wrapper tag.
+- Fixed a bug where ad refresh times could be incorrect when an ad request was not filled.
+
+- Updated the following dependencies:
+	- support-v4 AAR to 22.0.0
+	- support-annotations JAR to 22.0.0
+	- Android Maven Plugin to 4.2.0
+
+#### Version 3.6.1 (April 6, 2015)
+
+ - **Bug Fix** Fixed a compile error in FacebookBanner.java
+
+## Version 3.6.0 (April 3, 2015)
+
+ - **Facebook Update** Updated supported Facebook Audience Network version to 3.23.1
+ - **Bug fix** Fixed a bug where interstitials could leak memory; Fixes [issue #153](https://github.com/mopub/mopub-android-sdk/issues/153)
+ - **VAST Video** Updated the VAST video player to support Progress events.
+ - Updated **Volley** version to 1.1.0.
+
 ## Version 3.5.0 (March 10, 2015)
 
  - Dependency changes in Maven and Gradle. No new dependencies have been added, but your build script will need to change slightly to include JCenter. See our [Getting Started Guide](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started#adding-the-support-libraries-to-your-project) for complete instructions.

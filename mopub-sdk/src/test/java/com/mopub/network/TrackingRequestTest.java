@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 
 import com.mopub.common.test.support.SdkTestRunner;
-import com.mopub.volley.RequestQueue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +19,7 @@ import static org.mockito.Mockito.verify;
 public class TrackingRequestTest {
 
     @Mock
-    private RequestQueue mockRequestQueue;
+    private MoPubRequestQueue mockRequestQueue;
     private Context context;
     private String url;
 

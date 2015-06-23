@@ -1,6 +1,9 @@
 package com.mopub.mobileads.util.vast;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.util.DeviceUtils.ForceOrientation;
+import com.mopub.mobileads.VastAbsoluteProgressTracker;
+import com.mopub.mobileads.VastFractionalProgressTracker;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -37,10 +40,44 @@ public class VastXmlManagerTest {
             "                    <VASTAdTagURI><![CDATA[ http://0.dsp.dev1.mopub.com/xml ]]></VASTAdTagURI>" +
             "                    <Creatives>" +
             "                        <Creative sequence=\"1\" AdID=\"\">" +
-            "                            <Linear>" +
+            "                            <Linear skipoffset=\"25%\">" +
             "                                <Duration>00:00:58</Duration>" +
             "                                <TrackingEvents>" +
             "                                    <Tracking event=\"start\">" +
+            "                                        <![CDATA[" +
+            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        ]]>" +
+            "                                    </Tracking>" +
+            "                                    <Tracking event=\"progress\" offset=\"13%\">" +
+            "                                        <![CDATA[" +
+            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        ]]>" +
+            "                                    </Tracking>" +
+            "                                    <Tracking event=\"progress\" offset=\"01:01:10.300\">" +
+            "                                        <![CDATA[" +
+            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        ]]>" +
+            "                                    </Tracking>" +
+            // Invalid tracking due to ambiguous offset.
+            "                                    <Tracking event=\"progress\" offset=\"01:01\">" +
+            "                                        <![CDATA[" +
+            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        ]]>" +
+            "                                    </Tracking>" +
+            // Invalid tracking due to a too-high percentage offset.
+            "                                    <Tracking event=\"progress\" offset=\"113%\">" +
+            "                                        <![CDATA[" +
+            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        ]]>" +
+            "                                    </Tracking>" +
+            // Invalid tracking due to a negative percentage offset.
+            "                                    <Tracking event=\"progress\" offset=\"-113%\">" +
+            "                                        <![CDATA[" +
+            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        ]]>" +
+            "                                    </Tracking>" +
+            // Invalid tracking due to a non-number offset
+            "                                    <Tracking event=\"progress\" offset=\"ten seconds\">" +
             "                                        <![CDATA[" +
             "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
             "                                        ]]>" +
@@ -83,6 +120,26 @@ public class VastXmlManagerTest {
             "                                    <Tracking event=\"complete\">" +
             "                                        <![CDATA[" +
             "                                        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.5;sz=1x1;ord=2922389?" +
+            "                                        ]]>" +
+            "                                    </Tracking>" +
+            "                                    <Tracking event=\"close\">" +
+            "                                        <![CDATA[" +
+            "                                        http://www.mopub.com/close?q=ignatius" +
+            "                                        ]]>" +
+            "                                    </Tracking>" +
+            "                                    <Tracking event=\"close\">" +
+            "                                        <![CDATA[" +
+            "                                        http://www.mopub.com/close?q=j3" +
+            "                                        ]]>" +
+            "                                    </Tracking>" +
+            "                                    <Tracking event=\"skip\">" +
+            "                                        <![CDATA[" +
+            "                                        http://www.mopub.com/skip?q=ignatius" +
+            "                                        ]]>" +
+            "                                    </Tracking>" +
+            "                                    <Tracking event=\"skip\">" +
+            "                                        <![CDATA[" +
+            "                                        http://www.mopub.com/skip?q=j3" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"mute\">" +
@@ -236,6 +293,12 @@ public class VastXmlManagerTest {
             "                                </DeliveryData>" +
             "                            </AdServingData>" +
             "                        </Extension>" +
+            "                        <Extension type=\"MoPub\">" +
+            "                           <MoPubCtaText>custom CTA text</MoPubCtaText>" +
+            "                           <MoPubSkipText>skip</MoPubSkipText>" +
+            "                           <MoPubCloseIcon>http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png</MoPubCloseIcon>" +
+            "                           <MoPubForceOrientation>device</MoPubForceOrientation>" +
+            "                        </Extension>" +
             "                    </Extensions>" +
             "                </InLine>" +
             "            </Ad>" +
@@ -298,53 +361,53 @@ public class VastXmlManagerTest {
     }
 
     @Test
-    public void getVideoStartTrackers_shouldReturnTheCorrectValue() {
-        List<String> trackers = mXmlManager.getVideoStartTrackers();
-
-        assertThat(trackers.size()).isEqualTo(1);
-
-        String tracker1 = trackers.get(0);
-
-        assertThat(tracker1).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
-    }
-
-    @Test
-    public void getVideoFirstQuartileTrackers_shouldReturnTheCorrectValue() {
-        List<String> trackers = mXmlManager.getVideoFirstQuartileTrackers();
+    public void getAbsoluteTrackers_shouldReturnCorrectValues() {
+        List<VastAbsoluteProgressTracker> trackers = mXmlManager.getAbsoluteProgressTrackers();
 
         assertThat(trackers.size()).isEqualTo(2);
 
-        String tracker1 = trackers.get(0);
-        String tracker2 = trackers.get(1);
+        VastAbsoluteProgressTracker tracker0 = trackers.get(0);
+        assertThat(tracker0.getTrackingMilliseconds()).isEqualTo(2000);
+        assertThat(tracker0.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
 
-        assertThat(tracker1).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=26;ecn1=1;etm1=0;");
-        assertThat(tracker2).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.2;sz=1x1;ord=2922389?");
+        VastAbsoluteProgressTracker tracker1 = trackers.get(1);
+        assertThat(tracker1.getTrackingMilliseconds()).isEqualTo(3670300);
+        assertThat(tracker1.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
     }
 
     @Test
-    public void getVideoMidpointTrackers_shouldReturnTheCorrectValue() {
-        List<String> trackers = mXmlManager.getVideoMidpointTrackers();
+    public void getFractionalTrackers_shouldReturnCorrectValues() {
+        List<VastFractionalProgressTracker> trackers = mXmlManager.getFractionalProgressTrackers();
 
-        assertThat(trackers.size()).isEqualTo(2);
+        assertThat(trackers.size()).isEqualTo(7);
 
-        String tracker1 = trackers.get(0);
-        String tracker2 = trackers.get(1);
+        VastFractionalProgressTracker tracker0 = trackers.get(0);
+        assertThat(tracker0.trackingFraction()).isEqualTo(0.13f);
+        assertThat(tracker0.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
 
-        assertThat(tracker1).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;");
-        assertThat(tracker2).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.3;sz=1x1;ord=2922389?");
-    }
+        VastFractionalProgressTracker tracker1 = trackers.get(1);
+        assertThat(tracker1.trackingFraction()).isEqualTo(0.25f);
+        assertThat(tracker1.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=26;ecn1=1;etm1=0;");
 
-    @Test
-    public void getVideoThirdQuartileTrackers_shouldReturnTheCorrectValue() {
-        List<String> trackers = mXmlManager.getVideoThirdQuartileTrackers();
+        VastFractionalProgressTracker tracker2 = trackers.get(2);
+        assertThat(tracker2.trackingFraction()).isEqualTo(0.25f);
+        assertThat(tracker2.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.2;sz=1x1;ord=2922389?");
 
-        assertThat(trackers.size()).isEqualTo(2);
+        VastFractionalProgressTracker tracker3 = trackers.get(3);
+        assertThat(tracker3.trackingFraction()).isEqualTo(0.5f);
+        assertThat(tracker3.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;");
 
-        String tracker1 = trackers.get(0);
-        String tracker2 = trackers.get(1);
+        VastFractionalProgressTracker tracker4 = trackers.get(4);
+        assertThat(tracker4.trackingFraction()).isEqualTo(0.5f);
+        assertThat(tracker4.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.3;sz=1x1;ord=2922389?");
 
-        assertThat(tracker1).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=27;ecn1=1;etm1=0;");
-        assertThat(tracker2).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.4;sz=1x1;ord=2922389?");
+        VastFractionalProgressTracker tracker5 = trackers.get(5);
+        assertThat(tracker5.trackingFraction()).isEqualTo(0.75f);
+        assertThat(tracker5.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=27;ecn1=1;etm1=0;");
+
+        VastFractionalProgressTracker tracker6 = trackers.get(6);
+        assertThat(tracker6.trackingFraction()).isEqualTo(0.75f);
+        assertThat(tracker6.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.4;sz=1x1;ord=2922389?");
     }
 
     @Test
@@ -358,6 +421,20 @@ public class VastXmlManagerTest {
 
         assertThat(tracker1).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=13;ecn1=1;etm1=0;");
         assertThat(tracker2).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.5;sz=1x1;ord=2922389?");
+    }
+
+    @Test
+    public void getVideoCloseTrackers_shouldReturnTheCorrectValue() {
+        List<String> trackers = mXmlManager.getVideoCloseTrackers();
+
+        assertThat(trackers).containsExactly("http://www.mopub.com/close?q=ignatius", "http://www.mopub.com/close?q=j3");
+    }
+
+    @Test
+    public void getVideoSkipTrackers_shouldReturnTheCorrectValue() {
+        List<String> trackers = mXmlManager.getVideoSkipTrackers();
+
+        assertThat(trackers).containsExactly("http://www.mopub.com/skip?q=ignatius", "http://www.mopub.com/skip?q=j3");
     }
 
     @Test
@@ -445,6 +522,41 @@ public class VastXmlManagerTest {
     }
 
     @Test
+    public void getCustomCtaText_shouldReturnTheCorrectValue() {
+        String customCtaText = mXmlManager.getCustomCtaText();
+
+        assertThat(customCtaText).isEqualTo("custom CTA text");
+    }
+
+    @Test
+    public void getCustomSkipText_shouldReturnTheCorrectValue() {
+        String customSkipText = mXmlManager.getCustomSkipText();
+
+        assertThat(customSkipText).isEqualTo("skip");
+    }
+
+    @Test
+    public void getCustomCloseIconUrl_shouldReturnTheCorrectValue() {
+        String customCloseIconUrl = mXmlManager.getCustomCloseIconUrl();
+
+        assertThat(customCloseIconUrl).isEqualTo("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png");
+    }
+
+    @Test
+    public void getCustomForceOrientation_shouldReturnTheCorrectValue() {
+        ForceOrientation customForceOrientation = mXmlManager.getCustomForceOrientation();
+
+        assertThat(customForceOrientation).isEqualTo(ForceOrientation.DEVICE_ORIENTATION);
+    }
+
+    @Test
+    public void getSkipOffset_shouldReturnTheCorrectValue() {
+        String skipOffset = mXmlManager.getSkipOffset();
+
+        assertThat(skipOffset).isEqualTo("25%");
+    }
+
+    @Test
     public void getVastAdTagURI_shouldReturnTheCorrectValue() {
         String url = mXmlManager.getVastAdTagURI();
 
@@ -487,11 +599,11 @@ public class VastXmlManagerTest {
         }
 
         assertThat(badManager.getMediaFileUrl()).isEqualTo(null);
-        assertThat(badManager.getVideoMidpointTrackers().size()).isEqualTo(0);
+        assertThat(badManager.getFractionalProgressTrackers().size()).isEqualTo(0);
         assertThat(badManager.getImpressionTrackers().size()).isEqualTo(0);
 
-        List<String> startTrackers = badManager.getVideoStartTrackers();
+        List<VastAbsoluteProgressTracker> startTrackers = badManager.getAbsoluteProgressTrackers();
         assertThat(startTrackers.size()).isEqualTo(1);
-        assertThat(startTrackers.get(0)).isEqualTo("good");
+        assertThat(startTrackers.get(0).getTrackingUrl()).isEqualTo("good");
     }
 }

@@ -24,7 +24,7 @@ class MoPubSQLiteHelper extends SQLiteOpenHelper {
     public static final String COLUMN_AD_TYPE = "adType";
 
     private static final String DATABASE_NAME = "savedConfigurations.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String DATABASE_CREATE = "create table " + TABLE_AD_CONFIGURATIONS
             + " ("

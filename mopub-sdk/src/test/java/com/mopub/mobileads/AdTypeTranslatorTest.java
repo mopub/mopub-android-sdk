@@ -11,6 +11,7 @@ import com.mopub.common.util.ResponseHeader;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 
 import java.util.HashMap;
 
@@ -23,7 +24,6 @@ public class AdTypeTranslatorTest {
     private String customEventName;
     private MoPubView moPubView;
     private MoPubInterstitial.MoPubInterstitialView moPubInterstitialView;
-    private Context context;
     HashMap<String, String> headers;
 
     @Before
@@ -31,7 +31,7 @@ public class AdTypeTranslatorTest {
         moPubView = mock(MoPubView.class);
         moPubInterstitialView = mock(MoPubInterstitial.MoPubInterstitialView.class);
 
-        context = new Activity();
+        Context context = Robolectric.buildActivity(Activity.class).create().get();
         stub(moPubView.getContext()).toReturn(context);
         stub(moPubInterstitialView.getContext()).toReturn(context);
 

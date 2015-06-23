@@ -33,9 +33,11 @@ public class InterstitialDetailFragment extends Fragment implements Interstitial
         views.mLoadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (mMoPubInterstitial == null) {
+                    mMoPubInterstitial = new MoPubInterstitial(getActivity(), adUnitId);
+                    mMoPubInterstitial.setInterstitialAdListener(InterstitialDetailFragment.this);
+                }
                 final String keywords = views.mKeywordsField.getText().toString();
-                mMoPubInterstitial = new MoPubInterstitial(getActivity(), adUnitId);
-                mMoPubInterstitial.setInterstitialAdListener(InterstitialDetailFragment.this);
                 mMoPubInterstitial.setKeywords(keywords);
                 mMoPubInterstitial.load();
                 mShowButton.setEnabled(false);

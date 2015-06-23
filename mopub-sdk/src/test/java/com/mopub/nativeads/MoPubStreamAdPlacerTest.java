@@ -55,7 +55,7 @@ public class MoPubStreamAdPlacerTest {
 
     @Before
     public void setup() {
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         positioning = MoPubNativeAdPositioning.clientPositioning()
                 .enableRepeatingPositions(2);
 

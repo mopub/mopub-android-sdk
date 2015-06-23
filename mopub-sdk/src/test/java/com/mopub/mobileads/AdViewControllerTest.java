@@ -1,5 +1,6 @@
 package com.mopub.mobileads;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -14,9 +15,13 @@ import com.mopub.common.util.test.support.TestMethodBuilderFactory;
 import com.mopub.mobileads.test.support.ThreadUtils;
 import com.mopub.network.AdRequest;
 import com.mopub.network.AdResponse;
+import com.mopub.network.MoPubNetworkError;
+import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
+import com.mopub.volley.NetworkResponse;
+import com.mopub.volley.NoConnectionError;
 import com.mopub.volley.Request;
-import com.mopub.volley.RequestQueue;
+import com.mopub.volley.VolleyError;
 
 import org.junit.After;
 import org.junit.Before;
@@ -26,7 +31,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
 
-import edu.emory.mathcs.backport.java.util.Collections;
+import java.util.Collections;
 
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -37,6 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -44,25 +50,30 @@ import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
 public class AdViewControllerTest {
+
+    private static final int[] HTML_ERROR_CODES = new int[]{400, 401, 402, 403, 404, 405, 407, 408,
+            409, 410, 411, 412, 413, 414, 415, 416, 417, 500, 501, 502, 503, 504, 505};
+
     private AdViewController subject;
     @Mock
     private MoPubView mockMoPubView;
     @Mock
-    private RequestQueue mockRequestQueue;
+    private MoPubRequestQueue mockRequestQueue;
     private Reflection.MethodBuilder methodBuilder;
-    private Activity context;
+
     private AdResponse response;
+    private Activity activity;
 
     @Before
     public void setup() {
-        context = Robolectric.buildActivity(Activity.class).create().get();
-        shadowOf(context).grantPermissions(android.Manifest.permission.ACCESS_NETWORK_STATE);
+        activity = Robolectric.buildActivity(Activity.class).create().get();
+        shadowOf(activity).grantPermissions(android.Manifest.permission.ACCESS_NETWORK_STATE);
 
         when(mockMoPubView.getAdFormat()).thenReturn(AdFormat.BANNER);
-        when(mockMoPubView.getContext()).thenReturn(context);
+        when(mockMoPubView.getContext()).thenReturn(activity);
         Networking.setRequestQueueForTesting(mockRequestQueue);
 
-        subject = new AdViewController(context, mockMoPubView);
+        subject = new AdViewController(activity, mockMoPubView);
 
         methodBuilder = TestMethodBuilderFactory.getSingletonMock();
         reset(methodBuilder);
@@ -76,13 +87,21 @@ public class AdViewControllerTest {
                 .setAdType("html")
                 .setFailoverUrl("failUrl")
                 .setResponseBody("testResponseBody")
-                .setServerExtras(Collections.emptyMap())
+                .setServerExtras(Collections.<String, String>emptyMap())
                 .build();
     }
 
     @After
     public void tearDown() throws Exception {
         reset(methodBuilder);
+    }
+
+    @Test
+    public void cleanup_shouldNotHoldViewOrUrlGenerator() {
+        subject.cleanup();
+
+        assertThat(subject.getMoPubView()).isNull();
+        assertThat(subject.generateAdUrl()).isNull();
     }
 
     @Test
@@ -108,6 +127,7 @@ public class AdViewControllerTest {
         assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
         verify(mockMoPubView, never()).adFailed(any(MoPubErrorCode.class));
     }
+
 
     @Test
     public void scheduleRefreshTimer_shouldNotScheduleIfRefreshTimeIsNull() throws Exception {
@@ -458,5 +478,159 @@ public class AdViewControllerTest {
         assertThat(layoutParams.width).isEqualTo(FrameLayout.LayoutParams.WRAP_CONTENT);
         assertThat(layoutParams.height).isEqualTo(FrameLayout.LayoutParams.WRAP_CONTENT);
         assertThat(layoutParams.gravity).isEqualTo(Gravity.CENTER);
+    }
+
+    @Test
+    public void onAdLoadSuccess_withResponseContainingRefreshTime_shouldSetNewRefreshTime() {
+        assertThat(subject.getRefreshTimeMillis()).isEqualTo(60000);
+
+        response = response.toBuilder().setRefreshTimeMilliseconds(100000).build();
+        subject.onAdLoadSuccess(response);
+
+        assertThat(subject.getRefreshTimeMillis()).isEqualTo(100000);
+    }
+
+    @Test
+    public void onAdLoadSuccess_withResponseNotContainingRefreshTime_shoulSetRefreshTimeToNull() {
+        response = response.toBuilder().setRefreshTimeMilliseconds(null).build();
+        subject.onAdLoadSuccess(response);
+
+        assertThat(subject.getRefreshTimeMillis()).isNull();
+    }
+
+    @Test
+    public void onAdLoadError_withMoPubNetworkErrorIncludingRefreshTime_shouldSetNewRefreshTime() {
+        subject.setRefreshTimeMillis(54321);
+
+        subject.onAdLoadError(
+                new MoPubNetworkError(
+                        "network error with specified refresh time",
+                        MoPubNetworkError.Reason.NO_FILL,
+                        1000)
+        );
+
+        assertThat(subject.getRefreshTimeMillis()).isEqualTo(1000);
+    }
+
+    @Test
+    public void onAdLoadError_withMoPubNetworkErrorNotIncludingRefreshTime_shouldNotModifyRefreshTime() {
+        subject.setRefreshTimeMillis(12345);
+
+        subject.onAdLoadError(
+                new MoPubNetworkError(
+                        "network error that does not specify refresh time",
+                        MoPubNetworkError.Reason.UNSPECIFIED)
+        );
+
+        assertThat(subject.getRefreshTimeMillis()).isEqualTo(12345);
+    }
+
+    @Test
+    public void onAdLoadError_withVolleyErrorThatIsNotAnInstanceOfMoPubNetworkError_shouldNotModifyRefreshTime() {
+        subject.onAdLoadError(new VolleyError("message"));
+
+        assertThat(subject.getRefreshTimeMillis()).isEqualTo(60000);
+    }
+
+    @Test
+    public void onAdLoadError_withErrorReasonWarmingUp_shouldReturnErrorCodeWarmup_shouldCallMoPubViewAdFailed() {
+        final VolleyError expectedInternalError = new MoPubNetworkError(
+                MoPubNetworkError.Reason.WARMING_UP);
+
+        subject.onAdLoadError(expectedInternalError);
+
+        verify(mockMoPubView).adFailed(MoPubErrorCode.WARMUP);
+    }
+
+    @Test
+    public void onAdLoadError_whenNoNetworkConnection_shouldReturnErrorCodeNoConnection_shouldCallMoPubViewAdFailed() {
+        subject.onAdLoadError(new NoConnectionError());
+
+        // DeviceUtils#isNetworkAvailable conveniently returns false due to
+        // not having the network permission.
+        verify(mockMoPubView).adFailed(MoPubErrorCode.NO_CONNECTION);
+    }
+
+    @Test
+    public void onAdLoadError_withInvalidServerResponse_shouldReturnErrorCodeServerError_shouldCallMoPubViewAdFailed_shouldIncrementBackoffPower() {
+        for (int htmlErrorCode : HTML_ERROR_CODES) {
+            final int oldBackoffPower = subject.mBackoffPower;
+            final NetworkResponse errorNetworkResponse = new NetworkResponse(htmlErrorCode, null,
+                    null, true, 0);
+            final VolleyError volleyError = new VolleyError(errorNetworkResponse);
+
+            subject.onAdLoadError(volleyError);
+
+            assertThat(subject.mBackoffPower).isEqualTo(oldBackoffPower + 1);
+        }
+        verify(mockMoPubView, times(HTML_ERROR_CODES.length)).adFailed(MoPubErrorCode.SERVER_ERROR);
+    }
+
+    @Test
+    public void getErrorCodeFromVolleyError_whenNoConnection_shouldReturnErrorCodeNoConnection() {
+        final VolleyError noConnectionError = new NoConnectionError();
+
+        // DeviceUtils#isNetworkAvailable conveniently returns false due to
+        // not having the internet permission.
+        final MoPubErrorCode errorCode = AdViewController.getErrorCodeFromVolleyError(
+                noConnectionError, activity);
+
+        assertThat(errorCode).isEqualTo(MoPubErrorCode.NO_CONNECTION);
+    }
+
+    @Test
+    public void getErrorCodeFromVolleyError_withNullResponse_whenConnectionValid_shouldReturnErrorCodeUnspecified() {
+        final VolleyError noConnectionError = new NoConnectionError();
+
+        shadowOf(activity).grantPermissions(Manifest.permission.INTERNET);
+        final MoPubErrorCode errorCode = AdViewController.getErrorCodeFromVolleyError(
+                noConnectionError, activity);
+
+        assertThat(errorCode).isEqualTo(MoPubErrorCode.UNSPECIFIED);
+    }
+
+    @Test
+    public void getErrorCodeFromVolleyError_withInvalidServerResponse_shouldReturnErrorCodeServerError() {
+        for (int htmlErrorCode : HTML_ERROR_CODES) {
+            final NetworkResponse errorNetworkResponse = new NetworkResponse(htmlErrorCode, null,
+                    null, true, 0);
+            final VolleyError volleyError = new VolleyError(errorNetworkResponse);
+
+            final MoPubErrorCode errorCode = AdViewController.getErrorCodeFromVolleyError(
+                    volleyError, activity);
+
+            assertThat(errorCode).isEqualTo(MoPubErrorCode.SERVER_ERROR);
+        }
+    }
+
+    @Test
+    public void getErrorCodeFromVolleyError_withErrorReasonWarmingUp_shouldReturnErrorCodeWarmingUp() {
+        final VolleyError networkError = new MoPubNetworkError(MoPubNetworkError.Reason.WARMING_UP);
+
+        final MoPubErrorCode errorCode = AdViewController.getErrorCodeFromVolleyError(
+                networkError, activity);
+
+        assertThat(errorCode).isEqualTo(MoPubErrorCode.WARMUP);
+    }
+
+    @Test
+    public void getErrorCodeFromVolleyError_withErrorReasonNoFill_shouldReturnErrorCodeNoFill() {
+        final VolleyError networkError = new MoPubNetworkError(MoPubNetworkError.Reason.NO_FILL);
+
+        final MoPubErrorCode errorCode = AdViewController.getErrorCodeFromVolleyError(
+                networkError, activity);
+
+        assertThat(errorCode).isEqualTo(MoPubErrorCode.NO_FILL);
+    }
+
+    @Test
+    public void getErrorCodeFromVolleyError_withErrorReasonBadHeaderData_shouldReturnErrorCodeUnspecified() {
+        final VolleyError networkError = new MoPubNetworkError(
+                MoPubNetworkError.Reason.BAD_HEADER_DATA);
+
+        final MoPubErrorCode errorCode = AdViewController.getErrorCodeFromVolleyError(
+                networkError, activity);
+
+        assertThat(errorCode).isEqualTo(MoPubErrorCode.UNSPECIFIED);
     }
 }

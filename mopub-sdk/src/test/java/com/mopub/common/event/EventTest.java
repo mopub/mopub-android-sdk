@@ -15,13 +15,14 @@ public class EventTest {
 
     @Before
     public void setUp() {
-        subject = new Event.Builder("name", "category").build();
+        subject = new Event.Builder(BaseEvent.Name.AD_REQUEST, BaseEvent.Category.REQUESTS, 0.10000123).build();
     }
 
     @Test
-    public void constructor_shouldCorrectlyAssignScribeCategoryFromBuilder() throws Exception {
-        assertThat(subject.getEventName()).isEqualTo("name");
-        assertThat(subject.getEventCategory()).isEqualTo("category");
+    public void constructor_shouldCorrectlyAssignScribeCategoryFromBuilder() {
+        assertThat(subject.getName()).isEqualTo(BaseEvent.Name.AD_REQUEST);
+        assertThat(subject.getCategory()).isEqualTo(BaseEvent.Category.REQUESTS);
+        assertThat(subject.getSamplingRate()).isEqualTo(0.10000123);
         assertThat(subject.getScribeCategory()).isEqualTo(BaseEvent.ScribeCategory.EXCHANGE_CLIENT_EVENT);
     }
 }

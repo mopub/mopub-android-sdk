@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -21,7 +22,7 @@ import java.util.concurrent.*;
 /**
  * A custom event for showing Vungle rewarded videos.
  *
- * Certified with Vungle 3.2.2
+ * Certified with Vungle 3.3.0
  */
 public class VungleRewardedVideo extends CustomEventRewardedVideo {
 
@@ -30,8 +31,8 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
     /*
      * These constants are intended for MoPub internal use. Do not modify.
      */
-    private static final String APP_ID_KEY = "appId";
-    private static final String VUNGLE_AD_NETWORK_CONSTANT = "vngl_id";
+    public static final String APP_ID_KEY = "appId";
+    public static final String VUNGLE_AD_NETWORK_CONSTANT = "vngl_id";
 
     // This has to be reinitialized every time the CE loads to avoid conflict with the interstitials.
     private static VunglePub sVunglePub;
@@ -58,7 +59,7 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
 
 
     public VungleRewardedVideo() {
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
         mScheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
         mIsLoading = false;
     }
@@ -99,7 +100,7 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
     protected void loadWithSdkInitialized(@NonNull final Activity activity, @NonNull final Map<String, Object> localExtras, @NonNull final Map<String, String> serverExtras) throws Exception {
         String appId = serverExtras.containsKey(APP_ID_KEY) ? serverExtras.get(APP_ID_KEY) : DEFAULT_VUNGLE_APP_ID;
         sVunglePub.init(activity, appId);
-        sVunglePub.setEventListener(sVungleListener);
+        sVunglePub.setEventListeners(sVungleListener);
         Object adUnitObject = localExtras.get(DataKeys.AD_UNIT_ID_KEY);
         if (adUnitObject instanceof String) {
             mAdUnitId = (String) adUnitObject;
@@ -109,7 +110,7 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
 
     @Override
     protected boolean hasVideoAvailable() {
-        return sVunglePub.isCachedAdAvailable();
+        return sVunglePub.isAdPlayable();
     }
 
     @Override
@@ -157,7 +158,7 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                if (sVunglePub.isCachedAdAvailable()) {
+                if (sVunglePub.isAdPlayable()) {
                     MoPubLog.d("Vungle interstitial ad successfully loaded.");
                     mScheduledThreadPoolExecutor.shutdownNow();
                     mHandler.post(new Runnable() {
@@ -208,9 +209,9 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         }
 
         @Override
-        public void onCachedAdAvailable() {
-            // Due to the inconsistent behavior of this method,
-            // we rely on scheduleOnInterstitialLoaded instead.
+        public void onAdPlayableChanged(final boolean playable) {
+            // Do nothing here. After loading is kicked off, we scheduleOnInterstitialLoaded and check until
+            // we have a playable ad or we timeout.
         }
 
         @Override

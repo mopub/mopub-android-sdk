@@ -82,7 +82,7 @@ public abstract class CustomEventRewardedVideo {
      * to do any static initialization the first time this method is run by any class instance.
      * From then on, the SDK should be reused without initialization.
      *
-     * @return true if the SDK performed initialization.
+     * @return true if the SDK performed initialization, false if the SDK was already initialized.
      */
     protected abstract boolean checkAndInitializeSdk(@NonNull Activity launcherActivity,
             @NonNull Map<String, Object> localExtras,

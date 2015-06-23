@@ -35,13 +35,13 @@ public class BaseVideoPlayerActivityTest {
 
     @Test
     public void startMraid_shouldStartMraidVideoPlayerActivity() throws Exception {
-        startMraid(new Activity(), MRAID_VIDEO_URL);
+        startMraid(Robolectric.buildActivity(Activity.class).create().get(), MRAID_VIDEO_URL);
         assertMraidVideoPlayerActivityStarted(MraidVideoPlayerActivity.class, MRAID_VIDEO_URL);
     }
 
     @Test
     public void startVast_shouldStartMraidVideoPlayerActivity() throws Exception {
-        startVast(new Activity(), vastVideoConfiguration, testBroadcastIdentifier);
+        startVast(Robolectric.buildActivity(Activity.class).create().get(), vastVideoConfiguration, testBroadcastIdentifier);
         assertVastVideoPlayerActivityStarted(MraidVideoPlayerActivity.class, vastVideoConfiguration, testBroadcastIdentifier);
     }
 

@@ -5,12 +5,14 @@ import android.app.Activity;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.ShadowAsyncTasks;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
+import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.nativeads.MoPubNative.MoPubNativeEventListener;
 import com.mopub.nativeads.MoPubNative.MoPubNativeNetworkListener;
 import com.mopub.network.MoPubNetworkError;
+import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
+import com.mopub.volley.NoConnectionError;
 import com.mopub.volley.Request;
-import com.mopub.volley.RequestQueue;
 import com.mopub.volley.VolleyError;
 
 import org.junit.After;
@@ -22,9 +24,13 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLog;
 
 import java.net.MalformedURLException;
+import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
 import static android.Manifest.permission.INTERNET;
@@ -50,16 +56,16 @@ public class MoPubNativeTest {
     private Activity context;
     private Semaphore semaphore;
     private static final String adUnitId = "test_adunit_id";
-    
+
     @Mock private MoPubNativeEventListener mockEventListener;
 
     @Mock private MoPubNativeNetworkListener mockNetworkListener;
-    @Mock private RequestQueue mockRequestQueue;
+    @Mock private MoPubRequestQueue mockRequestQueue;
 
 
     @Before
     public void setup() {
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
         shadowOf(context).grantPermissions(INTERNET);
         subject = new MoPubNative(context, adUnitId, mockNetworkListener);
@@ -154,5 +160,34 @@ public class MoPubNativeTest {
         subject.onAdError(new VolleyError("generic"));
 
         verify(mockNetworkListener).onNativeFail(eq(NativeErrorCode.UNSPECIFIED));
+    }
+
+    @Test
+    public void onAdError_withVolleyErrorWarmingUp_shouldLogMoPubErrorCodeWarmup_shouldNotifyListener() {
+        LogManager.getLogManager().getLogger("com.mopub").setLevel(Level.ALL);
+
+        subject.onAdError(new MoPubNetworkError(MoPubNetworkError.Reason.WARMING_UP));
+
+        final List<ShadowLog.LogItem> allLogMessages = ShadowLog.getLogs();
+        final ShadowLog.LogItem latestLogMessage = allLogMessages.get(allLogMessages.size() - 1);
+
+        // All log messages end with a newline character.
+        assertThat(latestLogMessage.msg.trim()).isEqualTo(MoPubErrorCode.WARMUP.toString());
+        verify(mockNetworkListener).onNativeFail(eq(NativeErrorCode.EMPTY_AD_RESPONSE));
+    }
+
+    @Test
+    public void onAdError_withNoConnection_shouldLogMoPubErrorCodeNoConnection_shouldNotifyListener() {
+        LogManager.getLogManager().getLogger("com.mopub").setLevel(Level.ALL);
+        shadowOf(context).denyPermissions(INTERNET);
+
+        subject.onAdError(new NoConnectionError());
+
+        final List<ShadowLog.LogItem> allLogMessages = ShadowLog.getLogs();
+        final ShadowLog.LogItem latestLogMessage = allLogMessages.get(allLogMessages.size() - 1);
+
+        // All log messages end with a newline character.
+        assertThat(latestLogMessage.msg.trim()).isEqualTo(MoPubErrorCode.NO_CONNECTION.toString());
+        verify(mockNetworkListener).onNativeFail(eq(NativeErrorCode.CONNECTION_ERROR));
     }
 }

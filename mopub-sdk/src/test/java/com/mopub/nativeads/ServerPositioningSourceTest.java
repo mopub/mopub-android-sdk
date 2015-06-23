@@ -5,11 +5,13 @@ import android.os.Build.VERSION_CODES;
 
 import com.mopub.common.DownloadResponse;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubClientPositioning;
 import com.mopub.nativeads.PositioningSource.PositioningListener;
+import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
+import com.mopub.volley.NoConnectionError;
 import com.mopub.volley.Request;
-import com.mopub.volley.RequestQueue;
 import com.mopub.volley.VolleyError;
 
 import org.apache.http.HttpStatus;
@@ -21,7 +23,13 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLog;
 
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+
+import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
@@ -40,7 +48,7 @@ public class ServerPositioningSourceTest {
     @Mock DownloadResponse mockWarmingUpJsonResponse;
 
     @Mock
-    RequestQueue mockRequestQueue;
+    MoPubRequestQueue mockRequestQueue;
 
     @Captor ArgumentCaptor<MoPubClientPositioning> positioningCaptor;
 
@@ -144,5 +152,21 @@ public class ServerPositioningSourceTest {
         verify(mockRequestQueue).add(positionRequestCaptor.capture());
         positionRequestCaptor.getValue().deliverError(new VolleyError("test error"));
         verify(mockPositioningListener).onFailed();
+    }
+
+    @Test
+    public void loadPositions_withNoConnection_shouldLogMoPubErrorCodeNoConnection_shouldCallFailureHandler() {
+        LogManager.getLogManager().getLogger("com.mopub").setLevel(Level.ALL);
+
+        subject.loadPositions("test_ad_unit", mockPositioningListener);
+
+        verify(mockRequestQueue).add(positionRequestCaptor.capture());
+        positionRequestCaptor.getValue().deliverError(new NoConnectionError());
+        verify(mockPositioningListener).onFailed();
+
+        final List<ShadowLog.LogItem> allLogMessages = ShadowLog.getLogs();
+        final ShadowLog.LogItem latestLogMessage = allLogMessages.get(allLogMessages.size() - 2);
+        // All log messages end with a newline character.
+        assertThat(latestLogMessage.msg.trim()).isEqualTo(MoPubErrorCode.NO_CONNECTION.toString());
     }
 }

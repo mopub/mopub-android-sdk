@@ -1,6 +1,8 @@
 package com.mopub.mobileads;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.facebook.ads.Ad;
@@ -8,15 +10,16 @@ import com.facebook.ads.AdError;
 import com.facebook.ads.AdListener;
 import com.facebook.ads.AdSize;
 import com.facebook.ads.AdView;
+import com.mopub.common.DataKeys;
 import com.mopub.common.util.Views;
 
 import java.util.Map;
 
 /**
- * Tested with Facebook SDK 3.18.1.
+ * Tested with Facebook SDK 3.23.1.
  */
 public class FacebookBanner extends CustomEventBanner implements AdListener {
-    private static final String PLACEMENT_ID_KEY = "placement_id";
+    public static final String PLACEMENT_ID_KEY = "placement_id";
 
     private AdView mFacebookBanner;
     private CustomEventBannerListener mBannerListener;
@@ -33,15 +36,32 @@ public class FacebookBanner extends CustomEventBanner implements AdListener {
         mBannerListener = customEventBannerListener;
 
         final String placementId;
-        if (extrasAreValid(serverExtras)) {
+        if (serverExtrasAreValid(serverExtras)) {
             placementId = serverExtras.get(PLACEMENT_ID_KEY);
         } else {
             mBannerListener.onBannerFailed(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
             return;
         }
 
-        mFacebookBanner = new AdView(context, placementId, AdSize.BANNER_320_50);
+        int width;
+        int height;
+        if (localExtrasAreValid(localExtras)) {
+            width = (Integer) localExtras.get(DataKeys.AD_WIDTH);
+            height = (Integer) localExtras.get(DataKeys.AD_HEIGHT);
+        } else {
+            mBannerListener.onBannerFailed(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
+            return;
+        }
+
+        AdSize adSize = calculateAdSize(width, height);
+        if (adSize == null) {
+            mBannerListener.onBannerFailed(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
+            return;
+        }
+
+        mFacebookBanner = new AdView(context, placementId, adSize);
         mFacebookBanner.setAdListener(this);
+        mFacebookBanner.disableAutoRefresh();
         mFacebookBanner.loadAd();
     }
 
@@ -82,9 +102,28 @@ public class FacebookBanner extends CustomEventBanner implements AdListener {
         mBannerListener.onBannerClicked();
     }
 
-    private boolean extrasAreValid(final Map<String, String> serverExtras) {
+    private boolean serverExtrasAreValid(final Map<String, String> serverExtras) {
         final String placementId = serverExtras.get(PLACEMENT_ID_KEY);
         return (placementId != null && placementId.length() > 0);
+    }
+
+    private boolean localExtrasAreValid(@NonNull final Map<String, Object> localExtras) {
+        return localExtras.get(DataKeys.AD_WIDTH) instanceof Integer
+                && localExtras.get(DataKeys.AD_HEIGHT) instanceof Integer;
+    }
+
+    @Nullable
+    private AdSize calculateAdSize(int width, int height) {
+        // Use the smallest AdSize that will properly contain the adView
+        if (height <= AdSize.BANNER_320_50.getHeight()) {
+            return AdSize.BANNER_320_50;
+        } else if (height <= AdSize.BANNER_HEIGHT_90.getHeight()) {
+            return AdSize.BANNER_HEIGHT_90;
+        } else if (height <= AdSize.RECTANGLE_HEIGHT_250.getHeight()) {
+            return AdSize.RECTANGLE_HEIGHT_250;
+        } else {
+            return null;
+        }
     }
 
     @Deprecated // for testing

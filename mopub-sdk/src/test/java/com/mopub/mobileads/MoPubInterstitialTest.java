@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -47,7 +48,7 @@ public class MoPubInterstitialTest {
 
     @Before
     public void setUp() throws Exception {
-        activity = new Activity();
+        activity = Robolectric.buildActivity(Activity.class).create().get();
         subject = new MoPubInterstitial(activity, AD_UNIT_ID_VALUE);
         interstitialAdListener = mock(MoPubInterstitial.InterstitialAdListener.class);
         subject.setInterstitialAdListener(interstitialAdListener);

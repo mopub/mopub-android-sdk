@@ -1,8 +1,13 @@
 package com.mopub.mobileads;
 
+import android.support.annotation.NonNull;
+
+import com.mopub.common.CreativeOrientation;
+
 import java.util.Map;
 
 import static com.mopub.common.DataKeys.CLICKTHROUGH_URL_KEY;
+import static com.mopub.common.DataKeys.CREATIVE_ORIENTATION_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.common.DataKeys.REDIRECT_URL_KEY;
 import static com.mopub.common.DataKeys.SCROLLABLE_KEY;
@@ -12,6 +17,8 @@ public class HtmlInterstitial extends ResponseBodyInterstitial {
     private boolean mIsScrollable;
     private String mRedirectUrl;
     private String mClickthroughUrl;
+    @NonNull
+    private CreativeOrientation mOrientation;
 
     @Override
     protected void extractExtras(Map<String, String> serverExtras) {
@@ -19,6 +26,7 @@ public class HtmlInterstitial extends ResponseBodyInterstitial {
         mIsScrollable = Boolean.valueOf(serverExtras.get(SCROLLABLE_KEY));
         mRedirectUrl = serverExtras.get(REDIRECT_URL_KEY);
         mClickthroughUrl = serverExtras.get(CLICKTHROUGH_URL_KEY);
+        mOrientation = CreativeOrientation.fromHeader(serverExtras.get(CREATIVE_ORIENTATION_KEY));
     }
 
     @Override
@@ -28,6 +36,8 @@ public class HtmlInterstitial extends ResponseBodyInterstitial {
 
     @Override
     public void showInterstitial() {
-        MoPubActivity.start(mContext, mHtmlData, mAdReport, mIsScrollable, mRedirectUrl, mClickthroughUrl, mBroadcastIdentifier);
+        MoPubActivity.start(mContext, mHtmlData, mAdReport, mIsScrollable,
+                mRedirectUrl, mClickthroughUrl, mOrientation,
+                mBroadcastIdentifier);
     }
 }

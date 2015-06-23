@@ -9,14 +9,14 @@ group = 'com.mopub'
 description = '''MoPub SDK'''
 
 android {
-    compileSdkVersion 19
-    buildToolsVersion '21.1.1'
+    compileSdkVersion 22
+    buildToolsVersion '22.0.1'
 
     defaultConfig {
-        versionCode 21
-        versionName "3.5.0"
+        versionCode 25
+        versionName "3.8.0"
         minSdkVersion 9
-        targetSdkVersion 19
+        targetSdkVersion 22
     }
 
     buildTypes {
@@ -51,7 +51,7 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:19.1.+'
-    compile 'com.google.android.gms:play-services:5.0.89'
+    compile 'com.android.support:support-v4:22.0.0'
+    compile 'com.google.android.gms:play-services-ads:7.0.0'
     compile project(':mopub-sdk')
 }

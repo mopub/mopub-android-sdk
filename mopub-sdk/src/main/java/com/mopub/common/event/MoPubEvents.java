@@ -11,29 +11,6 @@ import java.util.ArrayList;
  */
 public class MoPubEvents {
 
-    public enum Type {
-        // Networking
-        AD_REQUEST("ad_request"),
-        IMPRESSION_REQUEST("impression_request"),
-        CLICK_REQUEST("click_request"),
-        POSITIONING_REQUEST("positioning_request"),
-
-        // Errors
-        AD_REQUEST_ERROR("ad_request_error"),
-        TRACKING_ERROR("track_error"),
-
-        // The SDK doesn't distinguish types of tracking at a level where this more-specific logging works yet.
-        IMPRESSION_ERROR("imp_track_error"),
-        CLICK_ERROR("click_track_error"),
-        CONVERSION_ERROR("conv_track_error"),
-        DATA_ERROR("invalid_data");
-
-        public final String mName;
-        Type(String name) {
-            mName = name;
-        }
-    }
-
     private static volatile EventDispatcher sEventDispatcher;
 
     /**
@@ -49,6 +26,15 @@ public class MoPubEvents {
         sEventDispatcher = dispatcher;
     }
 
+    /**
+     * Returns a singleton event dispatcher constructed with a single background thread meant to be
+     * used for all event logging operations. Operations that end up on the main thread, such as
+     * the result of a network request, should post to this background thread when interacting
+     * with shared resources in order to avoid concurrency issues.
+     *
+     * This design is meant to emulate an {@code IntentService} which we can't use due to
+     * the requirement of the publisher having to update their manifest file.
+     */
     @VisibleForTesting
     static EventDispatcher getDispatcher() {
         EventDispatcher result = sEventDispatcher;
@@ -57,9 +43,10 @@ public class MoPubEvents {
                 result = sEventDispatcher;
                 if (result == null) {
                     ArrayList<EventRecorder> recorders = new ArrayList<EventRecorder>();
-                    recorders.add(new NoopEventRecorder());
-                    HandlerThread handlerThread = new HandlerThread("mopub_event_queue");
-                    result = sEventDispatcher = new EventDispatcher(recorders, handlerThread);
+                    HandlerThread handlerThread = new HandlerThread("mopub_event_logging");
+                    handlerThread.start();
+                    recorders.add(new ScribeEventRecorder(handlerThread.getLooper()));
+                    result = sEventDispatcher = new EventDispatcher(recorders, handlerThread.getLooper());
                 }
             }
         }

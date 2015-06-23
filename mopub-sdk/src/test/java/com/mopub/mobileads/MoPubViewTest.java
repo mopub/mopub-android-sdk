@@ -38,7 +38,7 @@ public class MoPubViewTest {
 
     @Before
     public void setup() {
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         subject = new MoPubView(context);
         customEventBannerAdapter = TestCustomEventBannerAdapterFactory.getSingletonMock();
         reset(customEventBannerAdapter);

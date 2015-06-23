@@ -15,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.robolectric.Robolectric;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -40,7 +41,7 @@ public class NativeAdViewHelperTest {
 
     @Before
     public void setUp() throws Exception {
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         relativeLayout = new RelativeLayout(context);
         relativeLayout.setId((int) Utils.generateUniqueId());
         viewGroup = new LinearLayout(context);
@@ -60,6 +61,7 @@ public class NativeAdViewHelperTest {
         relativeLayout.addView(titleView);
         relativeLayout.addView(textView);
         relativeLayout.addView(callToActionView);
+        relativeLayout.setTag(NativeAdViewHelper.ViewType.AD);
 
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
                 .titleId(titleView.getId())
@@ -82,19 +84,21 @@ public class NativeAdViewHelperTest {
         assertThat(((TextView)view.findViewById(titleView.getId())).getText()).isEqualTo("test title");
         assertThat(((TextView)view.findViewById(textView.getId())).getText()).isEqualTo("test text");
         assertThat(((TextView)view.findViewById(callToActionView.getId())).getText()).isEqualTo("test call to action");
+        assertThat(view.getTag()).isEqualTo(NativeAdViewHelper.ViewType.AD);
 
         // not testing images due to testing complexity
     }
 
     @Test
-    public void getAdView_withDestroyedNativeResponse_shouldReturnGONEConvertView() throws Exception {
+    public void getAdView_withDestroyedNativeResponse_shouldReturnEmptyAndGoneConvertView() throws Exception {
         when(mockNativeResponse1.isDestroyed()).thenReturn(true);
         View view = NativeAdViewHelper.getAdView(relativeLayout, viewGroup, context, mockNativeResponse1, viewBinder);
 
-        assertThat(view).isEqualTo(relativeLayout);
+        assertThat(view).isNotEqualTo(relativeLayout);
+        assertThat(view.getTag()).isEqualTo(NativeAdViewHelper.ViewType.EMPTY);
         assertThat(view.getVisibility()).isEqualTo(View.GONE);
     }
-    
+
     @Test
     public void getAdView_shouldRemoveViewFromImpressionTracker_shouldClearPreviousNativeResponse() throws Exception {
         NativeAdViewHelper.sImpressionTrackerMap.put(context, mockImpressionTracker);

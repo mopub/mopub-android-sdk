@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.webkit.CookieSyncManager;
 import android.webkit.WebChromeClient;
@@ -21,6 +22,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.mobileads.BaseWebView;
 import com.mopub.mobileads.util.WebViews;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
@@ -33,7 +35,6 @@ import static com.mopub.common.util.Drawables.RIGHT_ARROW;
 import static com.mopub.common.util.Drawables.UNLEFT_ARROW;
 import static com.mopub.common.util.Drawables.UNRIGHT_ARROW;
 import static com.mopub.common.util.Intents.deviceCanHandleIntent;
-import static com.mopub.common.util.Intents.isDeepLink;
 
 public class MoPubBrowser extends Activity {
     public static final String DESTINATION_URL_KEY = "URL";
@@ -98,7 +99,8 @@ public class MoPubBrowser extends Activity {
                 }
 
                 final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                if (isDeepLink(url) && deviceCanHandleIntent(MoPubBrowser.this, intent)) {
+                if (UrlAction.FOLLOW_DEEP_LINK.shouldTryHandlingUrl(Uri.parse(url))
+                        && deviceCanHandleIntent(MoPubBrowser.this, intent)) {
                     startActivity(intent);
                     finish();
                     return true;
@@ -194,6 +196,15 @@ public class MoPubBrowser extends Activity {
     }
 
     @Override
+    public void finish() {
+        // ZoomButtonController adds buttons to the window's decorview. If they're still visible
+        // when finish() is called, they need to be removed or a Window object will be leaked.
+        ViewGroup decorView = (ViewGroup) getWindow().getDecorView();
+        decorView.removeAllViews();
+        super.finish();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         mWebView.destroy();
@@ -229,7 +240,7 @@ public class MoPubBrowser extends Activity {
         innerLayout.addView(mRefreshButton);
         innerLayout.addView(mCloseButton);
 
-        mWebView = new WebView(this);
+        mWebView = new BaseWebView(this);
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT);
         layoutParams.addRule(RelativeLayout.ABOVE, INNER_LAYOUT_ID);
         mWebView.setLayoutParams(layoutParams);

@@ -6,13 +6,11 @@ import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 
 import java.util.WeakHashMap;
-
-import static android.view.View.GONE;
-import static com.mopub.nativeads.MoPubNative.MoPubNativeListener;
 
 /**
  * @deprecated As of release 2.4, use {@link com.mopub.nativeads.MoPubNativeAdRenderer} instead
@@ -20,6 +18,12 @@ import static com.mopub.nativeads.MoPubNative.MoPubNativeListener;
 @Deprecated
 class NativeAdViewHelper {
     private NativeAdViewHelper() {
+    }
+
+    @VisibleForTesting
+    enum ViewType {
+        EMPTY,
+        AD
     }
 
     // Because the impression tracker requires tracking drawing views,
@@ -38,20 +42,30 @@ class NativeAdViewHelper {
     static View getAdView(@Nullable View convertView,
             @Nullable final ViewGroup parent,
             @NonNull final Context context,
-            @NonNull final NativeResponse nativeResponse,
-            @NonNull final ViewBinder viewBinder) {
+            @Nullable final NativeResponse nativeResponse,
+            @Nullable final ViewBinder viewBinder) {
 
-        final MoPubNativeAdRenderer moPubNativeAdRenderer = new MoPubNativeAdRenderer(viewBinder);
-        if (convertView == null) {
-            convertView = moPubNativeAdRenderer.createAdView(context, parent);
+        Preconditions.NoThrow.checkNotNull(viewBinder, "ViewBinder is null.");
+
+        if (convertView != null) {
+            clearNativeResponse(context, convertView);
         }
 
-        clearNativeResponse(context, convertView);
-
-        if (nativeResponse.isDestroyed()) {
-            MoPubLog.d("NativeResponse is destroyed, returning hidden view.");
-            convertView.setVisibility(GONE);
+        if (nativeResponse == null || nativeResponse.isDestroyed() || viewBinder == null) {
+            MoPubLog.d("nativeResponse or viewBinder null or invalid. Returning empty view");
+            // Only create a view if one hasn't been created already
+            if (convertView == null || !ViewType.EMPTY.equals(convertView.getTag())) {
+                convertView = new View(context);
+                convertView.setTag(ViewType.EMPTY);
+                convertView.setVisibility(View.GONE);
+            }
         } else {
+            final MoPubNativeAdRenderer moPubNativeAdRenderer = new MoPubNativeAdRenderer(viewBinder);
+            // Only create a view if one hasn't been created already
+            if (convertView == null || !ViewType.AD.equals(convertView.getTag())) {
+                convertView = moPubNativeAdRenderer.createAdView(context, parent);
+                convertView.setTag(ViewType.AD);
+            }
             prepareNativeResponse(context, convertView, nativeResponse);
             moPubNativeAdRenderer.renderAdView(convertView, nativeResponse);
         }

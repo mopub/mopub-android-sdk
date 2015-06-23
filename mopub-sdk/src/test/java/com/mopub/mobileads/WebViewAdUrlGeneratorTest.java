@@ -3,6 +3,8 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.graphics.Point;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -12,8 +14,10 @@ import android.os.Build;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
+import android.view.Display;
+import android.view.WindowManager;
 
-import com.mopub.common.AdUrlGenerator;
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.GpsHelper;
 import com.mopub.common.GpsHelperTest;
@@ -24,13 +28,15 @@ import com.mopub.common.util.Utils;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
 import com.mopub.mobileads.test.support.MoPubShadowTelephonyManager;
 import com.mopub.mraid.MraidNativeCommandHandler;
+import com.mopub.network.Networking;
 import com.mopub.network.PlayServicesUrlRewriter;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowConnectivityManager;
@@ -50,8 +56,10 @@ import static android.telephony.TelephonyManager.NETWORK_TYPE_UNKNOWN;
 import static com.mopub.common.ClientMetadata.MoPubNetworkType;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.application;
 import static org.robolectric.Robolectric.shadowOf;
@@ -60,8 +68,12 @@ import static org.robolectric.Robolectric.shadowOf;
 @Config(shadows = {MoPubShadowTelephonyManager.class})
 public class WebViewAdUrlGeneratorTest {
 
-    private WebViewAdUrlGenerator subject;
     private static final String TEST_UDID = "20b013c721c";
+    private static final int TEST_SCREEN_WIDTH = 42;
+    private static final int TEST_SCREEN_HEIGHT = 1337;
+    private static final float TEST_DENSITY = 1.0f;
+
+    private WebViewAdUrlGenerator subject;
     private String expectedUdid;
     private Configuration configuration;
     private MoPubShadowTelephonyManager shadowTelephonyManager;
@@ -71,8 +83,39 @@ public class WebViewAdUrlGeneratorTest {
 
     @Before
     public void setup() {
-        context = new Activity();
+        context = spy(Robolectric.buildActivity(Activity.class).create().get());
         shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
+
+        // Set the expected screen dimensions to arbitrary numbers
+        final Resources spyResources = spy(context.getResources());
+        final DisplayMetrics mockDisplayMetrics = mock(DisplayMetrics.class);
+        mockDisplayMetrics.widthPixels = TEST_SCREEN_WIDTH;
+        mockDisplayMetrics.heightPixels = TEST_SCREEN_HEIGHT;
+        mockDisplayMetrics.density = TEST_DENSITY;
+        when(spyResources.getDisplayMetrics()).thenReturn(mockDisplayMetrics);
+        when(context.getResources()).thenReturn(spyResources);
+        when(context.getPackageName()).thenReturn("testBundle");
+
+        // Only do this on Android 17+ because getRealSize doesn't exist before then.
+        // This is the default pathway.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            final WindowManager mockWindowManager = mock(WindowManager.class);
+            final Display mockDisplay = mock(Display.class);
+            doAnswer(new Answer() {
+                @Override
+                public Object answer(final InvocationOnMock invocationOnMock) throws Throwable {
+                    final Point point = (Point) invocationOnMock.getArguments()[0];
+                    point.x = TEST_SCREEN_WIDTH;
+                    point.y = TEST_SCREEN_HEIGHT;
+                    return null;
+                }
+            }).when(mockDisplay).getRealSize(any(Point.class));
+            when(mockWindowManager.getDefaultDisplay()).thenReturn(mockDisplay);
+            final Context spyApplicationContext = spy(context.getApplicationContext());
+            when(spyApplicationContext.getSystemService(Context.WINDOW_SERVICE)).thenReturn(mockWindowManager);
+            when(context.getApplicationContext()).thenReturn(spyApplicationContext);
+        }
+
         subject = new WebViewAdUrlGenerator(context,
                 new MraidNativeCommandHandler().isStorePictureSupported(context));
         Settings.Secure.putString(application.getContentResolver(), Settings.Secure.ANDROID_ID, TEST_UDID);
@@ -81,6 +124,7 @@ public class WebViewAdUrlGeneratorTest {
         shadowTelephonyManager = (MoPubShadowTelephonyManager) shadowOf((TelephonyManager) application.getSystemService(Context.TELEPHONY_SERVICE));
         shadowConnectivityManager = shadowOf((ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE));
         methodBuilder = TestMethodBuilderFactory.getSingletonMock();
+        Networking.useHttps(false);
     }
 
     @After
@@ -98,6 +142,13 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
+    public void generateAdUrl_withHttpsScheme() throws Exception {
+        Networking.useHttps(true);
+        String adUrl = generateMinimumUrlString();
+        assertThat(adUrl).startsWith("https://");
+    }
+
+    @Test
     public void generateAdUrl_shouldRunMultipleTimes() throws Exception {
         String expectedAdUrl = new AdUrlBuilder(expectedUdid).build();
 
@@ -112,7 +163,7 @@ public class WebViewAdUrlGeneratorTest {
         final String expectedAdUrl = new AdUrlBuilder(expectedUdid)
                 .withAdUnitId("adUnitId")
                 .withQuery("key%3Avalue")
-                .withLatLon("20.1%2C30.0", "1")
+                .withLatLon("20.1%2C30.0", "1", "101325")
                 .withMcc("123")
                 .withMnc("456")
                 .withCountryIso("expected%20country")
@@ -128,12 +179,16 @@ public class WebViewAdUrlGeneratorTest {
         location.setLatitude(20.1);
         location.setLongitude(30.0);
         location.setAccuracy(1.23f); // should get rounded to "1"
+        location.setTime(System.currentTimeMillis() - 101325);
 
         String adUrl = subject
                 .withAdUnitId("adUnitId")
                 .withKeywords("key:value")
                 .withLocation(location)
                 .generateUrlString("ads.mopub.com");
+
+        // Only compare the seconds since millis can be off
+        adUrl = adUrl.replaceFirst("llf=101[0-9]{3}", "llf=101325");
 
         assertThat(adUrl).isEqualTo(expectedAdUrl);
     }
@@ -295,6 +350,8 @@ public class WebViewAdUrlGeneratorTest {
         assertThat(adUrl).isEqualTo(urlBuilder.withNetworkType(MoPubNetworkType.UNKNOWN).build());
     }
 
+
+
     @Test
     public void generateAdUrl_whenGooglePlayServicesIsLinkedAndAdInfoIsCached_shouldUseAdInfoParams() throws Exception {
         GpsHelper.setClassNamesForTesting();
@@ -394,6 +451,17 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
+    public void generateAdUrl_withNullPackageName_withEmptyPackageName_shouldNotIncludeBundleKey() {
+        when(context.getPackageName()).thenReturn(null).thenReturn("");
+
+        final String adUrlNullPackageName = generateMinimumUrlString();
+        final String adUrlEmptyPackageName = generateMinimumUrlString();
+
+        assertThat(adUrlNullPackageName).doesNotContain("&bundle=");
+        assertThat(adUrlEmptyPackageName).doesNotContain("&bundle=");
+    }
+
+    @Test
     public void enableLocationTracking_shouldIncludeLocationInUrl() {
         MoPub.setLocationAwareness(MoPub.LocationAwareness.NORMAL);
         String adUrl = generateMinimumUrlString();
@@ -452,6 +520,7 @@ public class WebViewAdUrlGeneratorTest {
         private String query = "";
         private String latLon = "";
         private String locationAccuracy = "";
+        private String latLonLastUpdated = "";
         private String mnc = "";
         private String mcc = "";
         private String countryIso = "";
@@ -472,23 +541,28 @@ public class WebViewAdUrlGeneratorTest {
                     "&dn=" + Build.MANUFACTURER +
                     "%2C" + Build.MODEL +
                     "%2C" + Build.PRODUCT +
-
+                    "&bundle=" + "testBundle" +
                     paramIfNotEmpty("q", query) +
-                    (TextUtils.isEmpty(latLon) ? "" : "&ll=" + latLon + "&lla=" + locationAccuracy) +
+                    (TextUtils.isEmpty(latLon) ? "" :
+                            "&ll=" + latLon + "&lla=" + locationAccuracy + "&llf=" + latLonLastUpdated) +
                     "&z=-0700" +
                     "&o=u" +
+                    "&w=" + TEST_SCREEN_WIDTH +
+                    "&h=" + TEST_SCREEN_HEIGHT +
                     "&sc_a=1.0" +
-                    "&mr=1" +
                     paramIfNotEmpty("mcc", mcc) +
                     paramIfNotEmpty("mnc", mnc) +
                     paramIfNotEmpty("iso", countryIso) +
                     paramIfNotEmpty("cn", carrierName) +
                     "&ct=" + networkType +
+                    // Maven version
                     "&av=1.0" +
-                    "&android_perms_ext_storage=" + externalStoragePermission +
+                    // Gradle Version
+                    //"&av=" + BuildConfig.VERSION_NAME +
                     "&udid=" + PlayServicesUrlRewriter.UDID_TEMPLATE +
-                    "&dnt=" + PlayServicesUrlRewriter.DO_NOT_TRACK_TEMPLATE;
-
+                    "&dnt=" + PlayServicesUrlRewriter.DO_NOT_TRACK_TEMPLATE +
+                    "&mr=1" +
+                    "&android_perms_ext_storage=" + externalStoragePermission;
         }
 
         public AdUrlBuilder withAdUnitId(String adUnitId) {
@@ -501,9 +575,11 @@ public class WebViewAdUrlGeneratorTest {
             return this;
         }
 
-        public AdUrlBuilder withLatLon(String latLon, String locationAccuracy) {
+        public AdUrlBuilder withLatLon(String latLon, String locationAccuracy,
+                String latLonLastUpdated) {
             this.latLon = latLon;
             this.locationAccuracy = locationAccuracy;
+            this.latLonLastUpdated = latLonLastUpdated;
             return this;
         }
 

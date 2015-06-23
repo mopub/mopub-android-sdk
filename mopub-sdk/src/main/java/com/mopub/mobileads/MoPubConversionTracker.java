@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.support.annotation.NonNull;
 
 import com.mopub.common.BaseUrlGenerator;
 import com.mopub.common.ClientMetadata;
@@ -31,7 +32,7 @@ public class MoPubConversionTracker {
             TrackingRequest.makeTrackingHttpRequest(new ConversionUrlGenerator().generateUrlString(Constants.HOST),
                     mContext, new TrackingRequest.Listener() {
                 @Override
-                public void onResponse() {
+                public void onResponse(@NonNull String url) {
                     mSharedPreferences
                             .edit()
                             .putBoolean(mIsTrackedKey, true)

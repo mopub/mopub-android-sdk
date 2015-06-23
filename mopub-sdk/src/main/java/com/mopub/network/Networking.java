@@ -4,10 +4,12 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Looper;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.util.LruCache;
 import android.webkit.WebView;
 
 import com.mopub.common.ClientMetadata;
+import com.mopub.common.Constants;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.util.DeviceUtils;
@@ -22,36 +24,50 @@ import com.mopub.volley.toolbox.ImageLoader;
 
 import java.io.File;
 
-public class Networking {
-    private static final String CACHE_DIRECTORY_NAME = "mopub-volley-cache";
-    private static final int TEN_MB = 10 * 1024 * 1024;
+import javax.net.ssl.SSLSocketFactory;
 
-    private static RequestQueue sRequestQueue;
-    private static String sUserAgent;
-    private static MaxWidthImageLoader sMaxWidthImageLoader;
+public class Networking {
+    @VisibleForTesting
+    static final String CACHE_DIRECTORY_NAME = "mopub-volley-cache";
+
+
+    // These are volatile so that double-checked locking works.
+    // See http://en.wikipedia.org/wiki/Double-checked_locking#Usage_in_Java
+    // for more information.
+    private volatile static MoPubRequestQueue sRequestQueue;
+    private volatile static String sUserAgent;
+    private volatile static MaxWidthImageLoader sMaxWidthImageLoader;
+    public static boolean sUseHttps = false;
+
+    @Nullable
+    public static MoPubRequestQueue getRequestQueue() {
+        return sRequestQueue;
+    }
 
     @NonNull
-    public static RequestQueue getRequestQueue(@NonNull Context context) {
-        RequestQueue requestQueue = sRequestQueue;
+    public static MoPubRequestQueue getRequestQueue(@NonNull Context context) {
+        MoPubRequestQueue requestQueue = sRequestQueue;
         // Double-check locking to initialize.
         if (requestQueue == null) {
             synchronized (Networking.class) {
                 requestQueue = sRequestQueue;
                 if (requestQueue == null) {
+
                     // Guarantee ClientMetadata is set up.
                     final ClientMetadata clientMetadata = ClientMetadata.getInstance(context);
-                    HurlStack.UrlRewriter urlRewriter = new PlayServicesUrlRewriter(clientMetadata.getDeviceId(), context);
+                    final HurlStack.UrlRewriter urlRewriter = new PlayServicesUrlRewriter(clientMetadata.getDeviceId(), context);
+                    final SSLSocketFactory socketFactory = CustomSSLSocketFactory.getDefault(Constants.TEN_SECONDS_MILLIS);
 
                     final String userAgent = Networking.getUserAgent(context.getApplicationContext());
-                    HttpStack httpStack = new RequestQueueHttpStack(userAgent, urlRewriter);
+                    HttpStack httpStack = new RequestQueueHttpStack(userAgent, urlRewriter, socketFactory);
 
                     Network network = new BasicNetwork(httpStack);
                     File volleyCacheDir = new File(context.getCacheDir().getPath() + File.separator
                             + CACHE_DIRECTORY_NAME);
-                    Cache cache = new DiskBasedCache(volleyCacheDir, (int) DeviceUtils.diskCacheSizeBytes(volleyCacheDir, TEN_MB));
-                    requestQueue = new RequestQueue(cache, network);
+                    Cache cache = new DiskBasedCache(volleyCacheDir, (int) DeviceUtils.diskCacheSizeBytes(volleyCacheDir, Constants.TEN_MB));
+                    requestQueue = new MoPubRequestQueue(cache, network);
                     sRequestQueue = requestQueue;
-                    sRequestQueue.start();
+                    requestQueue.start();
                 }
             }
         }
@@ -113,17 +129,18 @@ public class Networking {
                 if (userAgent == null) {
                     // As of Android 4.4, WebViews may only be instantiated on the UI thread
                     if (Looper.myLooper() == Looper.getMainLooper()) {
-                        sUserAgent = new WebView(context).getSettings().getUserAgentString();
+                        userAgent = new WebView(context).getSettings().getUserAgentString();
                     } else {
                         // In the exceptional case where we can't access the WebView user agent,
                         // fall back to the System-specific user agent.
-                        sUserAgent = System.getProperty("http.agent");
+                        userAgent = System.getProperty("http.agent");
                     }
+                    sUserAgent = userAgent;
                 }
             }
         }
 
-        return sUserAgent;
+        return userAgent;
     }
 
     @VisibleForTesting
@@ -134,7 +151,7 @@ public class Networking {
     }
 
     @VisibleForTesting
-    public static synchronized void setRequestQueueForTesting(RequestQueue queue) {
+    public static synchronized void setRequestQueueForTesting(MoPubRequestQueue queue) {
         sRequestQueue = queue;
     }
 
@@ -146,5 +163,16 @@ public class Networking {
     @VisibleForTesting
     public static synchronized void setUserAgentForTesting(String userAgent) {
         sUserAgent = userAgent;
+    }
+
+    /**
+     * Set whether to use HTTPS for communication with MoPub ad servers.
+     */
+    public static void useHttps(boolean useHttps) {
+        sUseHttps = useHttps;
+    }
+
+    public static boolean useHttps() {
+        return sUseHttps;
     }
 }

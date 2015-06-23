@@ -2,6 +2,7 @@ package com.mopub.simpleadsdemo;
 
 import android.app.Activity;
 import android.content.Context;
+
 import com.inmobi.commons.InMobi;
 import com.inmobi.monetization.IMErrorCode;
 import com.inmobi.monetization.IMInterstitial;
@@ -10,19 +11,26 @@ import com.mopub.common.MoPub;
 import com.mopub.mobileads.CustomEventInterstitial;
 import com.mopub.mobileads.MoPubErrorCode;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /*
  * Tested with InMobi SDK  4.4.1
  */
 public class InMobiInterstitial extends CustomEventInterstitial implements IMInterstitialListener {
 
+    private static final String DEFAULT_APP_ID = "YOUR_INMOBI_APP_ID_HERE";
+
+    /*
+     * These keys are intended for MoPub internal use. Do not modify.
+     */
+    public static final String APP_ID_KEY = "app_id";
+
     @Override
     protected void loadInterstitial(Context context,
                                     CustomEventInterstitialListener interstitialListener,
                                     Map<String, Object> localExtras, Map<String, String> serverExtras) {
         mInterstitialListener = interstitialListener;
-        String inMobiAppId = "YOUR_INMOBI_APP_ID";
 
         Activity activity = null;
         if (context instanceof Activity) {
@@ -37,10 +45,11 @@ public class InMobiInterstitial extends CustomEventInterstitial implements IMInt
             return;
         }
 
-		/*
-		 * You may also pass this String down in the serverExtras Map by
-		 * specifying Custom Event Data in MoPub's web interface.
-		 */
+        String inMobiAppId = DEFAULT_APP_ID;
+        if (extrasAreValid(serverExtras)) {
+            inMobiAppId = serverExtras.get(APP_ID_KEY);
+        }
+
         if (!isAppInitialized) {
             InMobi.initialize(activity, inMobiAppId);
             isAppInitialized = true;
@@ -55,13 +64,17 @@ public class InMobiInterstitial extends CustomEventInterstitial implements IMInt
         iMInterstitial.loadInterstitial();
     }
 
+    private boolean extrasAreValid(Map<String, String> extras) {
+        return extras.containsKey(APP_ID_KEY);
+    }
+
     private CustomEventInterstitialListener mInterstitialListener;
     private IMInterstitial iMInterstitial;
     private static boolean isAppInitialized = false;
 
-	/*
-	 * Abstract methods from CustomEventInterstitial
-	 */
+    /*
+     * Abstract methods from CustomEventInterstitial
+     */
 
     @Override
     public void showInterstitial() {

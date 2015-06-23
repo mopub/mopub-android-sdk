@@ -9,8 +9,8 @@ import android.view.ViewParent;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 
-import com.mopub.nativeads.VisibilityTracker.TrackingInfo;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.nativeads.VisibilityTracker.TrackingInfo;
 
 import org.fest.util.Lists;
 import org.junit.Before;
@@ -20,6 +20,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.robolectric.Robolectric;
 import org.robolectric.shadows.ShadowSystemClock;
 
 import java.util.ArrayList;
@@ -56,7 +57,7 @@ public class VisibilityTrackerTest {
     public void setUp() throws Exception {
         trackedViews = new WeakHashMap<View, TrackingInfo>();
         visibilityChecker = new VisibilityChecker();
-        activity = new Activity();
+        activity = Robolectric.buildActivity(Activity.class).create().get();
         view = createViewMock(View.VISIBLE, 100, 100, 100, 100, true, true);
         view2 = createViewMock(View.VISIBLE, 100, 100, 100, 100, true, true);
 

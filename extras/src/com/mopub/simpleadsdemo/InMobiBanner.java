@@ -21,12 +21,19 @@ import java.util.Map;
  */
 public class InMobiBanner extends CustomEventBanner implements IMBannerListener {
 
+    private static final String DEFAULT_APP_ID = "YOUR_INMOBI_APP_ID_HERE";
+
+    /*
+     * These keys are intended for MoPub internal use. Do not modify.
+     */
+    public static final String APP_ID_KEY = "app_id";
+
     @Override
     protected void loadBanner(Context context,
-                              CustomEventBannerListener bannerListener,
-                              Map<String, Object> localExtras, Map<String, String> serverExtras) {
+            CustomEventBannerListener bannerListener,
+            Map<String, Object> localExtras, Map<String, String> serverExtras) {
         mBannerListener = bannerListener;
-        String inMobiAppId = "YOUR_INMOBI_APP_ID";
+        String inMobiAppId = DEFAULT_APP_ID;
 
         Activity activity = null;
         if (context instanceof Activity) {
@@ -39,15 +46,16 @@ public class InMobiBanner extends CustomEventBanner implements IMBannerListener 
             mBannerListener.onBannerFailed(null);
             return;
         }
+
+        if (extrasAreValid(serverExtras)) {
+            inMobiAppId = serverExtras.get(APP_ID_KEY);
+        }
+
         if (!isAppInitialized) {
             InMobi.initialize(activity, inMobiAppId);
             isAppInitialized = true;
         }
 
-		/*
-		 * You may also pass this String down in the serverExtras Map by
-		 * specifying Custom Event Data in MoPub's web interface.
-		 */
         iMBanner = new IMBanner(activity, inMobiAppId,
                 IMBanner.INMOBI_AD_UNIT_320X50);
 
@@ -62,13 +70,17 @@ public class InMobiBanner extends CustomEventBanner implements IMBannerListener 
 
     }
 
+    private boolean extrasAreValid(Map<String, String> extras) {
+        return extras.containsKey(APP_ID_KEY);
+    }
+
     private CustomEventBannerListener mBannerListener;
     private IMBanner iMBanner;
     private static boolean isAppInitialized = false;
 
-	/*
-	 * Abstract methods from CustomEventBanner
-	 */
+    /*
+     * Abstract methods from CustomEventBanner
+     */
 
     @Override
     public void onInvalidate() {

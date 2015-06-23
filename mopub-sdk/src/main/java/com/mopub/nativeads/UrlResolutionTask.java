@@ -1,12 +1,13 @@
 package com.mopub.nativeads;
 
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.mopub.common.UrlAction;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
-import com.mopub.common.util.Intents;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -54,7 +55,7 @@ class UrlResolutionTask extends AsyncTask<String, Void, String> {
             while (locationUrl != null && redirectCount < REDIRECT_LIMIT) {
                 // if location url is not http(s), assume it's an Android deep link
                 // this scheme will fail URL validation so we have to check early
-                if (!Intents.isHttpUrl(locationUrl)) {
+                if (!UrlAction.OPEN_IN_APP_BROWSER.shouldTryHandlingUrl(Uri.parse(locationUrl))) {
                     return locationUrl;
                 }
 

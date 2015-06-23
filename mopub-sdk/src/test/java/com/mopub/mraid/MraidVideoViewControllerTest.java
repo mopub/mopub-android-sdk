@@ -14,7 +14,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.shadows.ShadowImageButton;
 import org.robolectric.shadows.ShadowLocalBroadcastManager;
 import org.robolectric.shadows.ShadowVideoView;
 import org.robolectric.tester.org.apache.http.RequestMatcher;
@@ -41,7 +40,7 @@ public class MraidVideoViewControllerTest {
 
     @Before
     public void setUp() throws Exception {
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         bundle = new Bundle();
         baseVideoViewControllerListener = mock(BaseVideoViewControllerListener.class);
 
@@ -89,7 +88,7 @@ public class MraidVideoViewControllerTest {
         ImageButton closeButton = getCloseButton();
 
         assertThat(closeButton).isNotNull();
-        assertThat(getShadowImageButton(closeButton).getOnClickListener()).isNotNull();
+        assertThat(shadowOf(closeButton).getOnClickListener()).isNotNull();
         assertThat(closeButton.getVisibility()).isEqualTo(GONE);
     }
 
@@ -105,9 +104,7 @@ public class MraidVideoViewControllerTest {
         initializeSubject();
         subject.onCreate();
 
-        ImageButton closeButton = getCloseButton();
-
-        getShadowImageButton(closeButton).getOnClickListener().onClick(null);
+        getCloseButton().performClick();
         verify(baseVideoViewControllerListener).onFinish();
     }
 
@@ -165,9 +162,5 @@ public class MraidVideoViewControllerTest {
 
     ImageButton getCloseButton() {
         return (ImageButton) subject.getLayout().getChildAt(1);
-    }
-
-    private ShadowImageButton getShadowImageButton(ImageButton imageButton) {
-        return (ShadowImageButton) shadowOf(imageButton);
     }
 }

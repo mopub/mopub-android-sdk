@@ -22,7 +22,7 @@ public class MoPubEventsTest {
     }
 
     @Test
-    public void getDispatcher_shouldReturnSingletonEventDispatcherWithNoopEventRecorder() throws Exception {
+    public void getDispatcher_shouldReturnSingletonEventDispatcherWithScribeEventRecorder() throws Exception {
         EventDispatcher eventDispatcher = MoPubEvents.getDispatcher();
         EventDispatcher eventDispatcher2 = MoPubEvents.getDispatcher();
 
@@ -35,7 +35,7 @@ public class MoPubEventsTest {
         }
 
         assertThat(eventRecorders.size()).isEqualTo(1);
-        assertThat(eventRecorders.get(0)).isInstanceOf(NoopEventRecorder.class);
+        assertThat(eventRecorders.get(0)).isInstanceOf(ScribeEventRecorder.class);
     }
 
     @Test

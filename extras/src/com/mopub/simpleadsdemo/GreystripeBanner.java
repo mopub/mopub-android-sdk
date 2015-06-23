@@ -17,7 +17,13 @@ import java.util.Map;
  * Tested with Greystripe SDK 2.4.0.
  */
 class GreystripeBanner extends CustomEventBanner implements GSAdListener {
-    public static final String DEFAULT_GREYSTRIPE_APP_ID = "YOUR_GREYSTRIPE_APP_ID";
+
+    private static final String DEFAULT_GREYSTRIPE_APP_ID = "YOUR_GREYSTRIPE_APP_ID";
+
+    /*
+     * These keys are intended for MoPub internal use. Do not modify.
+     */
+    public static final String APP_ID_KEY = "GUID";
 
     private CustomEventBannerListener mBannerListener;
     private GSMobileBannerAdView mGreystripeAd;
@@ -32,15 +38,19 @@ class GreystripeBanner extends CustomEventBanner implements GSAdListener {
                               final Map<String, String> serverExtras) {
         mBannerListener = bannerListener;
 
-        /*
-         * You may also pass this String down in the serverExtras Map by specifying Custom Event Data
-         * in MoPub's web interface.
-         */
         String greystripeAppId = DEFAULT_GREYSTRIPE_APP_ID;
+        if (extrasAreValid(serverExtras)) {
+            greystripeAppId = serverExtras.get(APP_ID_KEY);
+        }
+
         mGreystripeAd = new GSMobileBannerAdView(context, greystripeAppId);
         mGreystripeAd.addListener(this);
 
         mGreystripeAd.refresh();
+    }
+
+    private boolean extrasAreValid(Map<String, String> extras) {
+        return extras.containsKey(APP_ID_KEY);
     }
 
     @Override

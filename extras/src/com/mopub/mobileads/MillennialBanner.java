@@ -18,11 +18,14 @@ import java.util.Map;
  */
 
 class MillennialBanner extends CustomEventBanner {
-    private MMAdView mMillennialAdView;
-    private CustomEventBannerListener mBannerListener;
+
     public static final String APID_KEY = "adUnitID";
     public static final String AD_WIDTH_KEY = "adWidth";
     public static final String AD_HEIGHT_KEY = "adHeight";
+
+    private MMAdView mMillennialAdView;
+    private CustomEventBannerListener mBannerListener;
+
 
     @Override
     protected void loadBanner(final Context context, final CustomEventBannerListener customEventBannerListener,

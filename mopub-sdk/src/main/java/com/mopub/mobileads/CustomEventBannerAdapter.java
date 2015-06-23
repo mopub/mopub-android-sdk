@@ -16,7 +16,9 @@ import com.mopub.mobileads.factories.CustomEventBannerFactory;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.mopub.common.DataKeys.AD_HEIGHT;
 import static com.mopub.common.DataKeys.AD_REPORT_KEY;
+import static com.mopub.common.DataKeys.AD_WIDTH;
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_NOT_FOUND;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_TIMEOUT;
@@ -71,6 +73,8 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
         }
         mLocalExtras.put(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
         mLocalExtras.put(AD_REPORT_KEY, adReport);
+        mLocalExtras.put(AD_WIDTH, mMoPubView.getAdWidth());
+        mLocalExtras.put(AD_HEIGHT, mMoPubView.getAdHeight());
     }
 
     void loadAd() {

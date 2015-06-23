@@ -46,6 +46,7 @@ public class CustomEventBannerAdapterTest {
     private static final long BROADCAST_IDENTIFIER = 123;
     private Map<String, String> serverExtras;
     private CustomEventBanner banner;
+    private Map<String,Object> localExtras;
     private Map<String,Object> expectedLocalExtras;
     private HashMap<String,String> expectedServerExtras;
 
@@ -53,6 +54,12 @@ public class CustomEventBannerAdapterTest {
     public void setUp() throws Exception {
 
         when(moPubView.getAdTimeoutDelay()).thenReturn(null);
+        when(moPubView.getAdWidth()).thenReturn(320);
+        when(moPubView.getAdHeight()).thenReturn(50);
+
+        localExtras = new HashMap<String, Object>();
+        when(moPubView.getLocalExtras()).thenReturn(localExtras);
+
         serverExtras = new HashMap<String, String>();
         serverExtras.put("key", "value");
         serverExtras.put("another_key", "another_value");
@@ -61,9 +68,18 @@ public class CustomEventBannerAdapterTest {
         expectedLocalExtras = new HashMap<String, Object>();
         expectedLocalExtras.put(DataKeys.AD_REPORT_KEY, mockAdReport);
         expectedLocalExtras.put("broadcastIdentifier", BROADCAST_IDENTIFIER);
+        expectedLocalExtras.put(DataKeys.AD_WIDTH, 320);
+        expectedLocalExtras.put(DataKeys.AD_HEIGHT, 50);
+
         expectedServerExtras = new HashMap<String, String>();
 
         banner = CustomEventBannerFactory.create(CLASS_NAME);
+    }
+
+    @Test
+    public void constructor_shouldPopulateLocalExtrasWithAdWidthAndHeight() throws Exception {
+        assertThat(localExtras.get("com_mopub_ad_width")).isEqualTo(320);
+        assertThat(localExtras.get("com_mopub_ad_height")).isEqualTo(50);
     }
 
     @Test
@@ -221,7 +237,7 @@ public class CustomEventBannerAdapterTest {
 
     @Test
     public void onBannerLoaded_shouldSignalMoPubView() throws Exception {
-        View view = new View(new Activity());
+        View view = new View(Robolectric.buildActivity(Activity.class).create().get());
         subject.onBannerLoaded(view);
 
         verify(moPubView).nativeAdLoaded();

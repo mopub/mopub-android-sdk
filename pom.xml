@@ -38,7 +38,5 @@
     <modules>
         <module>mopub-sdk</module>
         <module>mopub-sample</module>
-        <module>robotium-sample</module>
-        <module>robotium-tests</module>
     </modules>
 </project>

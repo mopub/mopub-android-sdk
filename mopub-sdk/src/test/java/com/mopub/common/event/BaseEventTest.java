@@ -3,6 +3,7 @@ package com.mopub.common.event;
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.test.support.SdkTestRunner;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,8 +30,8 @@ public class BaseEventTest {
         when(mockClientMetaData.getDeviceModel()).thenReturn("device_model");
         when(mockClientMetaData.getDeviceProduct()).thenReturn("device_product");
         when(mockClientMetaData.getDeviceOsVersion()).thenReturn("device_os_version");
-        when(mockClientMetaData.getDeviceScreenWidthPx()).thenReturn(1337);
-        when(mockClientMetaData.getDeviceScreenHeightPx()).thenReturn(70707);
+        when(mockClientMetaData.getDeviceScreenWidthDip()).thenReturn(1337);
+        when(mockClientMetaData.getDeviceScreenHeightDip()).thenReturn(70707);
         when(mockClientMetaData.getActiveNetworkType()).thenReturn(ClientMetadata.MoPubNetworkType.WIFI);
         when(mockClientMetaData.getNetworkOperator()).thenReturn("network_operator");
         when(mockClientMetaData.getNetworkOperatorName()).thenReturn("network_operator_name");
@@ -38,8 +39,9 @@ public class BaseEventTest {
         when(mockClientMetaData.getSimOperator()).thenReturn("network_sim_operator");
         when(mockClientMetaData.getSimOperatorName()).thenReturn("network_sim_operator_name");
         when(mockClientMetaData.getSimIsoCountryCode()).thenReturn("network_sim_iso_country_code");
+        ClientMetadata.setInstance(mockClientMetaData);
 
-        subject = new Event.Builder("name", "category")
+        subject = new Event.Builder(BaseEvent.Name.AD_REQUEST, BaseEvent.Category.REQUESTS, 0.10000123)
                 .withSdkProduct(BaseEvent.SdkProduct.NATIVE)
                 .withAdUnitId("8cf00598d3664adaaeccd800e46afaca")
                 .withAdCreativeId("3c2b887e2c2a4cd0ae6a925440a62f0d")
@@ -56,7 +58,68 @@ public class BaseEventTest {
                 .withRequestUri("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca")
                 .withRequestRetries(0)
                 .build();
-        subject.setClientMetaData(mockClientMetaData);
+    }
+
+    @After
+    public void tearDown() {
+        ClientMetadata.setInstance(null);
+    }
+
+    @Test
+    public void ScribeCategory_shouldHaveExpectedValues() throws Exception {
+        // We're testing this since our backend data definitions depend on these values matching
+        assertThat(BaseEvent.ScribeCategory.EXCHANGE_CLIENT_EVENT.getCategory())
+                .isEqualTo("exchange_client_event");
+        assertThat(BaseEvent.ScribeCategory.EXCHANGE_CLIENT_ERROR.getCategory())
+                .isEqualTo("exchange_client_error");
+    }
+
+    @Test
+    public void SdkProduct_shouldHaveExpectedValues() throws Exception {
+        // We're testing this since our backend data definitions depend on these values matching
+        assertThat(BaseEvent.SdkProduct.NONE.getType())
+                .isEqualTo(0);
+        assertThat(BaseEvent.SdkProduct.WEB_VIEW.getType())
+                .isEqualTo(1);
+        assertThat(BaseEvent.SdkProduct.NATIVE.getType())
+                .isEqualTo(2);
+    }
+
+    @Test
+    public void AppPlatform_shouldHaveExpectedValues() throws Exception {
+        // We're testing this since our backend data definitions depend on these values matching
+        assertThat(BaseEvent.AppPlatform.NONE.getType())
+                .isEqualTo(0);
+        assertThat(BaseEvent.AppPlatform.IOS.getType())
+                .isEqualTo(1);
+        assertThat(BaseEvent.AppPlatform.ANDROID.getType())
+                .isEqualTo(2);
+        assertThat(BaseEvent.AppPlatform.MOBILE_WEB.getType())
+                .isEqualTo(3);
+    }
+
+    @Test
+    public void Name_shouldHaveExpectedValues() throws Exception {
+        // We're testing this since our backend data definitions depend on these values matching
+        assertThat(BaseEvent.Name.AD_REQUEST.getName())
+                .isEqualTo("ad_request");
+        assertThat(BaseEvent.Name.IMPRESSION_REQUEST.getName())
+                .isEqualTo("impression_request");
+        assertThat(BaseEvent.Name.CLICK_REQUEST.getName())
+                .isEqualTo("click_request");
+    }
+
+    @Test
+    public void Category_shouldHaveExpectedValues() throws Exception {
+        // We're testing this since our backend data definitions depend on these values matching
+        assertThat(BaseEvent.Category.REQUESTS.getCategory())
+                .isEqualTo("requests");
+    }
+
+    @Test
+    public void SamplingRate_shouldHaveExpectedValues() throws Exception {
+        // We're testing this since our backend data definitions depend on these values matching
+        assertThat(BaseEvent.SamplingRate.AD_REQUEST.getSamplingRate()).isEqualTo(0.1);
     }
 
     @Test
@@ -76,6 +139,7 @@ public class BaseEventTest {
         assertThat(subject.getRequestStatusCode()).isEqualTo(200);
         assertThat(subject.getRequestUri()).isEqualTo("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca");
         assertThat(subject.getRequestRetries()).isEqualTo(0);
+        assertThat(subject.getSamplingRate()).isEqualTo(0.10000123);
     }
 
     @Test
@@ -104,6 +168,11 @@ public class BaseEventTest {
     }
 
     @Test
+    public void getObfuscatedClientAdvertisingId_shouldReturnObfuscatedDeviceId() throws Exception {
+        assertThat(subject.getObfuscatedClientAdvertisingId()).isEqualTo("ifa:XXXX");
+    }
+
+    @Test
     public void getClientDoNotTrack_shouldReturnClientMetaDataDoNotTrack() throws Exception {
         assertThat(subject.getClientDoNotTrack()).isEqualTo(true);
     }
@@ -129,13 +198,13 @@ public class BaseEventTest {
     }
 
     @Test
-    public void getDeviceScreenWidthPx_shouldReturnClientMetaDataDeviceScreenWidthPx() throws Exception {
-        assertThat(subject.getDeviceScreenWidthPx()).isEqualTo(1337);
+    public void getDeviceScreenWidthDip_shouldReturnClientMetaDataDeviceScreenWidthDip() throws Exception {
+        assertThat(subject.getDeviceScreenWidthDip()).isEqualTo(1337);
     }
 
     @Test
-    public void getDeviceScreenHeightPx_shouldReturnClientMetaDataDeviceScreenHeightPx() throws Exception {
-        assertThat(subject.getDeviceScreenHeightPx()).isEqualTo(70707);
+    public void getDeviceScreenHeightDip_shouldReturnClientMetaDataDeviceScreenHeightDip() throws Exception {
+        assertThat(subject.getDeviceScreenHeightDip()).isEqualTo(70707);
     }
 
     @Test

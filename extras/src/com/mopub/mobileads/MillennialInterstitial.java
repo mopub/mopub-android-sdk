@@ -18,9 +18,12 @@ import java.util.Map;
  */
 
 class MillennialInterstitial extends CustomEventInterstitial {
+
+    public static final String APID_KEY = "adUnitID";
+
     private MMInterstitial mMillennialInterstitial;
     private CustomEventInterstitialListener mInterstitialListener;
-    public static final String APID_KEY = "adUnitID";
+
 
     @Override
     protected void loadInterstitial(final Context context, final CustomEventInterstitialListener customEventInterstitialListener,

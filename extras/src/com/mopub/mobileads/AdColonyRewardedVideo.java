@@ -46,10 +46,10 @@ public class AdColonyRewardedVideo extends CustomEventRewardedVideo {
     /*
      * These keys are intended for MoPub internal use. Do not modify.
      */
-    private static final String CLIENT_OPTIONS_KEY = "clientOptions";
-    private static final String APP_ID_KEY = "appId";
-    private static final String ALL_ZONE_IDS_KEY = "allZoneIds";
-    private static final String ZONE_ID_KEY = "zoneId";
+    public static final String CLIENT_OPTIONS_KEY = "clientOptions";
+    public static final String APP_ID_KEY = "appId";
+    public static final String ALL_ZONE_IDS_KEY = "allZoneIds";
+    public static final String ZONE_ID_KEY = "zoneId";
 
     private static boolean sInitialized = false;
     private static LifecycleListener sLifecycleListener = new BaseLifecycleListener() {

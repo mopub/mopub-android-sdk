@@ -53,7 +53,7 @@ public class GpsHelperTest {
 
     @Before
     public void setup() {
-    	context = new Activity();
+    	context = Robolectric.buildActivity(Activity.class).create().get();
         adInfo = new TestAdInfo();
 
         methodBuilder = TestMethodBuilderFactory.getSingletonMock();

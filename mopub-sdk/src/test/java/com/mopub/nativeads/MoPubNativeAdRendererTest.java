@@ -16,6 +16,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -23,11 +24,9 @@ import static org.mockito.Mockito.mock;
 @RunWith(SdkTestRunner.class)
 public class MoPubNativeAdRendererTest {
     private MoPubNativeAdRenderer subject;
-    private Activity context;
     private RelativeLayout relativeLayout;
     private ViewGroup viewGroup;
     private NativeResponse nativeResponse;
-    private BaseForwardingNativeAd mNativeAd;
     private ViewBinder viewBinder;
     private TextView titleView;
     private TextView textView;
@@ -38,21 +37,21 @@ public class MoPubNativeAdRendererTest {
 
     @Before
     public void setUp() throws Exception {
-        context = new Activity();
+        Activity context = Robolectric.buildActivity(Activity.class).create().get();
         relativeLayout = new RelativeLayout(context);
         relativeLayout.setId((int) Utils.generateUniqueId());
         viewGroup = new LinearLayout(context);
 
-        mNativeAd = new BaseForwardingNativeAd() {};
-        mNativeAd.setTitle("test title");
-        mNativeAd.setText("test text");
-        mNativeAd.setCallToAction("test call to action");
-        mNativeAd.setClickDestinationUrl("destinationUrl");
+        BaseForwardingNativeAd baseForwardingNativeAd = new BaseForwardingNativeAd() {};
+        baseForwardingNativeAd.setTitle("test title");
+        baseForwardingNativeAd.setText("test text");
+        baseForwardingNativeAd.setCallToAction("test call to action");
+        baseForwardingNativeAd.setClickDestinationUrl("destinationUrl");
 
         nativeResponse = new NativeResponse(context,
                 "impressionTrackerUrl",
                 "clickTrackerUrl",
-                "test ID", mNativeAd,
+                "test ID", baseForwardingNativeAd,
                 mock(MoPubNative.MoPubNativeListener.class));
 
         titleView = new TextView(context);

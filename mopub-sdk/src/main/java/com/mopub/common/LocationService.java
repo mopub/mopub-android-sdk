@@ -3,6 +3,7 @@ package com.mopub.common;
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
+import android.support.annotation.Nullable;
 
 import com.mopub.common.logging.MoPubLog;
 
@@ -48,6 +49,7 @@ public class LocationService {
      * - The location providers don't exist
      * - Location awareness is disabled in the parent MoPubView
      */
+    @Nullable
     public static Location getLastKnownLocation(final Context context,
             final int locationPrecision,
             final MoPub.LocationAwareness locationLocationAwareness) {
@@ -65,6 +67,8 @@ public class LocationService {
             MoPubLog.d("Failed to retrieve GPS location: access appears to be disabled.");
         } catch (IllegalArgumentException e) {
             MoPubLog.d("Failed to retrieve GPS location: device has no GPS provider.");
+        } catch (NullPointerException e) { // This happens on 4.2.2 on a few Android TV devices
+            MoPubLog.d("Failed to retrieve GPS location: device has no GPS provider.");
         }
 
         Location networkLocation = null;
@@ -74,6 +78,8 @@ public class LocationService {
             MoPubLog.d("Failed to retrieve network location: access appears to be disabled.");
         } catch (IllegalArgumentException e) {
             MoPubLog.d("Failed to retrieve network location: device has no network provider.");
+        }  catch (NullPointerException e) { // This happens on 4.2.2 on a few Android TV devices
+            MoPubLog.d("Failed to retrieve GPS location: device has no network provider.");
         }
 
         if (gpsLocation == null && networkLocation == null) {

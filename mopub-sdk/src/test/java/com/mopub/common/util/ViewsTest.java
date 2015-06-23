@@ -2,6 +2,7 @@ package com.mopub.common.util;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Resources;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -9,6 +10,7 @@ import android.widget.TextView;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -18,12 +20,15 @@ public class ViewsTest {
     private Context context;
     private View subject;
     private RelativeLayout parent;
+    private Activity testActivity;
+    private Resources testResources;
 
     @Before
     public void setup() {
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         subject = new View(context);
         parent = new RelativeLayout(context);
+
     }
 
     @Test
