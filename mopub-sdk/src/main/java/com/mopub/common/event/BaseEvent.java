@@ -5,7 +5,6 @@ import android.support.annotation.Nullable;
 
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.Preconditions;
-import com.mopub.common.VisibleForTesting;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
