@@ -5,8 +5,9 @@ repositories {
 }
 
 apply plugin: 'com.android.library'
+apply plugin: 'maven'
 
-group = 'com.mopub'
+group = 'com.mopub.mobileads'
 
 description = '''MoPub SDK'''
 
@@ -59,3 +60,27 @@ check.dependsOn.remove("unitTest")
 check.dependsOn.remove("testDebug")
 check.dependsOn.remove("unitTestDebug")
 
+// Upload Settings/Task
+version = '3.4.0.0'
+uploadArchives {
+    repositories {
+        // the maven plugin features this deployer
+        mavenDeployer {
+            // we deploy to the release repository in this case
+            repository(url: "https://scopelybin.artifactoryonline.com/scopelybin/libs-releases-local/") {
+                authentication(userName: artifactoryDeployUser, password: artifactoryDeployPassword)
+            }
+            pom.project {
+                artifactId 'mopub-android'
+                name 'Mopub Android SDK'
+                packaging 'aar'
+            }
+        }
+    }
+}
+
+configurations {
+    archives {
+        extendsFrom configurations.default
+    }
+}

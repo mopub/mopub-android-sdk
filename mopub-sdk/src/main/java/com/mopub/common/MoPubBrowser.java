@@ -60,9 +60,6 @@ public class MoPubBrowser extends Activity {
 
         setResult(Activity.RESULT_OK);
 
-        getWindow().requestFeature(Window.FEATURE_PROGRESS);
-        getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.PROGRESS_VISIBILITY_ON);
-
         setContentView(getMoPubBrowserView());
 
         initializeWebView();

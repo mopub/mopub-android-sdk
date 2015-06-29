@@ -1,7 +1,9 @@
 package com.mopub.mobileads;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Build;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -13,12 +15,19 @@ import static com.mopub.common.util.VersionCode.ICE_CREAM_SANDWICH;
 import static com.mopub.common.util.VersionCode.currentApiLevel;
 import static com.mopub.mobileads.ViewGestureDetector.UserClickListener;
 
+
 public class BaseHtmlWebView extends BaseWebView implements UserClickListener {
     private final ViewGestureDetector mViewGestureDetector;
     private boolean mClicked;
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public BaseHtmlWebView(Context context, AdReport adReport) {
         super(context);
+
+        //RHT: This is to disable hardware acceleration, which is believed to be the cause of signal 11 SIGSEGV.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        }
 
         disableScrollingAndZoom();
         getSettings().setJavaScriptEnabled(true);
@@ -42,7 +51,12 @@ public class BaseHtmlWebView extends BaseWebView implements UserClickListener {
 
         MoPubLog.d("Loading url: " + url);
         if (url.startsWith("javascript:")) {
-            super.loadUrl(url);
+            // If destroy has been called on this webview, we won't be able to navigate
+            try {
+                super.loadUrl(url);
+            } catch (NullPointerException e) {
+                Log.e("MoPub", "Attempt to call javascript on destroyed WebView", e);
+            }
         }
     }
 

@@ -58,7 +58,6 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         mInterstitialView.setAdUnitId(mAdUnitId);
 
         mCurrentInterstitialState = InterstitialState.NOT_READY;
-
     }
 
     public void load() {
@@ -123,6 +122,21 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
 
     public Activity getActivity() {
         return mActivity;
+    }
+
+    public void setActivity(Activity activity) {
+        if(activity == mActivity) {
+            return;
+        }
+        mActivity = activity;
+
+        if(mInterstitialView != null) {
+            mInterstitialView.destroy();
+        }
+        mInterstitialView = new MoPubInterstitialView(mActivity);
+        mInterstitialView.setAdUnitId(mAdUnitId);
+
+        mCurrentInterstitialState = InterstitialState.NOT_READY;
     }
 
     public Location getLocation() {

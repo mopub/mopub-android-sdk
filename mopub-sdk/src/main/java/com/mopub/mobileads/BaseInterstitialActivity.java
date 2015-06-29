@@ -52,7 +52,6 @@ abstract class BaseInterstitialActivity extends Activity {
         mBroadcastIdentifier = getBroadcastIdentifierFromIntent(intent);
         mAdReport = getAdReportFromIntent(intent);
 
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         View adView = getAdView();

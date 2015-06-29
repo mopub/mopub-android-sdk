@@ -69,7 +69,7 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
         mLocalExtras.put(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
         mLocalExtras.put(AD_REPORT_KEY, adReport);
     }
-    
+
     void loadInterstitial() {
         if (isInvalidated() || mCustomEventInterstitial == null) {
             return;
@@ -191,10 +191,5 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
         if (isInvalidated()) return;
 
         if (mCustomEventInterstitialAdapterListener != null) mCustomEventInterstitialAdapterListener.onCustomEventInterstitialDismissed();
-    }
-
-    @Deprecated
-    void setCustomEventInterstitial(CustomEventInterstitial interstitial) {
-        mCustomEventInterstitial = interstitial;
     }
 }

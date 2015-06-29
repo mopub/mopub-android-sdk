@@ -1,3 +1,12 @@
+/**
+ * Usage:
+ * Set artifactoryDeployUser and artifactoryDeployPassword in ~/.gradle/gradle.properties
+ *
+ * ./gradlew uploadArchives
+ *
+ * Done!
+ */
+
 buildscript {
     repositories {
         mavenCentral()
