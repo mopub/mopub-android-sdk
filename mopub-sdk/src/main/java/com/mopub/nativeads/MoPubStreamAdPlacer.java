@@ -399,7 +399,7 @@ public class MoPubStreamAdPlacer {
      * @return An object representing ad data.
      */
     @Nullable
-    public Object getAdData(final int position) {
+    public NativeAdData getAdData(final int position) {
         return mPlacementData.getPlacedAd(position);
     }
 
@@ -680,7 +680,7 @@ public class MoPubStreamAdPlacer {
      * @param end The end of the range in which to place ads, exclusive.
      * @return false if there is no ad available to be placed.
      */
-    private boolean tryPlaceAdsInRange(final int start, final int end) {
+    public boolean tryPlaceAdsInRange(final int start, final int end) {
         int position = start;
         int lastPosition = end - 1;
         while (position <= lastPosition && position != PlacementData.NOT_FOUND) {
@@ -748,7 +748,7 @@ public class MoPubStreamAdPlacer {
      * Prepares a view and nativeresponse for display by attaching click handlers
      * and setting up impression tracking.
      */
-    private void prepareNativeResponse(@NonNull final NativeResponse nativeResponse, @NonNull final View view) {
+    public void prepareNativeResponse(@NonNull final NativeResponse nativeResponse, @NonNull final View view) {
         mViewMap.put(nativeResponse, new WeakReference<View>(view));
         mNativeResponseMap.put(view, nativeResponse);
         if (!nativeResponse.isOverridingImpressionTracker()) {
