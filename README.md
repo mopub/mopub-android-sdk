@@ -9,9 +9,9 @@ Sign up for an account at [http://app.mopub.com/](http://app.mopub.com/).
 You can find integration documentation on our [wiki](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started) and
 additional help documentation on our [developer help site](http://dev.twitter.com/mopub). 
 
-To file an issue with our team visit the [MoPub Forum](https://twittercommunity.com/c/fabric/mopub). 
+To file an issue with our team visit the [MoPub Forum](https://twittercommunity.com/c/fabric/mopub) or email [support@mopub.com](mailto:support@mopub.com).
 
-**Note: We will be deprecating the use of GitHub issues in the near future and migrating all issues to the forum to provide a faster response time.**
+**Please Note: We no longer accept GitHub Issues**
 
 ## Download
 
@@ -34,13 +34,21 @@ Integration instructions are available on the [wiki](https://github.com/mopub/mo
 
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for details.
 
-- Updated Chartboost support to 5.3.0. This introduces a new shared class called ChartboostShared. If you are using Chartboost Custom Native Networks you will need to include this class in your build along with ChartboostInterstitial.
+- Added **VAST 3.0** standard support for video ads.
+- Improved **video player UX**.
+- Added **RecyclerView** support for native ads. See the [integration guide](https://github.com/mopub/mopub-android-sdk/wiki/Native-Ads-with-Recycler-View).
+- Improved **deep link** handling.
+- Bug Fixes:
+  - MRAID video interstitials now play automatically when displayed on Jellybean MR1 and newer.
+  - MRAID relative assets are correctly rendered.
+  - MoPubLog no longer duplicates some messages.
 
 ## Requirements
 
 - Android 2.3.1 (API Version 9) and up
 - android-support-v4.jar, r22 (**Updated in 3.7.0**)
 - android-support-annotations.jar, r22 (**Updated in 3.7.0**)
+- android-support-v7-recyclerview.jar, r22 (**Updated in 3.9.0**)
 - MoPub Volley Library (mopub-volley-1.1.0.jar - available on JCenter) (**Updated in 3.6.0**)
 - **Recommended** Google Play Services 7.0.0
 

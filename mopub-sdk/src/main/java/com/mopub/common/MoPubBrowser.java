@@ -3,11 +3,10 @@ package com.mopub.common;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +15,6 @@ import android.webkit.CookieSyncManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -25,6 +23,8 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.mobileads.BaseWebView;
 import com.mopub.mobileads.util.WebViews;
 
+import java.util.EnumSet;
+
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.mopub.common.util.Drawables.BACKGROUND;
@@ -32,9 +32,6 @@ import static com.mopub.common.util.Drawables.CLOSE;
 import static com.mopub.common.util.Drawables.LEFT_ARROW;
 import static com.mopub.common.util.Drawables.REFRESH;
 import static com.mopub.common.util.Drawables.RIGHT_ARROW;
-import static com.mopub.common.util.Drawables.UNLEFT_ARROW;
-import static com.mopub.common.util.Drawables.UNRIGHT_ARROW;
-import static com.mopub.common.util.Intents.deviceCanHandleIntent;
 
 public class MoPubBrowser extends Activity {
     public static final String DESTINATION_URL_KEY = "URL";
@@ -45,6 +42,31 @@ public class MoPubBrowser extends Activity {
     private ImageButton mForwardButton;
     private ImageButton mRefreshButton;
     private ImageButton mCloseButton;
+
+    @NonNull
+    public ImageButton getBackButton() {
+        return mBackButton;
+    }
+
+    @NonNull
+    public ImageButton getCloseButton() {
+        return mCloseButton;
+    }
+
+    @NonNull
+    public ImageButton getForwardButton() {
+        return mForwardButton;
+    }
+
+    @NonNull
+    public ImageButton getRefreshButton() {
+        return mRefreshButton;
+    }
+
+    @NonNull
+    public WebView getWebView() {
+        return mWebView;
+    }
 
     public static void open(final Context context, final String url) {
         MoPubLog.d("Opening url in MoPubBrowser: " + url);
@@ -85,51 +107,8 @@ public class MoPubBrowser extends Activity {
         webSettings.setUseWideViewPort(true);
 
         mWebView.loadUrl(getIntent().getStringExtra(DESTINATION_URL_KEY));
-        mWebView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onReceivedError(WebView view, int errorCode, String description,
-                    String failingUrl) {
-                MoPubLog.d("MoPubBrowser error: " + description);
-            }
 
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url == null) {
-                    return false;
-                }
-
-                final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                if (UrlAction.FOLLOW_DEEP_LINK.shouldTryHandlingUrl(Uri.parse(url))
-                        && deviceCanHandleIntent(MoPubBrowser.this, intent)) {
-                    startActivity(intent);
-                    finish();
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-
-            @Override
-            public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                super.onPageStarted(view, url, favicon);
-                mForwardButton.setImageDrawable(UNRIGHT_ARROW.createDrawable(MoPubBrowser.this));
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-
-                Drawable backImageDrawable = view.canGoBack()
-                        ? LEFT_ARROW.createDrawable(MoPubBrowser.this)
-                        : UNLEFT_ARROW.createDrawable(MoPubBrowser.this);
-                mBackButton.setImageDrawable(backImageDrawable);
-
-                Drawable forwardImageDrawable = view.canGoForward()
-                        ? RIGHT_ARROW.createDrawable(MoPubBrowser.this)
-                        : UNRIGHT_ARROW.createDrawable(MoPubBrowser.this);
-                mForwardButton.setImageDrawable(forwardImageDrawable);
-            }
-        });
+        mWebView.setWebViewClient(new BrowserWebViewClient(this));
 
         mWebView.setWebChromeClient(new WebChromeClient() {
             public void onProgressChanged(WebView webView, int progress) {

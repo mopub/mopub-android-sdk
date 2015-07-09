@@ -101,6 +101,8 @@ public class MoPubNativeAdRendererTest {
     }
 
     @Rule public ExpectedException exception = ExpectedException.none();
+
+    @Test
     public void renderAdView_withNullViewBinder_shouldThrowNPE() {
         subject = new MoPubNativeAdRenderer(null);
 
@@ -120,6 +122,7 @@ public class MoPubNativeAdRendererTest {
         // not testing images due to testing complexity
     }
 
+    @Test
     public void renderAdView_withFailedViewBinder_shouldReturnEmptyViews() {
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
                 .titleId(titleView.getId())

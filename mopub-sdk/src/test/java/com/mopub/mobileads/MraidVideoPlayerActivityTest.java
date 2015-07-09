@@ -10,7 +10,6 @@ import android.widget.ImageView;
 
 import com.mopub.common.MoPubBrowser;
 import com.mopub.common.test.support.SdkTestRunner;
-import com.mopub.mobileads.util.vast.VastVideoConfiguration;
 import com.mopub.mraid.MraidVideoViewController;
 
 import org.junit.Before;

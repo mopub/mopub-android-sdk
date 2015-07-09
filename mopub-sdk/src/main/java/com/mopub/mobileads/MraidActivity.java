@@ -15,6 +15,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.mopub.common.AdReport;
+import com.mopub.common.Constants;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
@@ -66,7 +67,8 @@ public class MraidActivity extends BaseInterstitialActivity {
             }
         });
 
-        dummyWebView.loadDataWithBaseURL(null, htmlData, "text/html", "UTF-8", null);
+        dummyWebView.loadDataWithBaseURL("http://" + Constants.HOST + "/",
+                htmlData, "text/html", "UTF-8", null);
     }
 
     public static void start(@NonNull Context context, @Nullable AdReport adreport, @NonNull String htmlData, long broadcastIdentifier) {

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.drawable.StateListDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
@@ -28,7 +29,10 @@ public class MraidVideoViewController extends BaseVideoViewController {
     private int mButtonPadding;
     private int mButtonSize;
 
-    public MraidVideoViewController(final Context context, final Bundle bundle, final BaseVideoViewControllerListener baseVideoViewControllerListener) {
+    public MraidVideoViewController(final Context context,
+            final Bundle intentExtras,
+            final Bundle savedInstanceState,
+            final BaseVideoViewControllerListener baseVideoViewControllerListener) {
         // No broadcast identifiers are used by MraidVideoViews.
         super(context, null, baseVideoViewControllerListener);
 
@@ -51,7 +55,7 @@ public class MraidVideoViewController extends BaseVideoViewController {
             }
         });
 
-        mVideoView.setVideoPath(bundle.getString(VIDEO_URL));
+        mVideoView.setVideoPath(intentExtras.getString(VIDEO_URL));
     }
 
     @Override
@@ -77,6 +81,9 @@ public class MraidVideoViewController extends BaseVideoViewController {
 
     @Override
     protected void onResume() {}
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {}
 
     private void createInterstitialCloseButton() {
         mCloseButton = new ImageButton(getContext());

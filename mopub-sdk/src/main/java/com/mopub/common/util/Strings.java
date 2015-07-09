@@ -1,5 +1,6 @@
 package com.mopub.common.util;
 
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import java.io.IOException;
@@ -36,7 +37,12 @@ public class Strings {
                 && absolutePattern.matcher(progressValue).matches();
     }
 
-    public static Integer parseAbsoluteOffset(String progressValue) {
+    @Nullable
+    public static Integer parseAbsoluteOffset(@Nullable String progressValue) {
+        if (progressValue == null) {
+            return null;
+        }
+
         final String[] split = progressValue.split(":");
         if (split.length != 3) {
             return null;

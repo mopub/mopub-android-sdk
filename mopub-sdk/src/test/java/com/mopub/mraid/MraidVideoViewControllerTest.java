@@ -153,7 +153,7 @@ public class MraidVideoViewControllerTest {
     }
 
     private void initializeSubject() {
-        subject = new MraidVideoViewController(context, bundle, baseVideoViewControllerListener);
+        subject = new MraidVideoViewController(context, bundle, null, baseVideoViewControllerListener);
     }
 
     private ShadowVideoView getShadowVideoView() {

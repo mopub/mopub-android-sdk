@@ -1,9 +1,13 @@
 package com.mopub.nativeads;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build.VERSION_CODES;
 
+import com.mopub.common.ClientMetadata;
 import com.mopub.common.DownloadResponse;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubClientPositioning;
@@ -27,13 +31,14 @@ import org.robolectric.shadows.ShadowLog;
 
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,19 +51,24 @@ public class ServerPositioningSourceTest {
     @Mock DownloadResponse mockNotFoundResponse;
     @Mock DownloadResponse mockInvalidJsonResponse;
     @Mock DownloadResponse mockWarmingUpJsonResponse;
-
-    @Mock
-    MoPubRequestQueue mockRequestQueue;
+    @Mock Context mockContext;
+    @Mock ClientMetadata mockClientMetaData;
+    @Mock MoPubRequestQueue mockRequestQueue;
 
     @Captor ArgumentCaptor<MoPubClientPositioning> positioningCaptor;
 
     ServerPositioningSource subject;
+    private Activity spyActivity;
 
     @Before
     public void setUp() {
         Activity activity = Robolectric.buildActivity(Activity.class).create().get();
-        subject = new ServerPositioningSource(activity);
+        spyActivity = spy(activity);
 
+
+
+        subject = new ServerPositioningSource(spyActivity);
+        setupClientMetadata();
         Networking.setRequestQueueForTesting(mockRequestQueue);
 
         when(mockValidResponse.getStatusCode()).thenReturn(HttpStatus.SC_OK);
@@ -72,6 +82,29 @@ public class ServerPositioningSourceTest {
                 "{\"error\":\"WARMING_UP\"}".getBytes());
 
         when(mockNotFoundResponse.getStatusCode()).thenReturn(HttpStatus.SC_NOT_FOUND);
+    }
+
+    private void setupClientMetadata() {
+        when(mockClientMetaData.getSdkVersion()).thenReturn("sdk_version");
+        when(mockClientMetaData.getAppName()).thenReturn("app_name");
+        when(mockClientMetaData.getAppPackageName()).thenReturn("app_package_name");
+        when(mockClientMetaData.getAppVersion()).thenReturn("app_version");
+        when(mockClientMetaData.getDeviceId()).thenReturn("client_device_id");
+        when(mockClientMetaData.isDoNotTrackSet()).thenReturn(true);
+        when(mockClientMetaData.getDeviceManufacturer()).thenReturn("device_manufacturer");
+        when(mockClientMetaData.getDeviceModel()).thenReturn("device_model");
+        when(mockClientMetaData.getDeviceProduct()).thenReturn("device_product");
+        when(mockClientMetaData.getDeviceOsVersion()).thenReturn("device_os_version");
+        when(mockClientMetaData.getDeviceScreenWidthDip()).thenReturn(1337);
+        when(mockClientMetaData.getDeviceScreenHeightDip()).thenReturn(70707);
+        when(mockClientMetaData.getActiveNetworkType()).thenReturn(ClientMetadata.MoPubNetworkType.WIFI);
+        when(mockClientMetaData.getNetworkOperator()).thenReturn("network_operator");
+        when(mockClientMetaData.getNetworkOperatorName()).thenReturn("network_operator_name");
+        when(mockClientMetaData.getIsoCountryCode()).thenReturn("network_iso_country_code");
+        when(mockClientMetaData.getSimOperator()).thenReturn("network_sim_operator");
+        when(mockClientMetaData.getSimOperatorName()).thenReturn("network_sim_operator_name");
+        when(mockClientMetaData.getSimIsoCountryCode()).thenReturn("network_sim_iso_country_code");
+        ClientMetadata.setInstance(mockClientMetaData);
     }
 
     @Test
@@ -145,9 +178,9 @@ public class ServerPositioningSourceTest {
 
     @Test
     public void loadPositions_thenFailAfterMaxRetryTime_shouldCallFailureHandler() {
-        ServerPositioningSource.MAXIMUM_RETRY_TIME_MILLISECONDS = 999;
-
         subject.loadPositions("test_ad_unit", mockPositioningListener);
+        // Simulate failure after max time.
+        subject.setMaximumRetryTimeMilliseconds(999);
 
         verify(mockRequestQueue).add(positionRequestCaptor.capture());
         positionRequestCaptor.getValue().deliverError(new VolleyError("test error"));
@@ -156,12 +189,21 @@ public class ServerPositioningSourceTest {
 
     @Test
     public void loadPositions_withNoConnection_shouldLogMoPubErrorCodeNoConnection_shouldCallFailureHandler() {
-        LogManager.getLogManager().getLogger("com.mopub").setLevel(Level.ALL);
+        MoPubLog.setSdkHandlerLevel(Level.ALL);
 
+        when(mockContext.checkCallingOrSelfPermission(anyString()))
+                .thenReturn(PackageManager.PERMISSION_DENIED);
+        when(spyActivity.getApplicationContext()).thenReturn(mockContext);
+        // Reinit the subject so we get our mocked context.
+        subject = new ServerPositioningSource(spyActivity);
+
+        // Simulate failure after max time.
+        subject.setMaximumRetryTimeMilliseconds(999);
         subject.loadPositions("test_ad_unit", mockPositioningListener);
 
         verify(mockRequestQueue).add(positionRequestCaptor.capture());
         positionRequestCaptor.getValue().deliverError(new NoConnectionError());
+
         verify(mockPositioningListener).onFailed();
 
         final List<ShadowLog.LogItem> allLogMessages = ShadowLog.getLogs();

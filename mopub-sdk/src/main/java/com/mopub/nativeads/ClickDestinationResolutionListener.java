@@ -39,6 +39,7 @@ class ClickDestinationResolutionListener implements UrlResolutionTask.UrlResolut
                         UrlAction.OPEN_APP_MARKET,
                         UrlAction.OPEN_IN_APP_BROWSER,
                         UrlAction.HANDLE_SHARE_TWEET,
+                        UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK,
                         UrlAction.FOLLOW_DEEP_LINK)
                 .withResultActions(new UrlHandler.ResultActions() {
                     @Override

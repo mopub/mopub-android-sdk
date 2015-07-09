@@ -2,6 +2,7 @@ package com.mopub.nativeads;
 
 import android.app.Activity;
 
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.ShadowAsyncTasks;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
@@ -30,7 +31,6 @@ import java.net.MalformedURLException;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
 import static android.Manifest.permission.INTERNET;
@@ -164,7 +164,7 @@ public class MoPubNativeTest {
 
     @Test
     public void onAdError_withVolleyErrorWarmingUp_shouldLogMoPubErrorCodeWarmup_shouldNotifyListener() {
-        LogManager.getLogManager().getLogger("com.mopub").setLevel(Level.ALL);
+        MoPubLog.setSdkHandlerLevel(Level.ALL);
 
         subject.onAdError(new MoPubNetworkError(MoPubNetworkError.Reason.WARMING_UP));
 
@@ -178,7 +178,7 @@ public class MoPubNativeTest {
 
     @Test
     public void onAdError_withNoConnection_shouldLogMoPubErrorCodeNoConnection_shouldNotifyListener() {
-        LogManager.getLogManager().getLogger("com.mopub").setLevel(Level.ALL);
+        MoPubLog.setSdkHandlerLevel(Level.ALL);
         shadowOf(context).denyPermissions(INTERNET);
 
         subject.onAdError(new NoConnectionError());

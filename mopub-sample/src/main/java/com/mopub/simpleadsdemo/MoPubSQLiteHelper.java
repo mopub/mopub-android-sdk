@@ -13,6 +13,7 @@ import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.BANNER;
 import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.CUSTOM_NATIVE;
 import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.INTERSTITIAL;
 import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.LIST_VIEW;
+import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.RECYCLER_VIEW;
 import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.MRECT;
 
 class MoPubSQLiteHelper extends SQLiteOpenHelper {
@@ -24,7 +25,7 @@ class MoPubSQLiteHelper extends SQLiteOpenHelper {
     public static final String COLUMN_AD_TYPE = "adType";
 
     private static final String DATABASE_NAME = "savedConfigurations.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     private static final String DATABASE_CREATE = "create table " + TABLE_AD_CONFIGURATIONS
             + " ("
@@ -68,6 +69,11 @@ class MoPubSQLiteHelper extends SQLiteOpenHelper {
                 new MoPubSampleAdUnit
                         .Builder(mContext.getString(R.string.ad_unit_id_native), LIST_VIEW)
                         .description("MoPub Ad Placer Sample")
+                        .build());
+        adUnitList.add(
+                new MoPubSampleAdUnit
+                        .Builder(mContext.getString(R.string.ad_unit_id_native), RECYCLER_VIEW)
+                        .description("MoPub Recycler View Sample")
                         .build());
         adUnitList.add(
                 new MoPubSampleAdUnit

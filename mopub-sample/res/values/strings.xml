@@ -3,6 +3,8 @@
     <string name="app_name">MoPub Sample App</string>
     <string name="keywords">Keywords (optional)</string>
     <string name="load_ad">Load Ad</string>
+    <string name="refresh_ad">Refresh Ad</string>
+    <string name="switch_layout">Switch Layout</string>
     <string name="show_ad">Show Ad</string>
     <string name="native_icon_image">native_icon_image</string>
     <string name="native_main_image">native_main_image</string>

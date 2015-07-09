@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -20,6 +21,7 @@ import android.webkit.WebViewClient;
 
 import com.mopub.common.AdReport;
 import com.mopub.common.CloseableLayout.ClosePosition;
+import com.mopub.common.Constants;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.mobileads.BaseWebView;
@@ -105,6 +107,12 @@ public class MraidBridge {
     void attachView(@NonNull MraidWebView mraidWebView) {
         mMraidWebView = mraidWebView;
         mMraidWebView.getSettings().setJavaScriptEnabled(true);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            if (mPlacementType == PlacementType.INTERSTITIAL) {
+                mraidWebView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+            }
+        }
 
         mMraidWebView.loadUrl("javascript:" + FILTERED_JAVASCRIPT_SOURCE);
         mMraidWebView.setScrollContainer(false);
@@ -195,7 +203,8 @@ public class MraidBridge {
         }
 
         mHasLoaded = false;
-        mMraidWebView.loadDataWithBaseURL(null, htmlData, "text/html", "UTF-8", null);
+        mMraidWebView.loadDataWithBaseURL("http://" + Constants.HOST + "/",
+                htmlData, "text/html", "UTF-8", null);
     }
 
     public void setContentUrl(String url) {

@@ -29,6 +29,7 @@ public interface MoPubAdRenderer<T> {
      * parent.
      * @return A new ad view.
      */
+    @NonNull
     View createAdView(@NonNull Context context, @Nullable ViewGroup parent);
 
     /**

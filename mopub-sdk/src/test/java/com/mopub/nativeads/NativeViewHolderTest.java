@@ -308,7 +308,7 @@ public class NativeViewHolderTest {
         NativeViewHolder nativeViewHolder =
                 NativeViewHolder.fromViewBinder(relativeLayout, viewBinder);
 
-        nativeViewHolder.updateExtras(relativeLayout, nativeResponse, viewBinder);
+        nativeViewHolder.updateExtras(nativeResponse, viewBinder);
 
         assertThat(extrasTextView.getText()).isEqualTo("extrastexttext");
 
@@ -343,7 +343,7 @@ public class NativeViewHolderTest {
 
         assertThat(extrasTextView.getText()).isEqualTo("previousextrastext");
 
-        nativeViewHolder.updateExtras(relativeLayout, nativeResponse, viewBinder);
+        nativeViewHolder.updateExtras(nativeResponse, viewBinder);
 
         assertThat(extrasTextView.getText()).isEqualTo("");
         assertThat(extrasImageView.getDrawable()).isNull();
@@ -370,7 +370,7 @@ public class NativeViewHolderTest {
         assertThat(extrasTextView.getText()).isEqualTo("");
         assertThat(extrasImageView.getDrawable()).isNull();
 
-        nativeViewHolder.updateExtras(relativeLayout, nativeResponse, viewBinder);
+        nativeViewHolder.updateExtras(nativeResponse, viewBinder);
 
         // Volley's imageloader will set this to a bitmapdrawable with no bitmap
         assertThat(extrasTextView.getText()).isEqualTo("extrasimageurl");

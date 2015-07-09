@@ -5,7 +5,6 @@ import android.content.Intent;
 
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Utils;
-import com.mopub.mobileads.util.vast.VastVideoConfiguration;
 
 import org.junit.Before;
 import org.junit.Test;

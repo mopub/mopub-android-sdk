@@ -3,7 +3,7 @@ package com.mopub.mobileads.test.support;
 import android.content.Context;
 
 import com.mopub.mobileads.factories.VastManagerFactory;
-import com.mopub.mobileads.util.vast.VastManager;
+import com.mopub.mobileads.VastManager;
 
 import static org.mockito.Mockito.mock;
 

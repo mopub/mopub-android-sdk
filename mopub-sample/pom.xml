@@ -38,55 +38,17 @@
         </dependency>
 
         <dependency>
+            <groupId>com.android.support</groupId>
+            <artifactId>recyclerview-v7</artifactId>
+            <version>22.0.0</version>
+            <type>aar</type>
+        </dependency>
+        
+        <dependency>
             <groupId>com.google.android.gms</groupId>
             <artifactId>play-services-ads</artifactId>
             <version>7.0.0</version>
             <type>aar</type>
-        </dependency>
-
-        <!--test-->
-
-        <dependency>
-            <groupId>com.squareup</groupId>
-            <artifactId>fest-android</artifactId>
-            <version>1.0.1</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- this needs to come above fest-reflect or we pick up the wrong org.fest.util.Strings -->
-        <dependency>
-            <groupId>org.easytesting</groupId>
-            <artifactId>fest-assert-core</artifactId>
-            <version>2.0M9</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.easytesting</groupId>
-            <artifactId>fest-reflect</artifactId>
-            <version>1.4</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.8.2</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>1.9.5</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.robolectric</groupId>
-            <artifactId>robolectric</artifactId>
-            <version>${robolectric.version}</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency> <groupId>com.google.android</groupId>
@@ -103,9 +65,22 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
+                <!-- Skip tests. We use Gradle to build and run tests. -->
+                <executions>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>7</source>
+                    <target>7</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -122,16 +97,6 @@
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
                 </configuration>
                 <extensions>true</extensions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <excludes>
-                        <exclude>**/Test*.java</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
         </plugins>
     </build>

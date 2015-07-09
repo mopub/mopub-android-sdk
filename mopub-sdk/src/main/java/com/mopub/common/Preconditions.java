@@ -184,6 +184,8 @@ public final class Preconditions {
 
         /**
          * Ensures that an object reference is not null.
+         *
+         * @returns true if
          */
         public static boolean checkNotNull(Object reference) {
             return checkNotNullInternal(reference, sStrictMode, "Object can not be null.",

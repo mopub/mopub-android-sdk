@@ -10,6 +10,7 @@ import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 
 class NativeViewHolder {
+    @Nullable View mainView;
     @Nullable TextView titleView;
     @Nullable TextView textView;
     @Nullable TextView callToActionView;
@@ -23,9 +24,10 @@ class NativeViewHolder {
     private NativeViewHolder() {}
 
     @NonNull
-    static NativeViewHolder fromViewBinder(@NonNull final View view, @NonNull final ViewBinder viewBinder) {
+    static NativeViewHolder fromViewBinder(@NonNull final View view,
+            @NonNull final ViewBinder viewBinder) {
         final NativeViewHolder nativeViewHolder = new NativeViewHolder();
-
+        nativeViewHolder.mainView = view;
         try {
             nativeViewHolder.titleView = (TextView) view.findViewById(viewBinder.titleId);
             nativeViewHolder.textView = (TextView) view.findViewById(viewBinder.textId);
@@ -47,12 +49,15 @@ class NativeViewHolder {
         nativeResponse.loadIconImage(iconImageView);
     }
 
-    void updateExtras(@NonNull final View outerView,
-                      @NonNull final NativeResponse nativeResponse,
+    void updateExtras(@NonNull final NativeResponse nativeResponse,
                       @NonNull final ViewBinder viewBinder) {
+        if (mainView == null) {
+            MoPubLog.w("Attempted to bind extras on a null main view.");
+            return;
+        }
         for (final String key : viewBinder.extras.keySet()) {
             final int resourceId = viewBinder.extras.get(key);
-            final View view = outerView.findViewById(resourceId);
+            final View view = mainView.findViewById(resourceId);
             final Object content = nativeResponse.getExtra(key);
 
             if (view instanceof ImageView) {
@@ -84,6 +89,12 @@ class NativeViewHolder {
             MoPubLog.d("Attempted to set TextView contents to null.");
         } else {
             textView.setText(contents);
+        }
+    }
+
+    public void setViewVisibility(final int visibility) {
+        if (mainView != null) {
+            mainView.setVisibility(visibility);
         }
     }
 }

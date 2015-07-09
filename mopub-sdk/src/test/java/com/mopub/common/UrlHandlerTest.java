@@ -8,6 +8,8 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.network.MoPubRequestQueue;
+import com.mopub.network.Networking;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -16,15 +18,19 @@ import org.mockito.Mock;
 import org.robolectric.Robolectric;
 
 import static com.mopub.common.UrlAction.FOLLOW_DEEP_LINK;
+import static com.mopub.common.UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK;
 import static com.mopub.common.UrlAction.HANDLE_MOPUB_SCHEME;
 import static com.mopub.common.UrlAction.HANDLE_PHONE_SCHEME;
 import static com.mopub.common.UrlAction.HANDLE_SHARE_TWEET;
 import static com.mopub.common.UrlAction.IGNORE_ABOUT_SCHEME;
 import static com.mopub.common.UrlAction.NOOP;
+import static com.mopub.common.UrlAction.OPEN_APP_MARKET;
 import static com.mopub.common.UrlAction.OPEN_IN_APP_BROWSER;
 import static com.mopub.common.UrlAction.OPEN_NATIVE_BROWSER;
-import static com.mopub.common.UrlAction.OPEN_APP_MARKET;
+import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -33,6 +39,7 @@ public class UrlHandlerTest {
     private Context context;
     @Mock private UrlHandler.ResultActions mockResultActions;
     @Mock private UrlHandler.MoPubSchemeListener mockMoPubSchemeListener;
+    @Mock private MoPubRequestQueue mockRequestQueue;
 
     @Before
     public void setUp() throws Exception {
@@ -232,8 +239,7 @@ public class UrlHandlerTest {
     @Test
     public void urlHandler_withMatchingDeepLinkUrl_shouldCallOnClickSuccess_shouldStartActivity() {
         final String deepLinkUrl = "appscheme://host";
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW,
-                Uri.parse(deepLinkUrl)), new ResolveInfo());
+        makeDeeplinkResolvable(deepLinkUrl);
 
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK)
@@ -246,6 +252,262 @@ public class UrlHandlerTest {
         final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
         assertThat(startedActivity.getAction()).isEqualTo(Intent.ACTION_VIEW);
         assertThat(startedActivity.getData()).isEqualTo(Uri.parse(deepLinkUrl));
+    }
+
+    @Test
+    public void urlHandler_withMatchingDeeplinkPlus_shouldCallOnClickSuccess_shouldStartActivity() {
+        final String primaryUrl = "twitter://timeline";
+        final String deeplinkPlusUrl = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl);
+        makeDeeplinkResolvable("twitter://timeline");
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
+                .withResultActions(mockResultActions)
+                .build().handleUrl(context, deeplinkPlusUrl);
+
+        verify(mockResultActions).urlHandlingSucceeded(deeplinkPlusUrl, FOLLOW_DEEP_LINK_WITH_FALLBACK);
+        verifyNoMoreCallbacks();
+        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        assertThat(startedActivity.getAction()).isEqualTo(Intent.ACTION_VIEW);
+        assertThat(startedActivity.getData()).isEqualTo(Uri.parse(primaryUrl));
+    }
+
+    @Test
+    public void urlHandler_withMatchingUnresolvableDeeplinkPlus_withResolvableFallback_shouldCallOnClickSuccess_shouldStartActivity() {
+        final String primaryUrl = "missingApp://somePath";
+        final String fallbackUrl = "http://twitter.com";
+        final String deeplinkPlusUrl = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
+                + "&fallbackUrl=" + Uri.encode(fallbackUrl);
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK, OPEN_IN_APP_BROWSER)
+                .withResultActions(mockResultActions)
+                .build().handleUrl(context, deeplinkPlusUrl);
+
+        verify(mockResultActions).urlHandlingSucceeded(fallbackUrl, OPEN_IN_APP_BROWSER);
+        verifyNoMoreCallbacks();
+        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        assertThat(startedActivity.getComponent().getClassName())
+                .isEqualTo(MoPubBrowser.class.getName());
+        assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY))
+                .isEqualTo(fallbackUrl);
+    }
+
+    @Test
+    public void urlHandler_withMatchingUnresolvableDeeplinkPlus_withUnresolvableFallback_shouldAttemptAsDeeplink() {
+        final String primaryUrl = "missingApp://somePath";
+        final String fallbackUrl = "unresolvableUrl";
+        final String deeplinkPlusUrl = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
+                + "&fallbackUrl=" + Uri.encode(fallbackUrl);
+        makeDeeplinkResolvable(deeplinkPlusUrl);
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK, FOLLOW_DEEP_LINK)
+                .withResultActions(mockResultActions)
+                .build().handleUrl(context, deeplinkPlusUrl);
+
+        // There should really be only one of these fired at a time, but this is such an edge-case
+        // that we're not fixing at the moment (see ADF-1700).
+        verify(mockResultActions).urlHandlingFailed(fallbackUrl, NOOP);
+        verify(mockResultActions).urlHandlingSucceeded(deeplinkPlusUrl, FOLLOW_DEEP_LINK);
+        verifyNoMoreCallbacks();
+    }
+
+    @Test
+    public void urlHandler_withDeeplinkPlus_shouldTriggerPrimaryTracker() {
+        final String primaryUrl = "twitter://timeline";
+        final String primaryTracker = "http://ads.twitter.com/tracking?pubId=1234&userId=5678";
+        final String fallbackUrl = "http://twitter.com";
+        final String fallbackTracker =
+                "http://ads.twitter.com/fallbackTracking?pubId=1234&userId=5678";
+        final String url = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
+                + "&primaryTrackingUrl=" + Uri.encode(primaryTracker)
+                + "&fallbackUrl=" + Uri.encode(fallbackUrl)
+                + "&fallbackTrackingUrl=" + Uri.encode(fallbackTracker);
+        makeDeeplinkResolvable(primaryUrl);
+        Networking.setRequestQueueForTesting(mockRequestQueue);
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
+                .build().handleUrl(context, url);
+
+        verify(mockRequestQueue).add(argThat(isUrl(primaryTracker)));
+        verify(mockRequestQueue, never()).add(argThat(isUrl(fallbackTracker)));
+    }
+
+    @Test
+    public void urlHandler_withDeeplinkPlus_shouldTriggerMultiplePrimaryTrackers() {
+        final String primaryUrl = "twitter://timeline";
+        final String primaryTracker1 = "http://ads.twitter.com/tracking?pubId=1234&userId=5678";
+        final String primaryTracker2 = "http://ads.mopub.com/tracking?pubId=4321&userId=8765";
+        final String url = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
+                + "&primaryTrackingUrl=" + Uri.encode(primaryTracker1)
+                + "&primaryTrackingUrl=" + Uri.encode(primaryTracker2);
+        makeDeeplinkResolvable(primaryUrl);
+        Networking.setRequestQueueForTesting(mockRequestQueue);
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
+                .build().handleUrl(context, url);
+
+        verify(mockRequestQueue).add(argThat(isUrl(primaryTracker1)));
+        verify(mockRequestQueue).add(argThat(isUrl(primaryTracker2)));
+    }
+
+    @Test
+    public void urlHandler_withDeeplinkPlus_withResolvableFallback_shouldTriggerFallbackTracker() {
+        final String primaryUrl = "missingApp://somePath";
+        final String fallbackUrl = "http://twitter.com";
+        final String primaryTracker = "http://ads.twitter.com/tracking?pubId=1234&userId=5678";
+        final String fallbackTracker =
+                "http://ads.twitter.com/fallbackTracking?pubId=1234&userId=5678";
+        final String url = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
+                + "&primaryTrackingUrl=" + Uri.encode(primaryTracker)
+                + "&fallbackUrl=" + Uri.encode(fallbackUrl)
+                + "&fallbackTrackingUrl=" + Uri.encode(fallbackTracker);
+        Networking.setRequestQueueForTesting(mockRequestQueue);
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK, OPEN_IN_APP_BROWSER)
+                .build().handleUrl(context, url);
+
+        verify(mockRequestQueue).add(argThat(isUrl(fallbackTracker)));
+        verify(mockRequestQueue, never()).add(argThat(isUrl(primaryTracker)));
+    }
+
+    @Test
+    public void urlHandler_withDeeplinkPlus_withResolvableFallback_shouldTriggerMultiplePrimaryTrackers() {
+        final String primaryUrl = "missingApp://somePath";
+        final String fallbackUrl = "http://twitter.com";
+        final String fallbackTracker1 = "http://ads.twitter.com/tracking?pubId=1234&userId=5678";
+        final String fallbackTracker2 = "http://ads.mopub.com/tracking?pubId=4321&userId=8765";
+        final String url = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
+                + "&fallbackUrl=" + Uri.encode(fallbackUrl)
+                + "&fallbackTrackingUrl=" + Uri.encode(fallbackTracker1)
+                + "&fallbackTrackingUrl=" + Uri.encode(fallbackTracker2);
+        Networking.setRequestQueueForTesting(mockRequestQueue);
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK, OPEN_IN_APP_BROWSER)
+                .build().handleUrl(context, url);
+
+        verify(mockRequestQueue).add(argThat(isUrl(fallbackTracker1)));
+        verify(mockRequestQueue).add(argThat(isUrl(fallbackTracker2)));
+    }
+
+    @Test
+    public void urlHandler_withUppercasedDeeplinkPlus_shouldBeHandled() {
+        final String primaryUrl = "twitter://timeline";
+        final String url = "DeEpLiNk+://navigate?primaryUrl=" + Uri.encode(primaryUrl);
+        makeDeeplinkResolvable(primaryUrl);
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
+                .withResultActions(mockResultActions)
+                .build().handleUrl(context, url);
+
+        verify(mockResultActions).urlHandlingSucceeded(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
+    }
+
+    @Test
+    public void urlHandler_withdDeeplinkPlus_withUppercasedNavigate_shouldBeHandled() {
+        final String primaryUrl = "twitter://timeline";
+        final String url = "deeplink+://NaViGaTe?primaryUrl=" + Uri.encode(primaryUrl);
+        makeDeeplinkResolvable(primaryUrl);
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
+                .withResultActions(mockResultActions)
+                .build().handleUrl(context, url);
+
+        verify(mockResultActions).urlHandlingSucceeded(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
+    }
+
+    @Test
+    public void urlHandler_withoutMatchingDeeplinkPlus_shouldDoNothing() {
+        final String url = "NOTdeeplink+://navigate?primaryUrl=twitter%3A%2F%2Ftimeline";
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
+                .withResultActions(mockResultActions)
+                .build().handleUrl(context, url);
+
+        verify(mockResultActions).urlHandlingFailed(url, NOOP);
+        verifyNoMoreCallbacks();
+        verifyNoStartedActivity();
+    }
+
+    @Test
+    public void urlHandler_withDeeplinkPlus_withoutNavigate_shouldDoNothing() {
+        final String url = "deeplink+://NOTnavigate?primaryUrl=twitter%3A%2F%2Ftimeline";
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
+                .withResultActions(mockResultActions)
+                .build().handleUrl(context, url);
+
+        verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
+        verifyNoMoreCallbacks();
+        verifyNoStartedActivity();
+    }
+
+    @Test
+    public void urlHandler_withNestedDeeplinkPlus_shouldDoNothing() {
+        final String deeplink = "deeplink+://navigate?primaryUrl=twitter%3A%2F%2Ftimeline";
+        final String url = "deeplink+://navigate?primaryUrl=" + Uri.encode(deeplink);
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
+                .withResultActions(mockResultActions)
+                .build().handleUrl(context, url);
+
+        verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
+        verifyNoMoreCallbacks();
+        verifyNoStartedActivity();
+    }
+
+    @Test
+    public void urlHandler_withDeeplinkPlus_withDeeplinkPlusAsFallback_shouldDoNothing() {
+        final String deeplink = "deeplink+://navigate?primaryUrl=twitter%3A%2F%2Ftimeline";
+        final String url = "deeplink+://navigate?primaryUrl=missingApp%3A%2F%2FsomePath"
+                + "&fallbackUrl=" + Uri.encode(deeplink);
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
+                .withResultActions(mockResultActions)
+                .build().handleUrl(context, url);
+
+        verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
+        verifyNoMoreCallbacks();
+        verifyNoStartedActivity();
+    }
+
+    @Test
+    public void urlHandler_withDeeplinkPlus_withInvalidPrimaryUrl_shouldDoNothing() {
+        final String url = "deeplink+://navigate?primaryUrl=INVALID";
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
+                .withResultActions(mockResultActions)
+                .build().handleUrl(context, url);
+
+        verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
+        verifyNoMoreCallbacks();
+        verifyNoStartedActivity();
+    }
+
+    @Test
+    public void urlHandler_withDeeplinkPlus_withDecodedPrimaryUrl_shouldDoNothing() {
+        final String url = "deeplink+://navigate?primaryUrl=twitter://timeline";
+
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
+                .withResultActions(mockResultActions)
+                .build().handleUrl(context, url);
+
+        verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
+        verifyNoMoreCallbacks();
+        verifyNoStartedActivity();
     }
 
     @Test
@@ -392,8 +654,7 @@ public class UrlHandlerTest {
     @Test
     public void urlHandler_withoutMatchingDeepLinkUrlAction_shouldCallUrlHandlingFailed() {
         final String deepLinkUrl = "appscheme://host";
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW,
-                Uri.parse(deepLinkUrl)), new ResolveInfo());
+        makeDeeplinkResolvable(deepLinkUrl);
         assertCallbackWithoutMatchingSupportedUrlAction(deepLinkUrl, IGNORE_ABOUT_SCHEME,
                 HANDLE_MOPUB_SCHEME, OPEN_IN_APP_BROWSER, HANDLE_PHONE_SCHEME, OPEN_NATIVE_BROWSER,
                 HANDLE_SHARE_TWEET);
@@ -561,8 +822,7 @@ public class UrlHandlerTest {
         final String deepLinkUrl = "appscheme://host";
         // The following code would make this url resolvable, so avoiding it to test for an
         // unresolvable url (yet included for documentation purposes).
-        //  Robolectric.packageManager.addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW,
-        //          Uri.parse(deepLinkUrl)), new ResolveInfo());
+        //makeDeeplinkResolvable(deepLinkUrl);
 
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK)
@@ -606,7 +866,7 @@ public class UrlHandlerTest {
     private void assertCallbackWithoutMatchingSupportedUrlAction(@NonNull final String url,
             @NonNull final UrlAction... otherTypes) {
         new UrlHandler.Builder()
-                .withSupportedUrlActions(UrlAction.NOOP, otherTypes)
+                .withSupportedUrlActions(NOOP, otherTypes)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
                 .build().handleUrl(context, url);
@@ -621,5 +881,10 @@ public class UrlHandlerTest {
 
     private void verifyNoStartedActivity() {
         assertThat(Robolectric.getShadowApplication().peekNextStartedActivity()).isNull();
+    }
+
+    private void makeDeeplinkResolvable(String deeplink) {
+        Robolectric.packageManager.addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW,
+                Uri.parse(deeplink)), new ResolveInfo());
     }
 }

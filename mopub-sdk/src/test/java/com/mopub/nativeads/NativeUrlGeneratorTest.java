@@ -16,7 +16,9 @@ import android.view.WindowManager;
 
 import com.mopub.common.MoPub;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.test.support.MoPubShadowTelephonyManager;
+import com.mopub.network.Networking;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -55,6 +57,7 @@ public class NativeUrlGeneratorTest {
 
     @Before
     public void setup() {
+        Networking.useHttps(false);
         context = spy(Robolectric.buildActivity(Activity.class).create().get());
         shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
         when(context.getPackageName()).thenReturn("testBundle");
@@ -298,10 +301,7 @@ public class NativeUrlGeneratorTest {
                         TEST_SCREEN_HEIGHT +
                         "&sc_a=" +
                         TEST_DENSITY +
-                        // maven version
-                        "&ct=3&av=1.0" +
-                        // Gradle version
-                        //"&ct=3&av=" + BuildConfig.VERSION_NAME +
+                        "&ct=3&av=" + BuildConfig.VERSION_NAME +
                         "&udid=mp_tmpl_advertising_id&dnt=mp_tmpl_do_not_track");
     }
 

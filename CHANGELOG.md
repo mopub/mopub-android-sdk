@@ -1,3 +1,14 @@
+## Version 3.9.0 (July 1, 2015)
+
+- Added **VAST 3.0** standard support for video ads.
+- Improved **video player UX**.
+- Added **RecyclerView** support for native ads. See the [integration guide](https://github.com/mopub/mopub-android-sdk/wiki/Native-Ads-with-Recycler-View).
+- Improved **deep link** handling.
+- Bug Fixes:
+  - MRAID video interstitials now play automatically when displayed on Jellybean MR1 and newer.
+  - MRAID relative assets are correctly rendered.
+  - MoPubLog no longer duplicates some messages.
+
 ## Version 3.8.0 (June 1, 2015)
 
 - Updated Chartboost support to 5.3.0. This introduces a new shared class called ChartboostShared. If you are using Chartboost Custom Native Networks you will need to include this class in your build along with ChartboostInterstitial.

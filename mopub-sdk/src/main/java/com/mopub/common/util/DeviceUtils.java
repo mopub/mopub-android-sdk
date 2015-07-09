@@ -200,12 +200,12 @@ public class DeviceUtils {
     static int getScreenOrientationFromRotationAndOrientation(int rotation, int orientation) {
         if (Configuration.ORIENTATION_PORTRAIT == orientation) {
             switch (rotation) {
+                case Surface.ROTATION_90:
                 case Surface.ROTATION_180:
-                case Surface.ROTATION_270:
                     return ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
 
                 case Surface.ROTATION_0:
-                case Surface.ROTATION_90:
+                case Surface.ROTATION_270:
                 default:
                     return ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
             }

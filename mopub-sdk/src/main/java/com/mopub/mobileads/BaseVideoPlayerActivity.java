@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.mopub.common.logging.MoPubLog;
-import com.mopub.mobileads.util.vast.VastVideoConfiguration;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;

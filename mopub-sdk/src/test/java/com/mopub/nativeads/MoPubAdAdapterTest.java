@@ -51,6 +51,8 @@ public class MoPubAdAdapterTest {
     @Mock
     private RequestParameters mockRequestParameters;
     @Mock
+    private ViewBinder mockViewBinder;
+    @Mock
     private MoPubAdRenderer mockAdRenderer;
     @Mock
     private ListView mockListView;
@@ -184,6 +186,22 @@ public class MoPubAdAdapterTest {
         verify(mockStreamAdPlacer, never()).registerAdRenderer(any(MoPubAdRenderer.class));
     }
 
+    @Test
+    public void registerViewBinder_shouldCallAdPlacer() {
+        subject.registerViewBinder(mockViewBinder);
+
+        final ArgumentCaptor<MoPubAdRenderer> rendererCaptor = new ArgumentCaptor<MoPubAdRenderer>();
+        verify(mockStreamAdPlacer).registerAdRenderer(rendererCaptor.capture());
+        MoPubAdRenderer renderer = rendererCaptor.getValue();
+        assertThat(renderer).isExactlyInstanceOf(MoPubNativeAdRenderer.class);
+    }
+
+    @Test
+    public void registerViewBinder_withNull_shouldNotCallAdPlacer() {
+        subject.registerViewBinder(null);
+
+        verify(mockStreamAdPlacer, never()).registerAdRenderer(any(MoPubAdRenderer.class));
+    }
 
     @Test
     public void setAdLoadedListener_handleAdLoaded_shouldCallCallback_shouldCallObserver() {
@@ -508,7 +526,7 @@ public class MoPubAdAdapterTest {
     }
 
     @Test
-    public void smoothScrollToPosition_shouldCallSmooethScrollToPositionOnListView() {
+    public void smoothScrollToPosition_shouldCallSmoothScrollToPositionOnListView() {
         subject.smoothScrollToPosition(mockListView, AD_POSITION);
 
         // Since the original position is the ad position, the adjusted position is 1 higher

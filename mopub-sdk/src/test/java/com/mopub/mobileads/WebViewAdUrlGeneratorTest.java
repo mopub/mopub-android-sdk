@@ -555,10 +555,7 @@ public class WebViewAdUrlGeneratorTest {
                     paramIfNotEmpty("iso", countryIso) +
                     paramIfNotEmpty("cn", carrierName) +
                     "&ct=" + networkType +
-                    // Maven version
-                    "&av=1.0" +
-                    // Gradle Version
-                    //"&av=" + BuildConfig.VERSION_NAME +
+                    "&av=" + BuildConfig.VERSION_NAME +
                     "&udid=" + PlayServicesUrlRewriter.UDID_TEMPLATE +
                     "&dnt=" + PlayServicesUrlRewriter.DO_NOT_TRACK_TEMPLATE +
                     "&mr=1" +

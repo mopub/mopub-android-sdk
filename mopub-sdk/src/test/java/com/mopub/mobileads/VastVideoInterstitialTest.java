@@ -10,9 +10,7 @@ import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 import com.mopub.mobileads.test.support.TestVastManagerFactory;
 import com.mopub.mobileads.test.support.TestVastVideoDownloadTaskFactory;
-import com.mopub.mobileads.util.vast.VastCompanionAd;
-import com.mopub.mobileads.util.vast.VastManager;
-import com.mopub.mobileads.util.vast.VastVideoConfiguration;
+import com.mopub.mobileads.test.support.VastUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,7 +30,7 @@ import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERS
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiverTest.getIntentForActionAndIdentifier;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_INVALID_STATE;
-import static com.mopub.mobileads.util.vast.VastManager.VastManagerListener;
+import static com.mopub.mobileads.VastManager.VastManagerListener;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -88,8 +86,10 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
 
         subject.preRenderHtml(customEventInterstitialListener);
 
-        verify(customEventInterstitialListener).onInterstitialFailed(eq(MoPubErrorCode.VIDEO_CACHE_ERROR));
-        verify(vastManager, never()).prepareVastVideoConfiguration(anyString(), any(VastManagerListener.class));
+        verify(customEventInterstitialListener).onInterstitialFailed(
+                eq(MoPubErrorCode.VIDEO_CACHE_ERROR));
+        verify(vastManager, never()).prepareVastVideoConfiguration(anyString(),
+                any(VastManagerListener.class), any(Context.class));
     }
 
     @Test
@@ -112,7 +112,8 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
     public void loadInterstitial_shouldCreateVastManagerAndProcessVast() throws Exception {
         subject.loadInterstitial(context, customEventInterstitialListener, localExtras, serverExtras);
 
-        verify(vastManager).prepareVastVideoConfiguration(eq(expectedResponse), eq((VastVideoInterstitial) subject));
+        verify(vastManager).prepareVastVideoConfiguration(eq(expectedResponse),
+                eq((VastVideoInterstitial) subject), eq(context));
     }
 
     @Test
@@ -122,7 +123,8 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
         subject.loadInterstitial(context, customEventInterstitialListener, localExtras, serverExtras);
 
         verify(customEventInterstitialListener).onInterstitialFailed(NETWORK_INVALID_STATE);
-        verify(vastManager, never()).prepareVastVideoConfiguration(anyString(), any(VastManagerListener.class));
+        verify(vastManager, never()).prepareVastVideoConfiguration(anyString(),
+                any(VastManagerListener.class), any(Context.class));
     }
 
     @Test
@@ -145,14 +147,16 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
         VastCompanionAd vastCompanionAd = mock(VastCompanionAd.class, withSettings().serializable());
         VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
         vastVideoConfiguration.setNetworkMediaFileUrl(videoUrl);
-        vastVideoConfiguration.addAbsoluteTrackers(Arrays.asList(new VastAbsoluteProgressTracker("start", 2000)));
-        vastVideoConfiguration.addFractionalTrackers(Arrays.asList(new VastFractionalProgressTracker("first", 0.25f),
+        vastVideoConfiguration.addAbsoluteTrackers(Arrays.asList(new VastAbsoluteProgressTracker
+                ("start", 2000)));
+        vastVideoConfiguration.addFractionalTrackers(Arrays.asList(new
+                        VastFractionalProgressTracker("first", 0.25f),
                 new VastFractionalProgressTracker("mid", 0.5f),
                 new VastFractionalProgressTracker("third", 0.75f)));
-        vastVideoConfiguration.addCompleteTrackers(Arrays.asList("complete"));
-        vastVideoConfiguration.addImpressionTrackers(Arrays.asList("imp"));
+        vastVideoConfiguration.addCompleteTrackers(VastUtils.stringsToVastTrackers("complete"));
+        vastVideoConfiguration.addImpressionTrackers(VastUtils.stringsToVastTrackers("imp"));
         vastVideoConfiguration.setClickThroughUrl("clickThrough");
-        vastVideoConfiguration.addClickTrackers(Arrays.asList("click"));
+        vastVideoConfiguration.addClickTrackers(VastUtils.stringsToVastTrackers("click"));
         vastVideoConfiguration.setVastCompanionAd(vastCompanionAd);
 
         subject.loadInterstitial(context, customEventInterstitialListener, localExtras, serverExtras);

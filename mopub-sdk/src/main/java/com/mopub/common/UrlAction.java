@@ -4,17 +4,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.mopub.common.event.BaseEvent;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Intents;
 import com.mopub.exceptions.IntentNotResolvableException;
 import com.mopub.exceptions.UrlParseException;
 
+import java.util.List;
+
 import static com.mopub.common.Constants.HTTP;
 import static com.mopub.common.Constants.HTTPS;
-import static com.mopub.common.UrlHandler.MoPubSchemeListener;
+import static com.mopub.network.TrackingRequest.makeTrackingHttpRequest;
 
 /**
  * {@code UrlAction} describes the different kinds of actions for URLs that {@link UrlHandler} can
@@ -36,11 +38,13 @@ public enum UrlAction {
         }
 
         @Override
-        protected void performAction(@NonNull final Context context, @NonNull final Uri uri,
-                final boolean skipShowMoPubBrowser,
-                @Nullable final MoPubSchemeListener moPubSchemeListener)
+        protected void performAction(
+                @NonNull final Context context, @NonNull final Uri uri,
+                @NonNull final UrlHandler urlHandler)
                 throws IntentNotResolvableException {
             final String host = uri.getHost();
+            final UrlHandler.MoPubSchemeListener moPubSchemeListener =
+                    urlHandler.getMoPubSchemeListener();
 
             if ("finishLoad".equals(host)) {
                 moPubSchemeListener.onFinishLoad();
@@ -61,9 +65,9 @@ public enum UrlAction {
         }
 
         @Override
-        protected void performAction(@NonNull final Context context, @NonNull final Uri uri,
-                final boolean skipShowMoPubBrowser,
-                @Nullable final MoPubSchemeListener moPubSchemeListener)
+        protected void performAction(
+                @NonNull final Context context, @NonNull final Uri uri,
+                @NonNull final UrlHandler urlHandler)
                 throws IntentNotResolvableException {
             MoPubLog.d("Link to about page ignored.");
         }
@@ -80,9 +84,9 @@ public enum UrlAction {
         }
 
         @Override
-        protected void performAction(@NonNull final Context context, @NonNull final Uri uri,
-                final boolean skipShowMoPubBrowser,
-                @Nullable final MoPubSchemeListener moPubSchemeListener)
+        protected void performAction(
+                @NonNull final Context context, @NonNull final Uri uri,
+                @NonNull final UrlHandler urlHandler)
                 throws IntentNotResolvableException {
             final String errorMessage = "Could not handle intent with URI: " + uri + "\n\tIs " +
                     "this intent supported on your phone?";
@@ -97,9 +101,9 @@ public enum UrlAction {
         }
 
         @Override
-        protected void performAction(@NonNull final Context context, @NonNull final Uri uri,
-                final boolean skipShowMoPubBrowser,
-                @Nullable final MoPubSchemeListener moPubSchemeListener)
+        protected void performAction(
+                @NonNull final Context context, @NonNull final Uri uri,
+                @NonNull final UrlHandler urlHandler)
                 throws IntentNotResolvableException {
             final String errorMessage = "Unable to load mopub native browser url: " + uri;
             try {
@@ -124,9 +128,9 @@ public enum UrlAction {
         }
 
         @Override
-        protected void performAction(@NonNull final Context context, @NonNull final Uri uri,
-                final boolean skipShowMoPubBrowser,
-                @Nullable final MoPubSchemeListener moPubSchemeListener)
+        protected void performAction(
+                @NonNull final Context context, @NonNull final Uri uri,
+                @NonNull final UrlHandler urlHandler)
                 throws IntentNotResolvableException {
             Intents.launchApplicationUrl(context, uri);
         }
@@ -140,11 +144,11 @@ public enum UrlAction {
         }
 
         @Override
-        protected void performAction(@NonNull final Context context, @NonNull final Uri uri,
-                final boolean skipShowMoPubBrowser,
-                @Nullable final MoPubSchemeListener moPubSchemeListener)
+        protected void performAction(
+                @NonNull final Context context, @NonNull final Uri uri,
+                @NonNull final UrlHandler urlHandler)
                 throws IntentNotResolvableException {
-            if (!skipShowMoPubBrowser) {
+            if (!urlHandler.shouldSkipShowMoPubBrowser()) {
                 Intents.showMoPubBrowserForUrl(context, uri);
             }
         }
@@ -162,9 +166,9 @@ public enum UrlAction {
         }
 
         @Override
-        protected void performAction(@NonNull final Context context, @NonNull final Uri uri,
-                final boolean skipShowMoPubBrowser,
-                @Nullable final MoPubSchemeListener moPubSchemeListener)
+        protected void performAction(
+                @NonNull final Context context, @NonNull final Uri uri,
+                @NonNull final UrlHandler urlHandler)
                 throws IntentNotResolvableException {
             Preconditions.checkNotNull(context);
             Preconditions.checkNotNull(uri);
@@ -181,7 +185,87 @@ public enum UrlAction {
         }
     },
 
-    /* 7 */ FOLLOW_DEEP_LINK(true) {
+    /* 7 */ FOLLOW_DEEP_LINK_WITH_FALLBACK(true) {
+        @Override
+        public boolean shouldTryHandlingUrl(@NonNull final Uri uri) {
+            return "deeplink+".equalsIgnoreCase(uri.getScheme());
+        }
+
+        @Override
+        protected void performAction(
+                @NonNull final Context context, @NonNull final Uri uri,
+                @NonNull final UrlHandler urlHandler)
+                throws IntentNotResolvableException {
+
+            // 1. Parse the URL as a valid deeplink+
+            if (!"navigate".equalsIgnoreCase(uri.getHost())) {
+                throw new IntentNotResolvableException("Deeplink+ URL did not have 'navigate' as" +
+                        " the host.");
+            }
+
+            final String primaryUrl;
+            final List<String> primaryTrackingUrls;
+            final String fallbackUrl;
+            final List<String> fallbackTrackingUrls;
+            try {
+                primaryUrl = uri.getQueryParameter("primaryUrl");
+                primaryTrackingUrls = uri.getQueryParameters("primaryTrackingUrl");
+                fallbackUrl = uri.getQueryParameter("fallbackUrl");
+                fallbackTrackingUrls = uri.getQueryParameters("fallbackTrackingUrl");
+            } catch (UnsupportedOperationException e) {
+                // If the URL is not hierarchical, getQueryParameter[s] will throw
+                // UnsupportedOperationException (see http://developer.android.com/reference/android/net/Uri.html#getQueryParameter(java.lang.String)
+                throw new IntentNotResolvableException("Deeplink+ URL was not a hierarchical" +
+                        " URI.");
+            }
+
+            if (primaryUrl == null) {
+                throw new IntentNotResolvableException("Deeplink+ did not have 'primaryUrl' query" +
+                        " param.");
+            }
+
+            final Uri primaryUri = Uri.parse(primaryUrl);
+            if (shouldTryHandlingUrl(primaryUri)) {
+                // Nested Deeplink+ URLs are not allowed
+                throw new IntentNotResolvableException("Deeplink+ had another Deeplink+ as the " +
+                        "'primaryUrl'.");
+            }
+
+            // 2. Attempt to handle the primary URL
+            try {
+                Intents.launchApplicationUrl(context, primaryUri);
+                makeTrackingHttpRequest(primaryTrackingUrls, context, BaseEvent.Name.CLICK_REQUEST);
+                return;
+            } catch (IntentNotResolvableException e) {
+                // Primary URL failed; proceed to attempt fallback URL
+            }
+
+            // 3. Attempt to handle the fallback URL
+            if (fallbackUrl == null) {
+                throw new IntentNotResolvableException("Unable to handle 'primaryUrl' for " +
+                        "Deeplink+ and 'fallbackUrl' was missing.");
+            }
+
+            if (shouldTryHandlingUrl(Uri.parse(fallbackUrl))) {
+                // Nested Deeplink+ URLs are not allowed
+                throw new IntentNotResolvableException("Deeplink+ URL had another Deeplink+ " +
+                        "URL as the 'fallbackUrl'.");
+            }
+
+            // UrlAction.handleUrl already verified this comes from a user interaction
+            final boolean fromUserInteraction = true;
+
+            // Throw IntentNotResolvableException on failure to signal parent handleUrl to continue
+            // attempting to match other UrlActions
+            final boolean throwExceptionOnFailure = true;
+
+            urlHandler.handleUrl(context, fallbackUrl, fromUserInteraction,
+                    throwExceptionOnFailure);
+            makeTrackingHttpRequest(fallbackTrackingUrls, context, BaseEvent.Name.CLICK_REQUEST);
+        }
+    },
+
+    /* 8 */ FOLLOW_DEEP_LINK(true) {
         @Override
         public boolean shouldTryHandlingUrl(@NonNull final Uri uri) {
             final String scheme = uri.getScheme();
@@ -190,9 +274,9 @@ public enum UrlAction {
         }
 
         @Override
-        protected void performAction(@NonNull final Context context, @NonNull final Uri uri,
-                final boolean skipShowMoPubBrowser,
-                @Nullable final MoPubSchemeListener moPubSchemeListener)
+        protected void performAction(
+                @NonNull final Context context, @NonNull final Uri uri,
+                @NonNull final UrlHandler urlHandler)
                 throws IntentNotResolvableException {
             Intents.launchApplicationUrl(context, uri);
         }
@@ -206,27 +290,34 @@ public enum UrlAction {
         }
 
         @Override
-        protected void performAction(@NonNull final Context context, @NonNull final Uri uri,
-                final boolean skipShowMoPubBrowser,
-                @Nullable final MoPubSchemeListener moPubSchemeListener)
+        protected void performAction(
+                @NonNull final Context context, @NonNull final Uri uri,
+                @NonNull final UrlHandler urlHandler)
                 throws IntentNotResolvableException { }
     };
 
     public void handleUrl(
+            UrlHandler urlHandler,
             @NonNull final Context context,
             @NonNull final Uri destinationUri,
-            final boolean fromUserInteraction,
-            final boolean skipShowMoPubBrowser,
-            @Nullable final MoPubSchemeListener moPubSchemeListener)
+            final boolean fromUserInteraction)
             throws IntentNotResolvableException {
         MoPubLog.d("Ad event URL: " + destinationUri);
         if (mRequiresUserInteraction && !fromUserInteraction) {
             throw new IntentNotResolvableException("Attempted to handle action without user " +
                     "interaction.");
         } else {
-            performAction(context, destinationUri, skipShowMoPubBrowser,
-                    moPubSchemeListener);
+            performAction(context, destinationUri, urlHandler);
         }
+    }
+
+    public static UrlAction fromString(@NonNull final String actionName) {
+        for (UrlAction action : UrlAction.values()) {
+            if (actionName.equals(action.toString())) {
+                return action;
+            }
+        }
+        return NOOP;
     }
 
     private final boolean mRequiresUserInteraction;
@@ -238,9 +329,7 @@ public enum UrlAction {
     public abstract boolean shouldTryHandlingUrl(@NonNull final Uri uri);
 
     protected abstract void performAction(
-            @NonNull final Context context,
-            @NonNull final Uri uri,
-            final boolean skipShowMoPubBrowser,
-            @Nullable final MoPubSchemeListener moPubSchemeListener)
+            @NonNull final Context context, @NonNull final Uri uri,
+            @NonNull final UrlHandler urlHandler)
             throws IntentNotResolvableException;
 }

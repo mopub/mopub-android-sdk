@@ -49,8 +49,10 @@ class ServerPositioningSource implements PositioningSource {
     private static final double DEFAULT_RETRY_TIME_MILLISECONDS = 1000; // 1 second
     private static final double EXPONENTIAL_BACKOFF_FACTOR = 2;
 
-    @VisibleForTesting
-    static int MAXIMUM_RETRY_TIME_MILLISECONDS = 5 * 60 * 1000; // 5 minutes.
+    // We allow the retry limit to be set per-instance for testing, but it is always initialized
+    // to this default.
+    private static final int MAXIMUM_RETRY_TIME_MILLISECONDS = 5 * 60 * 1000; // 5 minutes.
+    private int mMaximumRetryTimeMillis = MAXIMUM_RETRY_TIME_MILLISECONDS;
 
     @NonNull private final Context mContext;
 
@@ -140,7 +142,7 @@ class ServerPositioningSource implements PositioningSource {
     private void handleFailure() {
         double multiplier = Math.pow(EXPONENTIAL_BACKOFF_FACTOR, mRetryCount + 1);
         int delay = (int) (DEFAULT_RETRY_TIME_MILLISECONDS * multiplier);
-        if (delay >= MAXIMUM_RETRY_TIME_MILLISECONDS) {
+        if (delay >= mMaximumRetryTimeMillis) {
             MoPubLog.d("Error downloading positioning information");
             if (mListener != null) {
                 mListener.onFailed();
@@ -151,5 +153,11 @@ class ServerPositioningSource implements PositioningSource {
 
         mRetryCount++;
         mRetryHandler.postDelayed(mRetryRunnable, delay);
+    }
+
+    @Deprecated
+    @VisibleForTesting
+    void setMaximumRetryTimeMilliseconds(int millis) {
+        mMaximumRetryTimeMillis = millis;
     }
 }

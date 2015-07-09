@@ -3,8 +3,6 @@ package com.mopub.mobileads;
 import com.mopub.common.CacheService;
 import com.mopub.common.DataKeys;
 import com.mopub.mobileads.factories.VastManagerFactory;
-import com.mopub.mobileads.util.vast.VastManager;
-import com.mopub.mobileads.util.vast.VastVideoConfiguration;
 
 import java.util.Map;
 
@@ -29,7 +27,7 @@ class VastVideoInterstitial extends ResponseBodyInterstitial implements VastMana
         }
 
         mVastManager = VastManagerFactory.create(mContext);
-        mVastManager.prepareVastVideoConfiguration(mVastResponse, this);
+        mVastManager.prepareVastVideoConfiguration(mVastResponse, this, mContext);
     }
 
     @Override

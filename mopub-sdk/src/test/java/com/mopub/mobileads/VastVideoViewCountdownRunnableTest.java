@@ -32,8 +32,8 @@ public class VastVideoViewCountdownRunnableTest {
 
         subject.doWork();
 
+        verify(mockVideoViewController).updateCountdown();
         verify(mockVideoViewController).makeVideoInteractable();
-        verify(mockVideoViewController).updateDuration();
     }
 
     @Test
@@ -42,27 +42,7 @@ public class VastVideoViewCountdownRunnableTest {
 
         subject.doWork();
 
-        verify(mockVideoViewController, never()).makeVideoInteractable();
-        verify(mockVideoViewController).updateDuration();
-    }
-
-    @Test
-    public void doWork_whenShouldShowCountdown_shouldCallUpdateCountdown() {
-        when(mockVideoViewController.shouldShowCountdown()).thenReturn(true);
-
-        subject.doWork();
-
         verify(mockVideoViewController).updateCountdown();
-        verify(mockVideoViewController).updateDuration();
-    }
-
-    @Test
-    public void run_whenShouldNotShowCountdown_shouldNotCallUpdateCountdown() {
-        when(mockVideoViewController.shouldShowCountdown()).thenReturn(false);
-
-        subject.doWork();
-
-        verify(mockVideoViewController, never()).updateCountdown();
-        verify(mockVideoViewController).updateDuration();
+        verify(mockVideoViewController, never()).makeVideoInteractable();
     }
 }

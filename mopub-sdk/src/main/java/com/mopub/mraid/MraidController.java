@@ -1042,6 +1042,7 @@ public class MraidController {
                         UrlAction.OPEN_NATIVE_BROWSER,
                         UrlAction.OPEN_IN_APP_BROWSER,
                         UrlAction.HANDLE_SHARE_TWEET,
+                        UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK,
                         UrlAction.FOLLOW_DEEP_LINK)
                 .build().handleUrl(mContext, url);
     }

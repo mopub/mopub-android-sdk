@@ -25,15 +25,10 @@ public class VastVideoViewCountdownRunnable extends RepeatingHandlerRunnable {
 
     @Override
     public void doWork() {
-        // Countdown and interactable are mutually exclusive. Should we refactor to collapse them?
-        if (mVideoViewController.shouldShowCountdown()) {
-            mVideoViewController.updateCountdown();
-        }
+        mVideoViewController.updateCountdown();
 
         if (mVideoViewController.shouldBeInteractable()) {
             mVideoViewController.makeVideoInteractable();
         }
-
-        mVideoViewController.updateDuration();
     }
 }

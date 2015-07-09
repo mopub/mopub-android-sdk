@@ -69,6 +69,8 @@ public class AdRequestTest {
 
     @After
     public void teardown() {
+        // Reset our locale for other tests.
+        Locale.setDefault(Locale.US);
         MoPubEvents.setEventDispatcher(null);
     }
 
@@ -311,6 +313,8 @@ public class AdRequestTest {
         activity.getResources().getConfiguration().locale = new Locale(" ");
 
         assertThat(subject.getHeaders()).isEqualTo(expectedHeaders);
+
+
     }
 
     @Test

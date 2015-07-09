@@ -27,16 +27,22 @@ final class CustomEventNativeAdapter {
             customEventNativeListener.onNativeAdFailed(NativeErrorCode.NATIVE_ADAPTER_NOT_FOUND);
             return;
         }
-
         if (adResponse.hasJson()) {
             localExtras.put(DataKeys.JSON_BODY_KEY, adResponse.getJsonBody());
         }
 
-        customEventNative.loadNativeAd(
-                context,
-                customEventNativeListener,
-                localExtras,
-                adResponse.getServerExtras()
-        );
+        // Custom event classes can be developed by any third party and may not be tested.
+        // We catch all exceptions here to prevent crashes from untested code.
+        try {
+            customEventNative.loadNativeAd(
+                    context,
+                    customEventNativeListener,
+                    localExtras,
+                    adResponse.getServerExtras()
+            );
+        } catch (Exception e) {
+            MoPubLog.w("Loading custom event native threw an error.", e);
+            customEventNativeListener.onNativeAdFailed(NativeErrorCode.NATIVE_ADAPTER_NOT_FOUND);
+        }
     }
 }

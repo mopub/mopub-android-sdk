@@ -5,8 +5,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.mopub.common.Preconditions;
 import com.mopub.common.event.BaseEvent;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.mobileads.VastErrorCode;
+import com.mopub.mobileads.VastMacroHelper;
+import com.mopub.mobileads.VastTracker;
 import com.mopub.volley.DefaultRetryPolicy;
 import com.mopub.volley.NetworkResponse;
 import com.mopub.volley.Request;
@@ -15,7 +19,9 @@ import com.mopub.volley.Response;
 import com.mopub.volley.VolleyError;
 import com.mopub.volley.toolbox.HttpHeaderParser;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class TrackingRequest extends Request<Void> {
 
@@ -57,18 +63,49 @@ public class TrackingRequest extends Request<Void> {
     // Static helper methods that can be used as utilities:
     //////////////////////////////////////////////////////////////
 
-    public static void makeTrackingHttpRequest(final Iterable<String> urls, final Context context) {
+    public static void makeVastTrackingHttpRequest(
+            @NonNull final List<VastTracker> vastTrackers,
+            @Nullable final VastErrorCode vastErrorCode,
+            @Nullable final Integer contentPlayHead,
+            @Nullable final String assetUri,
+            @Nullable final Context context) {
+        Preconditions.checkNotNull(vastTrackers);
+
+        List<String> trackers = new ArrayList<String>(vastTrackers.size());
+        for (VastTracker vastTracker : vastTrackers) {
+            if (vastTracker == null) {
+                continue;
+            }
+            if (vastTracker.isTracked() && !vastTracker.isRepeatable()) {
+                continue;
+            }
+            trackers.add(vastTracker.getTrackingUrl());
+            vastTracker.setTracked();
+        }
+
+        makeTrackingHttpRequest(
+                new VastMacroHelper(trackers)
+                        .withErrorCode(vastErrorCode)
+                        .withContentPlayHead(contentPlayHead)
+                        .withAssetUri(assetUri)
+                        .getUris(),
+                context
+        );
+    }
+
+    public static void makeTrackingHttpRequest(@Nullable final Iterable<String> urls,
+            @Nullable final Context context) {
         makeTrackingHttpRequest(urls, context, null, null);
     }
 
-    public static void makeTrackingHttpRequest(final Iterable<String> urls,
-            final Context context,
+    public static void makeTrackingHttpRequest(@Nullable final Iterable<String> urls,
+            @Nullable final Context context,
             final BaseEvent.Name name) {
         makeTrackingHttpRequest(urls, context, null, name);
     }
 
-    public static void makeTrackingHttpRequest(final Iterable<String> urls,
-            final Context context,
+    public static void makeTrackingHttpRequest(@Nullable final Iterable<String> urls,
+            @Nullable final Context context,
             @Nullable final Listener listener,
             final BaseEvent.Name name) {
         if (urls == null || context == null) {
@@ -103,23 +140,23 @@ public class TrackingRequest extends Request<Void> {
         }
     }
 
-    public static void makeTrackingHttpRequest(final String url,
-            final Context context) {
+    public static void makeTrackingHttpRequest(@Nullable final String url,
+            @Nullable final Context context) {
         makeTrackingHttpRequest(url, context, null, null);
     }
 
-    public static void makeTrackingHttpRequest(final String url,
-            final Context context, @Nullable Listener listener) {
+    public static void makeTrackingHttpRequest(@Nullable final String url,
+            @Nullable final Context context, @Nullable Listener listener) {
         makeTrackingHttpRequest(url, context, listener, null);
     }
 
-    public static void makeTrackingHttpRequest(final String url,
-            final Context context, final BaseEvent.Name name) {
+    public static void makeTrackingHttpRequest(@Nullable final String url,
+            @Nullable final Context context, final BaseEvent.Name name) {
         makeTrackingHttpRequest(url, context, null, name);
     }
 
-    public static void makeTrackingHttpRequest(final String url,
-            final Context context,
+    public static void makeTrackingHttpRequest(@Nullable final String url,
+            @Nullable final Context context,
             @Nullable Listener listener,
             final BaseEvent.Name name) {
         if (url != null) {

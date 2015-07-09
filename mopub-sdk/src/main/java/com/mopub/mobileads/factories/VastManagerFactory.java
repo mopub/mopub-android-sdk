@@ -2,7 +2,7 @@ package com.mopub.mobileads.factories;
 
 import android.content.Context;
 
-import com.mopub.mobileads.util.vast.VastManager;
+import com.mopub.mobileads.VastManager;
 
 public class VastManagerFactory {
     protected static VastManagerFactory instance = new VastManagerFactory();

@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 
 import com.mopub.common.Preconditions;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.network.TrackingRequest;
 
 import java.util.ArrayList;
@@ -29,6 +30,8 @@ public class VastVideoViewProgressRunnable extends RepeatingHandlerRunnable {
         int videoLength = mVideoViewController.getDuration();
         int currentPosition = mVideoViewController.getCurrentPosition();
 
+        mVideoViewController.updateProgressBar();
+
         if (videoLength > 0) {
             final List<VastTracker> trackersToTrack =
                     mVideoViewController.getUntriggeredTrackersBefore(currentPosition, videoLength);
@@ -38,9 +41,15 @@ public class VastVideoViewProgressRunnable extends RepeatingHandlerRunnable {
                     trackUrls.add(tracker.getTrackingUrl());
                     tracker.setTracked();
                 }
-                TrackingRequest.makeTrackingHttpRequest(trackUrls, mVideoViewController.getContext());
+                TrackingRequest.makeTrackingHttpRequest(
+                        new VastMacroHelper(trackUrls)
+                                .withAssetUri(mVideoViewController.getNetworkMediaFileUrl())
+                                .withContentPlayHead(currentPosition)
+                                .getUris(),
+                        mVideoViewController.getContext());
             }
 
+            mVideoViewController.handleIconDisplay(currentPosition);
         }
     }
 }

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.mopub.simpleadsdemo"
-      android:versionCode="25"
-      android:versionName="3.8.0">
-    <uses-sdk android:minSdkVersion="9" 
+      android:versionCode="26"
+      android:versionName="3.9.0">
+    <uses-sdk android:minSdkVersion="9"
               android:targetSdkVersion="22"/>
 
     <uses-permission android:name="android.permission.INTERNET" />

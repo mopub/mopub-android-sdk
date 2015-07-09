@@ -38,6 +38,7 @@ public class MoPubStreamAdPlacer {
      * instead of an ad.
      */
     public static final int CONTENT_VIEW_TYPE = 0;
+    private static final int DEFAULT_AD_VIEW_TYPE = -1;
     private final static MoPubNativeAdLoadedListener EMPTY_NATIVE_AD_LOADED_LISTENER =
             new MoPubNativeAdLoadedListener() {
                 @Override
@@ -60,11 +61,12 @@ public class MoPubStreamAdPlacer {
     @NonNull private final WeakHashMap<View, NativeResponse> mNativeResponseMap;
 
     private boolean mHasReceivedPositions;
-    @NonNull private PlacementData mPendingPlacementData;
+    @Nullable private PlacementData mPendingPlacementData;
     private boolean mHasReceivedAds;
     private boolean mHasPlacedAds;
     @NonNull private PlacementData mPlacementData;
-    
+
+    private int adViewType = DEFAULT_AD_VIEW_TYPE;
     @Nullable private MoPubAdRenderer mAdRenderer;
     @Nullable private String mAdUnitId;
 
@@ -148,8 +150,8 @@ public class MoPubStreamAdPlacer {
         mAdSource = adSource;
         mPlacementData = PlacementData.empty();
 
-        mNativeResponseMap = new WeakHashMap<View, NativeResponse>();
-        mViewMap = new HashMap<NativeResponse, WeakReference<View>>();
+        mNativeResponseMap = new WeakHashMap<>();
+        mViewMap = new HashMap<>();
 
         mPlacementHandler = new Handler();
         mPlacementRunnable = new Runnable() {
@@ -177,10 +179,24 @@ public class MoPubStreamAdPlacer {
      * @param adRenderer The ad renderer.
      */
     public void registerAdRenderer(@NonNull final MoPubAdRenderer adRenderer) {
+        registerAdRenderer(adRenderer, -1);
+    }
+
+    public void registerAdRenderer(@NonNull final MoPubAdRenderer adRenderer, int viewType) {
         if (!NoThrow.checkNotNull(adRenderer, "Cannot register a null adRenderer")) {
             return;
         }
+        adViewType = viewType;
         mAdRenderer = adRenderer;
+    }
+
+    @Nullable
+    public MoPubAdRenderer getAdRendererForViewType(int viewType) {
+        if (viewType == adViewType) {
+            return mAdRenderer;
+        }
+
+        return null;
     }
 
     /**
@@ -406,25 +422,31 @@ public class MoPubStreamAdPlacer {
             return null;
         }
 
-        final MoPubAdRenderer adRenderer = adData.getAdRenderer();
         final View view = (convertView != null) ?
-                convertView : adRenderer.createAdView(mContext, parent);
+                convertView : adData.getAdRenderer().createAdView(mContext, parent);
+        bindAdView(adData, view);
+        return view;
+    }
 
+    /**
+     * Given an ad and a view, attaches the ad data to the view and prepares the ad for display.
+     * @param adData the ad to bind.
+     * @param adView the view to bind it to.
+     */
+    public void bindAdView(@NonNull NativeAdData adData, @NonNull View adView) {
         NativeResponse nativeResponse = adData.getAd();
         WeakReference<View> mappedViewRef = mViewMap.get(nativeResponse);
         View mappedView = null;
         if (mappedViewRef != null) {
             mappedView = mappedViewRef.get();
         }
-        if (!view.equals(mappedView)) {
+        if (!adView.equals(mappedView)) {
             clearNativeResponse(mappedView);
-            clearNativeResponse(view);
-            prepareNativeResponse(nativeResponse, view);
+            clearNativeResponse(adView);
+            prepareNativeResponse(nativeResponse, adView);
             //noinspection unchecked
-            adRenderer.renderAdView(view, nativeResponse);
+            adData.getAdRenderer().renderAdView(adView, nativeResponse);
         }
-
-        return view;
     }
 
     /**
@@ -442,7 +464,7 @@ public class MoPubStreamAdPlacer {
         int adjustedStartRange = mPlacementData.getAdjustedPosition(originalStartPosition);
         int adjustedEndRange = mPlacementData.getAdjustedPosition(originalEndPosition);
 
-        ArrayList<Integer> removedPositions = new ArrayList<Integer>();
+        ArrayList<Integer> removedPositions = new ArrayList<>();
         // Traverse in reverse order to make this less error-prone for developers who are removing
         // views directly from their UI.
         for (int i = positions.length - 1; i >= 0; --i) {
@@ -689,7 +711,7 @@ public class MoPubStreamAdPlacer {
             return false;
         }
 
-        final NativeAdData adData = createAdData(position, adResponse);
+        final NativeAdData adData = createAdData(adResponse);
         mPlacementData.placeAd(position, adData);
         mItemCount++;
 
@@ -698,7 +720,7 @@ public class MoPubStreamAdPlacer {
     }
 
     @NonNull
-    private NativeAdData createAdData(final int position, @NonNull final NativeResponse adResponse) {
+    private NativeAdData createAdData(@NonNull final NativeResponse adResponse) {
         Preconditions.checkNotNull(mAdUnitId);
         Preconditions.checkNotNull(mAdRenderer);
 
@@ -706,6 +728,9 @@ public class MoPubStreamAdPlacer {
         return new NativeAdData(mAdUnitId, mAdRenderer, adResponse);
     }
 
+    /**
+     * Clears any native response click trackers and impression tracking are set up for this view.
+     */
     private void clearNativeResponse(@Nullable final View view) {
         if (view == null) {
             return;
@@ -719,6 +744,10 @@ public class MoPubStreamAdPlacer {
         }
     }
 
+    /**
+     * Prepares a view and nativeresponse for display by attaching click handlers
+     * and setting up impression tracking.
+     */
     private void prepareNativeResponse(@NonNull final NativeResponse nativeResponse, @NonNull final View view) {
         mViewMap.put(nativeResponse, new WeakReference<View>(view));
         mNativeResponseMap.put(view, nativeResponse);

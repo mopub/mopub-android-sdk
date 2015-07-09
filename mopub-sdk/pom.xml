@@ -15,10 +15,6 @@
     <name>MoPub SDK</name>
     <description>The SDK for MoPub developers.</description>
 
-    <properties>
-        <robolectric.version>2.1</robolectric.version>
-    </properties>
-
     <dependencies>
 
         <!--main-->
@@ -36,48 +32,19 @@
         </dependency>
 
         <dependency>
+            <groupId>com.android.support</groupId>
+            <artifactId>recyclerview-v7</artifactId>
+            <version>22.0.0</version>
+            <type>aar</type>
+        </dependency>
+        
+        <dependency>
             <groupId>com.mopub.volley</groupId>
             <artifactId>mopub-volley</artifactId>
             <version>1.1.0</version>
         </dependency>
 
-        <!--test-->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.0.3</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.squareup</groupId>
-            <artifactId>fest-android</artifactId>
-            <version>1.0.7</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit-dep</artifactId>
-            <version>4.10</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>1.9.5</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!--android & robolectric-->
-        <dependency>
-            <groupId>org.robolectric</groupId>
-            <artifactId>robolectric</artifactId>
-            <version>${robolectric.version}</version>
-            <scope>test</scope>
-        </dependency>
-
+        <!--android & oobolectric-->
         <dependency>
             <groupId>com.google.android</groupId>
             <artifactId>android</artifactId>
@@ -93,9 +60,22 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
+                <!-- Skip tests. We use Gradle to build and run tests. -->
+                <executions>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>7</source>
+                    <target>7</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -112,18 +92,6 @@
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
                 </configuration>
                 <extensions>true</extensions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <argLine>-Xms512m -Xmx1024m -XX:MaxPermSize=256m</argLine>
-                    <excludes>
-                        <exclude>**/Test*.java</exclude>
-                    </excludes>
-                    <parallel>classesAndMethods</parallel>
-                </configuration>
             </plugin>
         </plugins>
     </build>

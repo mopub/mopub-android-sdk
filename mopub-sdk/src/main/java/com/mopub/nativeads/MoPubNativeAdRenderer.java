@@ -49,8 +49,9 @@ public class MoPubNativeAdRenderer implements MoPubAdRenderer<NativeResponse> {
             nativeViewHolder = NativeViewHolder.fromViewBinder(view, mViewBinder);
             mViewHolderMap.put(view, nativeViewHolder);
         }
+
         nativeViewHolder.update(nativeResponse);
-        nativeViewHolder.updateExtras(view, nativeResponse, mViewBinder);
-        view.setVisibility(VISIBLE);
+        nativeViewHolder.updateExtras(nativeResponse, mViewBinder);
+        nativeViewHolder.setViewVisibility(VISIBLE);
     }
 }

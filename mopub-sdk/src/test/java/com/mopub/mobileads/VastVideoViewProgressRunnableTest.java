@@ -60,6 +60,9 @@ public class VastVideoViewProgressRunnableTest {
         verify(mockVastVideoViewController).getCurrentPosition();
         verify(mockVastVideoViewController).getDuration();
         verify(mockVastVideoViewController).getContext();
+        verify(mockVastVideoViewController).getNetworkMediaFileUrl();
+        verify(mockVastVideoViewController).handleIconDisplay(eq(3000));
+        verify(mockVastVideoViewController).updateProgressBar();
 
         // Capture request queue - should get two different trackers.
         verify(mockRequestQueue, times(2)).add(requestCaptor.capture());
@@ -86,6 +89,8 @@ public class VastVideoViewProgressRunnableTest {
         verify(mockVastVideoViewController).getUntriggeredTrackersBefore(eq(3000), eq(4000));
         verify(mockVastVideoViewController).getCurrentPosition();
         verify(mockVastVideoViewController).getDuration();
+        verify(mockVastVideoViewController).handleIconDisplay(eq(3000));
+        verify(mockVastVideoViewController).updateProgressBar();
 
         verifyNoMoreInteractions(mockVastVideoViewController, mockRequestQueue);
     }

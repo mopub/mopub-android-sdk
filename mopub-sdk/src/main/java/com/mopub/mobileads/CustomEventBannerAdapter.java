@@ -65,7 +65,7 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
         }
 
         // Attempt to load the JSON extras into mServerExtras.
-        mServerExtras = new TreeMap<String,String>(serverExtras);
+        mServerExtras = new TreeMap<String, String>(serverExtras);
 
         mLocalExtras = mMoPubView.getLocalExtras();
         if (mMoPubView.getLocation() != null) {
@@ -86,11 +86,26 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
             mHandler.postDelayed(mTimeout, getTimeoutDelayMilliseconds());
         }
 
-        mCustomEventBanner.loadBanner(mContext, this, mLocalExtras, mServerExtras);
+        // Custom event classes can be developed by any third party and may not be tested.
+        // We catch all exceptions here to prevent crashes from untested code.
+        try {
+            mCustomEventBanner.loadBanner(mContext, this, mLocalExtras, mServerExtras);
+        } catch (Exception e) {
+            MoPubLog.d("Loading a custom event banner threw an exception.", e);
+            onBannerFailed(MoPubErrorCode.INTERNAL_ERROR);
+        }
     }
 
     void invalidate() {
-        if (mCustomEventBanner != null) mCustomEventBanner.onInvalidate();
+        if (mCustomEventBanner != null) {
+            // Custom event classes can be developed by any third party and may not be tested.
+            // We catch all exceptions here to prevent crashes from untested code.
+            try {
+                mCustomEventBanner.onInvalidate();
+            } catch (Exception e) {
+                MoPubLog.d("Invalidating a custom event banner threw an exception", e);
+            }
+        }
         mContext = null;
         mCustomEventBanner = null;
         mLocalExtras = null;
@@ -138,8 +153,10 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
 
     @Override
     public void onBannerFailed(MoPubErrorCode errorCode) {
-        if (isInvalidated()) return;
-        
+        if (isInvalidated()) {
+            return;
+        }
+
         if (mMoPubView != null) {
             if (errorCode == null) {
                 errorCode = UNSPECIFIED;
@@ -151,7 +168,9 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
 
     @Override
     public void onBannerExpanded() {
-        if (isInvalidated()) return;
+        if (isInvalidated()) {
+            return;
+        }
 
         mStoredAutorefresh = mMoPubView.getAutorefreshEnabled();
         mMoPubView.setAutorefreshEnabled(false);
@@ -160,7 +179,9 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
 
     @Override
     public void onBannerCollapsed() {
-        if (isInvalidated()) return;
+        if (isInvalidated()) {
+            return;
+        }
 
         mMoPubView.setAutorefreshEnabled(mStoredAutorefresh);
         mMoPubView.adClosed();
@@ -168,11 +189,15 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
 
     @Override
     public void onBannerClicked() {
-        if (isInvalidated()) return;
-        
-        if (mMoPubView != null) mMoPubView.registerClick();
+        if (isInvalidated()) {
+            return;
+        }
+
+        if (mMoPubView != null) {
+            mMoPubView.registerClick();
+        }
     }
-    
+
     @Override
     public void onLeaveApplication() {
         onBannerClicked();

@@ -54,9 +54,25 @@ public class DeviceUtilsTest {
     }
 
     @Test
+    public void getOrientation_whenAlsoPortrait_shouldReturnPortrait() {
+        testResources.getConfiguration().orientation = Configuration.ORIENTATION_PORTRAIT;
+        MoPubShadowDisplay.setStaticRotation(Surface.ROTATION_270);
+
+        assertThat(DeviceUtils.getScreenOrientation(testActivity)).isEqualTo(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+    }
+
+    @Test
     public void getOrientation_whenReversePortrait_shouldReturnReversePortrait() {
         testResources.getConfiguration().orientation = Configuration.ORIENTATION_PORTRAIT;
         MoPubShadowDisplay.setStaticRotation(Surface.ROTATION_180);
+
+        assertThat(DeviceUtils.getScreenOrientation(testActivity)).isEqualTo(ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT);
+    }
+
+    @Test
+    public void getOrientation_whenAlsoReversePortrait_shouldReturnReversePortrait() {
+        testResources.getConfiguration().orientation = Configuration.ORIENTATION_PORTRAIT;
+        MoPubShadowDisplay.setStaticRotation(Surface.ROTATION_90);
 
         assertThat(DeviceUtils.getScreenOrientation(testActivity)).isEqualTo(ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT);
     }

@@ -13,11 +13,24 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Intents;
 import com.mopub.exceptions.IntentNotResolvableException;
 
+import java.util.EnumSet;
+
 import static com.mopub.mobileads.MoPubErrorCode.UNSPECIFIED;
 
 class HtmlWebViewClient extends WebViewClient {
     static final String MOPUB_FINISH_LOAD = "mopub://finishLoad";
     static final String MOPUB_FAIL_LOAD = "mopub://failLoad";
+
+    private final EnumSet<UrlAction> SUPPORTED_URL_ACTIONS = EnumSet.of(
+            UrlAction.HANDLE_MOPUB_SCHEME,
+            UrlAction.IGNORE_ABOUT_SCHEME,
+            UrlAction.HANDLE_PHONE_SCHEME,
+            UrlAction.OPEN_APP_MARKET,
+            UrlAction.OPEN_NATIVE_BROWSER,
+            UrlAction.OPEN_IN_APP_BROWSER,
+            UrlAction.HANDLE_SHARE_TWEET,
+            UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK,
+            UrlAction.FOLLOW_DEEP_LINK);
 
     private final Context mContext;
     private HtmlWebViewListener mHtmlWebViewListener;
@@ -36,15 +49,7 @@ class HtmlWebViewClient extends WebViewClient {
     @Override
     public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
         new UrlHandler.Builder()
-                .withSupportedUrlActions(
-                        UrlAction.HANDLE_MOPUB_SCHEME,
-                        UrlAction.IGNORE_ABOUT_SCHEME,
-                        UrlAction.HANDLE_PHONE_SCHEME,
-                        UrlAction.OPEN_APP_MARKET,
-                        UrlAction.OPEN_NATIVE_BROWSER,
-                        UrlAction.OPEN_IN_APP_BROWSER,
-                        UrlAction.HANDLE_SHARE_TWEET,
-                        UrlAction.FOLLOW_DEEP_LINK)
+                .withSupportedUrlActions(SUPPORTED_URL_ACTIONS)
                 .withResultActions(new UrlHandler.ResultActions() {
                     @Override
                     public void urlHandlingSucceeded(@NonNull String url,

@@ -5,6 +5,7 @@ repositories {
 }
 
 apply plugin: 'com.android.library'
+apply plugin: 'org.robolectric'
 
 group = 'com.mopub'
 
@@ -15,8 +16,8 @@ android {
     buildToolsVersion '22.0.1'
 
     defaultConfig {
-        versionCode 25
-        versionName "3.8.0"
+        versionCode 26
+        versionName "3.9.0"
         minSdkVersion 9
         targetSdkVersion 22
         consumerProguardFiles 'proguard.txt'
@@ -34,10 +35,32 @@ android {
         }
     }
 
+    testOptions {
+        unitTests {
+            // This causes android platform methods from the test JAR
+            // to return null, false, etc instead of throwing an exception.
+            // We should periodically disable this and tackle the broken tests
+            // as it exposes when we are hitting platform APIs in our tests.
+            // If these tests *require* platform APIs we may want to make them
+            // connected tests instead.
+            returnDefaultValues = true
+
+            // Test JVM settings since we have a lot of classes loaded.
+            all {
+                jvmArgs '-XX:MaxPermSize=4096m', '-Xmx8192m'
+                forkEvery 200
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard.txt')
+        }
+      
+        debug {
+            minifyEnabled false
         }
     }
 
@@ -47,15 +70,15 @@ android {
     // difference between the two methods, you can use the one you prefer.
 }
 
+
 dependencies {
     compile 'com.android.support:support-v4:22.0.0'
     compile 'com.android.support:support-annotations:22.0.0'
+    compile 'com.android.support:recyclerview-v7:22.0.0'
     compile 'com.mopub.volley:mopub-volley:1.1.0'
+
+    testCompile 'junit:junit:4.10'
+    testCompile 'org.robolectric:robolectric:2.4'
+    testCompile 'com.squareup:fest-android:1.0.7'
+    testCompile 'org.mockito:mockito-core:1.9.5'
 }
-
-// Don't run the Robolectric Unit Tests.
-check.dependsOn.remove("test")
-check.dependsOn.remove("unitTest")
-check.dependsOn.remove("testDebug")
-check.dependsOn.remove("unitTestDebug")
-

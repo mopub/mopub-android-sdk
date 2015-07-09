@@ -10,6 +10,7 @@ import com.mopub.common.test.support.SdkTestRunner;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -23,12 +24,11 @@ public class MoPubBrowserTest {
 
     @Before
     public void setUp() {
-        subject = new MoPubBrowser();
+        subject = Robolectric.buildActivity(MoPubBrowser.class).create().get();
         CookieSyncManager.createInstance(subject);
 
         mockWebView = mock(WebView.class);
         subject.setWebView(mockWebView);
-        // In the Gradle testing regime we will change these to build MoPubBrowser as an activity using Robolectric.
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)

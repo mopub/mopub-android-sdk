@@ -7,7 +7,6 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.mobileads.MoPubErrorCode;
 
 import java.util.logging.Handler;
-import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
@@ -20,11 +19,6 @@ import java.util.logging.Logger;
 public class LoggingUtils {
     private LoggingUtils() {
     }
-
-    /**
-     * The name of the custom logger we're looking for
-     */
-    private static final String LOGGER_NAME = "com.mopub";
 
     private static boolean sEnabled;
 
@@ -39,21 +33,19 @@ public class LoggingUtils {
             return;
         }
 
+        // This makes sure the static block in MoPubLog is executed before
+        // LogManager#getLogManager is called.
+        MoPubLog.c("Canary level logging enabled");
+
         final Handler handler = new SampleAppLogHandler(context.getApplicationContext());
         final Logger logger = getLogger();
-
-        logger.setLevel(Level.ALL);
         logger.addHandler(handler);
 
         sEnabled = true;
     }
 
     private static Logger getLogger() {
-        // This makes sure the static block in MoPubLog is executed before
-        // LogManager#getLogManager is called.
-        MoPubLog.c("Canary level logging enabled");
-
-        return LogManager.getLogManager().getLogger(LOGGER_NAME);
+        return LogManager.getLogManager().getLogger(MoPubLog.LOGGER_NAMESPACE);
     }
 
     private static class SampleAppLogHandler extends Handler {

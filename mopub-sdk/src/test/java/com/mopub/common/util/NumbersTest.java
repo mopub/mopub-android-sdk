@@ -56,4 +56,16 @@ public class NumbersTest {
             // pass
         }
     }
+
+    @Test
+    public void convertMillisecondsToSecondsRoundedUp_shouldReturnLongMillisecondsAsRoundedUpLongSeconds() throws Exception {
+        assertThat(Numbers.convertMillisecondsToSecondsRoundedUp(0)).isEqualTo(0);
+
+        assertThat(Numbers.convertMillisecondsToSecondsRoundedUp(1)).isEqualTo(1);
+        assertThat(Numbers.convertMillisecondsToSecondsRoundedUp(999)).isEqualTo(1);
+        assertThat(Numbers.convertMillisecondsToSecondsRoundedUp(1000)).isEqualTo(1);
+
+        assertThat(Numbers.convertMillisecondsToSecondsRoundedUp(1001)).isEqualTo(2);
+        assertThat(Numbers.convertMillisecondsToSecondsRoundedUp(100000)).isEqualTo(100);
+    }
 }

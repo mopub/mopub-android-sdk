@@ -19,6 +19,7 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.exceptions.IntentNotResolvableException;
 import com.mopub.exceptions.UrlParseException;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -203,11 +204,15 @@ public class Intents {
 
     /**
      * Launches a {@link MoPubBrowser} activity with the desired URL.
-     *  @param context The activity context.
+     * @param context The activity context.
      * @param uri The URL to load in the started {@link MoPubBrowser} activity.
      */
     public static void showMoPubBrowserForUrl(@NonNull final Context context,
-            @NonNull Uri uri) throws IntentNotResolvableException {
+            @NonNull Uri uri)
+            throws IntentNotResolvableException {
+        Preconditions.checkNotNull(context);
+        Preconditions.checkNotNull(uri);
+
         MoPubLog.d("Final URI to show in browser: " + uri);
 
         final Bundle extras = new Bundle();

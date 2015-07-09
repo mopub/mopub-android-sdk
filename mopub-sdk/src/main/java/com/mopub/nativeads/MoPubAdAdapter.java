@@ -157,13 +157,33 @@ public class MoPubAdAdapter extends BaseAdapter {
      * subject to change in a future SDK version.
      *
      * @param adRenderer The ad renderer.
+     *
+     * @deprecated in version 3.9.0, use {@link #registerViewBinder(ViewBinder)} instead.
      */
+    @Deprecated
     public final void registerAdRenderer(@NonNull final MoPubAdRenderer adRenderer) {
         if (!Preconditions.NoThrow.checkNotNull(
                 adRenderer, "Tried to set a null ad renderer on the placer.")) {
             return;
         }
         mStreamAdPlacer.registerAdRenderer(adRenderer);
+    }
+
+    /**
+     * Registers a {@link ViewBinder} to use when displaying ads in your stream.
+     *
+     * This binder will be used automatically to create and render your view when you call
+     * {@link #getView}. If you register a second {@link ViewBinder}, it will replace the first,
+     * although this behavior is subject to change in a future SDK version.
+     *
+     * @param viewBinder The view binder
+     */
+    public final void registerViewBinder(@NonNull final ViewBinder viewBinder) {
+        if (!Preconditions.NoThrow.checkNotNull(
+                viewBinder, "Tried to set a null view binder on the placer.")) {
+            return;
+        }
+        mStreamAdPlacer.registerAdRenderer(new MoPubNativeAdRenderer(viewBinder));
     }
 
     /**
@@ -308,7 +328,7 @@ public class MoPubAdAdapter extends BaseAdapter {
     public long getItemId(final int position) {
         final Object adData = mStreamAdPlacer.getAdData(position);
         if (adData != null) {
-            return ~System.identityHashCode(adData) + 1;
+            return -System.identityHashCode(adData);
         }
         return mOriginalAdapter.getItemId(mStreamAdPlacer.getOriginalPosition(position));
     }

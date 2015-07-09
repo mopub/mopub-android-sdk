@@ -1,6 +1,10 @@
 package com.mopub.common.logging;
 
+import android.annotation.SuppressLint;
+import android.support.annotation.NonNull;
 import android.util.Log;
+
+import com.mopub.common.VisibleForTesting;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,14 +15,23 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 public class MoPubLog {
+    public static final String LOGGER_NAMESPACE = "com.mopub";
+
     private static final String LOGTAG = "MoPub";
-    private static final Logger LOGGER = Logger.getLogger("com.mopub");
+    private static final Logger LOGGER = Logger.getLogger(LOGGER_NAMESPACE);
     private static final MoPubLogHandler LOG_HANDLER = new MoPubLogHandler();
 
+    /**
+     * Sets up the {@link Logger}, {@link Handler}, and prevents any parent Handlers from being
+     * notified to avoid duplicated log messages.
+     */
     static {
+        LOGGER.setUseParentHandlers(false);
+        LOGGER.setLevel(Level.ALL);
+        LOG_HANDLER.setLevel(Level.FINE);
+
         LogManager.getLogManager().addLogger(LOGGER);
-        LOGGER.addHandler(LOG_HANDLER);
-        LOGGER.setLevel(Level.FINE);
+        addHandler(LOGGER, LOG_HANDLER);
     }
 
     private MoPubLog() {}
@@ -71,6 +84,25 @@ public class MoPubLog {
         LOGGER.log(Level.SEVERE, message, throwable);
     }
 
+    @VisibleForTesting
+    public static void setSdkHandlerLevel(@NonNull final Level level) {
+        LOG_HANDLER.setLevel(level);
+    }
+
+    /**
+     * Adds a {@link Handler} to a {@link Logger} if they are not already associated.
+     */
+    private static void addHandler(@NonNull final Logger logger,
+            @NonNull final Handler handler) {
+        final Handler[] currentHandlers = logger.getHandlers();
+        for (final Handler currentHandler : currentHandlers) {
+            if (currentHandler.equals(handler)) {
+                return;
+            }
+        }
+        logger.addHandler(handler);
+    }
+
     private static final class MoPubLogHandler extends Handler {
         private static final Map<Level, Integer> LEVEL_TO_LOG = new HashMap<Level, Integer>(7);
 
@@ -95,6 +127,7 @@ public class MoPubLog {
         }
 
         @Override
+        @SuppressLint("LogTagMismatch")
         public void publish(final LogRecord logRecord) {
             if (isLoggable(logRecord)) {
                 final int priority;

@@ -69,7 +69,7 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
         mLocalExtras.put(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
         mLocalExtras.put(AD_REPORT_KEY, adReport);
     }
-    
+
     void loadInterstitial() {
         if (isInvalidated() || mCustomEventInterstitial == null) {
             return;
@@ -79,17 +79,42 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
             mHandler.postDelayed(mTimeout, getTimeoutDelayMilliseconds());
         }
 
-        mCustomEventInterstitial.loadInterstitial(mContext, this, mLocalExtras, mServerExtras);
+        // Custom event classes can be developed by any third party and may not be tested.
+        // We catch all exceptions here to prevent crashes from untested code.
+        try {
+            mCustomEventInterstitial.loadInterstitial(mContext, this, mLocalExtras, mServerExtras);
+        } catch (Exception e) {
+            MoPubLog.d("Loading a custom event interstitial threw an exception.", e);
+            onInterstitialFailed(MoPubErrorCode.INTERNAL_ERROR);
+        }
     }
-    
+
     void showInterstitial() {
-        if (isInvalidated() || mCustomEventInterstitial == null) return;
-        
-        mCustomEventInterstitial.showInterstitial();
+        if (isInvalidated() || mCustomEventInterstitial == null) {
+            return;
+        }
+
+        // Custom event classes can be developed by any third party and may not be tested.
+        // We catch all exceptions here to prevent crashes from untested code.
+        try {
+            mCustomEventInterstitial.showInterstitial();
+        } catch (Exception e) {
+            MoPubLog.d("Showing a custom event interstitial threw an exception.", e);
+            onInterstitialFailed(MoPubErrorCode.INTERNAL_ERROR);
+        }
     }
 
     void invalidate() {
-        if (mCustomEventInterstitial != null) mCustomEventInterstitial.onInvalidate();
+        if (mCustomEventInterstitial != null) {
+
+            // Custom event classes can be developed by any third party and may not be tested.
+            // We catch all exceptions here to prevent crashes from untested code.
+            try {
+                mCustomEventInterstitial.onInvalidate();
+            } catch (Exception e) {
+                MoPubLog.d("Invalidating a custom event interstitial threw an exception.", e);
+            }
+        }
         mCustomEventInterstitial = null;
         mContext = null;
         mServerExtras = null;
@@ -188,9 +213,13 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
 
     @Override
     public void onInterstitialDismissed() {
-        if (isInvalidated()) return;
+        if (isInvalidated()) {
+            return;
+        }
 
-        if (mCustomEventInterstitialAdapterListener != null) mCustomEventInterstitialAdapterListener.onCustomEventInterstitialDismissed();
+        if (mCustomEventInterstitialAdapterListener != null) {
+            mCustomEventInterstitialAdapterListener.onCustomEventInterstitialDismissed();
+        }
     }
 
     @Deprecated
