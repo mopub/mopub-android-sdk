@@ -76,7 +76,7 @@ public class MoPubStreamAdPlacer {
     // The visible range is the range of items which we believe are visible, inclusive.
     // Placing ads near this range makes for a smoother user experience when scrolling up
     // or down.
-    private static final int MAX_VISIBLE_RANGE = 100;
+    public static final int MAX_VISIBLE_RANGE = 100;
     private int mVisibleRangeStart;
     private int mVisibleRangeEnd;
 
