@@ -52,6 +52,8 @@ class NativeAdSource {
     @Nullable private RequestParameters mRequestParameters;
     @Nullable private MoPubNative mMoPubNative;
 
+    private int cacheLimit;
+
     /**
      * A listener for when ads are available for dequeueing.
      */
@@ -63,7 +65,12 @@ class NativeAdSource {
     }
 
     NativeAdSource() {
-        this(new ArrayList<TimestampWrapper<NativeResponse>>(CACHE_LIMIT), new Handler());
+        this(CACHE_LIMIT);
+    }
+
+    NativeAdSource(int cacheLimit) {
+        this(new ArrayList<TimestampWrapper<NativeResponse>>(cacheLimit), new Handler());
+        this.cacheLimit = cacheLimit;
     }
 
     @VisibleForTesting
@@ -222,10 +229,15 @@ class NativeAdSource {
      */
     @VisibleForTesting
     void replenishCache() {
-        if (!mRequestInFlight && mMoPubNative != null && mNativeAdCache.size() < CACHE_LIMIT) {
+        if (!mRequestInFlight && mMoPubNative != null && mNativeAdCache.size() < cacheLimit) {
             mRequestInFlight = true;
             mMoPubNative.makeRequest(mRequestParameters, mSequenceNumber);
         }
+    }
+
+    @VisibleForTesting
+    void setCacheLimit(int cacheLimit) {
+        this.cacheLimit = cacheLimit;
     }
 
     @Deprecated
