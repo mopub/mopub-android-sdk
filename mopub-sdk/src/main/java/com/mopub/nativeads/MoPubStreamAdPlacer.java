@@ -317,9 +317,6 @@ public class MoPubStreamAdPlacer {
 
 	@VisibleForTesting
 	void handlePositioningLoad(@NonNull final MoPubClientPositioning positioning) {
-		for (Integer position : delayedStackRequests){
-			positioning.addFixedPosition(position);
-		}
 		PlacementData placementData = PlacementData.fromAdPositioning(positioning);
 		if (mHasReceivedAds) {
 			handleAdsAvailable();
@@ -328,10 +325,6 @@ public class MoPubStreamAdPlacer {
 		}
 		mHasReceivedPositions = true;
 		mAdLoadedListener.onPositionsLoaded();
-		for (Integer position : delayedStackRequests){
-			stackPlace(position,placementData);
-		}
-		delayedStackRequests.clear();
 	}
 
 	@VisibleForTesting
@@ -345,8 +338,8 @@ public class MoPubStreamAdPlacer {
 		// Otherwise, we may need to place initial ads.
 		if (mHasReceivedPositions) {
 			int stackedCount = mPendingPlacementData.getStackedCount();
-			if (stackedCount > 0){
-				for (int i = 0;i<stackedCount;++i){
+			if (stackedCount > 0) {
+				for (int i = 0; i < stackedCount; ++i) {
 					final NativeResponse adResponse = mAdSource.dequeueAd();
 					if (adResponse == null) {
 						return;
@@ -381,7 +374,7 @@ public class MoPubStreamAdPlacer {
 		return mItemCount;
 	}
 
-	public boolean isAdLoaded(int position){
+	public boolean isAdLoaded(int position) {
 		return mPlacementData.isAdLoaded(position);
 	}
 
@@ -602,7 +595,7 @@ public class MoPubStreamAdPlacer {
 		return mPlacementData.getOriginalPosition(position);
 	}
 
-	public int getInsertPosition(final int position){
+	public int getInsertPosition(final int position) {
 		return mPlacementData.getInsertPosition(position);
 	}
 
@@ -733,6 +726,14 @@ public class MoPubStreamAdPlacer {
 	 * Places ads using the current visible range.
 	 */
 	private void placeAds() {
+		for (Integer integer : delayedStackRequests) {
+			if (mPlacementData.shouldPlaceAd(integer)){
+				if (!tryPlaceAd(integer)){
+					return;
+				}
+			}
+		}
+		delayedStackRequests.clear();
 		// Place ads within the visible range
 		if (!tryPlaceAdsInRange(mVisibleRangeStart, mVisibleRangeEnd)) {
 			return;
@@ -795,11 +796,12 @@ public class MoPubStreamAdPlacer {
 		return true;
 	}
 
-	public void stackPlace(final int position){
-		stackPlace(position,mPlacementData);
+	public void stackPlace(final int position) {
+		stackPlace(position, mPlacementData);
 	}
+
 	public void stackPlace(final int position, PlacementData placementData) {
-		if (!mHasReceivedPositions){
+		if (!mHasReceivedPositions) {
 			delayedStackRequests.add(position);
 			return;
 		}
@@ -816,7 +818,7 @@ public class MoPubStreamAdPlacer {
 		placementData.placeAd(position, adData);
 		mItemCount++;
 
-		if (adData !=null) {
+		if (adData != null) {
 			mAdLoadedListener.onAdLoaded(position);
 		}
 	}
