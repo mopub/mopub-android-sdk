@@ -4,6 +4,7 @@ package com.mopub.nativeads;
  * A listener for determining when ads are loaded into an ad Placer
  */
 public interface MoPubNativeAdLoadedListener {
+    void onPositionsLoaded();
     /**
      * Called when an ad is loaded at the specified position.
      *

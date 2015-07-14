@@ -6,6 +6,7 @@ import android.support.annotation.Nullable;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubClientPositioning;
 
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -136,6 +137,7 @@ class PlacementData {
     @NonNull private final int[] mOriginalAdPositions = new int[MAX_ADS];
     @NonNull private final int[] mAdjustedAdPositions = new int[MAX_ADS];
     @NonNull private final NativeAdData[] mAdDataObjects = new NativeAdData[MAX_ADS];
+    @NonNull private final LinkedList<Integer> stackedPositions = new LinkedList<>();
     private int mPlacedCount = 0;
 
     /**
@@ -238,8 +240,13 @@ class PlacementData {
         }
         mOriginalAdPositions[placeIndex] = originalPosition;
         mAdjustedAdPositions[placeIndex] = adjustedPosition;
-        mAdDataObjects[placeIndex] = adData;
-        mPlacedCount++;
+	    if (adData != null) {
+		    mAdDataObjects[placeIndex] = adData;
+	    }
+	    else {
+		    stackedPositions.add(placeIndex);
+	    }
+	    mPlacedCount++;
 
         // Remove desired index
         final int num = mDesiredCount - desiredIndex - 1;
@@ -265,6 +272,25 @@ class PlacementData {
         final int index = binarySearch(mAdjustedAdPositions, 0, mPlacedCount, position);
         return index >= 0;
     }
+
+    boolean isAdLoaded(final int position) {
+        final int index = binarySearch(mAdjustedAdPositions, 0, mPlacedCount, position);
+        if (index >=0){
+            return !stackedPositions.contains(index);
+        }
+        return false;
+    }
+
+	int getStackedCount(){
+		return stackedPositions.size();
+	}
+
+	int placeInStack(final NativeAdData adData){
+		int placeIndex = stackedPositions.getFirst();
+		mAdDataObjects[placeIndex] = adData;
+		stackedPositions.removeFirst();
+		return mAdjustedAdPositions[placeIndex];
+	}
 
     /**
      * Returns the ad data associated with the given ad position, or {@code null} if there is
@@ -303,6 +329,17 @@ class PlacementData {
 
         // This is an ad - there is no original position
         return NOT_FOUND;
+    }
+
+    int getInsertPosition(final int position) {
+        final int index = binarySearch(mAdjustedAdPositions, 0, mPlacedCount, position);
+
+        // No match, ~index is the number of ads before this pos.
+        if (index < 0) {
+            return position - ~index;
+        }
+
+        return position - index;
     }
 
     /**

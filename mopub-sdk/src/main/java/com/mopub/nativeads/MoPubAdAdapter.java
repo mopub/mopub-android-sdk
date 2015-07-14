@@ -128,6 +128,10 @@ public class MoPubAdAdapter extends BaseAdapter {
                 handleAdRemoved(position);
             }
 
+            @Override
+            public void onPositionsLoaded() {
+
+            }
         });
 
         mStreamAdPlacer.setItemCount(mOriginalAdapter.getCount());

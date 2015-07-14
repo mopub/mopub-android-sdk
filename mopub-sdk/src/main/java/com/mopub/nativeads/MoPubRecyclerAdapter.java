@@ -86,6 +86,11 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
             public void onAdRemoved(final int position) {
                 handleAdRemoved(position);
             }
+
+            @Override
+            public void onPositionsLoaded() {
+
+            }
         });
         mStreamAdPlacer.setItemCount(mOriginalAdapter.getItemCount());
 
