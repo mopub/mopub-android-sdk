@@ -22,17 +22,18 @@ import static com.google.android.gms.ads.AdSize.MEDIUM_RECTANGLE;
 
 // Note: AdMob ads will now use this class as Google has deprecated the AdMob SDK.
 
-class GooglePlayServicesBanner extends CustomEventBanner {
+public class GooglePlayServicesBanner extends CustomEventBanner {
     /*
      * These keys are intended for MoPub internal use. Do not modify.
      */
     public static final String AD_UNIT_ID_KEY = "adUnitID";
-    public static final String AD_WIDTH_KEY = "adWidth";
-    public static final String AD_HEIGHT_KEY = "adHeight";
-    public static final String LOCATION_KEY = "location";
+    public static final String AD_WIDTH_KEY   = "adWidth";
+    public static final String AD_HEIGHT_KEY  = "adHeight";
+    public static final String LOCATION_KEY   = "location";
+    public static final String AD_TEST_DEVICE = "add_test_id";
 
     private CustomEventBannerListener mBannerListener;
-    private AdView mGoogleAdView;
+    private AdView                    mGoogleAdView;
 
     @Override
     protected void loadBanner(
@@ -66,9 +67,14 @@ class GooglePlayServicesBanner extends CustomEventBanner {
 
         mGoogleAdView.setAdSize(adSize);
 
-        final AdRequest adRequest = new AdRequest.Builder()
-                .setRequestAgent("MoPub")
-                .build();
+        final AdRequest.Builder builder = new AdRequest.Builder()
+                .setRequestAgent("MoPub");
+
+        if (null != localExtras && localExtras.containsKey(AD_TEST_DEVICE)) {
+            builder.addTestDevice(localExtras.get(AD_TEST_DEVICE).toString());
+        }
+
+        final AdRequest adRequest = builder.build();
 
         try {
             mGoogleAdView.loadAd(adRequest);
