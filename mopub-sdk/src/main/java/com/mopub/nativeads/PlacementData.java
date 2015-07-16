@@ -351,6 +351,10 @@ class PlacementData {
         return originalPosition + index;
     }
 
+    int getPlacedCount(){
+        return mPlacedCount;
+    }
+
     /**
      * @see com.mopub.nativeads.MoPubStreamAdPlacer#getOriginalCount(int)
      */

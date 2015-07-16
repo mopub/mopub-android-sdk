@@ -629,6 +629,10 @@ public class MoPubStreamAdPlacer {
 		return mPlacementData.getAdjustedCount(originalCount);
 	}
 
+	public int getAdCount(){
+		return mPlacementData.getPlacedCount();
+	}
+
 	/**
 	 * Sets the original number of items in your stream.
 	 * <p/>
