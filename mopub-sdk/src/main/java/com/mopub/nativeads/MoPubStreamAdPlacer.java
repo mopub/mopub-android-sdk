@@ -11,6 +11,7 @@ import com.mopub.common.Preconditions;
 import com.mopub.common.Preconditions.NoThrow;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubClientPositioning;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubServerPositioning;
 import com.mopub.nativeads.PositioningSource.PositioningListener;
@@ -510,6 +511,27 @@ public class MoPubStreamAdPlacer {
 		}
 	}
 
+	public void clearAdView(int position, View adView) {
+		final NativeAdData adData = mPlacementData.getPlacedAd(position);
+		if (adData == null) {
+			return;
+		}
+		NativeResponse nativeResponse = adData.getAd();
+		WeakReference<View> mappedViewRef = mViewMap.get(nativeResponse);
+		View mappedView = null;
+		if (mappedViewRef != null) {
+			mappedView = mappedViewRef.get();
+		}
+		clearNativeResponse(adView);
+		if (!adView.equals(mappedView)) {
+			if (BuildConfig.DEBUG) {
+				throw new IllegalStateException();
+			}
+		}
+		clearNativeResponse(adView);
+		mViewMap.remove(nativeResponse);
+	}
+
 	/**
 	 * Removes ads in the given range from [originalStartPosition, originalEndPosition).
 	 *
@@ -629,7 +651,7 @@ public class MoPubStreamAdPlacer {
 		return mPlacementData.getAdjustedCount(originalCount);
 	}
 
-	public int getAdCount(){
+	public int getAdCount() {
 		return mPlacementData.getPlacedCount();
 	}
 
@@ -731,8 +753,8 @@ public class MoPubStreamAdPlacer {
 	 */
 	private void placeAds() {
 		for (Integer integer : delayedStackRequests) {
-			if (mPlacementData.shouldPlaceAd(integer)){
-				if (!tryPlaceAd(integer)){
+			if (mPlacementData.shouldPlaceAd(integer)) {
+				if (!tryPlaceAd(integer)) {
 					return;
 				}
 			}
