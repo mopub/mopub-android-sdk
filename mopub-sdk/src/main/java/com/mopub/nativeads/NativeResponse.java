@@ -1,6 +1,7 @@
 package com.mopub.nativeads;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.View;
@@ -161,6 +162,11 @@ public class NativeResponse {
     }
 
     @Nullable
+    public Drawable getDefaultIcon() {
+        return mNativeAd.getDefaultIcon();
+    }
+
+    @Nullable
     public String getClickDestinationUrl() {
         return mNativeAd.getClickDestinationUrl();
     }
@@ -290,17 +296,17 @@ public class NativeResponse {
 
     // Non Interface Public Methods
     public void loadMainImage(@Nullable final ImageView imageView) {
-        loadImageView(getMainImageUrl(), imageView);
+        loadImageView(getMainImageUrl(), imageView, null);
     }
 
     public void loadIconImage(@Nullable final ImageView imageView) {
-        loadImageView(getIconImageUrl(), imageView);
+        loadImageView(getIconImageUrl(), imageView, getDefaultIcon());
     }
 
     public void loadExtrasImage(final String key, final ImageView imageView) {
         final Object object = getExtra(key);
         if (object != null && object instanceof String) {
-            loadImageView((String) object, imageView);
+            loadImageView((String) object, imageView, null);
         }
     }
 
@@ -317,13 +323,13 @@ public class NativeResponse {
     }
 
     // Helpers
-    private void loadImageView(@Nullable final String url, @Nullable final ImageView imageView) {
+    private void loadImageView(@Nullable final String url, @Nullable final ImageView imageView, @Nullable final Drawable defaultImage) {
         if (imageView == null) {
             return;
         }
 
         if (url == null) {
-            imageView.setImageDrawable(null);
+            imageView.setImageDrawable(defaultImage);
         } else {
             mImageLoader.get(url, new ImageLoader.ImageListener() {
                 @Override
@@ -338,7 +344,7 @@ public class NativeResponse {
                 @Override
                 public void onErrorResponse(final VolleyError volleyError) {
                     MoPubLog.d("Failed to load image.", volleyError);
-                    imageView.setImageDrawable(null);
+                    imageView.setImageDrawable(defaultImage);
                 }
             });
         }
