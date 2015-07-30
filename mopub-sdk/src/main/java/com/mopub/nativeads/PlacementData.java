@@ -193,7 +193,7 @@ class PlacementData {
      */
     int nextInsertionPosition(final int position) {
         final int index = binarySearchGreaterThan(
-		        mDesiredInsertionPositions, mDesiredCount, position);
+                mDesiredInsertionPositions, mDesiredCount, position);
         if (index == mDesiredCount) {
             return NOT_FOUND;
         }
@@ -206,7 +206,7 @@ class PlacementData {
      */
     int previousInsertionPosition(final int position) {
         final int index = binarySearchFirstEquals(
-		        mDesiredInsertionPositions, mDesiredCount, position);
+                mDesiredInsertionPositions, mDesiredCount, position);
         if (index == 0) {
             return NOT_FOUND;
         }
@@ -340,13 +340,19 @@ class PlacementData {
         return NOT_FOUND;
     }
 
-    int getInsertPosition(final int position) {
+    int getPlacedPosition(final int position) {
         final int index = binarySearch(mAdjustedAdPositions, 0, mPlacedCount, position);
 
         // No match, ~index is the number of ads before this pos.
         if (index < 0) {
             return position - ~index;
         }
+
+        return position - index;
+    }
+
+    int getInsertPosition(final int position) {
+        final int index = binarySearchGreaterThan(mAdjustedAdPositions, mPlacedCount, position);
 
         return position - index;
     }

@@ -629,6 +629,10 @@ public class MoPubStreamAdPlacer {
 		return mPlacementData.getOriginalPosition(position);
 	}
 
+	public int getPlacedPosition(final int position) {
+		return mPlacementData.getPlacedPosition(position);
+	}
+
 	public int getInsertPosition(final int position) {
 		return mPlacementData.getInsertPosition(position);
 	}
@@ -769,6 +773,8 @@ public class MoPubStreamAdPlacer {
 				if (!tryPlaceAd(integer)) {
 					return;
 				}
+			}else {
+				MoPubLog.e("there is no place for stacked ad");
 			}
 		}
 		delayedStackRequests.clear();
