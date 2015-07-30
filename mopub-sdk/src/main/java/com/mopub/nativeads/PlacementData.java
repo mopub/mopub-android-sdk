@@ -193,7 +193,7 @@ class PlacementData {
      */
     int nextInsertionPosition(final int position) {
         final int index = binarySearchGreaterThan(
-                mDesiredInsertionPositions, mDesiredCount, position);
+		        mDesiredInsertionPositions, mDesiredCount, position);
         if (index == mDesiredCount) {
             return NOT_FOUND;
         }
@@ -206,7 +206,7 @@ class PlacementData {
      */
     int previousInsertionPosition(final int position) {
         final int index = binarySearchFirstEquals(
-                mDesiredInsertionPositions,  mDesiredCount, position);
+		        mDesiredInsertionPositions, mDesiredCount, position);
         if (index == 0) {
             return NOT_FOUND;
         }
@@ -275,11 +275,15 @@ class PlacementData {
 
     boolean isAdLoaded(final int position) {
         final int index = binarySearch(mAdjustedAdPositions, 0, mPlacedCount, position);
-        if (index >=0){
-            return !stackedPositions.contains(index);
-        }
-        return false;
+        return index >=0;
     }
+
+	boolean isAdLoadedByIndex(final int index){
+		if (index >=0){
+			return getPlacedCount()>index;
+		}
+		return false;
+	}
 
 	int getStackedCount(){
 		return stackedPositions.size();
@@ -299,11 +303,16 @@ class PlacementData {
     @Nullable
     NativeAdData getPlacedAd(final int position) {
         final int index = binarySearch(mAdjustedAdPositions, 0, mPlacedCount, position);
-        if (index < 0) {
-            return null;
-        }
-        return mAdDataObjects[index];
+        return getPlacedAdByIndex(index);
     }
+
+	@Nullable
+	NativeAdData getPlacedAdByIndex(final int index) {
+		if (index < 0) {
+			return null;
+		}
+		return mAdDataObjects[index];
+	}
 
     /**
      * Returns all placed ad positions. This method allocates new memory on every invocation. Do
@@ -349,6 +358,11 @@ class PlacementData {
         // This is an ad. Since binary search doesn't properly handle dups, find the first non-ad.
         int index = binarySearchGreaterThan(mOriginalAdPositions, mPlacedCount, originalPosition);
         return originalPosition + index;
+    }
+
+    int getAdIndex(final int adjustedPosition){
+        final int index = binarySearch(mAdjustedAdPositions, 0, mPlacedCount, adjustedPosition);
+	    return index;
     }
 
     int getPlacedCount(){

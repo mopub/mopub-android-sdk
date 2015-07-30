@@ -379,6 +379,14 @@ public class MoPubStreamAdPlacer {
 		return mPlacementData.isAdLoaded(position);
 	}
 
+	public boolean isAdLoadedByIndex(int index) {
+		return mPlacementData.isAdLoadedByIndex(index);
+	}
+
+	public int getAdIndex(int position) {
+		return mPlacementData.getAdIndex(position);
+	}
+
 	/**
 	 * Inserts ads that should appear in the given range.
 	 * <p/>
@@ -464,6 +472,11 @@ public class MoPubStreamAdPlacer {
 		return mPlacementData.getPlacedAd(position);
 	}
 
+	@Nullable
+	public NativeAdData getAdDataByIndex(final int index) {
+		return mPlacementData.getPlacedAdByIndex(index);
+	}
+
 	/**
 	 * Gets the ad at the given position, or {@code null} if there is no ad at the given position.
 	 * <p/>
@@ -511,8 +524,7 @@ public class MoPubStreamAdPlacer {
 		}
 	}
 
-	public void clearAdView(int position, View adView) {
-		final NativeAdData adData = mPlacementData.getPlacedAd(position);
+	public void clearAdView(NativeAdData adData, View adView) {
 		if (adData == null) {
 			return;
 		}
