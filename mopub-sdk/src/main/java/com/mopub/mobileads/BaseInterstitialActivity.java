@@ -9,6 +9,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout.LayoutParams;
 
+import com.integralads.verification.app_verification_library.AvidManager;
 import com.mopub.common.AdReport;
 import com.mopub.common.CloseableLayout;
 import com.mopub.common.CloseableLayout.OnCloseListener;
@@ -69,10 +70,12 @@ abstract class BaseInterstitialActivity extends Activity {
         setContentView(mCloseableLayout);
 
 
+        AvidManager.getInstance().register(this);
     }
 
     @Override
     protected void onDestroy() {
+        AvidManager.getInstance().unregister();
         mCloseableLayout.removeAllViews();
         super.onDestroy();
     }

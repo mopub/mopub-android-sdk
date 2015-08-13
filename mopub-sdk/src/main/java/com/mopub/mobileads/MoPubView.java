@@ -13,6 +13,7 @@ import android.view.View;
 import android.webkit.WebViewDatabase;
 import android.widget.FrameLayout;
 
+import com.integralads.verification.app_verification_library.AvidManager;
 import com.mopub.common.AdFormat;
 import com.mopub.common.MoPub;
 import com.mopub.common.logging.MoPubLog;
@@ -83,6 +84,7 @@ public class MoPubView extends FrameLayout {
 
         mAdViewController = AdViewControllerFactory.create(context, this);
         registerScreenStateBroadcastReceiver();
+        AvidManager.getInstance().register((Activity)mContext);
     }
 
     private void registerScreenStateBroadcastReceiver() {
@@ -126,6 +128,7 @@ public class MoPubView extends FrameLayout {
      * Activity's onDestroy implementation must include a call to this method.
      */
     public void destroy() {
+        AvidManager.getInstance().unregister();
         unregisterScreenStateBroadcastReceiver();
         removeAllViews();
 
