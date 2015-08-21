@@ -54,5 +54,15 @@ public class BaseVideoPlayerActivity extends Activity {
         intentVideoPlayerActivity.putExtra(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
         return intentVideoPlayerActivity;
     }
+
+    @Override
+    protected void onDestroy() {
+        // release audio focus which is acquired by the VideoView, but never released, leaking the Activity
+        // https://code.google.com/p/android/issues/detail?id=152173
+        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        am.abandonAudioFocus(null);
+
+        super.onDestroy();
+    }
 }
 
