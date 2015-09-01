@@ -15,6 +15,9 @@ import com.mopub.common.CloseableLayout;
 import com.mopub.common.CloseableLayout.OnCloseListener;
 import com.mopub.common.DataKeys;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 
 abstract class BaseInterstitialActivity extends Activity {
@@ -70,12 +73,12 @@ abstract class BaseInterstitialActivity extends Activity {
         setContentView(mCloseableLayout);
 
 
-        AvidManager.getInstance().register(this);
+        AvidManager.getInstance().registerAdClasses(new ArrayList<Class<?>>(Arrays.asList(BaseWebView.class)), this);
     }
 
     @Override
     protected void onDestroy() {
-        AvidManager.getInstance().unregister();
+        AvidManager.getInstance().unregisterAdClasses();
         mCloseableLayout.removeAllViews();
         super.onDestroy();
     }
