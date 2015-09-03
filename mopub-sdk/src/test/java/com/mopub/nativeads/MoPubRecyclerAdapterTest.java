@@ -5,9 +5,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
-
 import com.mopub.common.test.support.SdkTestRunner;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -456,9 +454,10 @@ public class MoPubRecyclerAdapterTest {
         originalAdapter.setItemCount(originalItemCount + 3);
         originalAdapter.notifyItemRangeInserted(originalItemCount, 3);
 
-        verify(mockObserver).onChanged();
+        verify(mockObserver).onItemRangeInserted(originalItemCount + 2, 3);
         verifyNoMoreInteractions(mockObserver);
         verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount);
+        verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount + 3 - 1);
         verify(mockStreamAdPlacer).setItemCount(originalItemCount + 3);
         verifyNoMoreInteractions(mockStreamAdPlacer);
     }
@@ -475,6 +474,7 @@ public class MoPubRecyclerAdapterTest {
         verify(mockObserver).onItemRangeInserted(originalItemCount + 2, 3);
         verifyNoMoreInteractions(mockObserver);
         verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount);
+        verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount + 3 - 1);
         verify(mockStreamAdPlacer).setItemCount(originalItemCount + 3);
         verify(mockStreamAdPlacer, times(3)).insertItem(anyInt());
         verifyNoMoreInteractions(mockStreamAdPlacer);
@@ -489,9 +489,10 @@ public class MoPubRecyclerAdapterTest {
         originalAdapter.setItemCount(originalItemCount + 3);
         originalAdapter.notifyItemRangeInserted(originalItemCount, 3);
 
-        verify(mockObserver).onChanged();
+        verify(mockObserver).onItemRangeInserted(originalItemCount + 2, 3);
         verifyNoMoreInteractions(mockObserver);
         verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount);
+        verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount + 3 - 1);
         verify(mockStreamAdPlacer).setItemCount(originalItemCount + 3);
         verifyNoMoreInteractions(mockStreamAdPlacer);
     }
@@ -508,6 +509,7 @@ public class MoPubRecyclerAdapterTest {
         verify(mockObserver).onItemRangeInserted(originalItemCount - 5, 3);
         verifyNoMoreInteractions(mockObserver);
         verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount - 7);
+        verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount - 7 + 3 - 1);
         verify(mockStreamAdPlacer).setItemCount(originalItemCount + 3);
         verify(mockStreamAdPlacer, times(3)).insertItem(anyInt());
         verifyNoMoreInteractions(mockStreamAdPlacer);
@@ -525,6 +527,7 @@ public class MoPubRecyclerAdapterTest {
         verify(mockObserver).onItemRangeInserted(originalItemCount - 5, 3);
         verifyNoMoreInteractions(mockObserver);
         verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount - 7);
+        verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount - 7 + 3 - 1);
         verify(mockStreamAdPlacer).setItemCount(originalItemCount + 3);
         verify(mockStreamAdPlacer, times(3)).insertItem(anyInt());
         verifyNoMoreInteractions(mockStreamAdPlacer);
@@ -539,9 +542,10 @@ public class MoPubRecyclerAdapterTest {
         originalAdapter.setItemCount(originalItemCount + 3);
         originalAdapter.notifyItemRangeInserted(originalItemCount - 7, 3);
 
-        verify(mockObserver).onChanged();
+        verify(mockObserver).onItemRangeInserted(originalItemCount - 7 + 2, 3);
         verifyNoMoreInteractions(mockObserver);
         verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount - 7);
+        verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount - 7 + 3 - 1);
         verify(mockStreamAdPlacer).setItemCount(originalItemCount + 3);
         verifyNoMoreInteractions(mockStreamAdPlacer);
     }
@@ -555,9 +559,10 @@ public class MoPubRecyclerAdapterTest {
         originalAdapter.setItemCount(originalItemCount - 3);
         originalAdapter.notifyItemRangeRemoved(originalItemCount - 4, 3);
 
-        verify(mockObserver).onChanged();
+        verify(mockObserver).onItemRangeRemoved(originalItemCount - 4 + 2, 3);
         verifyNoMoreInteractions(mockObserver);
         verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount - 4);
+        verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount - 4 + 3 - 1);
         verify(mockStreamAdPlacer).setItemCount(originalItemCount - 3);
         verifyNoMoreInteractions(mockStreamAdPlacer);
     }
@@ -606,7 +611,7 @@ public class MoPubRecyclerAdapterTest {
         originalAdapter.setItemCount(originalItemCount - 3);
         originalAdapter.notifyItemRangeRemoved(originalItemCount - 4, 3);
 
-        verify(mockObserver).onChanged();
+        verify(mockObserver).onItemRangeRemoved(originalItemCount - 4 + 2, 3);
         verifyNoMoreInteractions(mockObserver);
 
         verify(mockStreamAdPlacer).setItemCount(originalItemCount - 3);
@@ -653,9 +658,10 @@ public class MoPubRecyclerAdapterTest {
         originalAdapter.setItemCount(originalItemCount - 3);
         originalAdapter.notifyItemRangeRemoved(originalItemCount - 8, 3);
 
-        verify(mockObserver).onChanged();
+        verify(mockObserver).onItemRangeRemoved(originalItemCount - 8 + 2, 3);
         verifyNoMoreInteractions(mockObserver);
         verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount - 8);
+        verify(mockStreamAdPlacer).getAdjustedPosition(originalItemCount - 8 + 3 - 1);
         verify(mockStreamAdPlacer).setItemCount(originalItemCount - 3);
         verifyNoMoreInteractions(mockStreamAdPlacer);
     }
