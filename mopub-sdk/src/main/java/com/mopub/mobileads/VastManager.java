@@ -17,7 +17,7 @@ import static com.mopub.mobileads.VastVideoDownloadTask.VastVideoDownloadTaskLis
 /**
  * Given a VAST xml document, this class manages the lifecycle of parsing and finding a video and
  * possibly companion ad. It provides the API for clients to prepare a
- * {@link VastVideoConfiguration}.
+ * {@link VastVideoConfig}.
  */
 public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggregatorListener {
     /**
@@ -29,17 +29,17 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
          * Called when a video is found or if the VAST document is invalid. Passes in {@code null}
          * when the VAST document is invalid.
          *
-         * @param vastVideoConfiguration A configuration that can be used for displaying a VAST
+         * @param vastVideoConfig A configuration that can be used for displaying a VAST
          *                               video or {@code null} if the VAST document is invalid.
          */
         void onVastVideoConfigurationPrepared(
-                @Nullable final VastVideoConfiguration vastVideoConfiguration);
+                @Nullable final VastVideoConfig vastVideoConfig);
     }
 
     @Nullable private VastManagerListener mVastManagerListener;
     @Nullable private VastXmlManagerAggregator mVastXmlManagerAggregator;
     private double mScreenAspectRatio;
-    private int mScreenArea;
+    private int mScreenAreaDp;
 
     public VastManager(@NonNull final Context context) {
         initializeScreenDimensions(context);
@@ -60,7 +60,7 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
         if (mVastXmlManagerAggregator == null) {
             mVastManagerListener = vastManagerListener;
             mVastXmlManagerAggregator = new VastXmlManagerAggregator(this, mScreenAspectRatio,
-                    mScreenArea, context.getApplicationContext());
+                    mScreenAreaDp, context.getApplicationContext());
 
             try {
                 AsyncTasks.safeExecuteOnExecutor(mVastXmlManagerAggregator, vastXml);
@@ -82,20 +82,19 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
     }
 
     @Override
-    public void onAggregationComplete(
-            @Nullable final VastVideoConfiguration vastVideoConfiguration) {
+    public void onAggregationComplete(@Nullable final VastVideoConfig vastVideoConfig) {
         if (mVastManagerListener == null) {
             throw new IllegalStateException(
                     "mVastManagerListener cannot be null here. Did you call " +
                             "prepareVastVideoConfiguration()?");
         }
-        if (vastVideoConfiguration == null) {
+        if (vastVideoConfig == null) {
             mVastManagerListener.onVastVideoConfigurationPrepared(null);
             return;
         }
 
-        if (updateDiskMediaFileUrl(vastVideoConfiguration)) {
-            mVastManagerListener.onVastVideoConfigurationPrepared(vastVideoConfiguration);
+        if (updateDiskMediaFileUrl(vastVideoConfig)) {
+            mVastManagerListener.onVastVideoConfigurationPrepared(vastVideoConfig);
             return;
         }
 
@@ -103,8 +102,8 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
                 new VastVideoDownloadTaskListener() {
                     @Override
                     public void onComplete(boolean success) {
-                        if (success && updateDiskMediaFileUrl(vastVideoConfiguration)) {
-                            mVastManagerListener.onVastVideoConfigurationPrepared(vastVideoConfiguration);
+                        if (success && updateDiskMediaFileUrl(vastVideoConfig)) {
+                            mVastManagerListener.onVastVideoConfigurationPrepared(vastVideoConfig);
                         } else {
                             mVastManagerListener.onVastVideoConfigurationPrepared(null);
                         }
@@ -115,7 +114,7 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
         try {
             AsyncTasks.safeExecuteOnExecutor(
                     vastVideoDownloadTask,
-                    vastVideoConfiguration.getNetworkMediaFileUrl()
+                    vastVideoConfig.getNetworkMediaFileUrl()
             );
         } catch (Exception e) {
             MoPubLog.d("Failed to download vast video", e);
@@ -125,20 +124,20 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
 
     /**
      * This method takes the media file http url and checks to see if we have the media file downloaded
-     * and cached in the Disk LRU cache. If it is cached, then the {@link VastVideoConfiguration} is
+     * and cached in the Disk LRU cache. If it is cached, then the {@link VastVideoConfig} is
      * updated with the media file's url on disk.
      *
-     * @param vastVideoConfiguration used to store the media file's disk url and web url
+     * @param vastVideoConfig used to store the media file's disk url and web url
      * @return true if the media file was already cached locally, otherwise false
      */
     private boolean updateDiskMediaFileUrl(
-            @NonNull final VastVideoConfiguration vastVideoConfiguration) {
-        Preconditions.checkNotNull(vastVideoConfiguration, "vastVideoConfiguration cannot be null");
+            @NonNull final VastVideoConfig vastVideoConfig) {
+        Preconditions.checkNotNull(vastVideoConfig, "vastVideoConfig cannot be null");
 
-        final String networkMediaFileUrl = vastVideoConfiguration.getNetworkMediaFileUrl();
+        final String networkMediaFileUrl = vastVideoConfig.getNetworkMediaFileUrl();
         if (CacheService.containsKeyDiskCache(networkMediaFileUrl)) {
             final String filePathDiskCache = CacheService.getFilePathDiskCache(networkMediaFileUrl);
-            vastVideoConfiguration.setDiskMediaFileUrl(filePathDiskCache);
+            vastVideoConfig.setDiskMediaFileUrl(filePathDiskCache);
             return true;
         }
         return false;
@@ -148,20 +147,26 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
         Preconditions.checkNotNull(context, "context cannot be null");
         // This currently assumes that all vast videos will be played in landscape
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int x = display.getWidth();
-        int y = display.getHeight();
+        final int xPx = display.getWidth();
+        final int yPx = display.getHeight();
+        // Use the screen density to convert x and y (in pixels) to DP. Also, check the density to
+        // make sure that this is a valid density and that this is not going to divide by 0.
+        float density = context.getResources().getDisplayMetrics().density;
+        if (density <= 0) {
+            density = 1;
+        }
 
         // For landscape, width is always greater than height
-        int screenWidth = Math.max(x, y);
-        int screenHeight = Math.min(x, y);
+        int screenWidth = Math.max(xPx, yPx);
+        int screenHeight = Math.min(xPx, yPx);
         mScreenAspectRatio = (double) screenWidth / screenHeight;
-        mScreenArea = screenWidth * screenHeight;
+        mScreenAreaDp = (int) ((screenWidth / density) * (screenHeight / density));
     }
 
     @VisibleForTesting
     @Deprecated
-    int getScreenArea() {
-        return mScreenArea;
+    int getScreenAreaDp() {
+        return mScreenAreaDp;
     }
 
     @VisibleForTesting

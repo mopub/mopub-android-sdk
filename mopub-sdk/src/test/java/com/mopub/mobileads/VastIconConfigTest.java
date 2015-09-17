@@ -3,7 +3,6 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 
 import com.mopub.common.MoPubBrowser;
 import com.mopub.common.test.support.SdkTestRunner;
@@ -24,24 +23,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(SdkTestRunner.class)
-public class VastCompanionAdTest {
+public class VastIconConfigTest {
 
-    private static final String RESOLVED_CLICKTHROUGH_URL = "http://clickthrough_url";
-    private static final String CLICKTHROUGH_URL = "deeplink+://navigate?" +
-            "&primaryUrl=bogus%3A%2F%2Furl" +
-            "&fallbackUrl=" + Uri.encode(RESOLVED_CLICKTHROUGH_URL);
-
-    private VastCompanionAd subject;
+    private VastIconConfig subject;
     private Context context;
     @Mock private MoPubRequestQueue mockRequestQueue;
 
     @Before
     public void setup() {
-        subject = new VastCompanionAd(123, 456,
+        subject = new VastIconConfig(123, 456, 789, 101,
                 new VastResource("resource", VastResource.Type.STATIC_RESOURCE, VastResource
                         .CreativeType.IMAGE, 123, 456),
-                CLICKTHROUGH_URL,
                 VastUtils.stringsToVastTrackers("clickTrackerOne", "clickTrackerTwo"),
+                "http://www.mopub.com/",
                 VastUtils.stringsToVastTrackers("viewTrackerOne", "viewTrackerTwo")
         );
         context = Robolectric.buildActivity(Activity.class).create().get();
@@ -52,20 +46,35 @@ public class VastCompanionAdTest {
     public void constructor_shouldSetParamsCorrectly() throws Exception {
         assertThat(subject.getWidth()).isEqualTo(123);
         assertThat(subject.getHeight()).isEqualTo(456);
+        assertThat(subject.getOffsetMS()).isEqualTo(789);
+        assertThat(subject.getDurationMS()).isEqualTo(101);
         assertThat(subject.getVastResource().getResource()).isEqualTo("resource");
         assertThat(subject.getVastResource().getType()).isEqualTo(VastResource.Type.STATIC_RESOURCE);
         assertThat(subject.getVastResource().getCreativeType())
                 .isEqualTo(VastResource.CreativeType.IMAGE);
-        assertThat(subject.getClickThroughUrl()).isEqualTo(CLICKTHROUGH_URL);
-        assertThat(VastUtils.vastTrackersToStrings(subject.getClickTrackers()))
+        assertThat(VastUtils.vastTrackersToStrings(subject.getClickTrackingUris()))
                 .containsOnly("clickTrackerOne", "clickTrackerTwo");
-        assertThat(VastUtils.vastTrackersToStrings(subject.getCreativeViewTrackers()))
+        assertThat(subject.getClickThroughUri()).isEqualTo("http://www.mopub.com/");
+        assertThat(VastUtils.vastTrackersToStrings(subject.getViewTrackingUris()))
                 .containsOnly("viewTrackerOne", "viewTrackerTwo");
     }
 
     @Test
+    public void constructor_withNullOffset_shouldSetOffsetTo0() throws Exception {
+        subject = new VastIconConfig(123, 456, null, 101,
+                new VastResource("resource", VastResource.Type.STATIC_RESOURCE, VastResource
+                        .CreativeType.IMAGE, 123, 456),
+                VastUtils.stringsToVastTrackers("clickTrackerOne", "clickTrackerTwo"),
+                "clickThroughUri",
+                VastUtils.stringsToVastTrackers("viewTrackerOne", "viewTrackerTwo")
+        );
+
+        assertThat(subject.getOffsetMS()).isEqualTo(0);
+    }
+
+    @Test
     public void handleImpression_shouldTrackImpression() throws Exception {
-        subject.handleImpression(context, 123);
+        subject.handleImpression(context, 123, "uri");
 
         verify(mockRequestQueue).add(argThat(isUrl("viewTrackerOne")));
         verify(mockRequestQueue).add(argThat(isUrl("viewTrackerTwo")));
@@ -73,7 +82,7 @@ public class VastCompanionAdTest {
 
     @Test
     public void handleClick_shouldNotTrackClick() throws Exception {
-        subject.handleClick(context, 1, null);
+        subject.handleClick(context, null);
 
         verifyNoMoreInteractions(mockRequestQueue);
     }
@@ -81,13 +90,14 @@ public class VastCompanionAdTest {
 
     @Test
     public void handleClick_shouldOpenMoPubBrowser() throws Exception {
-        subject.handleClick(context, 1, null);
+        subject.handleClick(context, null);
 
+        Robolectric.runBackgroundTasks();
         Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo("com.mopub.common.MoPubBrowser");
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY))
-                .isEqualTo(RESOLVED_CLICKTHROUGH_URL);
+                .isEqualTo("http://www.mopub.com/");
         assertThat(startedActivity.getData()).isNull();
     }
 }

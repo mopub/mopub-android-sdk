@@ -1,6 +1,7 @@
 package com.mopub.mobileads;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import com.mopub.common.MoPubBrowser;
 import com.mopub.common.Preconditions;
 import com.mopub.common.UrlAction;
 import com.mopub.common.UrlHandler;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Intents;
 
 import java.io.Serializable;
@@ -19,7 +21,7 @@ import java.util.List;
 
 import static com.mopub.network.TrackingRequest.makeVastTrackingHttpRequest;
 
-public class VastCompanionAd implements Serializable {
+public class VastCompanionAdConfig implements Serializable {
     private static final long serialVersionUID = 0L;
 
     private final int mWidth;
@@ -29,7 +31,7 @@ public class VastCompanionAd implements Serializable {
     @NonNull private final List<VastTracker> mClickTrackers;
     @NonNull private final List<VastTracker> mCreativeViewTrackers;
 
-    public VastCompanionAd(
+    public VastCompanionAdConfig(
             int width,
             int height,
             @NonNull VastResource vastResource,
@@ -156,9 +158,15 @@ public class VastCompanionAd implements Serializable {
                             bundle.putString(MoPubBrowser.DESTINATION_URL_KEY,
                                     url);
 
-                            Intent intent = Intents.getStartActivityIntent(
-                                    context, MoPubBrowser.class, bundle);
-                            ((Activity) context).startActivityForResult(intent, requestCode);
+                            final Class clazz = MoPubBrowser.class;
+                            final Intent intent = Intents.getStartActivityIntent(
+                                    context, clazz, bundle);
+                            try {
+                                ((Activity) context).startActivityForResult(intent, requestCode);
+                            } catch (ActivityNotFoundException e) {
+                                MoPubLog.d("Activity " + clazz.getName() + " not found. Did you " +
+                                        "declare it in your AndroidManifest.xml?");
+                            }
                         }
                     }
 

@@ -31,12 +31,14 @@ public class VastVideoViewProgressRunnableTest {
     @Mock Context mockContext;
     @Mock Handler mockHandler;
     @Mock MoPubRequestQueue mockRequestQueue;
+    @Mock VastVideoConfig mockVideoConfig;
     @Captor ArgumentCaptor<TrackingRequest> requestCaptor;
     VastVideoViewProgressRunnable subject;
 
     @Before
     public void setup() {
-        subject = new VastVideoViewProgressRunnable(mockVastVideoViewController, mockHandler);
+        subject = new VastVideoViewProgressRunnable(mockVastVideoViewController, mockVideoConfig,
+                mockHandler);
 
         // Request Queue needed to verify tracking requests made.
         Networking.setRequestQueueForTesting(mockRequestQueue);
@@ -48,7 +50,7 @@ public class VastVideoViewProgressRunnableTest {
         testTrackers.add(new VastAbsoluteProgressTracker("http://example.com/", 1999));
         testTrackers.add(new VastAbsoluteProgressTracker("http://example1.com/", 2000));
 
-        when(mockVastVideoViewController.getUntriggeredTrackersBefore(eq(3000), eq(4000)))
+        when(mockVideoConfig.getUntriggeredTrackersBefore(eq(3000), eq(4000)))
                 .thenReturn(testTrackers);
         when(mockVastVideoViewController.getCurrentPosition()).thenReturn(3000);
         when(mockVastVideoViewController.getDuration()).thenReturn(4000);
@@ -56,7 +58,7 @@ public class VastVideoViewProgressRunnableTest {
 
         subject.doWork();
 
-        verify(mockVastVideoViewController).getUntriggeredTrackersBefore(eq(3000), eq(4000));
+        verify(mockVideoConfig).getUntriggeredTrackersBefore(eq(3000), eq(4000));
         verify(mockVastVideoViewController).getCurrentPosition();
         verify(mockVastVideoViewController).getDuration();
         verify(mockVastVideoViewController).getContext();
@@ -78,7 +80,7 @@ public class VastVideoViewProgressRunnableTest {
     public void doWork_whenNoTrackersReturned_shouldNotMakeTrackingRequests() {
         List<VastTracker> testTrackers = new ArrayList<VastTracker>();
 
-        when(mockVastVideoViewController.getUntriggeredTrackersBefore(eq(3000), eq(4000)))
+        when(mockVideoConfig.getUntriggeredTrackersBefore(eq(3000), eq(4000)))
                 .thenReturn(testTrackers);
         when(mockVastVideoViewController.getCurrentPosition()).thenReturn(3000);
         when(mockVastVideoViewController.getDuration()).thenReturn(4000);
@@ -86,7 +88,7 @@ public class VastVideoViewProgressRunnableTest {
 
         subject.doWork();
 
-        verify(mockVastVideoViewController).getUntriggeredTrackersBefore(eq(3000), eq(4000));
+        verify(mockVideoConfig).getUntriggeredTrackersBefore(eq(3000), eq(4000));
         verify(mockVastVideoViewController).getCurrentPosition();
         verify(mockVastVideoViewController).getDuration();
         verify(mockVastVideoViewController).handleIconDisplay(eq(3000));

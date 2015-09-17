@@ -12,7 +12,7 @@ import static com.mopub.mobileads.test.support.VastUtils.createNode;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
-public class VastIconXmlManagerTest {
+public class VastIconConfigXmlManagerTest {
 
     private VastIconXmlManager subject;
     private Node iconNode;
@@ -47,7 +47,7 @@ public class VastIconXmlManagerTest {
         iconNode = createNode(iconXml);
         subject = new VastIconXmlManager(iconNode);
     }
-    
+
     @Test
     public void getWidth_shouldReturnWidth() throws Exception {
         assertThat(subject.getWidth()).isEqualTo(123);

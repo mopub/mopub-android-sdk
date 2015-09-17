@@ -36,6 +36,8 @@ interface NativeAdInterface {
     @Nullable
     Drawable getDefaultIcon();
 
+    String getDaaIconClickthroughUrl();
+
     @NonNull
     Set<String> getImpressionTrackers();
 

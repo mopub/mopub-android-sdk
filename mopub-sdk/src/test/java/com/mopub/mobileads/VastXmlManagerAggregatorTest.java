@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Point;
 import android.view.Display;
 import android.view.WindowManager;
@@ -88,7 +89,7 @@ public class VastXmlManagerAggregatorTest {
             "                </Creative>" +
             "                <Creative AdID=\"601364-Companion\">" +
             "                    <CompanionAds>" +
-            "                        <Companion id=\"wrappercompanion\" height=\"123\" width=\"456\">" +
+            "                        <Companion id=\"wrappercompanion\" height=\"250\" width=\"456\">" +
             "                            <StaticResource creativeType=\"image/jpeg\">" +
             "                                http://wrapperCompanionAdStaticResource" +
             "                            </StaticResource>" +
@@ -99,7 +100,7 @@ public class VastXmlManagerAggregatorTest {
             "                            <CompanionClickThrough>http://wrapperCompanionClickThrough</CompanionClickThrough>" +
             "                            <CompanionClickTracking><![CDATA[http://wrapperCompanionClickTracking]]></CompanionClickTracking>" +
             "                        </Companion> " +
-            "                        <Companion id=\"noresource\" height=\"123\" width=\"456\">" +
+            "                        <Companion id=\"noresource\" height=\"250\" width=\"456\">" +
             "                            <TrackingEvents>" +
             "                                <Tracking event=\"creativeView\">http://firstNoResourceWrapperCompanionCreativeView</Tracking>" +
             "                                <Tracking event=\"creativeView\">http://secondNoResourceWrapperCompanionCreativeView</Tracking>" +
@@ -270,7 +271,7 @@ public class VastXmlManagerAggregatorTest {
     private Semaphore semaphore;
     private VastXmlManagerAggregatorListener vastXmlManagerAggregatorListener;
     private VastXmlManagerAggregator subject;
-    private VastVideoConfiguration vastVideoConfiguration;
+    private VastVideoConfig mVastVideoConfig;
 
     @Mock
     MoPubRequestQueue mockRequestQueue;
@@ -288,11 +289,11 @@ public class VastXmlManagerAggregatorTest {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Object[] args = invocationOnMock.getArguments();
-                VastXmlManagerAggregatorTest.this.vastVideoConfiguration = (VastVideoConfiguration) args[0];
+                VastXmlManagerAggregatorTest.this.mVastVideoConfig = (VastVideoConfig) args[0];
                 semaphore.release();
                 return null;
             }
-        }).when(vastXmlManagerAggregatorListener).onAggregationComplete(any(VastVideoConfiguration.class));
+        }).when(vastXmlManagerAggregatorListener).onAggregationComplete(any(VastVideoConfig.class));
 
         // Always assume landscape (where width > height) since videos will always be played in this orientation
         int screenWidth = 800;
@@ -316,7 +317,7 @@ public class VastXmlManagerAggregatorTest {
         subject.execute(TEST_VAST_XML_STRING);
         semaphore.acquire();
 
-        assertThat(vastVideoConfiguration).isNull();
+        assertThat(mVastVideoConfig).isNull();
     }
 
     @Test
@@ -329,9 +330,9 @@ public class VastXmlManagerAggregatorTest {
         subject.execute(TEST_VAST_XML_STRING);
         semaphore.acquire();
 
-        assertThat(vastVideoConfiguration.getNetworkMediaFileUrl()).isEqualTo("https://s3" +
+        assertThat(mVastVideoConfig.getNetworkMediaFileUrl()).isEqualTo("https://s3" +
                 ".amazonaws.com/mopub-vast/tapad-video.mp4");
-        assertThat(vastVideoConfiguration.getClickThroughUrl()).isEqualTo("http://rtb-test.dev" +
+        assertThat(mVastVideoConfig.getClickThroughUrl()).isEqualTo("http://rtb-test.dev" +
                 ".tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMj" +
                 "AwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTN" +
                 "BMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxh" +
@@ -342,9 +343,9 @@ public class VastXmlManagerAggregatorTest {
                 "PUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3" +
                 "D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad." +
                 "com");
-        assertThat(vastVideoConfiguration.getImpressionTrackers().size()).isEqualTo(4 *
+        assertThat(mVastVideoConfig.getImpressionTrackers().size()).isEqualTo(4 *
                 VastXmlManagerAggregator.MAX_TIMES_TO_FOLLOW_VAST_REDIRECT + 1);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().size()).isEqualTo(3 *
+        assertThat(mVastVideoConfig.getFractionalTrackers().size()).isEqualTo(3 *
                 VastXmlManagerAggregator.MAX_TIMES_TO_FOLLOW_VAST_REDIRECT);
     }
 
@@ -431,9 +432,11 @@ public class VastXmlManagerAggregatorTest {
         // Triple screen size
         final VastMediaXmlManager mediaXmlManager1 = initializeMediaXmlManagerMock(2400, 1440, "video/mp4", "video_url1");
         // Half screen size
-        final VastMediaXmlManager mediaXmlManager2 = initializeMediaXmlManagerMock(400, 240, "video/mp4", "video_url2");
+        final VastMediaXmlManager mediaXmlManager2 = initializeMediaXmlManagerMock(400, 240,
+                "video/mp4", "video_url2");
 
-        String bestMediaFileUrl = subject.getBestMediaFileUrl(Arrays.asList(mediaXmlManager1, mediaXmlManager2));
+        String bestMediaFileUrl = subject.getBestMediaFileUrl(
+                Arrays.asList(mediaXmlManager1, mediaXmlManager2));
         assertThat(bestMediaFileUrl).isEqualTo("video_url2");
     }
 
@@ -451,7 +454,8 @@ public class VastXmlManagerAggregatorTest {
         final VastMediaXmlManager mediaXmlManager2 =
                 initializeMediaXmlManagerMock(240, 400, "video/mp4", "video_url2");
 
-        String bestMediaFileUrl = subject.getBestMediaFileUrl(Arrays.asList(mediaXmlManager1, mediaXmlManager2));
+        String bestMediaFileUrl = subject.getBestMediaFileUrl(
+                Arrays.asList(mediaXmlManager1, mediaXmlManager2));
         assertThat(bestMediaFileUrl).isEqualTo("video_url1");
     }
 
@@ -465,9 +469,11 @@ public class VastXmlManagerAggregatorTest {
         // Invalid media type
         final VastMediaXmlManager mediaXmlManager1 = initializeMediaXmlManagerMock(800, 480, "video/invalid", "video_url1");
         // Null dimension
-        final VastMediaXmlManager mediaXmlManager2 = initializeMediaXmlManagerMock(null, null, "video/mp4", "video_url2");
+        final VastMediaXmlManager mediaXmlManager2 = initializeMediaXmlManagerMock(null, null,
+                "video/mp4", "video_url2");
 
-        String bestMediaFileUrl = subject.getBestMediaFileUrl(Arrays.asList(mediaXmlManager1, mediaXmlManager2));
+        String bestMediaFileUrl = subject.getBestMediaFileUrl(
+                Arrays.asList(mediaXmlManager1, mediaXmlManager2));
         assertThat(bestMediaFileUrl).isNull();
     }
 
@@ -492,8 +498,9 @@ public class VastXmlManagerAggregatorTest {
         final VastCompanionAdXmlManager companionXmlManager = initializeCompanionXmlManagerMock(
                 300, 250, "image_url", "image/jpeg", null, null);
 
-        final VastCompanionAd bestCompanionAd =
-                subject.getBestCompanionAd(Arrays.asList(companionXmlManager));
+        final VastCompanionAdConfig bestCompanionAd =
+                subject.getBestCompanionAd(Arrays.asList(companionXmlManager),
+                        VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertCompanionAdsAreEqual(companionXmlManager, bestCompanionAd);
     }
 
@@ -502,8 +509,9 @@ public class VastXmlManagerAggregatorTest {
         final VastCompanionAdXmlManager companionXmlManager = initializeCompanionXmlManagerMock(
                 300, 250, "image_url", "image/INVALID", null, null);
 
-        final VastCompanionAd bestCompanionAd =
-                subject.getBestCompanionAd(Arrays.asList(companionXmlManager));
+        final VastCompanionAdConfig bestCompanionAd =
+                subject.getBestCompanionAd(Arrays.asList(companionXmlManager),
+                        VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertThat(bestCompanionAd).isNull();
     }
 
@@ -512,25 +520,31 @@ public class VastXmlManagerAggregatorTest {
         final VastCompanionAdXmlManager companionXmlManager =
                 initializeCompanionXmlManagerMock(null, 250, "image_url", "image/png", null, null);
 
-        final VastCompanionAd bestCompanionAd = subject.getBestCompanionAd(Arrays.asList(companionXmlManager));
+        final VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
+                Arrays.asList(companionXmlManager),
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertThat(bestCompanionAd).isNull();
     }
 
     @Test
-    public void getBestCompanionAd_withZeroDimension_shouldReturnNull() throws Exception {
+    public void getBestCompanionAd_withWidthTooSmall_shouldReturnNull() throws Exception {
         final VastCompanionAdXmlManager companionXmlManager =
-                initializeCompanionXmlManagerMock(0, 250, "image_url", "image/png", null, null);
+                initializeCompanionXmlManagerMock(299, 250, "image_url", "image/png", null, null);
 
-        final VastCompanionAd bestCompanionAd = subject.getBestCompanionAd(Arrays.asList(companionXmlManager));
+        final VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
+                Arrays.asList(companionXmlManager),
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertThat(bestCompanionAd).isNull();
     }
 
     @Test
-    public void getBestCompanionAd_withNegativeDimension_shouldReturnNull() throws Exception {
+    public void getBestCompanionAd_withHeightTooSmall_shouldReturnNull() throws Exception {
         final VastCompanionAdXmlManager companionXmlManager =
-                initializeCompanionXmlManagerMock(-300, 250, "image_url", "image/png", null, null);
+                initializeCompanionXmlManagerMock(300, 249, "image_url", "image/png", null, null);
 
-        final VastCompanionAd bestCompanionAd = subject.getBestCompanionAd(Arrays.asList(companionXmlManager));
+        final VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
+                Arrays.asList(companionXmlManager),
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertThat(bestCompanionAd).isNull();
     }
 
@@ -548,7 +562,9 @@ public class VastXmlManagerAggregatorTest {
         final VastCompanionAdXmlManager companionXmlManager2 =
                 initializeCompanionXmlManagerMock(1600, 960, "image_url2", "image/bmp", null, null);
 
-        VastCompanionAd bestCompanionAd = subject.getBestCompanionAd(Arrays.asList(companionXmlManager1, companionXmlManager2));
+        VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
+                Arrays.asList(companionXmlManager1, companionXmlManager2),
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertThat(bestCompanionAd.getVastResource().getResource()).isEqualTo("image_url2");
     }
 
@@ -564,14 +580,16 @@ public class VastXmlManagerAggregatorTest {
                 initializeCompanionXmlManagerMock(2400, 1440, "image_url1", "image/png", null, null);
         // Half screen size
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(400, 240, "image_url2", "image/bmp", null, null);
+                initializeCompanionXmlManagerMock(400, 250, "image_url2", "image/bmp", null, null);
 
-        VastCompanionAd bestCompanionAd = subject.getBestCompanionAd(Arrays.asList(companionXmlManager1, companionXmlManager2));
+        VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
+                Arrays.asList(companionXmlManager1, companionXmlManager2),
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertThat(bestCompanionAd.getVastResource().getResource()).isEqualTo("image_url2");
     }
 
     @Test
-    public void getBestCompanionAd_withSameArea_shouldReturnCompanionAdWithAspectRatioCloserToScreenAspectRatio() throws Exception {
+    public void getBestCompanionAd_withSameArea_shouldReturnLandscapeCompanionAdWithAspectRatioCloserToScreenAspectRatio() throws Exception {
         // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         assertThat(display.getWidth()).isEqualTo(480);
@@ -579,29 +597,53 @@ public class VastXmlManagerAggregatorTest {
 
         // Landscape
         final VastCompanionAdXmlManager companionXmlManager1 =
-                initializeCompanionXmlManagerMock(400, 240, "image_url1", "image/png", null, null);
+                initializeCompanionXmlManagerMock(400, 250, "image_url1", "image/png", null, null);
         // Portrait
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(240, 400, "image_url2", "image/bmp", null, null);
+                initializeCompanionXmlManagerMock(250, 400, "image_url2", "image/bmp", null, null);
 
-        VastCompanionAd bestCompanionAd = subject.getBestCompanionAd(Arrays.asList(companionXmlManager1, companionXmlManager2));
+        VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
+                Arrays.asList(companionXmlManager1, companionXmlManager2),
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertThat(bestCompanionAd.getVastResource().getResource()).isEqualTo("image_url1");
+    }
+
+    @Test
+    public void getBestCompanionAd_withSameArea_shouldReturnPortraitCompanionAdWithAspectRatioCloserToScreenAspectRatio() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Landscape
+        final VastCompanionAdXmlManager companionXmlManager1 =
+                initializeCompanionXmlManagerMock(400, 300, "image_url1", "image/png", null, null);
+        // Portrait
+        final VastCompanionAdXmlManager companionXmlManager2 =
+                initializeCompanionXmlManagerMock(300, 400, "image_url2", "image/bmp", null, null);
+
+        VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
+                Arrays.asList(companionXmlManager1, companionXmlManager2),
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(bestCompanionAd.getVastResource().getResource()).isEqualTo("image_url2");
     }
 
     @Test
     public void getBestCompanionAd_withAllThreeResourceTypes_shouldReturnStaticResourceType() throws Exception {
         // Static Resource
         final VastCompanionAdXmlManager companionXmlManager1 =
-                initializeCompanionXmlManagerMock(400, 240, "StaticResource", "image/png", null, null);
+                initializeCompanionXmlManagerMock(400, 250, "StaticResource", "image/png", null,
+                        null);
         // HTML Resource
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(240, 400, null, null, null, "HTMLResource");
+                initializeCompanionXmlManagerMock(250, 400, null, null, null, "HTMLResource");
         // IFrame Resource
         final VastCompanionAdXmlManager companionXmlManager3 =
-                initializeCompanionXmlManagerMock(240, 400, null, null, "IFrameResource", null);
+                initializeCompanionXmlManagerMock(250, 400, null, null, "IFrameResource", null);
 
-        VastCompanionAd bestCompanionAd = subject.getBestCompanionAd(
-                Arrays.asList(companionXmlManager3, companionXmlManager2, companionXmlManager1));
+        VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
+                Arrays.asList(companionXmlManager3, companionXmlManager2, companionXmlManager1),
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertThat(bestCompanionAd.getVastResource().getResource()).isEqualTo("StaticResource");
     }
 
@@ -609,27 +651,49 @@ public class VastXmlManagerAggregatorTest {
     public void getBestCompanionAd_withHTMLAndStaticResourceTypes_shouldReturnStaticResourceType() throws Exception {
         // Static Resource
         final VastCompanionAdXmlManager companionXmlManager1 =
-                initializeCompanionXmlManagerMock(400, 240, "StaticResource", "image/png", null, null);
+                initializeCompanionXmlManagerMock(400, 250, "StaticResource", "image/png", null, null);
         // HTML Resource
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(240, 400, null, null, null, "HTMLResource");
+                initializeCompanionXmlManagerMock(250, 400, null, null, null, "HTMLResource");
 
-        VastCompanionAd bestCompanionAd = subject.getBestCompanionAd(
-                Arrays.asList(companionXmlManager2, companionXmlManager1));
+        VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
+                Arrays.asList(companionXmlManager2, companionXmlManager1),
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertThat(bestCompanionAd.getVastResource().getResource()).isEqualTo("StaticResource");
     }
 
     @Test
     public void getBestCompanionAd_withInvalidStaticResource_withValidHtmlResource_shouldReturnHtmlResource() throws Exception {
         final VastCompanionAdXmlManager companionXmlManager1 =
-                initializeCompanionXmlManagerMock(400, 240, "StaticResource", "INVALID",
+                initializeCompanionXmlManagerMock(400, 250, "StaticResource", "INVALID",
                         "IFrameResource", null);
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(240, 400, null, null, null, "HTMLResource");
+                initializeCompanionXmlManagerMock(300, 400, null, null, null, "HTMLResource");
 
-        VastCompanionAd bestCompanionAd = subject.getBestCompanionAd(
-                Arrays.asList(companionXmlManager2, companionXmlManager1));
+        VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
+                Arrays.asList(companionXmlManager2, companionXmlManager1),
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertThat(bestCompanionAd.getVastResource().getResource()).isEqualTo("HTMLResource");
+    }
+
+    @Test
+    public void getBestCompanionAd_withCompanionAdTooSmall_shouldReturnCompanionAdWithAtLeastMinimumSize() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // 305 x 305 is both fewer pixels (screen area) and a worse aspect ratio. It still should be
+        // chosen because 240 is not wide enough to be considered for a companion ad
+        final VastCompanionAdXmlManager companionXmlManager1 =
+                initializeCompanionXmlManagerMock(305, 305, "image_url1", "image/png", null, null);
+        final VastCompanionAdXmlManager companionXmlManager2 =
+                initializeCompanionXmlManagerMock(240, 400, "image_url2", "image/bmp", null, null);
+
+        VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
+                Arrays.asList(companionXmlManager1, companionXmlManager2),
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(bestCompanionAd.getVastResource().getResource()).isEqualTo("image_url1");
     }
 
     @Test
@@ -713,7 +777,7 @@ public class VastXmlManagerAggregatorTest {
                 initializeIconXmlManagerMock(40, 40, null, null, "staticResource2", "image/png",
                         null, null, new ArrayList<VastTracker>(), null, new ArrayList<VastTracker>());
 
-        VastIcon bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
+        VastIconConfig bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
         assertThat(bestIcon.getWidth()).isEqualTo(40);
         assertThat(bestIcon.getHeight()).isEqualTo(50);
         assertThat(bestIcon.getOffsetMS()).isEqualTo(123);
@@ -740,7 +804,7 @@ public class VastXmlManagerAggregatorTest {
                         null, null, new ArrayList<VastTracker>(), null,
                         new ArrayList<VastTracker>());
 
-        VastIcon bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
+        VastIconConfig bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
         assertThat(bestIcon.getVastResource().getResource()).isEqualTo("staticResource2");
     }
 
@@ -753,7 +817,7 @@ public class VastXmlManagerAggregatorTest {
                 initializeIconXmlManagerMock(40, 40, null, null, "staticResource2", "image/png",
                         null, null, new ArrayList<VastTracker>(), null, new ArrayList<VastTracker>());
 
-        VastIcon bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
+        VastIconConfig bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
         assertThat(bestIcon.getVastResource().getResource()).isEqualTo("staticResource2");
     }
 
@@ -766,7 +830,7 @@ public class VastXmlManagerAggregatorTest {
                 initializeIconXmlManagerMock(40, 40, null, null, "staticResource2", "image/png",
                         null, null, new ArrayList<VastTracker>(), null, new ArrayList<VastTracker>());
 
-        VastIcon bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
+        VastIconConfig bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
         assertThat(bestIcon.getVastResource().getResource()).isEqualTo("staticResource2");
     }
 
@@ -779,7 +843,7 @@ public class VastXmlManagerAggregatorTest {
                 initializeIconXmlManagerMock(40, 40, null, null, "staticResource2", "image/png",
                         null, null, new ArrayList<VastTracker>(), null, new ArrayList<VastTracker>());
 
-        VastIcon bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
+        VastIconConfig bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
         assertThat(bestIcon.getVastResource().getResource()).isEqualTo("staticResource2");
     }
 
@@ -792,7 +856,7 @@ public class VastXmlManagerAggregatorTest {
                 initializeIconXmlManagerMock(40, 40, null, null, "staticResource2", "image/png",
                         null, null, new ArrayList<VastTracker>(), null, new ArrayList<VastTracker>());
 
-        VastIcon bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
+        VastIconConfig bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
         assertThat(bestIcon.getVastResource().getResource()).isEqualTo("staticResource2");
     }
 
@@ -805,7 +869,7 @@ public class VastXmlManagerAggregatorTest {
                 initializeIconXmlManagerMock(40, 40, null, null, "staticResource2", "image/png",
                         null, null, new ArrayList<VastTracker>(), null, new ArrayList<VastTracker>());
 
-        VastIcon bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
+        VastIconConfig bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager1, iconXmlManager2));
         assertThat(bestIcon.getVastResource().getResource()).isEqualTo("staticResource2");
     }
 
@@ -821,7 +885,7 @@ public class VastXmlManagerAggregatorTest {
                 initializeIconXmlManagerMock(40, 40, null, null, null, null, null, "HTMLResource",
                         new ArrayList<VastTracker>(), null, new ArrayList<VastTracker>());
 
-        VastIcon bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager3, iconXmlManager2,
+        VastIconConfig bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager3, iconXmlManager2,
                 iconXmlManager1));
         assertThat(bestIcon.getVastResource().getResource()).isEqualTo("StaticResource");
     }
@@ -835,7 +899,7 @@ public class VastXmlManagerAggregatorTest {
                 initializeIconXmlManagerMock(40, 40, null, null, null, null, null, "HTMLResource",
                         new ArrayList<VastTracker>(), null, new ArrayList<VastTracker>());
 
-        VastIcon bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager2, iconXmlManager1));
+        VastIconConfig bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager2, iconXmlManager1));
         assertThat(bestIcon.getVastResource().getResource()).isEqualTo("StaticResource");
     }
 
@@ -848,75 +912,81 @@ public class VastXmlManagerAggregatorTest {
                 initializeIconXmlManagerMock(40, 40, null, null, null, null, null, "HTMLResource",
                         new ArrayList<VastTracker>(), null, new ArrayList<VastTracker>());
 
-        VastIcon bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager2, iconXmlManager1));
+        VastIconConfig bestIcon = subject.getBestIcon(Arrays.asList(iconXmlManager2, iconXmlManager1));
         assertThat(bestIcon.getVastResource().getResource()).isEqualTo("HTMLResource");
     }
 
     @Test
     public void evaluateVastXmlManager_withStandardInline_shouldReturnValidVastVideoConfiguration() {
-        VastVideoConfiguration vastVideoConfiguration = subject.evaluateVastXmlManager(
+        VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
                 TEST_NESTED_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
 
-        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfiguration.getImpressionTrackers()))
+        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getImpressionTrackers()))
                 .containsOnly("http://rtb-test.dev.tapad.com:8080/creative/imp" +
                         ".png?ts=1374099035457&svid=1&creative_id=30731&ctx_type=InApp&ta_pinfo" +
                         "=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&liverail_cp=1");
-        assertThat(vastVideoConfiguration.getFractionalTrackers()).isEmpty();
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers()).isEmpty();
-        assertThat(vastVideoConfiguration.getPauseTrackers()).isEmpty();
-        assertThat(vastVideoConfiguration.getResumeTrackers()).isEmpty();
-        assertThat(vastVideoConfiguration.getCompleteTrackers()).isEmpty();
-        assertThat(vastVideoConfiguration.getCloseTrackers()).isEmpty();
-        assertThat(vastVideoConfiguration.getSkipTrackers()).isEmpty();
-        assertThat(vastVideoConfiguration.getClickTrackers()).isEmpty();
-        assertThat(vastVideoConfiguration.getClickThroughUrl()).isEqualTo(
+        assertThat(vastVideoConfig.getFractionalTrackers()).isEmpty();
+        assertThat(vastVideoConfig.getAbsoluteTrackers()).isEmpty();
+        assertThat(vastVideoConfig.getPauseTrackers()).isEmpty();
+        assertThat(vastVideoConfig.getResumeTrackers()).isEmpty();
+        assertThat(vastVideoConfig.getCompleteTrackers()).isEmpty();
+        assertThat(vastVideoConfig.getCloseTrackers()).isEmpty();
+        assertThat(vastVideoConfig.getSkipTrackers()).isEmpty();
+        assertThat(vastVideoConfig.getClickTrackers()).isEmpty();
+        assertThat(vastVideoConfig.getClickThroughUrl()).isEqualTo(
                 "http://rtb-test.dev.tapad" +
                         ".com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com");
-        assertThat(vastVideoConfiguration.getNetworkMediaFileUrl()).isEqualTo(
+        assertThat(vastVideoConfig.getNetworkMediaFileUrl()).isEqualTo(
                 "https://s3.amazonaws.com/mopub-vast/tapad-video.mp4");
-        assertThat(vastVideoConfiguration.getSkipOffset()).isNull();
-        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfiguration.getErrorTrackers()))
+        assertThat(vastVideoConfig.getSkipOffsetString()).isNull();
+        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getErrorTrackers()))
                 .containsOnly("http://nestedInLineErrorOne", "http://nestedInLineErrorTwo");
 
-        VastCompanionAd companionAd = vastVideoConfiguration.getVastCompanionAd();
-        assertThat(companionAd.getWidth()).isEqualTo(300);
-        assertThat(companionAd.getHeight()).isEqualTo(250);
-        assertThat(companionAd.getVastResource().getResource())
-                .isEqualTo("http://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
-        assertThat(companionAd.getVastResource().getType())
-                .isEqualTo(VastResource.Type.STATIC_RESOURCE);
-        assertThat(companionAd.getVastResource().getCreativeType())
-                .isEqualTo(VastResource.CreativeType.IMAGE);
-        assertThat(companionAd.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
-        assertThat(VastUtils.vastTrackersToStrings(companionAd.getClickTrackers()))
-                .containsOnly("http://companionClickTracking1",
-                        "http://companionClickTracking2");
-        assertThat(VastUtils.vastTrackersToStrings(companionAd.getCreativeViewTrackers()))
-                .containsExactly("http://myTrackingURL/firstCompanionCreativeView",
-                        "http://myTrackingURL/secondCompanionCreativeView");
+        VastCompanionAdConfig[] companionAds = new VastCompanionAdConfig[2];
+        companionAds[0] = vastVideoConfig.getVastCompanionAd(
+                Configuration.ORIENTATION_LANDSCAPE);
+        companionAds[1] = vastVideoConfig.getVastCompanionAd(
+                Configuration.ORIENTATION_PORTRAIT);
+        for (VastCompanionAdConfig companionAd : companionAds) {
+            assertThat(companionAd.getWidth()).isEqualTo(300);
+            assertThat(companionAd.getHeight()).isEqualTo(250);
+            assertThat(companionAd.getVastResource().getResource())
+                    .isEqualTo("http://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
+            assertThat(companionAd.getVastResource().getType())
+                    .isEqualTo(VastResource.Type.STATIC_RESOURCE);
+            assertThat(companionAd.getVastResource().getCreativeType())
+                    .isEqualTo(VastResource.CreativeType.IMAGE);
+            assertThat(companionAd.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
+            assertThat(VastUtils.vastTrackersToStrings(companionAd.getClickTrackers()))
+                    .containsOnly("http://companionClickTracking1",
+                            "http://companionClickTracking2");
+            assertThat(VastUtils.vastTrackersToStrings(companionAd.getCreativeViewTrackers()))
+                    .containsExactly("http://myTrackingURL/firstCompanionCreativeView",
+                            "http://myTrackingURL/secondCompanionCreativeView");
+        }
 
-        VastIcon vastIcon = vastVideoConfiguration.getVastIcon();
-        assertThat(vastIcon.getWidth()).isEqualTo(123);
-        assertThat(vastIcon.getHeight()).isEqualTo(234);
-        assertThat(vastIcon.getDurationMS()).isEqualTo(3723456);
-        assertThat(vastIcon.getOffsetMS()).isEqualTo(3723000);
-        assertThat(vastIcon.getVastResource().getResource()).isEqualTo("imageJpeg");
-        assertThat(vastIcon.getVastResource().getType()).isEqualTo(VastResource.Type.STATIC_RESOURCE);
-        assertThat(vastIcon.getVastResource().getCreativeType()).isEqualTo(VastResource.CreativeType.IMAGE);
-        assertThat(VastUtils.vastTrackersToStrings(vastIcon.getClickTrackingUris()))
+        VastIconConfig vastIconConfig = vastVideoConfig.getVastIconConfig();
+        assertThat(vastIconConfig.getWidth()).isEqualTo(123);
+        assertThat(vastIconConfig.getHeight()).isEqualTo(234);
+        assertThat(vastIconConfig.getDurationMS()).isEqualTo(3723456);
+        assertThat(vastIconConfig.getOffsetMS()).isEqualTo(3723000);
+        assertThat(vastIconConfig.getVastResource().getResource()).isEqualTo("imageJpeg");
+        assertThat(vastIconConfig.getVastResource().getType()).isEqualTo(VastResource.Type.STATIC_RESOURCE);
+        assertThat(vastIconConfig.getVastResource().getCreativeType()).isEqualTo(VastResource.CreativeType.IMAGE);
+        assertThat(VastUtils.vastTrackersToStrings(vastIconConfig.getClickTrackingUris()))
                 .containsOnly("clickTrackingUri1", "clickTrackingUri2");
-        assertThat(vastIcon.getClickThroughUri()).isEqualTo("clickThroughUri");
-        assertThat(VastUtils.vastTrackersToStrings(vastIcon.getViewTrackingUris()))
+        assertThat(vastIconConfig.getClickThroughUri()).isEqualTo("clickThroughUri");
+        assertThat(VastUtils.vastTrackersToStrings(vastIconConfig.getViewTrackingUris()))
                 .containsOnly("viewTrackingUri1", "viewTrackingUri2");
     }
 
     @Test
     public void evaluateVastXmlManager_withAWrapperToAnInline_shouldReturnValidVastVideoConfiguration() {
         mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
-        VastVideoConfiguration vastVideoConfiguration = subject.evaluateVastXmlManager(
+        VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
                 TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
 
-        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfiguration.getImpressionTrackers()))
+        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getImpressionTrackers()))
                 .containsOnly(
                         "http://rtb-test.dev.tapad.com:8080/creative/imp" +
                                 ".png?ts=1374099035457&svid=1&creative_id=30731&ctx_type=InApp" +
@@ -927,124 +997,137 @@ public class VastXmlManagerAggregatorTest {
                         "http://www.mopub.com/imp1",
                         "http://www.mopub.com/imp2");
 
-        assertThat(vastVideoConfiguration.getFractionalTrackers()).hasSize(3);
+        assertThat(vastVideoConfig.getFractionalTrackers()).hasSize(3);
         assertThat(
-                vastVideoConfiguration.getFractionalTrackers().get(0)).isEqualsToByComparingFields(
+                vastVideoConfig.getFractionalTrackers().get(0)).isEqualsToByComparingFields(
                 new VastFractionalProgressTracker("http://myTrackingURL/wrapper/firstQuartile",
                         0.25f));
         assertThat(
-                vastVideoConfiguration.getFractionalTrackers().get(1)).isEqualsToByComparingFields(
+                vastVideoConfig.getFractionalTrackers().get(1)).isEqualsToByComparingFields(
                 new VastFractionalProgressTracker("http://myTrackingURL/wrapper/midpoint",
                         0.5f));
         assertThat(
-                vastVideoConfiguration.getFractionalTrackers().get(2)).isEqualsToByComparingFields(
+                vastVideoConfig.getFractionalTrackers().get(2)).isEqualsToByComparingFields(
                 new VastFractionalProgressTracker("http://myTrackingURL/wrapper/thirdQuartile",
                         0.75f));
 
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().size()).isEqualTo(2);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(0)).isEqualsToByComparingFields(
+        assertThat(vastVideoConfig.getAbsoluteTrackers().size()).isEqualTo(2);
+        assertThat(vastVideoConfig.getAbsoluteTrackers().get(0)).isEqualsToByComparingFields(
                 new VastAbsoluteProgressTracker("http://myTrackingURL/wrapper/creativeView", 0));
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(1)).isEqualsToByComparingFields(
+        assertThat(vastVideoConfig.getAbsoluteTrackers().get(1)).isEqualsToByComparingFields(
                 new VastAbsoluteProgressTracker("http://myTrackingURL/wrapper/start", 2000));
 
-        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfiguration.getPauseTrackers()))
+        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getPauseTrackers()))
                 .containsOnly("http://myTrackingURL/wrapper/pause");
-        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfiguration.getResumeTrackers()))
+        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getResumeTrackers()))
                 .containsOnly("http://myTrackingURL/wrapper/resume");
-        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfiguration.getCompleteTrackers()))
+        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getCompleteTrackers()))
                 .containsOnly("http://myTrackingURL/wrapper/complete");
-        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfiguration.getErrorTrackers()))
+        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getErrorTrackers()))
                 .containsExactly(
                         "http://wrapperErrorOne?errorcode=[ERRORCODE]",
                         "http://wrapperErrorTwo?errorcode=[ERRORCODE]",
                         "http://nestedInLineErrorOne",
                         "http://nestedInLineErrorTwo");
 
-        assertThat(vastVideoConfiguration.getCloseTrackers()).isEmpty();
-        assertThat(vastVideoConfiguration.getSkipTrackers()).isEmpty();
+        assertThat(vastVideoConfig.getCloseTrackers()).isEmpty();
+        assertThat(vastVideoConfig.getSkipTrackers()).isEmpty();
 
-        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfiguration.getClickTrackers()))
+        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getClickTrackers()))
                 .containsOnly("http://myTrackingURL/wrapper/click");
 
-        assertThat(vastVideoConfiguration.getClickThroughUrl()).isEqualTo(
+        assertThat(vastVideoConfig.getClickThroughUrl()).isEqualTo(
                 "http://rtb-test.dev.tapad" +
                         ".com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com");
-        assertThat(vastVideoConfiguration.getNetworkMediaFileUrl()).isEqualTo(
+        assertThat(vastVideoConfig.getNetworkMediaFileUrl()).isEqualTo(
                 "https://s3.amazonaws.com/mopub-vast/tapad-video.mp4");
-        assertThat(vastVideoConfiguration.getSkipOffset()).isNull();
+        assertThat(vastVideoConfig.getSkipOffsetString()).isNull();
 
-        VastCompanionAd companionAd = vastVideoConfiguration.getVastCompanionAd();
-        assertThat(companionAd.getWidth()).isEqualTo(300);
-        assertThat(companionAd.getHeight()).isEqualTo(250);
-        assertThat(companionAd.getVastResource().getResource())
-                .isEqualTo("http://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
-        assertThat(companionAd.getVastResource().getType())
-                .isEqualTo(VastResource.Type.STATIC_RESOURCE);
-        assertThat(companionAd.getVastResource().getCreativeType())
-                .isEqualTo(VastResource.CreativeType.IMAGE);
-        assertThat(companionAd.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
-        assertThat(VastUtils.vastTrackersToStrings(companionAd.getClickTrackers()))
-                .containsOnly("http://companionClickTracking1",
-                        "http://companionClickTracking2",
-                        "http://noResourceWrapperCompanionClickTracking1");
-        assertThat(VastUtils.vastTrackersToStrings(companionAd.getCreativeViewTrackers()))
-                .containsExactly("http://myTrackingURL/firstCompanionCreativeView",
-                        "http://myTrackingURL/secondCompanionCreativeView",
-                        "http://firstNoResourceWrapperCompanionCreativeView",
-                        "http://secondNoResourceWrapperCompanionCreativeView");
+        VastCompanionAdConfig[] companionAds = new VastCompanionAdConfig[2];
+        companionAds[0] = vastVideoConfig.getVastCompanionAd(
+                Configuration.ORIENTATION_LANDSCAPE);
+        companionAds[1] = vastVideoConfig.getVastCompanionAd(
+                Configuration.ORIENTATION_PORTRAIT);
+        for (VastCompanionAdConfig companionAd : companionAds) {
+            assertThat(companionAd.getWidth()).isEqualTo(300);
+            assertThat(companionAd.getHeight()).isEqualTo(250);
+            assertThat(companionAd.getVastResource().getResource())
+                    .isEqualTo("http://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
+            assertThat(companionAd.getVastResource().getType())
+                    .isEqualTo(VastResource.Type.STATIC_RESOURCE);
+            assertThat(companionAd.getVastResource().getCreativeType())
+                    .isEqualTo(VastResource.CreativeType.IMAGE);
+            assertThat(companionAd.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
+            assertThat(VastUtils.vastTrackersToStrings(companionAd.getClickTrackers()))
+                    .containsOnly("http://companionClickTracking1",
+                            "http://companionClickTracking2",
+                            "http://noResourceWrapperCompanionClickTracking1");
+            assertThat(VastUtils.vastTrackersToStrings(companionAd.getCreativeViewTrackers()))
+                    .containsExactly("http://myTrackingURL/firstCompanionCreativeView",
+                            "http://myTrackingURL/secondCompanionCreativeView",
+                            "http://firstNoResourceWrapperCompanionCreativeView",
+                            "http://secondNoResourceWrapperCompanionCreativeView");
+        }
 
-        VastIcon vastIcon = vastVideoConfiguration.getVastIcon();
-        assertThat(vastIcon.getWidth()).isEqualTo(123);
-        assertThat(vastIcon.getHeight()).isEqualTo(234);
-        assertThat(vastIcon.getDurationMS()).isEqualTo(3723456);
-        assertThat(vastIcon.getOffsetMS()).isEqualTo(3723000);
-        assertThat(vastIcon.getVastResource().getResource()).isEqualTo("imageJpeg");
-        assertThat(vastIcon.getVastResource().getType()).isEqualTo(VastResource.Type.STATIC_RESOURCE);
-        assertThat(vastIcon.getVastResource().getCreativeType()).isEqualTo(VastResource.CreativeType.IMAGE);
-        assertThat(VastUtils.vastTrackersToStrings(vastIcon.getClickTrackingUris()))
+        VastIconConfig vastIconConfig = vastVideoConfig.getVastIconConfig();
+        assertThat(vastIconConfig.getWidth()).isEqualTo(123);
+        assertThat(vastIconConfig.getHeight()).isEqualTo(234);
+        assertThat(vastIconConfig.getDurationMS()).isEqualTo(3723456);
+        assertThat(vastIconConfig.getOffsetMS()).isEqualTo(3723000);
+        assertThat(vastIconConfig.getVastResource().getResource()).isEqualTo("imageJpeg");
+        assertThat(vastIconConfig.getVastResource().getType()).isEqualTo(VastResource.Type.STATIC_RESOURCE);
+        assertThat(vastIconConfig.getVastResource().getCreativeType()).isEqualTo(VastResource.CreativeType.IMAGE);
+        assertThat(VastUtils.vastTrackersToStrings(vastIconConfig.getClickTrackingUris()))
                 .containsOnly("clickTrackingUri1", "clickTrackingUri2");
-        assertThat(vastIcon.getClickThroughUri()).isEqualTo("clickThroughUri");
-        assertThat(VastUtils.vastTrackersToStrings(vastIcon.getViewTrackingUris()))
+        assertThat(vastIconConfig.getClickThroughUri()).isEqualTo("clickThroughUri");
+        assertThat(VastUtils.vastTrackersToStrings(vastIconConfig.getViewTrackingUris()))
                 .containsOnly("viewTrackingUri1", "viewTrackingUri2");
     }
 
     @Test
     public void evaluateVastXmlManager_withInvalidXml_shouldReturnNullVastVideoConfiguration() {
-        VastVideoConfiguration vastVideoConfiguration = subject.evaluateVastXmlManager(
+        VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
                 TEST_VAST_BAD_NEST_URL_XML_STRING, HttpClient.getHttpClient(),
                 new ArrayList<VastTracker>());
 
-        assertThat(vastVideoConfiguration).isNull();
+        assertThat(vastVideoConfig).isNull();
     }
 
     @Test
     public void evaluateVastXmlManager_withRedirectHavingNoCompanionAd_shouldReturnVastVideoConfigurationWithCompanionAdOfWrapper() {
         mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_NO_COMPANION_VAST_XML_STRING);
-        VastVideoConfiguration vastVideoConfiguration = subject.evaluateVastXmlManager(
+        VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
                 TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
 
-        VastCompanionAd companionAd = vastVideoConfiguration.getVastCompanionAd();
-        assertThat(companionAd.getWidth()).isEqualTo(456);
-        assertThat(companionAd.getHeight()).isEqualTo(123);
-        assertThat(companionAd.getVastResource().getResource()).isEqualTo("http" +
-                "://wrapperCompanionAdStaticResource");
-        assertThat(companionAd.getClickThroughUrl()).isEqualTo("http://wrapperCompanionClickThrough");
-        assertThat(VastUtils.vastTrackersToStrings(companionAd.getClickTrackers()))
-                .containsOnly("http://wrapperCompanionClickTracking");
-        assertThat(VastUtils.vastTrackersToStrings(companionAd.getCreativeViewTrackers()))
-                .containsExactly("http://firstWrapperCompanionCreativeView",
-                        "http://secondWrapperCompanionCreativeView");
+        VastCompanionAdConfig[] companionAds = new VastCompanionAdConfig[2];
+        companionAds[0] = vastVideoConfig.getVastCompanionAd(
+                Configuration.ORIENTATION_LANDSCAPE);
+        companionAds[1] = vastVideoConfig.getVastCompanionAd(
+                Configuration.ORIENTATION_PORTRAIT);
+        for (VastCompanionAdConfig companionAd : companionAds) {
+            assertThat(companionAd.getWidth()).isEqualTo(456);
+            assertThat(companionAd.getHeight()).isEqualTo(250);
+            assertThat(companionAd.getVastResource().getResource()).isEqualTo("http" +
+                    "://wrapperCompanionAdStaticResource");
+            assertThat(companionAd.getClickThroughUrl()).isEqualTo(
+                    "http://wrapperCompanionClickThrough");
+            assertThat(VastUtils.vastTrackersToStrings(companionAd.getClickTrackers()))
+                    .containsOnly("http://wrapperCompanionClickTracking");
+            assertThat(VastUtils.vastTrackersToStrings(companionAd.getCreativeViewTrackers()))
+                    .containsExactly("http://firstWrapperCompanionCreativeView",
+                            "http://secondWrapperCompanionCreativeView");
+        }
     }
 
     @Test
     public void evaluateVastXmlManager_withSequenceNumbers_shouldReturnVastVideoConfigurationWithNegativeSequenceNumber() {
-        VastVideoConfiguration vastVideoConfiguration = subject.evaluateVastXmlManager(
+        VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
                 TEST_VAST_WITH_NEGATIVE_SEQUENCE_NUMBER_XML_STRING, HttpClient.getHttpClient(),
                 new ArrayList<VastTracker>());
 
-        assertThat(vastVideoConfiguration.getNetworkMediaFileUrl()).isEqualTo(
+        assertThat(vastVideoConfig.getNetworkMediaFileUrl()).isEqualTo(
                 "http://negativeSequence");
-        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfiguration.getImpressionTrackers()))
+        assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getImpressionTrackers()))
                 .containsOnly("http://negativeSequence");
     }
 
@@ -1090,11 +1173,11 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void evaluateVastXmlManager_withJustError_shouldReturnNullVastVideoConfiguration_shouldFireErrorTracker() {
-        VastVideoConfiguration vastVideoConfiguration = subject.evaluateVastXmlManager(
+        VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
                 TEST_JUST_ERROR_XML_STRING, HttpClient.getHttpClient(),
                 new ArrayList<VastTracker>());
 
-        assertThat(vastVideoConfiguration).isNull();
+        assertThat(vastVideoConfig).isNull();
         verify(mockRequestQueue).add(argThat(isUrl("http://justErrorTracking?errorcode=900")));
         verifyNoMoreInteractions(mockRequestQueue);
     }
@@ -1102,10 +1185,10 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void evaluateVastXmlManager_withWrapperToJustError_shouldReturnNullVastVideoConfiguration_shouldFireErrorTrackers() {
         mFakeHttpLayer.addPendingHttpResponse(200, TEST_JUST_ERROR_XML_STRING);
-        VastVideoConfiguration vastVideoConfiguration = subject.evaluateVastXmlManager(
+        VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
                 TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
 
-        assertThat(vastVideoConfiguration).isNull();
+        assertThat(vastVideoConfig).isNull();
         verify(mockRequestQueue).add(argThat(isUrl("http://justErrorTracking?errorcode=303")));
         verifyNoMoreInteractions(mockRequestQueue);
     }
@@ -1113,20 +1196,20 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void evaluateVastXmlManager_withWrapperToVastXmlError_shouldReturnNullVastVideoConfiguration_shouldFireErrorTracker() {
         mFakeHttpLayer.addPendingHttpResponse(200, TEST_INVALID_VAST_XML_STRING);
-        VastVideoConfiguration vastVideoConfiguration = subject.evaluateVastXmlManager(
+        VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
                 TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
 
-        assertThat(vastVideoConfiguration).isNull();
+        assertThat(vastVideoConfig).isNull();
         verifyNoMoreInteractions(mockRequestQueue);
     }
 
     @Test
     public void evaluateVastXmlManager_withWrapperToInvalidXml_shouldReturnNullVastVideoConfiguration_shouldFireErrorTracker() {
         mFakeHttpLayer.addPendingHttpResponse(200, TEST_INVALID_XML_STRING);
-        VastVideoConfiguration vastVideoConfiguration = subject.evaluateVastXmlManager(
+        VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
                 TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
 
-        assertThat(vastVideoConfiguration).isNull();
+        assertThat(vastVideoConfig).isNull();
         verify(mockRequestQueue).add(argThat(isUrl("http://wrapperErrorOne?errorcode=100")));
         verify(mockRequestQueue).add(argThat(isUrl("http://wrapperErrorTwo?errorcode=100")));
         verifyNoMoreInteractions(mockRequestQueue);
@@ -1134,10 +1217,10 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void evaluateVastXmlManager_withWrapperToNoHttpResponse_shouldReturnNullVastVideoConfiguration_shouldFireErrorTracker() {
-        VastVideoConfiguration vastVideoConfiguration = subject.evaluateVastXmlManager(
+        VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
                 TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
 
-        assertThat(vastVideoConfiguration).isNull();
+        assertThat(vastVideoConfig).isNull();
         verify(mockRequestQueue).add(argThat(isUrl("http://wrapperErrorOne?errorcode=301")));
         verify(mockRequestQueue).add(argThat(isUrl("http://wrapperErrorTwo?errorcode=301")));
         verifyNoMoreInteractions(mockRequestQueue);
@@ -1180,8 +1263,8 @@ public class VastXmlManagerAggregatorTest {
 
     private void assertCompanionAdsAreEqual(
             final VastCompanionAdXmlManager companionAdXmlManager,
-            final VastCompanionAd companionAd) {
-        final VastCompanionAd companionAd1 = new VastCompanionAd(
+            final VastCompanionAdConfig companionAd) {
+        final VastCompanionAdConfig companionAd1 = new VastCompanionAdConfig(
                 companionAdXmlManager.getWidth(),
                 companionAdXmlManager.getHeight(),
                 VastResource.fromVastResourceXmlManager(
@@ -1196,20 +1279,20 @@ public class VastXmlManagerAggregatorTest {
     }
 
     private void assertCompanionAdsAreEqual(
-            final VastCompanionAd vastCompanionAd1,
-            final VastCompanionAd vastCompanionAd2) {
-        assertThat(vastCompanionAd1.getWidth()).isEqualTo(vastCompanionAd2.getWidth());
-        assertThat(vastCompanionAd1.getHeight()).isEqualTo(vastCompanionAd2.getHeight());
-        assertThat(vastCompanionAd1.getVastResource().getResource())
-                .isEqualTo(vastCompanionAd2.getVastResource().getResource());
-        assertThat(vastCompanionAd1.getVastResource().getType())
-                .isEqualTo(vastCompanionAd2.getVastResource().getType());
-        assertThat(vastCompanionAd1.getVastResource().getCreativeType())
-                .isEqualTo(vastCompanionAd2.getVastResource().getCreativeType());
-        assertThat(vastCompanionAd1.getClickThroughUrl()).isEqualTo(vastCompanionAd2.getClickThroughUrl());
-        assertThat(vastCompanionAd1.getClickTrackers()).isEqualTo(vastCompanionAd2.getClickTrackers());
-        assertThat(vastCompanionAd1.getCreativeViewTrackers()).isEqualTo(
-                vastCompanionAd2.getCreativeViewTrackers());
+            final VastCompanionAdConfig vastCompanionAdConfig1,
+            final VastCompanionAdConfig vastCompanionAdConfig2) {
+        assertThat(vastCompanionAdConfig1.getWidth()).isEqualTo(vastCompanionAdConfig2.getWidth());
+        assertThat(vastCompanionAdConfig1.getHeight()).isEqualTo(vastCompanionAdConfig2.getHeight());
+        assertThat(vastCompanionAdConfig1.getVastResource().getResource())
+                .isEqualTo(vastCompanionAdConfig2.getVastResource().getResource());
+        assertThat(vastCompanionAdConfig1.getVastResource().getType())
+                .isEqualTo(vastCompanionAdConfig2.getVastResource().getType());
+        assertThat(vastCompanionAdConfig1.getVastResource().getCreativeType())
+                .isEqualTo(vastCompanionAdConfig2.getVastResource().getCreativeType());
+        assertThat(vastCompanionAdConfig1.getClickThroughUrl()).isEqualTo(vastCompanionAdConfig2.getClickThroughUrl());
+        assertThat(vastCompanionAdConfig1.getClickTrackers()).isEqualTo(vastCompanionAdConfig2.getClickTrackers());
+        assertThat(vastCompanionAdConfig1.getCreativeViewTrackers()).isEqualTo(
+                vastCompanionAdConfig2.getCreativeViewTrackers());
     }
 
     private VastIconXmlManager initializeIconXmlManagerMock(

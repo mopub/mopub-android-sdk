@@ -4,8 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.mopub.common.event.ErrorEvent;
-import com.mopub.common.event.MoPubEvents;
+import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 
 import org.json.JSONArray;
@@ -20,8 +19,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import static com.mopub.common.util.Numbers.parseDouble;
 import static com.mopub.common.DataKeys.JSON_BODY_KEY;
+import static com.mopub.common.util.Numbers.parseDouble;
 import static com.mopub.nativeads.NativeResponse.Parameter;
 
 public class MoPubCustomEventNative extends CustomEventNative {
@@ -52,6 +51,10 @@ public class MoPubCustomEventNative extends CustomEventNative {
     }
 
     static class MoPubForwardingNativeAd extends BaseForwardingNativeAd {
+
+        @VisibleForTesting
+        static final String DAA_CLICKTHROUGH_URL = "https://www.mopub.com/optout";
+
         @NonNull private final Context mContext;
         @NonNull private final CustomEventNativeListener mCustomEventNativeListener;
         @NonNull private final JSONObject mJsonObject;
@@ -195,6 +198,11 @@ public class MoPubCustomEventNative extends CustomEventNative {
 
             imageUrls.addAll(getExtrasImageUrls());
             return imageUrls;
+        }
+
+        @Override
+        public String getDaaIconClickthroughUrl() {
+            return DAA_CLICKTHROUGH_URL;
         }
     }
 }

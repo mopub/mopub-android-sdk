@@ -1,24 +1,23 @@
-package com.mopub.nativeads;
+package com.mopub.common;
 
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.mopub.common.UrlAction;
-import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-class UrlResolutionTask extends AsyncTask<String, Void, String> {
+@VisibleForTesting
+public class UrlResolutionTask extends AsyncTask<String, Void, String> {
     private static final int REDIRECT_LIMIT = 10;
 
     interface UrlResolutionListener {
-        void onSuccess(@NonNull String resolvedUrl);
-        void onFailure();
+        void onSuccess(@NonNull final String resolvedUrl);
+        void onFailure(@NonNull final String message, @Nullable final Throwable throwable);
     }
 
     @NonNull private final UrlResolutionListener mListener;
@@ -30,9 +29,7 @@ class UrlResolutionTask extends AsyncTask<String, Void, String> {
         try {
             AsyncTasks.safeExecuteOnExecutor(urlResolutionTask, urlString);
         } catch (Exception e) {
-            MoPubLog.d("Failed to resolve url", e);
-
-            listener.onFailure();
+            listener.onFailure("Failed to resolve url", e);
         }
     }
 
@@ -109,7 +106,7 @@ class UrlResolutionTask extends AsyncTask<String, Void, String> {
     protected void onCancelled() {
         super.onCancelled();
 
-        mListener.onFailure();
+        mListener.onFailure("Task for resolving url was cancelled", null);
     }
 }
 

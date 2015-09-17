@@ -151,6 +151,18 @@ abstract class BaseForwardingNativeAd implements NativeAdInterface {
     }
 
     /**
+     * Override this method to set the clickthrough url for the DAA icon. No DAA icon will be shown
+     * unless this is set to something non-null.
+     *
+     * @return String representing the DAA icon clickthrough url, or {@code null} if not set.
+     */
+    @Nullable
+    @Override
+    public String getDaaIconClickthroughUrl() {
+        return null;
+    }
+
+    /**
      * Returns the minimum viewable percentage of the ad that must be onscreen for it to be
      * considered visible. See {@link BaseForwardingNativeAd#getImpressionMinTimeViewed()} for
      * additional impression tracking considerations.

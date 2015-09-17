@@ -1,13 +1,17 @@
 package com.mopub.nativeads;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.mopub.common.UrlAction;
+import com.mopub.common.UrlHandler;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.common.util.Drawables;
 
 class NativeViewHolder {
     @Nullable View mainView;
@@ -16,6 +20,7 @@ class NativeViewHolder {
     @Nullable TextView callToActionView;
     @Nullable ImageView mainImageView;
     @Nullable ImageView iconImageView;
+    @Nullable ImageView daaIconImageView;
 
     @VisibleForTesting
     static final NativeViewHolder EMPTY_VIEW_HOLDER = new NativeViewHolder();
@@ -34,6 +39,7 @@ class NativeViewHolder {
             nativeViewHolder.callToActionView = (TextView) view.findViewById(viewBinder.callToActionId);
             nativeViewHolder.mainImageView = (ImageView) view.findViewById(viewBinder.mainImageId);
             nativeViewHolder.iconImageView = (ImageView) view.findViewById(viewBinder.iconImageId);
+            nativeViewHolder.daaIconImageView = (ImageView) view.findViewById(viewBinder.daaIconImageId);
             return nativeViewHolder;
         } catch (ClassCastException exception) {
             MoPubLog.w("Could not cast from id in ViewBinder to expected View type", exception);
@@ -47,6 +53,7 @@ class NativeViewHolder {
         addTextView(callToActionView, nativeResponse.getCallToAction());
         nativeResponse.loadMainImage(mainImageView);
         nativeResponse.loadIconImage(iconImageView);
+        addDaaIcon(nativeResponse.getDaaIconClickthroughUrl());
     }
 
     void updateExtras(@NonNull final NativeResponse nativeResponse,
@@ -90,6 +97,39 @@ class NativeViewHolder {
         } else {
             textView.setText(contents);
         }
+    }
+
+    private void addDaaIcon(@Nullable final String daaClickthroughUrl) {
+        if (daaIconImageView == null) {
+            return;
+        }
+        if (daaClickthroughUrl == null) {
+            daaIconImageView.setImageDrawable(null);
+            daaIconImageView.setOnClickListener(null);
+            daaIconImageView.setVisibility(View.INVISIBLE);
+            return;
+        }
+        final Context context = daaIconImageView.getContext();
+        if (context == null) {
+            return;
+        }
+        daaIconImageView.setImageDrawable(
+                Drawables.NATIVE_DAA_ICON.createDrawable(context));
+        daaIconImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                new UrlHandler.Builder()
+                        .withSupportedUrlActions(
+                                UrlAction.IGNORE_ABOUT_SCHEME,
+                                UrlAction.OPEN_NATIVE_BROWSER,
+                                UrlAction.OPEN_IN_APP_BROWSER,
+                                UrlAction.HANDLE_SHARE_TWEET,
+                                UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK,
+                                UrlAction.FOLLOW_DEEP_LINK)
+                        .build().handleUrl(context, daaClickthroughUrl);
+            }
+        });
+        daaIconImageView.setVisibility(View.VISIBLE);
     }
 
     public void setViewVisibility(final int visibility) {

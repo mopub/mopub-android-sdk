@@ -1,12 +1,12 @@
 package com.mopub.common;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.os.AsyncTask;
-import android.support.v4.util.LruCache;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
-import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.Streams;
 import com.mopub.common.util.Utils;
 
@@ -40,6 +40,10 @@ public class CacheService {
 
         if (sDiskLruCache == null) {
             final File cacheDirectory = getDiskCacheDirectory(context);
+            if (cacheDirectory == null) {
+                return false;
+            }
+
             final long diskCacheSizeBytes = DeviceUtils.diskCacheSizeBytes(cacheDirectory);
             try {
                 sDiskLruCache = open(
@@ -50,6 +54,7 @@ public class CacheService {
                 );
             } catch (IOException e) {
                 MoPubLog.d("Unable to create DiskLruCache", e);
+                return false;
             }
         }
         return true;
@@ -63,8 +68,14 @@ public class CacheService {
         return Utils.sha1(key);
     }
 
-    public static File getDiskCacheDirectory(final Context context) {
-        final String cachePath = context.getCacheDir().getPath();
+    @Nullable
+    public static File getDiskCacheDirectory(@NonNull final Context context) {
+        final File cacheDir = context.getCacheDir();
+        if (cacheDir == null) {
+            return null;
+        }
+
+        final String cachePath = cacheDir.getPath();
         return new File(cachePath + File.separator + UNIQUE_CACHE_NAME);
     }
 

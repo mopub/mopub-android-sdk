@@ -12,7 +12,7 @@ import static com.mopub.mobileads.test.support.VastUtils.createNode;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
-public class VastCompanionAdXmlManagerTest {
+public class VastCompanionAdConfigXmlManagerTest {
 
     private VastCompanionAdXmlManager subject;
     private Node companionNode;

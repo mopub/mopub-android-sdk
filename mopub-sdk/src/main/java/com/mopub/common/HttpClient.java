@@ -4,10 +4,9 @@ import android.content.Context;
 import android.net.http.AndroidHttpClient;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.text.TextUtils;
-import android.webkit.WebView;
 
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.network.Networking;
 
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.params.HttpClientParams;
@@ -25,11 +24,9 @@ import static com.mopub.common.util.ResponseHeader.USER_AGENT;
 public class HttpClient {
     private static final int CONNECTION_TIMEOUT = 10000;
     private static final int SOCKET_TIMEOUT = 10000;
-    private static final String DEFAULT_USER_AGENT = System.getProperty("http.agent");
-    private static String sWebViewUserAgent;
 
     public static AndroidHttpClient getHttpClient() {
-        final String userAgent = getWebViewUserAgent(DEFAULT_USER_AGENT);
+        final String userAgent = Networking.getCachedUserAgent();
 
         AndroidHttpClient httpClient = AndroidHttpClient.newInstance(userAgent);
 
@@ -58,13 +55,13 @@ public class HttpClient {
 
         final HttpGet httpGet = new HttpGet(getUrl);
 
-        if (getWebViewUserAgent() == null && context != null) {
-            // Memoize the user agent since creating WebViews is expensive
-            setWebViewUserAgent(new WebView(context).getSettings().getUserAgentString());
+        final String webViewUserAgent;
+        if (context != null) {
+            webViewUserAgent = Networking.getUserAgent(context);
+        } else {
+            webViewUserAgent = Networking.getCachedUserAgent();
         }
 
-
-        final String webViewUserAgent = getWebViewUserAgent();
         if (webViewUserAgent != null) {
             httpGet.addHeader(USER_AGENT.getKey(), webViewUserAgent);
         }
@@ -136,27 +133,5 @@ public class HttpClient {
             throw e;
         }
         return uri;
-    }
-
-    /**
-     * @param defaultUserAgent the String to return if the WebView user agent hasn't been generated.
-     * @return the user agent of an Android WebView, or {@code defaultUserAgent}
-     */
-    public synchronized static String getWebViewUserAgent(String defaultUserAgent) {
-        if (TextUtils.isEmpty(sWebViewUserAgent)) {
-            return defaultUserAgent;
-        }
-        return sWebViewUserAgent;
-    }
-
-    /**
-     * @return the user agent of an Android WebView or {@code null}
-     */
-    public synchronized static String getWebViewUserAgent() {
-        return getWebViewUserAgent(null);
-    }
-
-    public synchronized static void setWebViewUserAgent(final String userAgent) {
-        sWebViewUserAgent = userAgent;
     }
 }

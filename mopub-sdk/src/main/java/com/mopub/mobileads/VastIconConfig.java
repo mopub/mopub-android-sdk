@@ -23,7 +23,7 @@ import static com.mopub.network.TrackingRequest.makeVastTrackingHttpRequest;
 /**
  * The data and event handlers for the icon displayed during a VAST 3.0 video.
  */
-class VastIcon implements Serializable {
+class VastIconConfig implements Serializable {
     private static final long serialVersionUID = 0L;
 
     private final int mWidth;
@@ -35,7 +35,7 @@ class VastIcon implements Serializable {
     @Nullable private final String mClickThroughUri;
     @NonNull private final List<VastTracker> mViewTrackingUris;
 
-    VastIcon(int width,
+    VastIconConfig(int width,
             int height,
             @Nullable Integer offsetMS,
             @Nullable Integer durationMS,

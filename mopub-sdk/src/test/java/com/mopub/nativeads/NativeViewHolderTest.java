@@ -2,9 +2,11 @@ package com.mopub.nativeads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -13,6 +15,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.util.Drawables;
 import com.mopub.common.util.Utils;
 import com.mopub.network.MaxWidthImageLoader;
 import com.mopub.network.MoPubRequestQueue;
@@ -49,6 +52,7 @@ public class NativeViewHolderTest {
     private TextView extrasTextView;
     private ImageView extrasImageView;
     private ImageView extrasImageView2;
+    private ImageView daaIconImageView;
     private String mainImageUrl;
     private String iconImageUrl;
     private String mainImageData;
@@ -100,6 +104,8 @@ public class NativeViewHolderTest {
         mainImageView.setId((int) Utils.generateUniqueId());
         iconImageView = new ImageView(context);
         iconImageView.setId((int) Utils.generateUniqueId());
+        daaIconImageView = new ImageView(context);
+        daaIconImageView.setId((int) Utils.generateUniqueId());
 
         // Extras
         extrasTextView = new TextView(context);
@@ -117,6 +123,7 @@ public class NativeViewHolderTest {
         relativeLayout.addView(extrasTextView);
         relativeLayout.addView(extrasImageView);
         relativeLayout.addView(extrasImageView2);
+        relativeLayout.addView(daaIconImageView);
 
         mainImageUrl = "mainimageurl";
         iconImageUrl = "iconimageurl";
@@ -138,6 +145,7 @@ public class NativeViewHolderTest {
                 .callToActionId(callToActionView.getId())
                 .mainImageId(mainImageView.getId())
                 .iconImageId(iconImageView.getId())
+                .daaIconImageId(daaIconImageView.getId())
                 .build();
 
         NativeViewHolder nativeViewHolder =
@@ -148,6 +156,7 @@ public class NativeViewHolderTest {
         assertThat(nativeViewHolder.callToActionView).isEqualTo(callToActionView);
         assertThat(nativeViewHolder.mainImageView).isEqualTo(mainImageView);
         assertThat(nativeViewHolder.iconImageView).isEqualTo(iconImageView);
+        assertThat(nativeViewHolder.daaIconImageView).isEqualTo(daaIconImageView);
     }
 
     @Test
@@ -165,6 +174,7 @@ public class NativeViewHolderTest {
         assertThat(nativeViewHolder.callToActionView).isNull();
         assertThat(nativeViewHolder.mainImageView).isNull();
         assertThat(nativeViewHolder.iconImageView).isEqualTo(iconImageView);
+        assertThat(nativeViewHolder.daaIconImageView).isNull();
     }
 
     @Test
@@ -185,13 +195,19 @@ public class NativeViewHolderTest {
         assertThat(nativeViewHolder.callToActionView).isNull();
         assertThat(nativeViewHolder.mainImageView).isNull();
         assertThat(nativeViewHolder.iconImageView).isNull();
+        assertThat(nativeViewHolder.daaIconImageView).isNull();
     }
 
     @Test
     public void update_shouldAddValuesToViews() throws Exception {
         // Setup for cache state for image gets
 
-        BaseForwardingNativeAd nativeAd = new BaseForwardingNativeAd() {};
+        BaseForwardingNativeAd nativeAd = new BaseForwardingNativeAd() {
+            @Override
+            public String getDaaIconClickthroughUrl() {
+                return MoPubCustomEventNative.MoPubForwardingNativeAd.DAA_CLICKTHROUGH_URL;
+            }
+        };
         nativeAd.setTitle("titletext");
         nativeAd.setText("texttext");
         nativeAd.setMainImageUrl("mainimageurl");
@@ -207,6 +223,7 @@ public class NativeViewHolderTest {
                 .callToActionId(callToActionView.getId())
                 .mainImageId(mainImageView.getId())
                 .iconImageId(iconImageView.getId())
+                .daaIconImageId(daaIconImageView.getId())
                 .build();
 
         NativeViewHolder nativeViewHolder =
@@ -226,6 +243,16 @@ public class NativeViewHolderTest {
 
         assertThat(((BitmapDrawable) mainImageView.getDrawable()).getBitmap()).isEqualTo(mockBitmap);
         assertThat(((BitmapDrawable) iconImageView.getDrawable()).getBitmap()).isEqualTo(mockBitmap);
+
+        assertThat(((BitmapDrawable) daaIconImageView.getDrawable()).getBitmap().describeContents())
+                .isEqualTo(Drawables.NATIVE_DAA_ICON.getBitmap().describeContents());
+
+        daaIconImageView.performClick();
+        final Intent nextActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        assertThat(nextActivity.getComponent().getClassName()).isEqualTo(
+                "com.mopub.common.MoPubBrowser");
+        assertThat(nextActivity.getStringExtra("URL")).isEqualTo(
+                MoPubCustomEventNative.MoPubForwardingNativeAd.DAA_CLICKTHROUGH_URL + "/");
     }
 
     @Test
@@ -234,8 +261,12 @@ public class NativeViewHolderTest {
         titleView.setText("previoustitletext");
         textView.setText("previoustexttext");
         callToActionView.setText("previousctatext");
-        mainImageView.setImageBitmap(BitmapFactory.decodeByteArray("previousmainimagedata".getBytes(), 0, "previousmainimagedata".getBytes().length));
-        iconImageView.setImageBitmap(BitmapFactory.decodeByteArray("previousiconimagedata".getBytes(), 0, "previousiconimagedata".getBytes().length));
+        mainImageView.setImageBitmap(
+                BitmapFactory.decodeByteArray("previousmainimagedata".getBytes(), 0,
+                        "previousmainimagedata".getBytes().length));
+        iconImageView.setImageBitmap(
+                BitmapFactory.decodeByteArray("previousiconimagedata".getBytes(), 0,
+                        "previousiconimagedata".getBytes().length));
 
         // Only required fields in native response
         nativeResponse = new NativeResponse(context,
@@ -288,6 +319,45 @@ public class NativeViewHolderTest {
     }
 
     @Test
+    public void update_withValidDaaIcon_thenWithNoDaaIcon_shouldRemoveDaaIcon() {
+        BaseForwardingNativeAd nativeAd = new BaseForwardingNativeAd() {
+            @Override
+            public String getDaaIconClickthroughUrl() {
+                return MoPubCustomEventNative.MoPubForwardingNativeAd.DAA_CLICKTHROUGH_URL;
+            }
+        };
+        nativeResponse = new NativeResponse(context,
+                IMPRESSION_URL, CLICK_URL, AD_UNIT_ID, nativeAd, null);
+        viewBinder = new ViewBinder.Builder(relativeLayout.getId())
+                .titleId(titleView.getId())
+                .textId(textView.getId())
+                .callToActionId(callToActionView.getId())
+                .mainImageId(mainImageView.getId())
+                .iconImageId(iconImageView.getId())
+                .daaIconImageId(daaIconImageView.getId())
+                .build();
+        NativeViewHolder nativeViewHolder =
+                NativeViewHolder.fromViewBinder(relativeLayout, viewBinder);
+
+        nativeViewHolder.update(nativeResponse);
+
+        assertThat(((BitmapDrawable) daaIconImageView.getDrawable()).getBitmap().describeContents())
+                .isEqualTo(Drawables.NATIVE_DAA_ICON.getBitmap().describeContents());
+        assertThat(daaIconImageView.getVisibility()).isEqualTo(View.VISIBLE);
+
+        nativeAd = new BaseForwardingNativeAd() {};
+        nativeResponse = new NativeResponse(context,
+                IMPRESSION_URL, CLICK_URL, AD_UNIT_ID, nativeAd, null);
+
+        nativeViewHolder.update(nativeResponse);
+        daaIconImageView.performClick();
+
+        assertThat(daaIconImageView.getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(daaIconImageView.getDrawable()).isNull();
+        assertThat(Robolectric.getShadowApplication().peekNextStartedActivity()).isNull();
+    }
+
+    @Test
     public void updateExtras_shouldAddValuesToViews() throws Exception {
         // Setup for cache state for image gets
 
@@ -326,8 +396,12 @@ public class NativeViewHolderTest {
     @Test
     public void updateExtras_withMissingExtrasValues_shouldClearPreviousValues() throws Exception {
         extrasTextView.setText("previousextrastext");
-        extrasImageView.setImageBitmap(BitmapFactory.decodeByteArray("previousextrasimagedata".getBytes(), 0, "previousextrasimagedata".getBytes().length));
-        extrasImageView2.setImageBitmap(BitmapFactory.decodeByteArray("previousextrasimagedata2".getBytes(), 0, "previousextrasimagedata2".getBytes().length));
+        extrasImageView.setImageBitmap(
+                BitmapFactory.decodeByteArray("previousextrasimagedata".getBytes(), 0,
+                        "previousextrasimagedata".getBytes().length));
+        extrasImageView2.setImageBitmap(
+                BitmapFactory.decodeByteArray("previousextrasimagedata2".getBytes(), 0,
+                        "previousextrasimagedata2".getBytes().length));
 
         nativeResponse = new NativeResponse(context,
                 IMPRESSION_URL, CLICK_URL, AD_UNIT_ID, new BaseForwardingNativeAd(){}, null);
@@ -377,6 +451,7 @@ public class NativeViewHolderTest {
         assertThat(extrasImageView.getDrawable()).isNull();
     }
 
+    @Test
     public void fromViewBinder_withMixedViewTypes_shouldReturnEmptyViewHolder() throws Exception {
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
                 .titleId(mainImageView.getId())

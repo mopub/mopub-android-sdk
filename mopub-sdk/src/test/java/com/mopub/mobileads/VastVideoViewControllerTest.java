@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -12,6 +13,7 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.view.View;
@@ -24,6 +26,7 @@ import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.DeviceUtils.ForceOrientation;
 import com.mopub.mobileads.resource.CloseButtonDrawable;
 import com.mopub.mobileads.test.support.GestureUtils;
+import com.mopub.mobileads.test.support.ShadowVastVideoView;
 import com.mopub.mobileads.test.support.VastUtils;
 import com.mopub.network.MaxWidthImageLoader;
 import com.mopub.network.MoPubRequestQueue;
@@ -35,7 +38,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
@@ -50,15 +52,12 @@ import org.robolectric.tester.org.apache.http.TestHttpResponse;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
-import static com.mopub.common.MoPubBrowser.DESTINATION_URL_KEY;
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static com.mopub.common.util.ResponseHeader.USER_AGENT;
 import static com.mopub.mobileads.BaseVideoViewController.BaseVideoViewControllerListener;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_FAIL;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
@@ -67,12 +66,13 @@ import static com.mopub.mobileads.EventForwardingBroadcastReceiverTest.getIntent
 import static com.mopub.mobileads.VastVideoViewController.CURRENT_POSITION;
 import static com.mopub.mobileads.VastVideoViewController.DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON;
 import static com.mopub.mobileads.VastVideoViewController.MAX_VIDEO_DURATION_FOR_CLOSE_BUTTON;
-import static com.mopub.mobileads.VastVideoViewController.RESUMED_VAST_CONFIGURATION;
-import static com.mopub.mobileads.VastVideoViewController.VAST_VIDEO_CONFIGURATION;
+import static com.mopub.mobileads.VastVideoViewController.RESUMED_VAST_CONFIG;
+import static com.mopub.mobileads.VastVideoViewController.VAST_VIDEO_CONFIG;
 import static com.mopub.volley.toolbox.ImageLoader.ImageListener;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
@@ -87,18 +87,22 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.shadowOf;
+import static org.robolectric.Robolectric.shadowOf_;
 
 @RunWith(SdkTestRunner.class)
+@Config(shadows = {ShadowVastVideoView.class})
 public class VastVideoViewControllerTest {
     public static final int NETWORK_DELAY = 100;
 
     private static final String COMPANION_IMAGE_URL = "companion_image_url";
     private static final String COMPANION_CLICK_TRACKING_URL_1 = "companion_click_tracking_url_1";
     private static final String COMPANION_CLICK_TRACKING_URL_2 = "companion_click_tracking_url_2";
+    private static final String COMPANION_CLICK_TRACKING_URL_3 = "companion_click_tracking_url_3";
     private static final String COMPANION_CLICK_DESTINATION_URL = "http://companion_click_destination_url";
     private static final String COMPANION_CREATIVE_VIEW_URL_1 = "companion_creative_view_url_1";
     private static final String COMPANION_CREATIVE_VIEW_URL_2 = "companion_creative_view_url_2";
-    private static final String RESOLVED_CLICKTHROUGH_URL = "http://clickthrough_url";
+    private static final String COMPANION_CREATIVE_VIEW_URL_3 = "companion_creative_view_url_3";
+    private static final String RESOLVED_CLICKTHROUGH_URL = "http://www.mopub.com/";
     private static final String CLICKTHROUGH_URL = "deeplink+://navigate?" +
             "&primaryUrl=bogus%3A%2F%2Furl" +
             "&fallbackUrl=" + Uri.encode(RESOLVED_CLICKTHROUGH_URL);
@@ -120,7 +124,7 @@ public class VastVideoViewControllerTest {
     @Mock private EventForwardingBroadcastReceiver broadcastReceiver;
     @Mock MoPubRequestQueue mockRequestQueue;
     @Mock MaxWidthImageLoader mockImageLoader;
-    @Mock private VastIcon mockVastIcon;
+    @Mock private VastIconConfig mMockVastIconConfig;
     @Mock private MediaMetadataRetriever mockMediaMetadataRetriever;
     @Mock private Bitmap mockBitmap;
 
@@ -133,38 +137,38 @@ public class VastVideoViewControllerTest {
     public void setUp() throws Exception {
         Networking.setRequestQueueForTesting(mockRequestQueue);
         Networking.setImageLoaderForTesting(mockImageLoader);
-        context = Robolectric.buildActivity(Activity.class).create().get();
+        context = spy(Robolectric.buildActivity(Activity.class).create().get());
         bundle = new Bundle();
         savedInstanceState = new Bundle();
         testBroadcastIdentifier = 1111;
 
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addAbsoluteTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addAbsoluteTrackers(
                 Arrays.asList(new VastAbsoluteProgressTracker("start" + MACRO_TAGS, 2000)));
-        vastVideoConfiguration.addFractionalTrackers(
+        vastVideoConfig.addFractionalTrackers(
                 Arrays.asList(new VastFractionalProgressTracker("first" + MACRO_TAGS, 0.25f),
                         new VastFractionalProgressTracker("mid" + MACRO_TAGS, 0.5f),
                         new VastFractionalProgressTracker("third" + MACRO_TAGS, 0.75f)));
-        vastVideoConfiguration.addPauseTrackers(
+        vastVideoConfig.addPauseTrackers(
                 Arrays.asList(new VastTracker("pause" + MACRO_TAGS, true)));
-        vastVideoConfiguration.addResumeTrackers(
+        vastVideoConfig.addResumeTrackers(
                 Arrays.asList(new VastTracker("resume" + MACRO_TAGS, true)));
-        vastVideoConfiguration.addCompleteTrackers(
+        vastVideoConfig.addCompleteTrackers(
                 VastUtils.stringsToVastTrackers("complete" + MACRO_TAGS));
-        vastVideoConfiguration.addCloseTrackers(
+        vastVideoConfig.addCloseTrackers(
                 VastUtils.stringsToVastTrackers("close" + MACRO_TAGS));
-        vastVideoConfiguration.addSkipTrackers(VastUtils.stringsToVastTrackers("skip" + MACRO_TAGS));
-        vastVideoConfiguration.addImpressionTrackers(
+        vastVideoConfig.addSkipTrackers(VastUtils.stringsToVastTrackers("skip" + MACRO_TAGS));
+        vastVideoConfig.addImpressionTrackers(
                 VastUtils.stringsToVastTrackers("imp" + MACRO_TAGS));
-        vastVideoConfiguration.addErrorTrackers(
+        vastVideoConfig.addErrorTrackers(
                 Collections.singletonList(new VastTracker("error" + MACRO_TAGS)));
-        vastVideoConfiguration.setClickThroughUrl(CLICKTHROUGH_URL);
-        vastVideoConfiguration.addClickTrackers(
+        vastVideoConfig.setClickThroughUrl(CLICKTHROUGH_URL);
+        vastVideoConfig.addClickTrackers(
                 VastUtils.stringsToVastTrackers("click_1" + MACRO_TAGS, "click_2" + MACRO_TAGS));
 
-        VastCompanionAd vastCompanionAd = new VastCompanionAd(
+        VastCompanionAdConfig landscapeVastCompanionAdConfig = new VastCompanionAdConfig(
                 300,
                 250,
                 new VastResource(COMPANION_IMAGE_URL,
@@ -174,20 +178,31 @@ public class VastVideoViewControllerTest {
                 VastUtils.stringsToVastTrackers(COMPANION_CLICK_TRACKING_URL_1, COMPANION_CLICK_TRACKING_URL_2),
                 VastUtils.stringsToVastTrackers(COMPANION_CREATIVE_VIEW_URL_1, COMPANION_CREATIVE_VIEW_URL_2)
         );
-        vastVideoConfiguration.setVastCompanionAd(vastCompanionAd);
+        VastCompanionAdConfig portraitVastCompanionAdConfig = new VastCompanionAdConfig(
+                250,
+                300,
+                new VastResource(COMPANION_IMAGE_URL,
+                        VastResource.Type.STATIC_RESOURCE,
+                        VastResource.CreativeType.IMAGE, 250, 300),
+                COMPANION_CLICK_DESTINATION_URL,
+                VastUtils.stringsToVastTrackers(COMPANION_CLICK_TRACKING_URL_3),
+                VastUtils.stringsToVastTrackers(COMPANION_CREATIVE_VIEW_URL_3)
+        );
+        vastVideoConfig.setVastCompanionAd(landscapeVastCompanionAdConfig,
+                portraitVastCompanionAdConfig);
 
-        when(mockVastIcon.getWidth()).thenReturn(40);
-        when(mockVastIcon.getHeight()).thenReturn(40);
+        when(mMockVastIconConfig.getWidth()).thenReturn(40);
+        when(mMockVastIconConfig.getHeight()).thenReturn(40);
         VastResource vastResource = mock(VastResource.class);
         when(vastResource.getType()).thenReturn(VastResource.Type.STATIC_RESOURCE);
         when(vastResource.getResource()).thenReturn("static");
         when(vastResource.getCreativeType()).thenReturn(VastResource.CreativeType.IMAGE);
-        when(mockVastIcon.getVastResource()).thenReturn(vastResource);
-        vastVideoConfiguration.setVastIcon(mockVastIcon);
+        when(mMockVastIconConfig.getVastResource()).thenReturn(vastResource);
+        vastVideoConfig.setVastIconConfig(mMockVastIconConfig);
 
         when(mockMediaMetadataRetriever.getFrameAtTime(anyLong(), anyInt())).thenReturn(mockBitmap);
 
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         expectedBrowserRequestCode = 1;
 
@@ -225,7 +240,8 @@ public class VastVideoViewControllerTest {
         assertThat(ctaButtonWidget.getVisibility()).isEqualTo(View.INVISIBLE);
         ShadowImageView ctaButtonWidgetShadow = shadowOf(ctaButtonWidget);
         assertThat(ctaButtonWidgetShadow.getOnTouchListener()).isNotNull();
-        assertThat(ctaButtonWidgetShadow.getOnTouchListener()).isEqualTo(getShadowVideoView().getOnTouchListener());
+        assertThat(ctaButtonWidgetShadow.getOnTouchListener()).isEqualTo(
+                getShadowVideoView().getOnTouchListener());
     }
 
     @Test
@@ -269,23 +285,23 @@ public class VastVideoViewControllerTest {
     }
 
     @Test
-    public void constructor_shouldAddTopGradientWidgetToLayoutAndSetVisibleWithNoListeners() throws Exception {
+    public void constructor_shouldAddTopGradientStripWidgetToLayoutWithNoListeners() throws Exception {
         initializeSubject();
 
         VastVideoGradientStripWidget topGradientStripWidget = subject.getTopGradientStripWidget();
         assertThat(topGradientStripWidget.getParent()).isEqualTo(subject.getLayout());
-        assertThat(topGradientStripWidget.getVisibility()).isEqualTo(View.VISIBLE);
+
         ShadowImageView topGradientStripWidgetShadow = shadowOf(topGradientStripWidget);
         assertThat(topGradientStripWidgetShadow.getOnTouchListener()).isNull();
     }
 
     @Test
-    public void constructor_shouldAddBottomGradientWidgetToLayoutAndSetVisibleWithNoListeners() throws Exception {
+    public void constructor_shouldAddBottomGradientStripWidgetToLayoutWithNoListeners() throws Exception {
         initializeSubject();
 
         VastVideoGradientStripWidget bottomGradientStripWidget = subject.getBottomGradientStripWidget();
         assertThat(bottomGradientStripWidget.getParent()).isEqualTo(subject.getLayout());
-        assertThat(bottomGradientStripWidget.getVisibility()).isEqualTo(View.VISIBLE);
+
         ShadowImageView bottomGradientStripWidgetShadow = shadowOf(bottomGradientStripWidget);
         assertThat(bottomGradientStripWidgetShadow.getOnTouchListener()).isNull();
     }
@@ -345,7 +361,7 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void constructor_withNullVastVideoConfigurationDiskMediaFileUrl_shouldThrowIllegalStateException() throws Exception {
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, new VastVideoConfiguration());
+        bundle.putSerializable(VAST_VIDEO_CONFIG, new VastVideoConfig());
         try {
             initializeSubject();
             fail("VastVideoViewController didn't throw IllegalStateException");
@@ -356,9 +372,9 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void constructor_whenCustomCtaTextNotSpecified_shouldUseDefaultCtaText() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
@@ -368,10 +384,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void constructor_whenCustomCtaTextSpecified_shouldUseCustomCtaText() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setCustomCtaText("custom CTA text");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setCustomCtaText("custom CTA text");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
@@ -381,9 +397,9 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void constructor_whenCustomSkipTextNotSpecified_shouldUseDefaultSkipText() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
@@ -393,10 +409,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void constructor_whenCustomSkipTextSpecified_shouldUseCustomSkipText() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setCustomSkipText("custom skip text");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setCustomSkipText("custom skip text");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
@@ -406,9 +422,9 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void constructor_whenCustomCloseIconNotSpecified_shouldUseDefaultCloseIcon() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
@@ -420,11 +436,11 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void constructor_whenCustomCloseIconSpecified_shouldUseCustomCloseIcon() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setCustomCloseIconUrl(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setCustomCloseIconUrl(
                 "http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
@@ -435,10 +451,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void constructor_withVastConfigurationInSavedInstanceState_shouldUseThatVastConfiguration() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setNetworkMediaFileUrl("resumed_network_media_url");
-        savedInstanceState.putSerializable(RESUMED_VAST_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setNetworkMediaFileUrl("resumed_network_media_url");
+        savedInstanceState.putSerializable(RESUMED_VAST_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
@@ -447,10 +463,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void constructor_withSavedVastConfiguration_shouldUseThatVastConfiguration() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setNetworkMediaFileUrl("resumed_network_media_url");
-        savedInstanceState.putSerializable(RESUMED_VAST_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setNetworkMediaFileUrl("resumed_network_media_url");
+        savedInstanceState.putSerializable(RESUMED_VAST_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
@@ -459,10 +475,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void constructor_withSavedVastConfiguration_withCurrentPositionSet_shouldResumeVideoFromCurrentPosition() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setNetworkMediaFileUrl("resumed_network_media_url");
-        savedInstanceState.putSerializable(RESUMED_VAST_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setNetworkMediaFileUrl("resumed_network_media_url");
+        savedInstanceState.putSerializable(RESUMED_VAST_CONFIG, vastVideoConfig);
         savedInstanceState.putInt(CURRENT_POSITION, 123);
 
         initializeSubject();
@@ -495,9 +511,9 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onCreate_whenCustomForceOrientationNotSpecified_shouldForceLandscapeOrientation() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         subject.onCreate();
@@ -508,10 +524,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onCreate_whenCustomForceOrientationIsDeviceOrientation_shouldNotForceLandscapeOrientation() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setCustomForceOrientation(ForceOrientation.DEVICE_ORIENTATION);
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setCustomForceOrientation(ForceOrientation.DEVICE_ORIENTATION);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         subject.onCreate();
@@ -521,10 +537,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onCreate_whenCustomForceOrientationIsPortraitOrientation_shouldForcePortraitOrientation() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setCustomForceOrientation(ForceOrientation.FORCE_PORTRAIT);
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setCustomForceOrientation(ForceOrientation.FORCE_PORTRAIT);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         subject.onCreate();
@@ -535,10 +551,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onCreate_whenCustomForceOrientationIsLandscapeOrientation_shouldForceLandscapeOrientation() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setCustomForceOrientation(ForceOrientation.FORCE_LANDSCAPE);
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setCustomForceOrientation(ForceOrientation.FORCE_LANDSCAPE);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         subject.onCreate();
@@ -551,33 +567,35 @@ public class VastVideoViewControllerTest {
     public void VastWebView_onVastWebViewClick_shouldCallVastCompanionAdHandleClick() throws Exception {
         initializeSubject();
 
-        VastCompanionAd vastCompanionAd = mock(VastCompanionAd.class);
-        when(vastCompanionAd.getWidth()).thenReturn(300);
-        when(vastCompanionAd.getHeight()).thenReturn(240);
+        VastCompanionAdConfig vastCompanionAdConfig = mock(VastCompanionAdConfig.class);
+        when(vastCompanionAdConfig.getWidth()).thenReturn(300);
+        when(vastCompanionAdConfig.getHeight()).thenReturn(240);
         VastResource vastResource = mock(VastResource.class);
         when(vastResource.getType()).thenReturn(VastResource.Type.STATIC_RESOURCE);
         when(vastResource.getResource()).thenReturn("static");
-        when(vastCompanionAd.getVastResource()).thenReturn(vastResource);
+        when(vastCompanionAdConfig.getVastResource()).thenReturn(vastResource);
 
-        VastWebView view = (VastWebView) subject.createCompanionAdView(context, vastCompanionAd, View.INVISIBLE);
+        VastWebView view = (VastWebView) subject.createCompanionAdView(context,
+                vastCompanionAdConfig, View.INVISIBLE);
 
         view.getVastWebViewClickListener().onVastWebViewClick();
-        verify(vastCompanionAd).handleClick(any(Context.class), eq(1), anyString());
+        verify(vastCompanionAdConfig).handleClick(any(Context.class), eq(1), anyString());
     }
 
     @Test
     public void createCompanionAdView_shouldLayoutAndReturnInvisibleVastIconView() throws Exception {
         initializeSubject();
 
-        VastCompanionAd vastCompanionAd = mock(VastCompanionAd.class);
-        when(vastCompanionAd.getWidth()).thenReturn(300);
-        when(vastCompanionAd.getHeight()).thenReturn(240);
+        VastCompanionAdConfig vastCompanionAdConfig = mock(VastCompanionAdConfig.class);
+        when(vastCompanionAdConfig.getWidth()).thenReturn(300);
+        when(vastCompanionAdConfig.getHeight()).thenReturn(240);
         VastResource vastResource = mock(VastResource.class);
         when(vastResource.getType()).thenReturn(VastResource.Type.STATIC_RESOURCE);
         when(vastResource.getResource()).thenReturn("static");
-        when(vastCompanionAd.getVastResource()).thenReturn(vastResource);
+        when(vastCompanionAdConfig.getVastResource()).thenReturn(vastResource);
 
-        VastWebView view = (VastWebView) subject.createCompanionAdView(context, vastCompanionAd, View.INVISIBLE);
+        VastWebView view = (VastWebView) subject.createCompanionAdView(context,
+                vastCompanionAdConfig, View.INVISIBLE);
 
         assertThat(view).isNotNull();
         assertThat(view.getVisibility()).isEqualTo(View.INVISIBLE);
@@ -594,7 +612,8 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onDestroy_shouldBroadcastInterstitialDismiss() throws Exception {
-        Intent expectedIntent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_DISMISS, testBroadcastIdentifier);
+        Intent expectedIntent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_DISMISS,
+                testBroadcastIdentifier);
 
         initializeSubject();
 
@@ -605,6 +624,45 @@ public class VastVideoViewControllerTest {
     }
 
     @Test
+    public void onDestroy_withBlurLastVideoFrameTaskStillRunning_shouldCancelTask() throws Exception {
+        initializeSubject();
+
+        VastVideoBlurLastVideoFrameTask mockBlurLastVideoFrameTask = mock(VastVideoBlurLastVideoFrameTask.class);
+        when(mockBlurLastVideoFrameTask.getStatus()).thenReturn(AsyncTask.Status.RUNNING);
+        subject.getVastVideoView().setBlurLastVideoFrameTask(mockBlurLastVideoFrameTask);
+
+        subject.onDestroy();
+
+        verify(mockBlurLastVideoFrameTask).cancel(true);
+    }
+
+    @Test
+    public void onDestroy_withBlurLastVideoFrameTaskStillPending_shouldCancelTask() throws Exception {
+        initializeSubject();
+
+        VastVideoBlurLastVideoFrameTask mockBlurLastVideoFrameTask = mock(VastVideoBlurLastVideoFrameTask.class);
+        when(mockBlurLastVideoFrameTask.getStatus()).thenReturn(AsyncTask.Status.PENDING);
+        subject.getVastVideoView().setBlurLastVideoFrameTask(mockBlurLastVideoFrameTask);
+
+        subject.onDestroy();
+
+        verify(mockBlurLastVideoFrameTask).cancel(true);
+    }
+
+    @Test
+    public void onDestroy_withBlurLastVideoFrameTaskFinished_shouldNotCancelTask() throws Exception {
+        initializeSubject();
+
+        VastVideoBlurLastVideoFrameTask mockBlurLastVideoFrameTask = mock(VastVideoBlurLastVideoFrameTask.class);
+        when(mockBlurLastVideoFrameTask.getStatus()).thenReturn(AsyncTask.Status.FINISHED);
+        subject.getVastVideoView().setBlurLastVideoFrameTask(mockBlurLastVideoFrameTask);
+
+        subject.onDestroy();
+
+        verify(mockBlurLastVideoFrameTask, never()).cancel(anyBoolean());
+    }
+
+    @Test
     public void onSaveInstanceState_shouldSetCurrentPosition_shouldSetVastConfiguration() throws Exception {
         initializeSubject();
 
@@ -612,7 +670,7 @@ public class VastVideoViewControllerTest {
         subject.onSaveInstanceState(bundle);
 
         verify(bundle).putInt(eq(CURRENT_POSITION), anyInt());
-        verify(bundle).putSerializable(eq(RESUMED_VAST_CONFIGURATION), any(VastVideoConfiguration
+        verify(bundle).putSerializable(eq(RESUMED_VAST_CONFIG), any(VastVideoConfig
                 .class));
     }
 
@@ -679,15 +737,14 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(0, 0));
 
-        ArgumentCaptor<Bundle> bundleCaptor = ArgumentCaptor.forClass(Bundle.class);
-        verify(baseVideoViewControllerListener).onStartActivityForResult(
-                eq(MoPubBrowser.class),
-                eq(expectedBrowserRequestCode),
-                bundleCaptor.capture()
-        );
-
-        assertThat(bundleCaptor.getValue().get(DESTINATION_URL_KEY))
-                .isEqualTo(RESOLVED_CLICKTHROUGH_URL);
+        Robolectric.runBackgroundTasks();
+        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        assertThat(startedActivity.getComponent().getClassName())
+                .isEqualTo(MoPubBrowser.class.getName());
+        assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(
+                RESOLVED_CLICKTHROUGH_URL);
+        verify((Activity) context).startActivityForResult(any(Intent.class),
+                eq(expectedBrowserRequestCode));
     }
 
     @Test
@@ -720,25 +777,24 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(0, 0));
 
-        ArgumentCaptor<Bundle> bundleCaptor = ArgumentCaptor.forClass(Bundle.class);
-        verify(baseVideoViewControllerListener).onStartActivityForResult(
-                eq(MoPubBrowser.class),
-                eq(expectedBrowserRequestCode),
-                bundleCaptor.capture()
-        );
-
-        assertThat(bundleCaptor.getValue().get(DESTINATION_URL_KEY))
-                .isEqualTo(RESOLVED_CLICKTHROUGH_URL);
+        Robolectric.runBackgroundTasks();
+        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        assertThat(startedActivity.getComponent().getClassName())
+                .isEqualTo(MoPubBrowser.class.getName());
+        assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(
+                RESOLVED_CLICKTHROUGH_URL);
+        verify((Activity) context).startActivityForResult(any(Intent.class),
+                eq(expectedBrowserRequestCode));
     }
 
     @Test
     public void onTouch_whenCloseButtonVisible_shouldPingClickThroughTrackers() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addClickTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addClickTrackers(
                 VastUtils.stringsToVastTrackers("click_1" + MACRO_TAGS, "click_2" + MACRO_TAGS));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -758,11 +814,11 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onTouch_whenCloseButtonNotVisible_shouldNotPingClickThroughTrackers() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addClickTrackers(VastUtils.stringsToVastTrackers("click_1",
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addClickTrackers(VastUtils.stringsToVastTrackers("click_1",
                 "click_2"));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
@@ -774,7 +830,8 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onTouch_withNullBaseVideoViewListener_andActionTouchUp_shouldReturnTrueAndNotBlowUp() throws Exception {
-        subject = new VastVideoViewController(context, bundle, null, testBroadcastIdentifier, null);
+        subject = new VastVideoViewController((Activity) context, bundle, null,
+                testBroadcastIdentifier, null);
 
         boolean result = getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(
                 0, 0));
@@ -819,10 +876,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onPrepared_whenPercentSkipOffsetSpecified_shouldSetShowCloseButtonDelayToSkipOffset() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("25%");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("25%");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -836,10 +893,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onPrepared_whenAbsoluteSkipOffsetSpecified_shouldSetShowCloseButtonDelayToSkipOffset() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("00:00:03");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("00:00:03");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -853,10 +910,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onPrepared_whenAbsoluteSkipOffsetWithMillisecondsSpecified_shouldSetShowCloseButtonDelayToSkipOffset() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("00:00:03.141");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("00:00:03.141");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -870,10 +927,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onPrepared_whenSkipOffsetIsNull_shouldNotSetShowCloseButtonDelay() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset(null);
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset(null);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -881,16 +938,17 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(
+                DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
         assertThat(subject.getHasSkipOffset()).isFalse();
     }
 
     @Test
     public void onPrepared_whenSkipOffsetHasInvalidAbsoluteFormat_shouldNotSetShowCloseButtonDelay() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("123:4:56.7");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("123:4:56.7");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -898,16 +956,17 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(
+                DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
         assertThat(subject.getHasSkipOffset()).isFalse();
     }
 
     @Test
     public void onPrepared_whenSkipOffsetHasInvalidPercentFormat_shouldNotSetShowCloseButtonDelay() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("101%");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("101%");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -915,16 +974,17 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(
+                DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
         assertThat(subject.getHasSkipOffset()).isFalse();
     }
 
     @Test
     public void onPrepared_whenSkipOffsetHasInvalidFractionalPercentFormat_shouldNotSetShowCloseButtonDelay() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("3.14%");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("3.14%");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -932,16 +992,17 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(
+                DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
         assertThat(subject.getHasSkipOffset()).isFalse();
     }
 
     @Test
     public void onPrepared_whenSkipOffsetIsNegative_shouldNotSetShowCloseButtonDelay() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("-00:00:03");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("-00:00:03");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -949,16 +1010,17 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(
+                DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
         assertThat(subject.getHasSkipOffset()).isFalse();
     }
 
     @Test
     public void onPrepared_whenSkipOffsetIsZero_shouldSetShowCloseButtonDelayToZero() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("00:00:00");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("00:00:00");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -972,10 +1034,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onPrepared_whenSkipOffsetIsLongerThanDurationForShortVideo_shouldNotSetShowCloseButtonDelay() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("00:00:11");   // 11s
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("00:00:11");   // 11s
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -989,10 +1051,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onPrepared_whenSkipOffsetIsLongerThanDurationForLongVideo_shouldNotSetShowCloseButtonDelay() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("00:00:21");   // 21s
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("00:00:21");   // 21s
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -1007,10 +1069,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onPrepared_shouldCalibrateAndMakeVisibleRadialCountdownWidget() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("00:00:05");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("00:00:05");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
         initializeSubject();
         spyOnVideoView();
         setVideoViewParams(0, 10000);
@@ -1030,10 +1092,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onPrepared_shouldCalibrateAndMakeVisibleProgressBarWidget() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("00:00:05");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("00:00:05");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
         initializeSubject();
         spyOnVideoView();
         setVideoViewParams(0, 10000);
@@ -1054,13 +1116,16 @@ public class VastVideoViewControllerTest {
     @Config(reportSdk = VERSION_CODES.GINGERBREAD)
     @Test
     public void onPrepared_beforeGingerbreadMr1_shouldNotSetBlurredLastVideoFrame() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
+        Robolectric.getBackgroundScheduler().unPause();
+        Robolectric.getUiThreadScheduler().unPause();
+        Thread.sleep(NETWORK_DELAY);
 
         assertThat(subject.getBlurredLastVideoFrameImageView().getDrawable()).isNull();
 
@@ -1071,17 +1136,21 @@ public class VastVideoViewControllerTest {
     @Config(reportSdk = VERSION_CODES.GINGERBREAD_MR1)
     @Test
     public void onPrepared_atLeastGingerbreadMr1_shouldSetBlurredLastVideoFrame() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
+        Robolectric.getBackgroundScheduler().unPause();
+        Robolectric.getUiThreadScheduler().unPause();
+        Thread.sleep(NETWORK_DELAY);
 
         final ImageView blurredLastVideoFrameImageView = subject.getBlurredLastVideoFrameImageView();
         assertThat(blurredLastVideoFrameImageView.getDrawable()).isInstanceOf(BitmapDrawable.class);
-        assertThat(((BitmapDrawable) blurredLastVideoFrameImageView.getDrawable()).getBitmap()).isNotNull();
+        assertThat(
+                ((BitmapDrawable) blurredLastVideoFrameImageView.getDrawable()).getBitmap()).isNotNull();
 
         ShadowImageView imageView = shadowOf(subject.getBlurredLastVideoFrameImageView());
         assertThat(imageView.getOnTouchListener()).isNull();
@@ -1098,16 +1167,16 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onCompletion_whenAllTrackersTracked_whenNoPlaybackErrors_shouldPingCompletionTrackersOnlyOnce() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         VastAbsoluteProgressTracker testTracker = new VastAbsoluteProgressTracker(
                 "testUrl" + MACRO_TAGS, 123);
-        vastVideoConfiguration.addAbsoluteTrackers(Arrays.asList(testTracker));
-        vastVideoConfiguration.addCompleteTrackers(
+        vastVideoConfig.addAbsoluteTrackers(Arrays.asList(testTracker));
+        vastVideoConfig.addCompleteTrackers(
                 VastUtils.stringsToVastTrackers("complete_1" + MACRO_TAGS,
                         "complete_2" + MACRO_TAGS));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         testTracker.setTracked();
@@ -1130,16 +1199,16 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onCompletion_whenSomeTrackersRemain_shouldNotPingCompletionTrackers() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addCompleteTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addCompleteTrackers(
                 VastUtils.stringsToVastTrackers("complete_1", "complete_2"));
         VastAbsoluteProgressTracker testTracker = new VastAbsoluteProgressTracker(
                 "testUrl" + MACRO_TAGS, 123);
         // Never track the testTracker, so completion trackers should not be fired.
-        vastVideoConfiguration.addAbsoluteTrackers(Arrays.asList(testTracker));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        vastVideoConfig.addAbsoluteTrackers(Arrays.asList(testTracker));
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
@@ -1150,12 +1219,12 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onCompletion_whenPlaybackError_shouldNotPingCompletionTrackers() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addCompleteTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addCompleteTrackers(
                 VastUtils.stringsToVastTrackers("complete_1", "complete_2"));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         subject.setVideoError();
@@ -1195,7 +1264,7 @@ public class VastVideoViewControllerTest {
     public void onCompletion_whenCompanionAdAvailable_shouldShowCompanionAdAndHideBlurredLastVideoFrame() throws Exception {
         initializeSubject();
 
-        final View companionView = subject.getCompanionAdView();
+        final View companionView = subject.getLandscapeCompanionAdView();
         final ImageView blurredLastVideoFrameImageView = subject.getBlurredLastVideoFrameImageView();
 
         assertThat(subject.getVideoView().getVisibility()).isEqualTo(View.VISIBLE);
@@ -1203,23 +1272,46 @@ public class VastVideoViewControllerTest {
         assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.INVISIBLE);
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
+        Robolectric.getBackgroundScheduler().unPause();
+        Robolectric.getUiThreadScheduler().unPause();
+        Thread.sleep(NETWORK_DELAY);
+
         getShadowVideoView().getOnCompletionListener().onCompletion(null);
 
+        assertThat(subject.getVastVideoView().getBlurLastVideoFrameTask()).isNull();
         assertThat(subject.getVideoView().getVisibility()).isEqualTo(View.INVISIBLE);
         assertThat(companionView.getVisibility()).isEqualTo(View.VISIBLE);
         assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.INVISIBLE);
     }
 
     @Test
+    public void onCompletion_whenCompanionAdAvailable_shouldOnlyShowTopGradientStripWidget() throws Exception {
+        initializeSubject();
+
+        final VastVideoGradientStripWidget topGradientStripWidget = subject.getTopGradientStripWidget();
+        final VastVideoGradientStripWidget bottomGradientStripWidget = subject.getBottomGradientStripWidget();
+
+        getShadowVideoView().getOnPreparedListener().onPrepared(null);
+        Robolectric.getBackgroundScheduler().unPause();
+        Robolectric.getUiThreadScheduler().unPause();
+        Thread.sleep(NETWORK_DELAY);
+
+        getShadowVideoView().getOnCompletionListener().onCompletion(null);
+
+        assertThat(topGradientStripWidget.getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(bottomGradientStripWidget.getVisibility()).isEqualTo(View.GONE);
+    }
+
+    @Test
     public void onCompletion_whenCompanionAdNotAvailable_shouldHideCompanionAdAndShowBlurredLastVideoFrame() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setVastCompanionAd(null);
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setVastCompanionAd(null, null);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
-        final View companionView = subject.getCompanionAdView();
+        final View companionView = subject.getLandscapeCompanionAdView();
         final ImageView blurredLastVideoFrameImageView = subject.getBlurredLastVideoFrameImageView();
 
         assertThat(subject.getVideoView().getVisibility()).isEqualTo(View.VISIBLE);
@@ -1227,26 +1319,55 @@ public class VastVideoViewControllerTest {
         assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.INVISIBLE);
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
+        Robolectric.getBackgroundScheduler().unPause();
+        Robolectric.getUiThreadScheduler().unPause();
+        Thread.sleep(NETWORK_DELAY);
+
         getShadowVideoView().getOnCompletionListener().onCompletion(null);
 
+        assertThat(subject.getVastVideoView().getBlurLastVideoFrameTask()).isNotNull();
         assertThat(subject.getVideoView().getVisibility()).isEqualTo(View.INVISIBLE);
         assertThat(companionView.getVisibility()).isEqualTo(View.INVISIBLE);
         assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.VISIBLE);
         assertThat(blurredLastVideoFrameImageView.getDrawable()).isInstanceOf(BitmapDrawable.class);
-        assertThat(((BitmapDrawable) blurredLastVideoFrameImageView.getDrawable()).getBitmap()).isNotNull();
+        assertThat(
+                ((BitmapDrawable) blurredLastVideoFrameImageView.getDrawable()).getBitmap()).isNotNull();
+    }
+
+    @Test
+    public void onCompletion_whenCompanionAdNotAvailable_shouldHideBothGradientStripWidgets() throws Exception {
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setVastCompanionAd(null, null);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
+
+        initializeSubject();
+
+        final VastVideoGradientStripWidget topGradientStripWidget = subject.getTopGradientStripWidget();
+        final VastVideoGradientStripWidget bottomGradientStripWidget = subject.getBottomGradientStripWidget();
+
+        getShadowVideoView().getOnPreparedListener().onPrepared(null);
+        Robolectric.getBackgroundScheduler().unPause();
+        Robolectric.getUiThreadScheduler().unPause();
+        Thread.sleep(NETWORK_DELAY);
+
+        getShadowVideoView().getOnCompletionListener().onCompletion(null);
+
+        assertThat(topGradientStripWidget.getVisibility()).isEqualTo(View.GONE);
+        assertThat(bottomGradientStripWidget.getVisibility()).isEqualTo(View.GONE);
     }
 
     @TargetApi(VERSION_CODES.HONEYCOMB)
     @Test
     public void onCompletion_whenCompanionAdNotAvailableAndBlurredLastVideoFrameNotPrepared_shouldShowBlackBackground() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setVastCompanionAd(null);
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setVastCompanionAd(null, null);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
-        final View companionView = subject.getCompanionAdView();
+        final View companionView = subject.getLandscapeCompanionAdView();
         final ImageView blurredLastVideoFrameImageView = subject.getBlurredLastVideoFrameImageView();
 
         assertThat(subject.getVideoView().getVisibility()).isEqualTo(View.VISIBLE);
@@ -1255,12 +1376,31 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnCompletionListener().onCompletion(null);
 
+        assertThat(subject.getVastVideoView().getBlurLastVideoFrameTask()).isNull();
         assertThat(subject.getVideoView().getVisibility()).isEqualTo(View.INVISIBLE);
         assertThat(companionView.getVisibility()).isEqualTo(View.INVISIBLE);
         assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.INVISIBLE);
 
         Drawable background = subject.getLayout().getBackground();
         assertThat(((ColorDrawable) background).getColor()).isEqualTo(Color.BLACK);
+    }
+
+    @Test
+    public void onCompletion_whenCompanionAdNotAvailableAndBlurredLastVideoFrameNotPrepared_shouldHideBothGradientStripWidgets() throws Exception {
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setVastCompanionAd(null, null);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
+
+        initializeSubject();
+
+        final VastVideoGradientStripWidget topGradientStripWidget = subject.getTopGradientStripWidget();
+        final VastVideoGradientStripWidget bottomGradientStripWidget = subject.getBottomGradientStripWidget();
+
+        getShadowVideoView().getOnCompletionListener().onCompletion(null);
+
+        assertThat(topGradientStripWidget.getVisibility()).isEqualTo(View.GONE);
+        assertThat(bottomGradientStripWidget.getVisibility()).isEqualTo(View.GONE);
     }
 
     @Test
@@ -1301,25 +1441,25 @@ public class VastVideoViewControllerTest {
 
         assertThat(getShadowVideoView().getCurrentVideoState()).isEqualTo(-1);
 
-        assertThat(subject.getVideoRetries()).isEqualTo(0);
+        assertThat(subject.getVastVideoView().getVideoRetries()).isEqualTo(0);
         getShadowVideoView().getOnErrorListener().onError(new MediaPlayer(), 1, Integer.MIN_VALUE);
 
         assertThat(getShadowVideoView().isPlaying()).isTrue();
-        assertThat(subject.getVideoRetries()).isEqualTo(1);
+        assertThat(subject.getVastVideoView().getVideoRetries()).isEqualTo(1);
 
         file.delete();
     }
 
     @Test
     public void onError_shouldFireErrorTrackers() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addCompleteTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addCompleteTrackers(
                 VastUtils.stringsToVastTrackers("complete_1", "complete_2"));
-        vastVideoConfiguration.addErrorTrackers(
+        vastVideoConfig.addErrorTrackers(
                 Collections.singletonList(new VastTracker("error" + MACRO_TAGS)));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         subject.setVideoError();
@@ -1335,12 +1475,12 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onError_withMultipleCalls_shouldRepeatedlyFireErrorTrackers() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addErrorTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addErrorTrackers(
                 Collections.singletonList(new VastTracker("error" + MACRO_TAGS)));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         subject.setVideoError();
@@ -1355,137 +1495,17 @@ public class VastVideoViewControllerTest {
         verifyNoMoreInteractions(mockRequestQueue);
     }
 
-    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
-    @Test
-    public void retryMediaPlayer_withVideoFilePermissionErrorAndBelowJellyBean_shouldReturnTrue() throws Exception {
-        File file = new File("disk_video_path");
-        file.createNewFile();
-
-        initializeSubject();
-
-        assertThat(subject.getVideoRetries()).isEqualTo(0);
-        assertThat(subject.retryMediaPlayer(new MediaPlayer(), 1, Integer.MIN_VALUE)).isTrue();
-        assertThat(subject.getVideoRetries()).isEqualTo(1);
-
-        file.delete();
-    }
-
-    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
-    @Test
-    public void retryMediaPlayer_shouldNotRunMoreThanOnce() throws Exception {
-        File file = new File("disk_video_path");
-        file.createNewFile();
-
-        initializeSubject();
-
-        assertThat(subject.getVideoRetries()).isEqualTo(0);
-        assertThat(subject.retryMediaPlayer(new MediaPlayer(), 1, Integer.MIN_VALUE)).isTrue();
-        assertThat(subject.getVideoRetries()).isEqualTo(1);
-
-        assertThat(subject.retryMediaPlayer(new MediaPlayer(), 1, Integer.MIN_VALUE)).isFalse();
-        assertThat(subject.getVideoRetries()).isEqualTo(1);
-
-        file.delete();
-    }
-
-    @Config(reportSdk = VERSION_CODES.JELLY_BEAN)
-    @Test
-    public void retryMediaPlayer_withAndroidVersionAboveJellyBean_shouldReturnFalse() throws Exception {
-        File file = new File("disk_video_path");
-        file.createNewFile();
-
-        initializeSubject();
-
-        assertThat(subject.getVideoRetries()).isEqualTo(0);
-        assertThat(subject.retryMediaPlayer(new MediaPlayer(), 1, Integer.MIN_VALUE)).isFalse();
-        assertThat(subject.getVideoRetries()).isEqualTo(0);
-
-        file.delete();
-    }
-
-    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH)
-    @Test
-    public void retryMediaPlayer_withOtherVideoError_shouldReturnFalse() throws Exception {
-        File file = new File("disk_video_path");
-        file.createNewFile();
-
-        initializeSubject();
-
-        assertThat(subject.getVideoRetries()).isEqualTo(0);
-        assertThat(subject.retryMediaPlayer(new MediaPlayer(), 2, Integer.MIN_VALUE)).isFalse();
-        assertThat(subject.getVideoRetries()).isEqualTo(0);
-
-        file.delete();
-    }
-
-    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH)
-    @Test
-    public void retryMediaPlayer_withExceptionThrown_shouldReturnFalseAndIncrementRetryCount() throws Exception {
-        File file = new File("disk_video_path");
-        if (file.exists()) {
-            assertThat(file.delete()).isTrue();
-        }
-
-        initializeSubject();
-
-        assertThat(subject.getVideoRetries()).isEqualTo(0);
-        assertThat(subject.retryMediaPlayer(new MediaPlayer(), 1, Integer.MIN_VALUE)).isFalse();
-        assertThat(subject.getVideoRetries()).isEqualTo(1);
-    }
-
-    @Test
-    public void handleClick_withNullClickThroughUrl_shouldNotBroadcastClickOrOpenNewActivity() throws Exception {
-        Intent expectedIntent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_CLICK, testBroadcastIdentifier);
-
-        initializeSubject();
-        subject.handleClick(null);
-
-        Robolectric.getUiThreadScheduler().unPause();
-        verify(broadcastReceiver, never()).onReceive(any(Context.class), eq(expectedIntent));
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
-    }
-
-    @Test
-    public void handleClick_withMoPubNativeBrowserClickThroughUrl_shouldOpenExternalBrowser() throws Exception {
-        initializeSubject();
-
-        subject.handleClick("mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.mopub.com");
-
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
-        assertThat(intent.getDataString()).isEqualTo("http://www.mopub.com");
-        assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
-    }
-
-    @Test
-    public void handleClick_withMalformedMoPubNativeBrowserClickThroughUrl_shouldNotOpenANewActivity() throws Exception {
-        initializeSubject();
-
-        // url2 is an invalid query parameter
-        subject.handleClick("mopubnativebrowser://navigate?url2=http%3A%2F%2Fwww.mopub.com");
-
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
-    }
-
-    @Test
-    public void handleClick_withAboutBlankClickThroughUrl_shouldFailSilently() throws Exception {
-        initializeSubject();
-
-        subject.handleClick("about:blank");
-
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
-    }
-
     @Test
     public void videoRunnablesRun_shouldFireOffAllProgressTrackers() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addFractionalTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addFractionalTrackers(
                 Arrays.asList(new VastFractionalProgressTracker("first" + MACRO_TAGS, 0.25f),
                         new VastFractionalProgressTracker("second" + MACRO_TAGS, 0.5f),
                         new VastFractionalProgressTracker("third" + MACRO_TAGS, 0.75f)));
 
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -1504,78 +1524,10 @@ public class VastVideoViewControllerTest {
     }
 
     @Test
-    public void getUntriggeredTrackersBefore_endOfVideo_shouldReturnAllTrackers() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addFractionalTrackers(
-                Arrays.asList(new VastFractionalProgressTracker("first", 0.25f),
-                        new VastFractionalProgressTracker("second", 0.5f),
-                        new VastFractionalProgressTracker("third", 0.75f)));
-        vastVideoConfiguration.addAbsoluteTrackers(
-                Arrays.asList(new VastAbsoluteProgressTracker("1secs", 1000),
-                        new VastAbsoluteProgressTracker("10secs", 10000)));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
-
-        initializeSubject();
-        spyOnVideoView();
-        setVideoViewParams(11000, 11000);
-
-        final List<VastTracker> untriggeredTrackers = subject.getUntriggeredTrackersBefore(11000, 11000);
-        assertThat(untriggeredTrackers).hasSize(5);
-
-        // Sorted absolute trackers, followed by sorted fractional trackers
-        final VastTracker tracker0 = untriggeredTrackers.get(0);
-        assertThat(tracker0).isExactlyInstanceOf(VastAbsoluteProgressTracker.class);
-        assertThat(((VastAbsoluteProgressTracker) tracker0).getTrackingMilliseconds()).isEqualTo(1000);
-
-        final VastTracker tracker1 = untriggeredTrackers.get(1);
-        assertThat(tracker1).isExactlyInstanceOf(VastAbsoluteProgressTracker.class);
-        assertThat(((VastAbsoluteProgressTracker) tracker1).getTrackingMilliseconds()).isEqualTo(10000);
-
-
-        final VastTracker tracker2 = untriggeredTrackers.get(2);
-        assertThat(tracker2).isExactlyInstanceOf(VastFractionalProgressTracker.class);
-        assertThat(((VastFractionalProgressTracker) tracker2).trackingFraction()).isEqualTo(0.25f);
-
-        final VastTracker tracker3 = untriggeredTrackers.get(3);
-        assertThat(tracker3).isExactlyInstanceOf(VastFractionalProgressTracker.class);
-        assertThat(((VastFractionalProgressTracker) tracker3).trackingFraction()).isEqualTo(0.5f);
-
-        final VastTracker tracker4 = untriggeredTrackers.get(4);
-        assertThat(tracker4).isExactlyInstanceOf(VastFractionalProgressTracker.class);
-        assertThat(((VastFractionalProgressTracker) tracker4).trackingFraction()).isEqualTo(0.75f);
-    }
-
-    @Test
-    public void getUntriggeredTrackersBefore_withTriggeredTrackers_shouldNotReturnTriggered() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addFractionalTrackers(
-                Arrays.asList(new VastFractionalProgressTracker("first", 0.25f),
-                        new VastFractionalProgressTracker("second", 0.5f),
-                        new VastFractionalProgressTracker("third", 0.75f)));
-        vastVideoConfiguration.addAbsoluteTrackers(
-                Arrays.asList(new VastAbsoluteProgressTracker("5secs", 5000),
-                        new VastAbsoluteProgressTracker("10secs", 10000)));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
-
-        initializeSubject();
-        spyOnVideoView();
-        setVideoViewParams(11000, 11000);
-
-        final List<VastTracker> untriggeredTrackers = subject.getUntriggeredTrackersBefore(11000, 11000);
-        assertThat(untriggeredTrackers).hasSize(5);
-        untriggeredTrackers.get(0).setTracked();
-
-        final List<VastTracker> secondTrackersList = subject.getUntriggeredTrackersBefore(11000, 11000);
-        assertThat(secondTrackersList).hasSize(4);
-    }
-
-    @Test
     public void videoRunnablesRun_whenDurationIsInvalid_shouldNotMakeAnyNetworkCalls() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -1592,11 +1544,11 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void videoRunnablesRun_whenCurrentTimeLessThanTwoSeconds_shouldNotFireStartTracker() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addAbsoluteTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addAbsoluteTrackers(
                 Arrays.asList(new VastAbsoluteProgressTracker("start", 2000)));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -1621,14 +1573,14 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void videoRunnablesRun_whenCurrentTimeGreaterThanTwoSeconds_shouldFireStartTracker() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addAbsoluteTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addAbsoluteTrackers(
                 Arrays.asList(new VastAbsoluteProgressTracker("start" + MACRO_TAGS, 2000)));
-        vastVideoConfiguration.addAbsoluteTrackers(
+        vastVideoConfig.addAbsoluteTrackers(
                 Arrays.asList(new VastAbsoluteProgressTracker("later" + MACRO_TAGS, 3000)));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -1650,14 +1602,14 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void videoRunnablesRun_whenProgressIsPastFirstQuartile_shouldOnlyPingFirstQuartileTrackersOnce() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addFractionalTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addFractionalTrackers(
                 Arrays.asList(new VastFractionalProgressTracker("first" + MACRO_TAGS, 0.25f)));
-        vastVideoConfiguration.addFractionalTrackers(
+        vastVideoConfig.addFractionalTrackers(
                 Arrays.asList(new VastFractionalProgressTracker("don't call" + MACRO_TAGS, 0.28f)));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -1680,14 +1632,14 @@ public class VastVideoViewControllerTest {
     @Test
     public void videoRunnablesRun_whenProgressIsPastMidQuartile_shouldPingFirstQuartileTrackers_andMidQuartileTrackersBothOnlyOnce() throws Exception {
 
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addFractionalTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addFractionalTrackers(
                 Arrays.asList(new VastFractionalProgressTracker("first" + MACRO_TAGS, 0.25f)));
-        vastVideoConfiguration.addFractionalTrackers(
+        vastVideoConfig.addFractionalTrackers(
                 Arrays.asList(new VastFractionalProgressTracker("second" + MACRO_TAGS, 0.5f)));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -1710,16 +1662,16 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void videoRunnablesRun_whenProgressIsPastThirdQuartile_shouldPingFirstQuartileTrackers_andMidQuartileTrackers_andThirdQuartileTrackersAllOnlyOnce() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addFractionalTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addFractionalTrackers(
                 Arrays.asList(new VastFractionalProgressTracker("first" + MACRO_TAGS, 0.25f)));
-        vastVideoConfiguration.addFractionalTrackers(
+        vastVideoConfig.addFractionalTrackers(
                 Arrays.asList(new VastFractionalProgressTracker("second" + MACRO_TAGS, 0.5f)));
-        vastVideoConfiguration.addFractionalTrackers(
+        vastVideoConfig.addFractionalTrackers(
                 Arrays.asList(new VastFractionalProgressTracker("third" + MACRO_TAGS, 0.75f)));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -1746,14 +1698,14 @@ public class VastVideoViewControllerTest {
     public void videoRunnablesRun_asVideoPlays_shouldPingAllThreeTrackersIndividuallyOnce() throws Exception {
         //stub(mockMediaPlayer.getDuration()).toReturn(100);
 
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl("video_url");
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.addFractionalTrackers(
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl("video_url");
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.addFractionalTrackers(
                 Arrays.asList(new VastFractionalProgressTracker("first" + MACRO_TAGS, 0.25f)));
-        vastVideoConfiguration.addFractionalTrackers(Arrays.asList(new VastFractionalProgressTracker("second" + MACRO_TAGS, 0.5f)));
-        vastVideoConfiguration.addFractionalTrackers(Arrays.asList(new VastFractionalProgressTracker("third" + MACRO_TAGS, 0.75f)));
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        vastVideoConfig.addFractionalTrackers(Arrays.asList(new VastFractionalProgressTracker("second" + MACRO_TAGS, 0.5f)));
+        vastVideoConfig.addFractionalTrackers(Arrays.asList(new VastFractionalProgressTracker("third" + MACRO_TAGS, 0.75f)));
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -1812,10 +1764,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void videoRunnablesRun_whenCurrentPositionIsGreaterThanSkipOffset_shouldShowCloseButton() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("25%");    // skipoffset is at 2.5s
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("25%");    // skipoffset is at 2.5s
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -1836,10 +1788,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void videoRunnablesRun_whenCurrentPositionIsLessThanSkipOffset_shouldNotShowCloseButton() throws Exception {
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("disk_video_path");
-        vastVideoConfiguration.setSkipOffset("00:00:03");   // skipoffset is at 3s
-        bundle.putSerializable(VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("00:00:03");   // skipoffset is at 3s
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
         spyOnVideoView();
@@ -1880,6 +1832,15 @@ public class VastVideoViewControllerTest {
     }
 
     @Test
+    public void onPause_withIsClosingFlagSet_shouldNotFirePauseTrackers() throws Exception {
+        initializeSubject();
+        subject.setIsClosing(true);
+
+        subject.onPause();
+        verifyNoMoreInteractions(mockRequestQueue);
+    }
+
+    @Test
     public void onResume_shouldStartRunnables() throws Exception {
         initializeSubject();
 
@@ -1900,23 +1861,6 @@ public class VastVideoViewControllerTest {
 
         assertThat(getShadowVideoView().getCurrentVideoState()).isEqualTo(ShadowVideoView.START);
         assertThat(getShadowVideoView().getPrevVideoState()).isNotEqualTo(ShadowVideoView.START);
-    }
-
-    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
-    @Test
-    public void onResume_shouldResetVideoRetryCountToZero() throws Exception {
-        File file = new File("disk_video_path");
-        file.createNewFile();
-
-        initializeSubject();
-
-        assertThat(subject.retryMediaPlayer(new MediaPlayer(), 1, Integer.MIN_VALUE)).isTrue();
-        assertThat(subject.getVideoRetries()).isEqualTo(1);
-
-        subject.onResume();
-        assertThat(subject.getVideoRetries()).isEqualTo(0);
-
-        file.delete();
     }
 
     @Test
@@ -1946,13 +1890,107 @@ public class VastVideoViewControllerTest {
 
         verify(mockRequestQueue).add(argThat(isUrl
                 ("pause?errorcode=&asseturi=video_url&contentplayhead=00:00:07.000")));
-        verify(mockRequestQueue).add(argThat(isUrl("resume?errorcode=&asseturi=video_url&contentplayhead=00:00:07.000")));
+        verify(mockRequestQueue).add(
+                argThat(isUrl("resume?errorcode=&asseturi=video_url&contentplayhead=00:00:07.000")));
 
         subject.onPause();
         subject.onResume();
 
-        verify(mockRequestQueue).add(argThat(isUrl("pause?errorcode=&asseturi=video_url&contentplayhead=00:00:07.000")));
-        verify(mockRequestQueue).add(argThat(isUrl("resume?errorcode=&asseturi=video_url&contentplayhead=00:00:07.000")));
+        verify(mockRequestQueue).add(
+                argThat(isUrl("pause?errorcode=&asseturi=video_url&contentplayhead=00:00:07.000")));
+        verify(mockRequestQueue).add(
+                argThat(isUrl("resume?errorcode=&asseturi=video_url&contentplayhead=00:00:07.000")));
+    }
+
+    @Test
+    public void onConfigurationChanged_withPortraitCompanionAdVisible_withDeviceLandscape_shouldMakeLandscapeCompanionAdVisible() throws Exception {
+        initializeSubject();
+        context.getResources().getConfiguration().orientation = Configuration.ORIENTATION_LANDSCAPE;
+        subject.getPortraitCompanionAdView().setVisibility(View.VISIBLE);
+
+        subject.onConfigurationChanged(null);
+
+        assertThat(subject.getPortraitCompanionAdView().getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(subject.getLandscapeCompanionAdView().getVisibility()).isEqualTo(View.VISIBLE);
+        verify(mockRequestQueue).add(argThat(isUrl(COMPANION_CREATIVE_VIEW_URL_1)));
+        verify(mockRequestQueue).add(argThat(isUrl(COMPANION_CREATIVE_VIEW_URL_2)));
+        verifyNoMoreInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void onConfigurationChanged_withLandscapeCompanionAdVisible_withDevicePortrait_shouldMakePortraitCompanionAdVisible() throws Exception {
+        initializeSubject();
+        context.getResources().getConfiguration().orientation = Configuration.ORIENTATION_PORTRAIT;
+        subject.getLandscapeCompanionAdView().setVisibility(View.VISIBLE);
+
+        subject.onConfigurationChanged(null);
+
+        assertThat(subject.getLandscapeCompanionAdView().getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(subject.getPortraitCompanionAdView().getVisibility()).isEqualTo(View.VISIBLE);
+        verify(mockRequestQueue).add(argThat(isUrl(COMPANION_CREATIVE_VIEW_URL_3)));
+        verifyNoMoreInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void onConfigurationChanged_withPortraitCompanionAdVisible_withDevicePortrait_shouldKeepPortraitCompanionAdVisible() throws Exception {
+        initializeSubject();
+        context.getResources().getConfiguration().orientation = Configuration.ORIENTATION_PORTRAIT;
+        subject.getPortraitCompanionAdView().setVisibility(View.VISIBLE);
+
+        subject.onConfigurationChanged(null);
+
+        assertThat(subject.getPortraitCompanionAdView().getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(subject.getLandscapeCompanionAdView().getVisibility()).isEqualTo(View.INVISIBLE);
+        verify(mockRequestQueue).add(argThat(isUrl(COMPANION_CREATIVE_VIEW_URL_3)));
+        verifyNoMoreInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void onConfigurationChanged_withNoCompanionAdVisible_shouldDoNothing() throws Exception {
+        initializeSubject();
+        context.getResources().getConfiguration().orientation = Configuration.ORIENTATION_LANDSCAPE;
+
+        subject.onConfigurationChanged(null);
+
+        assertThat(subject.getPortraitCompanionAdView().getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(subject.getLandscapeCompanionAdView().getVisibility()).isEqualTo(View.INVISIBLE);
+        verifyNoMoreInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void onConfigurationChanged_whenCalledMultipleTimes_shouldOnlyEverFireEachCreativeViewTrackerOnce() throws Exception {
+        initializeSubject();
+        subject.getPortraitCompanionAdView().setVisibility(View.VISIBLE);
+
+        for(int i = 0; i < 10; i++) {
+            context.getResources().getConfiguration().orientation = Configuration.ORIENTATION_LANDSCAPE;
+            subject.onConfigurationChanged(null);
+            context.getResources().getConfiguration().orientation = Configuration.ORIENTATION_PORTRAIT;
+            subject.onConfigurationChanged(null);
+        }
+        verify(mockRequestQueue).add(argThat(isUrl(COMPANION_CREATIVE_VIEW_URL_1)));
+        verify(mockRequestQueue).add(argThat(isUrl(COMPANION_CREATIVE_VIEW_URL_2)));
+        verify(mockRequestQueue).add(argThat(isUrl(COMPANION_CREATIVE_VIEW_URL_3)));
+        verifyNoMoreInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void onConfigurationChanged_withNoCompanionAd_shouldDoNothing() throws Exception {
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setNetworkMediaFileUrl("media_url");
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
+        initializeSubject();
+
+        subject.onConfigurationChanged(null);
+
+        verifyNoMoreInteractions(mockRequestQueue);
+        assertThat(subject.getLandscapeCompanionAdView().getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(subject.getLandscapeCompanionAdView().getWidth()).isEqualTo(0);
+        assertThat(subject.getLandscapeCompanionAdView().getHeight()).isEqualTo(0);
+        assertThat(subject.getPortraitCompanionAdView().getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(subject.getPortraitCompanionAdView().getWidth()).isEqualTo(0);
+        assertThat(subject.getPortraitCompanionAdView().getHeight()).isEqualTo(0);
     }
 
     @Test
@@ -2021,15 +2059,15 @@ public class VastVideoViewControllerTest {
     public void createIconView_shouldLayoutAndReturnInvisibleVastIconView() throws Exception {
         initializeSubject();
 
-        VastIcon vastIcon = mock(VastIcon.class);
-        when(vastIcon.getWidth()).thenReturn(40);
-        when(vastIcon.getHeight()).thenReturn(40);
+        VastIconConfig vastIconConfig = mock(VastIconConfig.class);
+        when(vastIconConfig.getWidth()).thenReturn(40);
+        when(vastIconConfig.getHeight()).thenReturn(40);
         VastResource vastResource = mock(VastResource.class);
         when(vastResource.getType()).thenReturn(VastResource.Type.STATIC_RESOURCE);
         when(vastResource.getResource()).thenReturn("static");
-        when(vastIcon.getVastResource()).thenReturn(vastResource);
+        when(vastIconConfig.getVastResource()).thenReturn(vastResource);
 
-        VastWebView view = (VastWebView) subject.createIconView(context, vastIcon, View.INVISIBLE);
+        VastWebView view = (VastWebView) subject.createIconView(context, vastIconConfig, View.INVISIBLE);
 
         assertThat(view).isNotNull();
         assertThat(view.getVisibility()).isEqualTo(View.INVISIBLE);
@@ -2048,51 +2086,52 @@ public class VastVideoViewControllerTest {
     public void VastWebView_onVastWebViewClick_shouldCallVastIconHandleClick() throws Exception {
         initializeSubject();
 
-        VastIcon vastIcon = mock(VastIcon.class);
-        when(vastIcon.getWidth()).thenReturn(40);
-        when(vastIcon.getHeight()).thenReturn(40);
+        VastIconConfig vastIconConfig = mock(VastIconConfig.class);
+        when(vastIconConfig.getWidth()).thenReturn(40);
+        when(vastIconConfig.getHeight()).thenReturn(40);
         VastResource vastResource = mock(VastResource.class);
         when(vastResource.getType()).thenReturn(VastResource.Type.STATIC_RESOURCE);
         when(vastResource.getResource()).thenReturn("static");
-        when(vastIcon.getVastResource()).thenReturn(vastResource);
+        when(vastIconConfig.getVastResource()).thenReturn(vastResource);
 
-        VastWebView view = (VastWebView) subject.createIconView(context, vastIcon, View.INVISIBLE);
+        VastWebView view = (VastWebView) subject.createIconView(context, vastIconConfig, View.INVISIBLE);
 
         view.getVastWebViewClickListener().onVastWebViewClick();
-        verify(vastIcon).handleClick(any(Context.class), anyString());
+        verify(vastIconConfig).handleClick(any(Context.class), anyString());
     }
 
     @Test
     public void handleIconDisplay_withCurrentPositionGreaterThanOffset_shouldSetIconToVisible_shouldCallHandleImpression() throws Exception {
         initializeSubject();
 
-        when(mockVastIcon.getOffsetMS()).thenReturn(0);
-        when(mockVastIcon.getDurationMS()).thenReturn(1);
+        when(mMockVastIconConfig.getOffsetMS()).thenReturn(0);
+        when(mMockVastIconConfig.getDurationMS()).thenReturn(1);
 
         subject.handleIconDisplay(0);
 
         assertThat(subject.getIconView().getVisibility()).isEqualTo(View.VISIBLE);
-        verify(mockVastIcon).handleImpression(any(Context.class), eq(0), eq("video_url"));
+        verify(mMockVastIconConfig).handleImpression(any(Context.class), eq(0), eq("video_url"));
     }
 
     @Test
     public void handleIconDisplay_withCurrentPositionLessThanOffset_shouldReturn() throws Exception {
         initializeSubject();
 
-        when(mockVastIcon.getOffsetMS()).thenReturn(1);
+        when(mMockVastIconConfig.getOffsetMS()).thenReturn(1);
 
         subject.handleIconDisplay(0);
 
         assertThat(subject.getIconView().getVisibility()).isEqualTo(View.INVISIBLE);
-        verify(mockVastIcon, never()).handleImpression(any(Context.class), eq(0), eq("video_url"));
+        verify(mMockVastIconConfig, never()).handleImpression(any(Context.class), eq(0),
+                eq("video_url"));
     }
 
     @Test
     public void handleIconDisplay_withCurrentPositionGreaterThanOffsetPlusDuration_shouldSetIconToGone() throws Exception {
         initializeSubject();
 
-        when(mockVastIcon.getOffsetMS()).thenReturn(0);
-        when(mockVastIcon.getDurationMS()).thenReturn(1);
+        when(mMockVastIconConfig.getOffsetMS()).thenReturn(0);
+        when(mMockVastIconConfig.getDurationMS()).thenReturn(1);
 
         subject.handleIconDisplay(2);
 
@@ -2110,8 +2149,9 @@ public class VastVideoViewControllerTest {
     }
 
     private void initializeSubject() throws IllegalAccessException {
-        subject = new VastVideoViewController(context, bundle, savedInstanceState, testBroadcastIdentifier, baseVideoViewControllerListener);
-        subject.setMediaMetadataRetriever(mockMediaMetadataRetriever);
+        subject = new VastVideoViewController((Activity) context, bundle, savedInstanceState,
+                testBroadcastIdentifier, baseVideoViewControllerListener);
+        subject.getVastVideoView().setMediaMetadataRetriever(mockMediaMetadataRetriever);
         spyOnRunnables();
     }
 
@@ -2136,8 +2176,8 @@ public class VastVideoViewControllerTest {
         when(spyVideoView.getDuration()).thenReturn(duration);
     }
 
-    private ShadowVideoView getShadowVideoView() {
-        return shadowOf(subject.getVideoView());
+    private ShadowVastVideoView getShadowVideoView() {
+        return (ShadowVastVideoView) shadowOf_(subject.getVastVideoView());
     }
 
     public static void assertHttpRequestsMade(final String userAgent, final String... urls) {

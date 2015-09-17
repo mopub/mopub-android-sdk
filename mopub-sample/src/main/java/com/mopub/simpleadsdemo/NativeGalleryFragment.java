@@ -78,6 +78,7 @@ public class NativeGalleryFragment extends Fragment implements MoPubNativeAdLoad
                         .mainImageId(R.id.native_main_image)
                         .iconImageId(R.id.native_icon_image)
                         .callToActionId(R.id.native_cta)
+                        .daaIconImageId(R.id.native_daa_icon_image)
                         .build()
         );
         mPagerAdapter = new CustomPagerAdapter(getChildFragmentManager(), mStreamAdPlacer);

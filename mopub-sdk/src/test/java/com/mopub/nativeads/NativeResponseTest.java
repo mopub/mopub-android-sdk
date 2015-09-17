@@ -49,10 +49,15 @@ public class NativeResponseTest {
     private boolean baseNativeAdIsClicked;
     @Mock
     private MoPubRequestQueue mockRequestQueue;
+    private SpinningProgressView mockSpinningProgressView;
 
 
     @Before
     public void setUp() throws Exception {
+        setupWithClickUrl("clickDestinationUrl");
+    }
+
+    private void setupWithClickUrl(String clickUrl) {
         context = Robolectric.buildActivity(Activity.class).create().get();
         mNativeAd = new BaseForwardingNativeAd() {
             @Override
@@ -69,7 +74,7 @@ public class NativeResponseTest {
         mNativeAd.setText("text");
         mNativeAd.setMainImageUrl("mainImageUrl");
         mNativeAd.setIconImageUrl("iconImageUrl");
-        mNativeAd.setClickDestinationUrl("clickDestinationUrl");
+        mNativeAd.setClickDestinationUrl(clickUrl);
         mNativeAd.setCallToAction("callToAction");
         mNativeAd.addExtra("extra", "extraValue");
         mNativeAd.addExtra("extraImage", "extraImageUrl");
@@ -92,6 +97,8 @@ public class NativeResponseTest {
                 "moPubImpressionTrackerUrl",
                 "moPubClickTrackerUrl",
                 "adunit_id", mMockNativeAd, moPubNativeListener);
+
+        mockSpinningProgressView = mock(SpinningProgressView.class);
     }
 
     @Test
@@ -277,6 +284,45 @@ public class NativeResponseTest {
     @Test
     public void handleClick_withBaseNativeAdClickDestinationUrl_shouldRecordClickAndCallIntoBaseNativeAdAndOpenClickDestinationAndNotifyListener() {
         // Really difficult to test url resolution since it doesn't use the apache http client
+    }
+
+    @Test
+    public void handleClick_shouldShowSpinner_shouldRemoveSpinner_WhenSucceeded() {
+        setupWithClickUrl("http://www.mopub.com");
+
+        Robolectric.getBackgroundScheduler().pause();
+
+        subject.handleClick(view, mockSpinningProgressView);
+
+        verify(mockSpinningProgressView).addToRoot(view);
+        Robolectric.getBackgroundScheduler().unPause();
+        verify(mockSpinningProgressView).removeFromRoot();
+    }
+
+    @Test
+    public void handleClick_shouldShowSpinner_shouldRemoveSpinner_WhenFailed() {
+        setupWithClickUrl("");
+
+        Robolectric.getBackgroundScheduler().pause();
+
+        subject.handleClick(view, mockSpinningProgressView);
+
+        verify(mockSpinningProgressView).addToRoot(view);
+        Robolectric.getBackgroundScheduler().unPause();
+        verify(mockSpinningProgressView).removeFromRoot();
+    }
+
+    @Test
+    public void handleClick_withNullView_shouldNotShowSpinner() {
+        setupWithClickUrl("http://www.mopub.com");
+
+        Robolectric.getBackgroundScheduler().pause();
+
+        subject.handleClick(null, mockSpinningProgressView);
+
+        verify(mockSpinningProgressView, never()).addToRoot(view);
+        Robolectric.getBackgroundScheduler().unPause();
+        verify(mockSpinningProgressView, never()).removeFromRoot();
     }
 
     @Test

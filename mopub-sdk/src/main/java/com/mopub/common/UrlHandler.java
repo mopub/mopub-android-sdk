@@ -6,11 +6,15 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.mopub.common.event.BaseEvent;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Intents;
 import com.mopub.exceptions.IntentNotResolvableException;
 
 import java.util.EnumSet;
+
+import static com.mopub.common.UrlResolutionTask.UrlResolutionListener;
+import static com.mopub.network.TrackingRequest.makeTrackingHttpRequest;
 
 /**
  * {@code UrlHandler} facilitates handling user clicks on different URLs, allowing configuration
@@ -163,6 +167,7 @@ public class UrlHandler {
     private MoPubSchemeListener mMoPubSchemeListener;
     private boolean mSkipShowMoPubBrowser;
     private boolean mAlreadySucceeded;
+    private boolean mTaskPending;
 
     /**
      * Do not instantiate UrlHandler directly; use {@link Builder} instead.
@@ -177,6 +182,7 @@ public class UrlHandler {
         mMoPubSchemeListener = moPubSchemeListener;
         mSkipShowMoPubBrowser = skipShowMoPubBrowser;
         mAlreadySucceeded = false;
+        mTaskPending = false;
     }
 
     @NonNull
@@ -206,6 +212,8 @@ public class UrlHandler {
      * @param destinationUrl The URL to handle.
      */
     public void handleUrl(@NonNull final Context context, @NonNull final String destinationUrl) {
+        Preconditions.checkNotNull(context);
+
         handleUrl(context, destinationUrl, true);
     }
 
@@ -219,51 +227,106 @@ public class UrlHandler {
      */
     public void handleUrl(@NonNull final Context context, @NonNull final String destinationUrl,
             final boolean fromUserInteraction) {
-        try {
-            final boolean throwExceptionOnFailure = false;
-            handleUrl(context, destinationUrl, fromUserInteraction, throwExceptionOnFailure);
-        } catch (IntentNotResolvableException e) {
-            // Exception will never be thrown since throwExceptionOnFailure is false
-        }
+        Preconditions.checkNotNull(context);
+
+        handleUrl(context, destinationUrl, fromUserInteraction, null);
     }
 
+    /**
+     * Follows any redirects from {@code destinationUrl} and then handles the URL accordingly.
+     *
+     * @param context The activity context.
+     * @param destinationUrl The URL to handle.
+     * @param fromUserInteraction Whether this handling was triggered from a user interaction.
+     * @param trackingUrls Optional tracking URLs to trigger on success
+     */
     public void handleUrl(@NonNull final Context context, @NonNull final String destinationUrl,
-            final boolean fromUserInteraction, final boolean throwExceptionOnFailure)
-            throws IntentNotResolvableException {
-        UrlAction lastFailedUrlAction = UrlAction.NOOP;
-        final String errorMessage;
+            final boolean fromUserInteraction, @Nullable final Iterable<String> trackingUrls) {
+        Preconditions.checkNotNull(context);
 
         if (TextUtils.isEmpty(destinationUrl)) {
-            errorMessage = "Attempted to handle empty url.";
-        } else {
-            final Uri destinationUri = Uri.parse(destinationUrl);
-            for (final UrlAction urlAction : mSupportedUrlActions) {
-                if (urlAction.shouldTryHandlingUrl(destinationUri)) {
-                    try {
-                        urlAction.handleUrl(this, context, destinationUri, fromUserInteraction);
-                        if (!mAlreadySucceeded
-                                && !UrlAction.IGNORE_ABOUT_SCHEME.equals(urlAction)
-                                && !UrlAction.HANDLE_MOPUB_SCHEME.equals(urlAction)) {
-                            mResultActions.urlHandlingSucceeded(destinationUri.toString(),
-                                    urlAction);
-                            mAlreadySucceeded = true;
-                        }
-                        return;
-                    } catch (IntentNotResolvableException e) {
-                        MoPubLog.d(e.getMessage(), e);
-                        lastFailedUrlAction = urlAction;
-                        // continue trying to match...
+            failUrlHandling(destinationUrl, null, "Attempted to handle empty url.", null);
+            return;
+        }
+
+        final UrlResolutionListener urlResolutionListener = new UrlResolutionListener() {
+            @Override
+            public void onSuccess(@NonNull final String resolvedUrl) {
+                mTaskPending = false;
+                handleResolvedUrl(context, resolvedUrl, fromUserInteraction, trackingUrls);
+            }
+
+            @Override
+            public void onFailure(@NonNull final String message,
+                    @Nullable final Throwable throwable) {
+                mTaskPending = false;
+                failUrlHandling(destinationUrl, null, message, throwable);
+
+            }
+
+        };
+
+        UrlResolutionTask.getResolvedUrl(destinationUrl, urlResolutionListener);
+        mTaskPending = true;
+    }
+
+    /**
+     * Performs the actual url handling by verifying that the {@code destinationUrl} is one of
+     * the configured supported {@link UrlAction}s and then handling it accordingly.
+     *
+     * @param context The activity context.
+     * @param url The URL to handle.
+     * @param fromUserInteraction Whether this handling was triggered from a user interaction.
+     * @param trackingUrls Optional tracking URLs to trigger on success
+     * @return true if the given URL was successfully handled; false otherwise
+     */
+    public boolean handleResolvedUrl(@NonNull final Context context,
+            @NonNull final String url, final boolean fromUserInteraction,
+            @Nullable Iterable<String> trackingUrls) {
+        if (TextUtils.isEmpty(url)) {
+            failUrlHandling(url, null, "Attempted to handle empty url.", null);
+            return false;
+        }
+
+        UrlAction lastFailedUrlAction = UrlAction.NOOP;
+        final Uri destinationUri = Uri.parse(url);
+
+        for (final UrlAction urlAction : mSupportedUrlActions) {
+            if (urlAction.shouldTryHandlingUrl(destinationUri)) {
+                try {
+                    urlAction.handleUrl(UrlHandler.this, context, destinationUri,
+                            fromUserInteraction);
+                    if (!mAlreadySucceeded && !mTaskPending
+                            && !UrlAction.IGNORE_ABOUT_SCHEME.equals(urlAction)
+                            && !UrlAction.HANDLE_MOPUB_SCHEME.equals(urlAction)) {
+                        makeTrackingHttpRequest(trackingUrls, context,
+                                BaseEvent.Name.CLICK_REQUEST);
+                        mResultActions.urlHandlingSucceeded(destinationUri.toString(),
+                                urlAction);
+                        mAlreadySucceeded = true;
                     }
+                    return true;
+                } catch (IntentNotResolvableException e) {
+                    MoPubLog.d(e.getMessage(), e);
+                    lastFailedUrlAction = urlAction;
+                    // continue trying to match...
                 }
             }
-            errorMessage = "Link ignored. Unable to handle url: " + destinationUrl;
         }
-
-        mResultActions.urlHandlingFailed(destinationUrl, lastFailedUrlAction);
-
-        MoPubLog.d(errorMessage);
-        if (throwExceptionOnFailure) {
-            throw new IntentNotResolvableException(errorMessage);
-        }
+        failUrlHandling(url, lastFailedUrlAction, "Link ignored. Unable to handle url: " + url, null);
+        return false;
     }
+
+    private void failUrlHandling(@Nullable final String url, @Nullable UrlAction urlAction,
+            @NonNull final String message, @Nullable final Throwable throwable) {
+        Preconditions.checkNotNull(message);
+
+        if (urlAction == null) {
+            urlAction = UrlAction.NOOP;
+        }
+
+        MoPubLog.d(message, throwable);
+        mResultActions.urlHandlingFailed(url, urlAction);
+    }
+
 }

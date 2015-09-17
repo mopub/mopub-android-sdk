@@ -29,7 +29,7 @@ import javax.net.ssl.SSLSocketFactory;
 public class Networking {
     @VisibleForTesting
     static final String CACHE_DIRECTORY_NAME = "mopub-volley-cache";
-
+    private static final String DEFAULT_USER_AGENT = System.getProperty("http.agent");
 
     // These are volatile so that double-checked locking works.
     // See http://en.wikipedia.org/wiki/Double-checked_locking#Usage_in_Java
@@ -133,13 +133,28 @@ public class Networking {
                     } else {
                         // In the exceptional case where we can't access the WebView user agent,
                         // fall back to the System-specific user agent.
-                        userAgent = System.getProperty("http.agent");
+                        userAgent = DEFAULT_USER_AGENT;
                     }
                     sUserAgent = userAgent;
                 }
             }
         }
 
+        return userAgent;
+    }
+
+    /**
+     * Gets the previously cached WebView user agent. This returns the default userAgent if the
+     * WebView user agent has not been initialized yet.
+     *
+     * @return Best-effort String WebView user agent.
+     */
+    @NonNull
+    public static String getCachedUserAgent() {
+        final String userAgent = sUserAgent;
+        if (userAgent == null) {
+            return DEFAULT_USER_AGENT;
+        }
         return userAgent;
     }
 

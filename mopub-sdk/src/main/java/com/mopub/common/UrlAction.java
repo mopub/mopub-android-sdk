@@ -254,14 +254,7 @@ public enum UrlAction {
 
             // UrlAction.handleUrl already verified this comes from a user interaction
             final boolean fromUserInteraction = true;
-
-            // Throw IntentNotResolvableException on failure to signal parent handleUrl to continue
-            // attempting to match other UrlActions
-            final boolean throwExceptionOnFailure = true;
-
-            urlHandler.handleUrl(context, fallbackUrl, fromUserInteraction,
-                    throwExceptionOnFailure);
-            makeTrackingHttpRequest(fallbackTrackingUrls, context, BaseEvent.Name.CLICK_REQUEST);
+            urlHandler.handleUrl(context, fallbackUrl, true, fallbackTrackingUrls);
         }
     },
 
@@ -309,15 +302,6 @@ public enum UrlAction {
         } else {
             performAction(context, destinationUri, urlHandler);
         }
-    }
-
-    public static UrlAction fromString(@NonNull final String actionName) {
-        for (UrlAction action : UrlAction.values()) {
-            if (actionName.equals(action.toString())) {
-                return action;
-            }
-        }
-        return NOOP;
     }
 
     private final boolean mRequiresUserInteraction;

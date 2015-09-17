@@ -7,7 +7,6 @@ import com.mopub.common.CacheServiceTest;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -81,6 +80,14 @@ public class VastVideoDownloadTaskTest {
     @Test
     public void execute_whenUrlArrayIsNull_shouldSignalDownloadFailed() throws Exception {
         subject.execute((String) null);
+
+        semaphore.acquire();
+        verify(mVastVideoDownloadTaskListener).onComplete(false);
+    }
+
+    @Test
+    public void execute_whenUrlArrayIsEmpty_shouldSignalDownloadFailed() throws Exception {
+        subject.execute(new String[0]);
 
         semaphore.acquire();
         verify(mVastVideoDownloadTaskListener).onComplete(false);

@@ -68,4 +68,11 @@ public class NetworkingTest {
         semaphore.acquire();
         assertThat(sUserAgent).isEqualTo("system level user agent");
     }
+
+    public void getCachedUserAgent_usesCachedUserAgent() {
+        Networking.setUserAgentForTesting("some cached user agent");
+        String userAgent = Networking.getCachedUserAgent();
+
+        assertThat(userAgent).isEqualTo("some cached user agent");
+    }
 }

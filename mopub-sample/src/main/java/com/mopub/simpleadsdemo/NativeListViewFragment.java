@@ -80,6 +80,7 @@ public class NativeListViewFragment extends Fragment {
                         .mainImageId(R.id.native_main_image)
                         .iconImageId(R.id.native_icon_image)
                         .callToActionId(R.id.native_cta)
+                        .daaIconImageId(R.id.native_daa_icon_image)
                         .build());
 
         // Register the renderer with the MoPubAdAdapter and then set the adapter on the ListView.

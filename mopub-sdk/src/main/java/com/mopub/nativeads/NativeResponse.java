@@ -8,6 +8,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.mopub.common.Preconditions;
+import com.mopub.common.UrlAction;
+import com.mopub.common.UrlHandler;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.event.BaseEvent;
 import com.mopub.common.logging.MoPubLog;
@@ -18,9 +21,7 @@ import com.mopub.volley.VolleyError;
 import com.mopub.volley.toolbox.ImageLoader;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -204,6 +205,11 @@ public class NativeResponse {
         return mNativeAd.getStarRating();
     }
 
+    @Nullable
+    public String getDaaIconClickthroughUrl() {
+        return mNativeAd.getDaaIconClickthroughUrl();
+    }
+
     public int getImpressionMinTimeViewed() {
         return mNativeAd.getImpressionMinTimeViewed();
     }
@@ -261,6 +267,14 @@ public class NativeResponse {
     }
 
     public void handleClick(@Nullable final View view) {
+        handleClick(view, new SpinningProgressView(mContext));
+    }
+
+    @VisibleForTesting
+    void handleClick(@Nullable final View view,
+            @NonNull final SpinningProgressView spinningProgressView) {
+        Preconditions.checkNotNull(spinningProgressView);
+
         if (isDestroyed()) {
             return;
         }
@@ -270,7 +284,7 @@ public class NativeResponse {
                     mMoPubClickTracker, mContext, BaseEvent.Name.CLICK_REQUEST);
         }
 
-        openClickDestinationUrl(view);
+        openClickDestinationUrl(view, spinningProgressView);
         mNativeAd.handleClick(view);
         mIsClicked = true;
 
@@ -350,21 +364,47 @@ public class NativeResponse {
         }
     }
 
-    private void openClickDestinationUrl(@Nullable final View view) {
+    private void openClickDestinationUrl(@Nullable final View view,
+            @NonNull final SpinningProgressView spinningProgressView) {
+        Preconditions.checkNotNull(spinningProgressView);
+
         if (getClickDestinationUrl() == null) {
             return;
         }
 
-        SpinningProgressView spinningProgressView = null;
         if (view != null) {
-            spinningProgressView = new SpinningProgressView(mContext);
             spinningProgressView.addToRoot(view);
         }
 
-        final Iterator<String> urlIterator = Arrays.asList(getClickDestinationUrl()).iterator();
-        final ClickDestinationResolutionListener urlResolutionListener =
-                new ClickDestinationResolutionListener(mContext, urlIterator, spinningProgressView);
-        UrlResolutionTask.getResolvedUrl(urlIterator.next(), urlResolutionListener);
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(
+                        UrlAction.IGNORE_ABOUT_SCHEME,
+                        UrlAction.OPEN_NATIVE_BROWSER,
+                        UrlAction.OPEN_APP_MARKET,
+                        UrlAction.OPEN_IN_APP_BROWSER,
+                        UrlAction.HANDLE_SHARE_TWEET,
+                        UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK,
+                        UrlAction.FOLLOW_DEEP_LINK)
+                .withResultActions(new UrlHandler.ResultActions() {
+                    @Override
+                    public void urlHandlingSucceeded(@NonNull String url,
+                            @NonNull UrlAction urlAction) {
+                        removeSpinningProgressView();
+                    }
+
+                    @Override
+                    public void urlHandlingFailed(@NonNull String url,
+                            @NonNull UrlAction lastFailedUrlAction) {
+                        removeSpinningProgressView();
+                    }
+
+                    private void removeSpinningProgressView() {
+                        if (view != null) {
+                            spinningProgressView.removeFromRoot();
+                        }
+                    }
+                })
+                .build().handleUrl(mContext, getClickDestinationUrl());
     }
 
     private void setOnClickListener(@NonNull final View view,

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.webkit.WebView;
 
 import com.mopub.common.util.ResponseHeader;
+import com.mopub.network.Networking;
 
 import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpGet;
@@ -16,7 +17,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.tester.org.apache.http.RequestMatcher;
 import org.robolectric.tester.org.apache.http.TestHttpResponse;
 
-import static com.mopub.common.HttpClient.getWebViewUserAgent;
 import static com.mopub.common.HttpClient.initializeHttpGet;
 import static com.mopub.common.HttpClient.urlEncode;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -39,39 +39,32 @@ public class HttpClientTest {
             }
         }, new TestHttpResponse(200, "body"));
 
-        HttpClient.setWebViewUserAgent(null);
         Robolectric.getBackgroundScheduler().pause();
         Robolectric.clearPendingHttpResponses();
     }
 
     @After
     public void tearDown() throws Exception {
-        HttpClient.setWebViewUserAgent(null);
         Robolectric.getBackgroundScheduler().reset();
         Robolectric.clearPendingHttpResponses();
     }
 
     @Test
     public void initializeHttpGet_shouldReturnHttpGetWithWebViewUserAgent() throws Exception {
+        Networking.setUserAgentForTesting(null);
         HttpGet httpGet = initializeHttpGet(url, context);
 
         assertThat(httpGet.getURI().toURL().toString()).isEqualTo(url);
-        assertThat(httpGet.getFirstHeader(ResponseHeader.USER_AGENT.getKey()).getValue()).isEqualTo(userAgent);
+        assertThat(httpGet.getFirstHeader(ResponseHeader.USER_AGENT.getKey()).getValue()).isEqualTo(
+                userAgent);
     }
 
     @Test
-    public void initializeHttpGet_shouldPopulateStaticWebViewUserAgent() throws Exception {
-        assertThat(HttpClient.getWebViewUserAgent()).isNull();
-
-        HttpGet httpGet = initializeHttpGet(url, context);
-
-        assertThat(HttpClient.getWebViewUserAgent()).isEqualTo(userAgent);
-    }
-
-    @Test
-    public void initializeHttpGet_withNullContext_shouldNotSetUserAgent() throws Exception {
+    public void initializeHttpGet_withNullContext_shouldUseCachedUserAgent() throws Exception {
+        Networking.setUserAgentForTesting("cached");
         HttpGet httpGet = initializeHttpGet("http://www.mopub.com/");
-        assertThat(httpGet.getFirstHeader(ResponseHeader.USER_AGENT.getKey())).isNull();
+        assertThat(httpGet.getFirstHeader(ResponseHeader.USER_AGENT.getKey()).getValue()).isEqualTo(
+                "cached");
     }
 
     @Test
@@ -113,7 +106,8 @@ public class HttpClientTest {
                 .isEqualTo("http://user:passwrd@host:80/doc%7Csearch?q=green%20robots#over%206%22");
 
         assertThat(urlEncode("https://www.mywebsite.com%2Fd+ocs%2Fenglish%2Fsite%2Fmybook.do%3Fkey%3Dvalue%3B%23fragment"))
-                .isEqualTo("https://www.mywebsite.com%2Fd+ocs%2Fenglish%2Fsite%2Fmybook.do%3Fkey%3Dvalue%3B%23fragment");
+                .isEqualTo(
+                        "https://www.mywebsite.com%2Fd+ocs%2Fenglish%2Fsite%2Fmybook.do%3Fkey%3Dvalue%3B%23fragment");
     }
 
     @Test(expected = Exception.class)
@@ -134,21 +128,18 @@ public class HttpClientTest {
         urlEncode("derp://www.mopub.com/");
     }
 
-    @Test
-    public void getWebViewUserAgent_whenUserAgentNotSet_shouldReturnDefault() {
-        assertThat(getWebViewUserAgent("test")).isEqualTo("test");
-    }
-
     @Test(expected = NullPointerException.class)
     public void initializeHttpGet_withNullUrl_shouldThrowNullPointerException() throws Exception {
         initializeHttpGet(null, context);
     }
 
     @Test
-    public void initializeHttpGet_withNullContext_shouldNotPopulateUserAgentHeader() throws Exception {
+    public void initializeHttpGet_withNullContext_shouldPopulateUserAgentHeaderWithCachedValue() throws Exception {
+        Networking.setUserAgentForTesting("cached");
         HttpGet httpGet = initializeHttpGet(url, null);
 
         assertThat(httpGet.getURI().toURL().toString()).isEqualTo(url);
-        assertThat(httpGet.getFirstHeader(ResponseHeader.USER_AGENT.getKey())).isNull();
+        assertThat(httpGet.getFirstHeader(ResponseHeader.USER_AGENT.getKey()).getValue()).isEqualTo(
+                "cached");
     }
 }

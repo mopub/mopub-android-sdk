@@ -3,6 +3,7 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -36,7 +37,7 @@ public class MraidVideoPlayerActivity extends BaseVideoPlayerActivity implements
         } catch (IllegalStateException e) {
             // This can happen if the activity was started without valid intent extras. We leave
             // mBaseVideoController set to null, and finish the activity immediately.
-            
+
             broadcastAction(this, mBroadcastIdentifier, ACTION_INTERSTITIAL_FAIL);
             finish();
             return;
@@ -74,6 +75,14 @@ public class MraidVideoPlayerActivity extends BaseVideoPlayerActivity implements
         super.onSaveInstanceState(outState);
         if (mBaseVideoController != null) {
             mBaseVideoController.onSaveInstanceState(outState);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(@Nullable Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (mBaseVideoController != null) {
+            mBaseVideoController.onConfigurationChanged(newConfig);
         }
     }
 
