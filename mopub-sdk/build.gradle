@@ -30,6 +30,8 @@ android {
 	compileSdkVersion 23
 	buildToolsVersion '23.0.1'
 
+	useLibrary 'org.apache.http.legacy'
+
 	defaultConfig {
 		versionCode 29
 		versionName version
@@ -66,6 +68,7 @@ android {
 	// Alternatively, you can set an environment variable called ANDROID_HOME. There is no
 	// difference between the two methods, you can use the one you prefer.
 }
+
 
 
 dependencies {
