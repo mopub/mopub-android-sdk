@@ -3,7 +3,6 @@ package com.mopub.mobileads;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Point;
-import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -11,19 +10,20 @@ import android.text.TextUtils;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.mopub.common.HttpClient;
+import com.mopub.common.MoPubHttpUrlConnection;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Dips;
+import com.mopub.common.util.Streams;
 import com.mopub.common.util.Strings;
 import com.mopub.network.Networking;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -105,25 +105,17 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
 
     @Override
     protected VastVideoConfig doInBackground(@Nullable String... strings) {
-        AndroidHttpClient httpClient = null;
-        try {
-            httpClient = HttpClient.getHttpClient();
-            if (strings != null && strings.length > 0) {
-                String vastXml = strings[0];
-                if (vastXml == null) {
-                    return null;
-                }
-                return evaluateVastXmlManager(vastXml, httpClient, new ArrayList<VastTracker>());
-            }
-        } catch (Exception e) {
-            MoPubLog.d("Failed to parse VAST XML", e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
+        if (strings == null || strings.length == 0 || strings[0] == null) {
+            return null;
         }
 
-        return null;
+        try {
+            final String vastXml = strings[0];
+            return evaluateVastXmlManager(vastXml, new ArrayList<VastTracker>());
+        } catch (Exception e) {
+            MoPubLog.d("Unable to generate VastVideoConfig.", e);
+            return null;
+        }
     }
 
     @Override
@@ -155,7 +147,6 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
      * non-xml errors.
      *
      * @param vastXml           The xml that this class parses
-     * @param androidHttpClient This is used to follow redirects
      * @param errorTrackers     This is the current list of error tracker URLs to hit if something
      *                          goes wrong.
      * @return {@link VastVideoConfig} with all available fields set or null if the xml is
@@ -164,10 +155,8 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
     @VisibleForTesting
     @Nullable
     VastVideoConfig evaluateVastXmlManager(@NonNull final String vastXml,
-            @NonNull final AndroidHttpClient androidHttpClient,
             @NonNull final List<VastTracker> errorTrackers) {
         Preconditions.checkNotNull(vastXml, "vastXml cannot be null");
-        Preconditions.checkNotNull(androidHttpClient, "androidHttpClient cannot be null");
         Preconditions.checkNotNull(errorTrackers, "errorTrackers cannot be null");
 
         final VastXmlManager xmlManager = new VastXmlManager();
@@ -180,7 +169,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
             return null;
         }
 
-        List<VastAdXmlManager> vastAdXmlManagers = xmlManager.getAdXmlManagers();
+        final List<VastAdXmlManager> vastAdXmlManagers = xmlManager.getAdXmlManagers();
 
         // If there are no ads, fire the error trackers
         if (fireErrorTrackerIfNoAds(vastAdXmlManagers, xmlManager, mContext)) {
@@ -188,15 +177,15 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
         }
 
         for (VastAdXmlManager vastAdXmlManager : vastAdXmlManagers) {
-
             if (!isValidSequenceNumber(vastAdXmlManager.getSequence())) {
                 continue;
             }
 
             // InLine evaluation
-            VastInLineXmlManager vastInLineXmlManager = vastAdXmlManager.getInLineXmlManager();
+            final VastInLineXmlManager vastInLineXmlManager =
+                    vastAdXmlManager.getInLineXmlManager();
             if (vastInLineXmlManager != null) {
-                VastVideoConfig vastVideoConfig = evaluateInLineXmlManager(
+                final VastVideoConfig vastVideoConfig = evaluateInLineXmlManager(
                         vastInLineXmlManager, errorTrackers);
                 // If the vastVideoConfig is non null, it means we found a valid media file
                 if (vastVideoConfig != null) {
@@ -206,19 +195,19 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
             }
 
             // Wrapper evaluation
-            VastWrapperXmlManager vastWrapperXmlManager = vastAdXmlManager.getWrapperXmlManager();
+            final VastWrapperXmlManager vastWrapperXmlManager
+                    = vastAdXmlManager.getWrapperXmlManager();
             if (vastWrapperXmlManager != null) {
                 final List<VastTracker> wrapperErrorTrackers = new ArrayList<VastTracker>(errorTrackers);
                 wrapperErrorTrackers.addAll(vastWrapperXmlManager.getErrorTrackers());
-                String vastRedirectXml = evaluateWrapperRedirect(vastWrapperXmlManager,
-                        androidHttpClient, wrapperErrorTrackers);
+                final String vastRedirectXml = evaluateWrapperRedirect(vastWrapperXmlManager,
+                        wrapperErrorTrackers);
                 if (vastRedirectXml == null) {
                     continue;
                 }
 
-                VastVideoConfig vastVideoConfig = evaluateVastXmlManager(
+                final VastVideoConfig vastVideoConfig = evaluateVastXmlManager(
                         vastRedirectXml,
-                        androidHttpClient,
                         wrapperErrorTrackers);
                 // If we don't find a valid video creative somewhere down this wrapper chain,
                 // look at the next Ad element
@@ -232,7 +221,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
                 // in one of Wrapper redirects. Therefore, aggregate all trackers in the wrapper
                 vastVideoConfig.addImpressionTrackers(
                         vastWrapperXmlManager.getImpressionTrackers());
-                List<VastLinearXmlManager> linearXmlManagers =
+                final List<VastLinearXmlManager> linearXmlManagers =
                         vastWrapperXmlManager.getLinearXmlManagers();
                 for (VastLinearXmlManager linearXmlManager : linearXmlManagers) {
                     populateLinearTrackersAndIcon(linearXmlManager, vastVideoConfig);
@@ -293,13 +282,16 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
             @NonNull final VastInLineXmlManager vastInLineXmlManager,
             @NonNull final List<VastTracker> errorTrackers) {
         Preconditions.checkNotNull(vastInLineXmlManager);
+        Preconditions.checkNotNull(errorTrackers);
 
-        List<VastLinearXmlManager> linearXmlManagers = vastInLineXmlManager.getLinearXmlManagers();
+        final List<VastLinearXmlManager> linearXmlManagers
+                = vastInLineXmlManager.getLinearXmlManagers();
+
         for (VastLinearXmlManager linearXmlManager : linearXmlManagers) {
             String bestMediaFileUrl = getBestMediaFileUrl(linearXmlManager.getMediaXmlManagers());
             if (bestMediaFileUrl != null) {
                 // Create vast video configuration and populate initial trackers
-                VastVideoConfig vastVideoConfig = new VastVideoConfig();
+                final VastVideoConfig vastVideoConfig = new VastVideoConfig();
                 vastVideoConfig.addImpressionTrackers(vastInLineXmlManager.getImpressionTrackers());
                 populateLinearTrackersAndIcon(linearXmlManager, vastVideoConfig);
 
@@ -327,22 +319,20 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
      * Retrieves the Wrapper's redirect uri and follows it to return the next VAST xml String.
      *
      * @param vastWrapperXmlManager used to get the redirect uri
-     * @param androidHttpClient     the http client
      * @param wrapperErrorTrackers  Error trackers to hit if something goes wrong
      * @return the next VAST xml String or {@code null} if it could not be resolved
      */
     @Nullable
     private String evaluateWrapperRedirect(@NonNull VastWrapperXmlManager vastWrapperXmlManager,
-            @NonNull AndroidHttpClient androidHttpClient,
             @NonNull List<VastTracker> wrapperErrorTrackers) {
-        String vastAdTagUri = vastWrapperXmlManager.getVastAdTagURI();
+        final String vastAdTagUri = vastWrapperXmlManager.getVastAdTagURI();
         if (vastAdTagUri == null) {
             return null;
         }
 
         String vastRedirectXml = null;
         try {
-            vastRedirectXml = followVastRedirect(androidHttpClient, vastAdTagUri);
+            vastRedirectXml = followVastRedirect(vastAdTagUri);
         } catch (Exception e) {
             MoPubLog.d("Failed to follow VAST redirect", e);
             if (!wrapperErrorTrackers.isEmpty()) {
@@ -688,19 +678,27 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
     }
 
     @Nullable
-    private String followVastRedirect(@NonNull final AndroidHttpClient httpClient,
-            @NonNull final String redirectUrl) throws Exception {
-        Preconditions.checkNotNull(httpClient);
+    private String followVastRedirect(@NonNull final String redirectUrl) throws IOException {
         Preconditions.checkNotNull(redirectUrl);
 
         if (mTimesFollowedVastRedirect < MAX_TIMES_TO_FOLLOW_VAST_REDIRECT) {
             mTimesFollowedVastRedirect++;
 
-            final HttpGet httpget = HttpClient.initializeHttpGet(redirectUrl);
-            final HttpResponse response = httpClient.execute(httpget);
-            final HttpEntity entity = response.getEntity();
-            return (entity != null) ? Strings.fromStream(entity.getContent()) : null;
+            HttpURLConnection urlConnection = null;
+            InputStream inputStream = null;
+            try {
+                urlConnection = MoPubHttpUrlConnection.getHttpUrlConnection(redirectUrl);
+                inputStream = new BufferedInputStream(urlConnection.getInputStream());
+
+                return Strings.fromStream(inputStream);
+            } finally {
+                Streams.closeStream(inputStream);
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+            }
         }
+
         return null;
     }
 

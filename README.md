@@ -27,7 +27,7 @@ The MoPub SDK is available via:
     }
 
     dependencies {
-        compile('com.mopub:mopub-sdk:3.11.0@aar') {
+        compile('com.mopub:mopub-sdk:3.13.0@aar') {
             transitive = true
         }
     }
@@ -63,8 +63,7 @@ The MoPub SDK is available via:
 
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the lastest release..
 
-- **Rewarded Video Mediation** is now Generally Available. We provide support for Unity Ads, Chartboost, Vungle, and Ad Colony rewarded video.
-- **Privacy Information Icon** is now available for native ads. You should add this view to your ViewBinder. See the example in the MoPub Sample app.
+- **Android M Support** - Replaced usage of the now-deprecated HttpClient with HttpURLConnection.
 
 ## Requirements
 

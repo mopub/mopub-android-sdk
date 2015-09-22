@@ -2179,25 +2179,4 @@ public class VastVideoViewControllerTest {
     private ShadowVastVideoView getShadowVideoView() {
         return (ShadowVastVideoView) shadowOf_(subject.getVastVideoView());
     }
-
-    public static void assertHttpRequestsMade(final String userAgent, final String... urls) {
-        final int numberOfReceivedHttpRequests = Robolectric.getFakeHttpLayer().getSentHttpRequestInfos().size();
-        assertThat(numberOfReceivedHttpRequests).isEqualTo(urls.length);
-
-        for (final String url : urls) {
-            assertThat(Robolectric.httpRequestWasMade(url)).isTrue();
-        }
-
-        if (userAgent != null) {
-            while (true) {
-                final HttpRequest httpRequest = Robolectric.getNextSentHttpRequest();
-                if (httpRequest == null) {
-                    break;
-                }
-
-                assertThat(httpRequest.getFirstHeader(USER_AGENT.getKey()).getValue())
-                        .isEqualTo(userAgent);
-            }
-        }
-    }
 }

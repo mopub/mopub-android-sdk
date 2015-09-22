@@ -5,15 +5,17 @@ import android.app.Activity;
 import com.mopub.common.CacheService;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.DeviceUtils;
+import com.mopub.common.util.test.support.ShadowMoPubHttpUrlConnection;
 import com.mopub.mobileads.test.support.VastUtils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
-import org.robolectric.tester.org.apache.http.FakeHttpLayer;
+import org.robolectric.annotation.Config;
 
 import java.util.concurrent.Semaphore;
 
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+@Config(shadows = {ShadowMoPubHttpUrlConnection.class})
 @RunWith(SdkTestRunner.class)
 public class VastManagerTest {
     static final String EXTENSIONS_SNIPPET_PLACEHOLDER = "<![CDATA[EXTENSIONS_SNIPPET]]>";
@@ -32,7 +35,6 @@ public class VastManagerTest {
     static final String TEST_VAST_BAD_NEST_URL_XML_STRING = "<VAST version='2.0'><Ad id='62833'><Wrapper><AdSystem>Tapad</AdSystem><VASTAdTagURI>http://dsp.x-team.staging.mopub.com/xml\"$|||</VASTAdTagURI><Impression>http://myTrackingURL/wrapper/impression1</Impression><Impression>http://myTrackingURL/wrapper/impression2</Impression><Creatives><Creative AdID='62833'><Linear><TrackingEvents><Tracking event='creativeView'>http://myTrackingURL/wrapper/creativeView</Tracking><Tracking event='start'>http://myTrackingURL/wrapper/start</Tracking><Tracking event='midpoint'>http://myTrackingURL/wrapper/midpoint</Tracking><Tracking event='firstQuartile'>http://myTrackingURL/wrapper/firstQuartile</Tracking><Tracking event='thirdQuartile'>http://myTrackingURL/wrapper/thirdQuartile</Tracking><Tracking event='complete'>http://myTrackingURL/wrapper/complete</Tracking><Tracking event='mute'>http://myTrackingURL/wrapper/mute</Tracking><Tracking event='unmute'>http://myTrackingURL/wrapper/unmute</Tracking><Tracking event='pause'>http://myTrackingURL/wrapper/pause</Tracking><Tracking event='resume'>http://myTrackingURL/wrapper/resume</Tracking><Tracking event='fullscreen'>http://myTrackingURL/wrapper/fullscreen</Tracking></TrackingEvents><VideoClicks><ClickTracking>http://myTrackingURL/wrapper/click</ClickTracking></VideoClicks></Linear></Creative></Creatives></Wrapper></Ad></VAST><MP_TRACKING_URLS><MP_TRACKING_URL>http://www.mopub.com/imp1</MP_TRACKING_URL><MP_TRACKING_URL>http://www.mopub.com/imp2</MP_TRACKING_URL></MP_TRACKING_URLS>";
 
     private VastManager subject;
-    private FakeHttpLayer mFakeHttpLayer;
     private VastManagerListener vastManagerListener;
     private Activity context;
     private VastVideoConfig mVastVideoConfig;
@@ -43,7 +45,6 @@ public class VastManagerTest {
         context = Robolectric.buildActivity(Activity.class).create().get();
         CacheService.initializeDiskCache(context);
         subject = new VastManager(context);
-        mFakeHttpLayer = Robolectric.getFakeHttpLayer();
 
         semaphore = new Semaphore(0);
         vastManagerListener = mock(VastManagerListener.class);
@@ -58,6 +59,11 @@ public class VastManagerTest {
         }).when(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
     }
 
+    @After
+    public void tearDown() {
+        CacheService.clearAndNullCaches();
+    }
+
     private void prepareVastVideoConfiguration() {
         subject.prepareVastVideoConfiguration(TEST_VAST_XML_STRING, vastManagerListener, context);
 
@@ -68,9 +74,9 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_shouldNotifyTheListenerAndContainTheCorrectVastValues() throws Exception {
         // Vast redirect responses
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -127,11 +133,11 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_shouldHandleMultipleRedirects() throws Exception {
         // Vast redirect responses
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_VAST_XML_STRING);
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_VAST_XML_STRING);
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -194,9 +200,9 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_shouldReturnCorrectVastValuesWhenAVastRedirectFails() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(404, "");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(404, "");
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -208,9 +214,9 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withNoExtensions_shouldContainTheCorrectDefaultExtensionValues() throws Exception {
         // Vast redirect response to XML without VAST extensions
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -225,9 +231,9 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withExtensionsUnderWrapper_shouldContainTheCorrectCustomExtensionValues() throws Exception {
         // Vast redirect response to XML without extensions
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         // Add extensions under Wrapper element in TEST_VAST_XML_STRING
         subject.prepareVastVideoConfiguration(
@@ -258,18 +264,18 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withExtensionsUnderInline_shouldContainTheCorrectCustomExtensionValues() throws Exception {
         // Vast redirect response to XML with extensions under Inline element
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText>custom CTA text</MoPubCtaText>" +
                                 "<MoPubSkipText>skip</MoPubSkipText>" +
                                 "<MoPubCloseIcon>http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png</MoPubCloseIcon>" +
                                 "<MoPubForceOrientation>device</MoPubForceOrientation>" +
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -286,18 +292,18 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withExtensionsUnderBothWrapperAndInline_shouldContainLastParsedCustomExtensionValues() throws Exception {
         // Vast redirect response to XML with extensions under Inline element in TEST_NESTED_VAST_XML_STRING, will be parsed last
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText>CTA 2</MoPubCtaText>" +
                                 "<MoPubSkipText>skip 2</MoPubSkipText>" +
                                 "<MoPubCloseIcon>http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_2.png</MoPubCloseIcon>" +
                                 "<MoPubForceOrientation>landscape</MoPubForceOrientation>" +
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         // Also add extensions under Wrapper element in TEST_VAST_XML_STRING
         subject.prepareVastVideoConfiguration(
@@ -329,15 +335,15 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withCustomCtaTextAsSingleSpace_shouldReturnEmptyString() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText> </MoPubCtaText>" +     // single space, i.e. no text
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -349,15 +355,15 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withCustomCtaTextLongerThan15Chars_shouldReturnNull() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText>1234567890123456</MoPubCtaText>" +     // 16 chars
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -369,15 +375,15 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withCustomSkipTextLongerThan8Chars_shouldReturnNull() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubSkipText>123456789</MoPubSkipText>" +     // 9 chars
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -389,15 +395,15 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withInvalidCustomForceOrientation_shouldReturnDefaultForceLandscapeOrientation() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubForceOrientation>abcd</MoPubForceOrientation>" +   // invalid value
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -409,15 +415,15 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withCustomForceOrientationInMixedCaseAndUntrimmed_shouldReturnCustomForceOrientation() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubForceOrientation> PortRAIT  </MoPubForceOrientation>" +
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -429,9 +435,9 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withValidPercentSkipOffset_shouldReturnCorrectValue() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='25%'>"));
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='25%'>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -445,9 +451,9 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withValidAbsoluteSkipOffset_shouldReturnCorrectValue() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='  00:03:14 '>"));
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='  00:03:14 '>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -460,9 +466,9 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withValidAbsoluteSkipOffsetWithExtraSpace_shouldReturnCorrectTrimmedValue() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='  00:03:14.159 '>"));
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='  00:03:14.159 '>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -475,9 +481,9 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withSkipOffsets_shouldReturnLastParsedValue() throws Exception {
         // Vast redirect response with skipoffset in percent format
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='25%'>"));
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='25%'>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         // Also add a skipoffset in absolute format
         subject.prepareVastVideoConfiguration(
@@ -498,9 +504,9 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withEmptySkipOffset_shouldReturnNull() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset=' '>"));
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset=' '>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -549,14 +555,14 @@ public class VastManagerTest {
 
     @Test
     public void prepareVastVideoConfiguration_withVideoInDiskCache_shouldNotDownloadVideo() throws Exception {
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
 
         CacheService.putToDiskCache("https://s3.amazonaws.com/mopub-vast/tapad-video.mp4", "video_data".getBytes());
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        assertThat(mFakeHttpLayer.getSentHttpRequestInfos().size()).isEqualTo(1);
+        assertThat(ShadowMoPubHttpUrlConnection.getLatestRequestUrl()).isNotNull();
         verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
         assertThat(mVastVideoConfig.getDiskMediaFileUrl())
                 .isEqualTo(CacheService.getFilePathDiskCache("https://s3.amazonaws.com/mopub-vast/tapad-video.mp4"));
@@ -564,7 +570,8 @@ public class VastManagerTest {
 
     @Test
     public void prepareVastVideoConfiguration_withUninitializedDiskCache_shouldReturnNull() throws Exception {
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        CacheService.clearAndNullCaches();
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
@@ -575,7 +582,7 @@ public class VastManagerTest {
 
     @Test
     public void cancel_shouldCancelBackgroundProcessingAndNotNotifyListenerWithNull() throws Exception {
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
 
         Robolectric.getBackgroundScheduler().pause();
 

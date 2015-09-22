@@ -1,87 +1,77 @@
 package com.mopub.common;
 
 import android.app.Activity;
+import android.content.Context;
 import android.webkit.WebView;
 
-import com.mopub.common.util.ResponseHeader;
+import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.network.Networking;
 
 import org.apache.http.HttpRequest;
-import org.apache.http.client.methods.HttpGet;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
 import org.robolectric.tester.org.apache.http.RequestMatcher;
 import org.robolectric.tester.org.apache.http.TestHttpResponse;
 
-import static com.mopub.common.HttpClient.initializeHttpGet;
-import static com.mopub.common.HttpClient.urlEncode;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.util.List;
+
+import static com.mopub.common.MoPubHttpUrlConnection.urlEncode;
 import static org.fest.assertions.api.Assertions.assertThat;
 
-@RunWith(RobolectricTestRunner.class)
-public class HttpClientTest {
-    static final String url = "http://www.mopub.com";
-    private Activity context;
+@RunWith(SdkTestRunner.class)
+public class MoPubHttpUrlConnectionTest {
+    private static final String url = "http://www.mopub.com";
     private String userAgent;
 
     @Before
-    public void setup() {
-        context = Robolectric.buildActivity(Activity.class).create().get();
+    public void setUp() throws Exception {
+        Context context = Robolectric.buildActivity(Activity.class).create().get();
         userAgent = new WebView(context).getSettings().getUserAgentString();
-
-        Robolectric.addHttpResponseRule(new RequestMatcher() {
-            @Override
-            public boolean matches(HttpRequest request) {
-                return true;
-            }
-        }, new TestHttpResponse(200, "body"));
-
-        Robolectric.getBackgroundScheduler().pause();
-        Robolectric.clearPendingHttpResponses();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        Robolectric.getBackgroundScheduler().reset();
-        Robolectric.clearPendingHttpResponses();
+        Networking.setUserAgentForTesting(userAgent);
     }
 
     @Test
-    public void initializeHttpGet_shouldReturnHttpGetWithWebViewUserAgent() throws Exception {
-        Networking.setUserAgentForTesting(null);
-        HttpGet httpGet = initializeHttpGet(url, context);
+    public void getHttpUrlConnection_shouldReturnHttpUrlConnectionWithUserAgent() throws Exception {
+        HttpURLConnection urlConnection = MoPubHttpUrlConnection.getHttpUrlConnection(url);
 
-        assertThat(httpGet.getURI().toURL().toString()).isEqualTo(url);
-        assertThat(httpGet.getFirstHeader(ResponseHeader.USER_AGENT.getKey()).getValue()).isEqualTo(
-                userAgent);
+        List<String> userAgentHeaders = urlConnection.getRequestProperties().get("User-Agent");
+        assertThat(userAgentHeaders).containsExactly(userAgent);
     }
 
     @Test
-    public void initializeHttpGet_withNullContext_shouldUseCachedUserAgent() throws Exception {
-        Networking.setUserAgentForTesting("cached");
-        HttpGet httpGet = initializeHttpGet("http://www.mopub.com/");
-        assertThat(httpGet.getFirstHeader(ResponseHeader.USER_AGENT.getKey()).getValue()).isEqualTo(
-                "cached");
+    public void getHttpUrlConnection_shouldSetConnectAndReadTimeoutTo10Seconds() throws Exception {
+        HttpURLConnection urlConnection = MoPubHttpUrlConnection.getHttpUrlConnection(url);
+
+        assertThat(urlConnection.getConnectTimeout()).isEqualTo(10000);
+        assertThat(urlConnection.getReadTimeout()).isEqualTo(10000);
     }
 
     @Test
-    public void initializeHttpGet_shouldProperlyEncodeUrl() throws Exception {
-        HttpGet httpGet = initializeHttpGet("http://host:80/doc|search?q=green robots#over 6\"");
-        assertThat(httpGet.getURI().toString())
+    public void getHttpUrlConnection_shouldProperlyEncodeUrl() throws Exception {
+        HttpURLConnection urlConnection = MoPubHttpUrlConnection.getHttpUrlConnection(
+                "http://host:80/doc|search?q=green robots#over 6\"");
+
+        assertThat(urlConnection.getURL().toString())
                 .isEqualTo("http://host:80/doc%7Csearch?q=green%20robots#over%206%22");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void initializeHttpGet_withImproperlyEncodedUrl_shouldThrowIllegalArgumentException() throws Exception {
-        initializeHttpGet("http://user:passwrd@host:80/doc%7ZZZC");
+    public void getHttpUrlConnection_withImproperlyEncodedUrl_shouldThrowIllegalArgumentException() throws Exception {
+        MoPubHttpUrlConnection.getHttpUrlConnection("http://user:passwrd@host:80/doc%7ZZZC");
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void initializeHttpGet_withMalformedUrl_shouldThrowIllegalArgumentException() throws Exception {
-        initializeHttpGet("bad://host:80/doc|search?q=green robots#over 6\"");
+    @Test(expected = MalformedURLException.class)
+    public void getHttpUrlConnection_withMalformedUrl_shouldThrowMalformedUrlException() throws Exception {
+        MoPubHttpUrlConnection.getHttpUrlConnection("bad://host:80/doc|search?q=green robots#over 6\"");
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void getHttpUrlConnection_withNullUrl_shouldThrowNullPointerException() throws Exception {
+        MoPubHttpUrlConnection.getHttpUrlConnection(null);
     }
 
     @Test
@@ -126,20 +116,5 @@ public class HttpClientTest {
     @Test(expected = Exception.class)
     public void urlEncode_withMalformedUrl_shouldThrowException() throws Exception {
         urlEncode("derp://www.mopub.com/");
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void initializeHttpGet_withNullUrl_shouldThrowNullPointerException() throws Exception {
-        initializeHttpGet(null, context);
-    }
-
-    @Test
-    public void initializeHttpGet_withNullContext_shouldPopulateUserAgentHeaderWithCachedValue() throws Exception {
-        Networking.setUserAgentForTesting("cached");
-        HttpGet httpGet = initializeHttpGet(url, null);
-
-        assertThat(httpGet.getURI().toURL().toString()).isEqualTo(url);
-        assertThat(httpGet.getFirstHeader(ResponseHeader.USER_AGENT.getKey()).getValue()).isEqualTo(
-                "cached");
     }
 }

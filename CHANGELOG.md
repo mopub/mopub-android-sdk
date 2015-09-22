@@ -1,3 +1,7 @@
+## Version 3.13.0 (September 21, 2015)
+
+- **Android M Support** - Replaced usage of the now-deprecated HttpClient with HttpURLConnection.
+
 ## Version 3.12.0 (August 31, 2015)
 
 - **Rewarded Video Mediation** is now Generally Available. We provide support for Unity Ads, Chartboost, Vungle, and Ad Colony rewarded video.

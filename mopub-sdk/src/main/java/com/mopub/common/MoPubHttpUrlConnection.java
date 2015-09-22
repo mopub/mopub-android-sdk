@@ -1,51 +1,38 @@
 package com.mopub.common;
 
-import android.content.Context;
-import android.net.http.AndroidHttpClient;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.network.Networking;
 
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.params.HttpClientParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 
-import static com.mopub.common.util.ResponseHeader.USER_AGENT;
+public abstract class MoPubHttpUrlConnection extends HttpURLConnection {
+    private static final int CONNECT_TIMEOUT = 10000;
+    private static final int READ_TIMEOUT = 10000;
 
-public class HttpClient {
-    private static final int CONNECTION_TIMEOUT = 10000;
-    private static final int SOCKET_TIMEOUT = 10000;
-
-    public static AndroidHttpClient getHttpClient() {
-        final String userAgent = Networking.getCachedUserAgent();
-
-        AndroidHttpClient httpClient = AndroidHttpClient.newInstance(userAgent);
-
-        HttpParams params = httpClient.getParams();
-        HttpConnectionParams.setConnectionTimeout(params, CONNECTION_TIMEOUT);
-        HttpConnectionParams.setSoTimeout(params, SOCKET_TIMEOUT);
-        HttpClientParams.setRedirecting(params, true);
-
-        return httpClient;
+    private MoPubHttpUrlConnection(URL url) {
+        super(url);
     }
 
-    public static HttpGet initializeHttpGet(@NonNull final String url) {
-        return initializeHttpGet(url, null);
-    }
-
-    public static HttpGet initializeHttpGet(@NonNull String url, @Nullable final Context context) {
+    public static HttpURLConnection getHttpUrlConnection(@NonNull final String url)
+            throws IOException {
         Preconditions.checkNotNull(url);
 
-        // Try to encode url. If this fails, then fallback on the original url
+        // If the passed-in url has already been encoded improperly, there is no way to salvage this
+        // connection request -- fail quickly instead.
+        if (isUrlImproperlyEncoded(url)) {
+            throw new IllegalArgumentException("URL is improperly encoded: " + url);
+        }
+
+        // Attempt to encode the passed-in url and use that, if possible. If this fails, then
+        // fallback to the original url instead.
         String getUrl;
         try {
             getUrl = urlEncode(url);
@@ -53,26 +40,20 @@ public class HttpClient {
             getUrl = url;
         }
 
-        final HttpGet httpGet = new HttpGet(getUrl);
+        final HttpURLConnection urlConnection =
+                (HttpURLConnection) new URL(getUrl).openConnection();
+        urlConnection.setRequestProperty("User-Agent", Networking.getCachedUserAgent());
+        urlConnection.setConnectTimeout(CONNECT_TIMEOUT);
+        urlConnection.setReadTimeout(READ_TIMEOUT);
 
-        final String webViewUserAgent;
-        if (context != null) {
-            webViewUserAgent = Networking.getUserAgent(context);
-        } else {
-            webViewUserAgent = Networking.getCachedUserAgent();
-        }
-
-        if (webViewUserAgent != null) {
-            httpGet.addHeader(USER_AGENT.getKey(), webViewUserAgent);
-        }
-
-        return httpGet;
+        return urlConnection;
     }
 
     /**
      * This method constructs a properly encoded and valid URI adhering to legal characters for
      * each component. See Android docs on these classes for reference.
      */
+    @NonNull
     public static String urlEncode(@NonNull final String url) throws Exception {
         Preconditions.checkNotNull(url);
 
@@ -122,6 +103,7 @@ public class HttpClient {
     /**
      * This method encodes each component of the URL into a valid URI.
      */
+    @NonNull
     static URI encodeUrl(@NonNull String urlString) throws Exception {
         URI uri;
         try {

@@ -7,8 +7,8 @@ import android.graphics.Point;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.mopub.common.HttpClient;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.util.test.support.ShadowMoPubHttpUrlConnection;
 import com.mopub.mobileads.test.support.VastUtils;
 import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
@@ -20,7 +20,7 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
-import org.robolectric.tester.org.apache.http.FakeHttpLayer;
+import org.robolectric.annotation.Config;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+@Config(shadows = {ShadowMoPubHttpUrlConnection.class})
 @RunWith(SdkTestRunner.class)
 public class VastXmlManagerAggregatorTest {
     static final String TEST_VAST_XML_STRING = "<VAST version='2.0'>" +
@@ -267,7 +268,6 @@ public class VastXmlManagerAggregatorTest {
             "</VAST>";
 
     private Activity context;
-    private FakeHttpLayer mFakeHttpLayer;
     private Semaphore semaphore;
     private VastXmlManagerAggregatorListener vastXmlManagerAggregatorListener;
     private VastXmlManagerAggregator subject;
@@ -279,7 +279,6 @@ public class VastXmlManagerAggregatorTest {
     @Before
     public void setup() {
         context = Robolectric.buildActivity(Activity.class).create().get();
-        mFakeHttpLayer = Robolectric.getFakeHttpLayer();
 
         Networking.setRequestQueueForTesting(mockRequestQueue);
 
@@ -309,10 +308,10 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void doInBackground_shouldNotFollowRedirectsOnceTheLimitHasBeenReached() throws Exception {
-        for(int i = 0; i < VastXmlManagerAggregator.MAX_TIMES_TO_FOLLOW_VAST_REDIRECT; i++) {
-            mFakeHttpLayer.addPendingHttpResponse(200, TEST_VAST_XML_STRING);
+        for (int i = 0; i < VastXmlManagerAggregator.MAX_TIMES_TO_FOLLOW_VAST_REDIRECT; i++) {
+            ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_VAST_XML_STRING);
         }
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
 
         subject.execute(TEST_VAST_XML_STRING);
         semaphore.acquire();
@@ -322,10 +321,10 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void doInBackground_shouldFollowMaxRedirectsMinusOne() throws Exception {
-        for(int i = 0; i < VastXmlManagerAggregator.MAX_TIMES_TO_FOLLOW_VAST_REDIRECT - 1; i++) {
-            mFakeHttpLayer.addPendingHttpResponse(200, TEST_VAST_XML_STRING);
+        for (int i = 0; i < VastXmlManagerAggregator.MAX_TIMES_TO_FOLLOW_VAST_REDIRECT - 1; i++) {
+            ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_VAST_XML_STRING);
         }
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
 
         subject.execute(TEST_VAST_XML_STRING);
         semaphore.acquire();
@@ -919,7 +918,7 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void evaluateVastXmlManager_withStandardInline_shouldReturnValidVastVideoConfiguration() {
         VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
-                TEST_NESTED_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
+                TEST_NESTED_VAST_XML_STRING, new ArrayList<VastTracker>());
 
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getImpressionTrackers()))
                 .containsOnly("http://rtb-test.dev.tapad.com:8080/creative/imp" +
@@ -981,10 +980,10 @@ public class VastXmlManagerAggregatorTest {
     }
 
     @Test
-    public void evaluateVastXmlManager_withAWrapperToAnInline_shouldReturnValidVastVideoConfiguration() {
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+    public void evaluateVastXmlManager_withAWrapperToAnInline_shouldReturnValidVastVideoConfiguration() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
         VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
-                TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
+                TEST_VAST_XML_STRING, new ArrayList<VastTracker>());
 
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getImpressionTrackers()))
                 .containsOnly(
@@ -1087,17 +1086,17 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void evaluateVastXmlManager_withInvalidXml_shouldReturnNullVastVideoConfiguration() {
         VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
-                TEST_VAST_BAD_NEST_URL_XML_STRING, HttpClient.getHttpClient(),
+                TEST_VAST_BAD_NEST_URL_XML_STRING,
                 new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig).isNull();
     }
 
     @Test
-    public void evaluateVastXmlManager_withRedirectHavingNoCompanionAd_shouldReturnVastVideoConfigurationWithCompanionAdOfWrapper() {
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_NO_COMPANION_VAST_XML_STRING);
+    public void evaluateVastXmlManager_withRedirectHavingNoCompanionAd_shouldReturnVastVideoConfigurationWithCompanionAdOfWrapper() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_NO_COMPANION_VAST_XML_STRING);
         VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
-                TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
+                TEST_VAST_XML_STRING, new ArrayList<VastTracker>());
 
         VastCompanionAdConfig[] companionAds = new VastCompanionAdConfig[2];
         companionAds[0] = vastVideoConfig.getVastCompanionAd(
@@ -1122,7 +1121,7 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void evaluateVastXmlManager_withSequenceNumbers_shouldReturnVastVideoConfigurationWithNegativeSequenceNumber() {
         VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
-                TEST_VAST_WITH_NEGATIVE_SEQUENCE_NUMBER_XML_STRING, HttpClient.getHttpClient(),
+                TEST_VAST_WITH_NEGATIVE_SEQUENCE_NUMBER_XML_STRING,
                 new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig.getNetworkMediaFileUrl()).isEqualTo(
@@ -1174,7 +1173,7 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void evaluateVastXmlManager_withJustError_shouldReturnNullVastVideoConfiguration_shouldFireErrorTracker() {
         VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
-                TEST_JUST_ERROR_XML_STRING, HttpClient.getHttpClient(),
+                TEST_JUST_ERROR_XML_STRING,
                 new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig).isNull();
@@ -1183,10 +1182,10 @@ public class VastXmlManagerAggregatorTest {
     }
 
     @Test
-    public void evaluateVastXmlManager_withWrapperToJustError_shouldReturnNullVastVideoConfiguration_shouldFireErrorTrackers() {
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_JUST_ERROR_XML_STRING);
+    public void evaluateVastXmlManager_withWrapperToJustError_shouldReturnNullVastVideoConfiguration_shouldFireErrorTrackers() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_JUST_ERROR_XML_STRING);
         VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
-                TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
+                TEST_VAST_XML_STRING, new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig).isNull();
         verify(mockRequestQueue).add(argThat(isUrl("http://justErrorTracking?errorcode=303")));
@@ -1194,20 +1193,20 @@ public class VastXmlManagerAggregatorTest {
     }
 
     @Test
-    public void evaluateVastXmlManager_withWrapperToVastXmlError_shouldReturnNullVastVideoConfiguration_shouldFireErrorTracker() {
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_INVALID_VAST_XML_STRING);
+    public void evaluateVastXmlManager_withWrapperToVastXmlError_shouldReturnNullVastVideoConfiguration_shouldFireErrorTracker() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_INVALID_VAST_XML_STRING);
         VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
-                TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
+                TEST_VAST_XML_STRING, new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig).isNull();
         verifyNoMoreInteractions(mockRequestQueue);
     }
 
     @Test
-    public void evaluateVastXmlManager_withWrapperToInvalidXml_shouldReturnNullVastVideoConfiguration_shouldFireErrorTracker() {
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_INVALID_XML_STRING);
+    public void evaluateVastXmlManager_withWrapperToInvalidXml_shouldReturnNullVastVideoConfiguration_shouldFireErrorTracker() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_INVALID_XML_STRING);
         VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
-                TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
+                TEST_VAST_XML_STRING, new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig).isNull();
         verify(mockRequestQueue).add(argThat(isUrl("http://wrapperErrorOne?errorcode=100")));
@@ -1218,7 +1217,7 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void evaluateVastXmlManager_withWrapperToNoHttpResponse_shouldReturnNullVastVideoConfiguration_shouldFireErrorTracker() {
         VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
-                TEST_VAST_XML_STRING, HttpClient.getHttpClient(), new ArrayList<VastTracker>());
+                TEST_VAST_XML_STRING, new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig).isNull();
         verify(mockRequestQueue).add(argThat(isUrl("http://wrapperErrorOne?errorcode=301")));
