@@ -30,7 +30,8 @@ class HtmlWebViewClient extends WebViewClient {
             UrlAction.OPEN_IN_APP_BROWSER,
             UrlAction.HANDLE_SHARE_TWEET,
             UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK,
-            UrlAction.FOLLOW_DEEP_LINK);
+            UrlAction.FOLLOW_DEEP_LINK,
+            UrlAction.FOLLOW_INTENT_LINK);
 
     private final Context mContext;
     private HtmlWebViewListener mHtmlWebViewListener;
