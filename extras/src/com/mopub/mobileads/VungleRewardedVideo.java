@@ -36,7 +36,7 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
 
     // This has to be reinitialized every time the CE loads to avoid conflict with the interstitials.
     private static VunglePub sVunglePub;
-    private static VungleRewardedVideoListener sVungleListener = new VungleRewardedVideoListener();
+    private static VungleRewardedVideoListener sVungleListener;
     private static boolean sInitialized;
     private static final LifecycleListener sLifecycleListener = new BaseLifecycleListener() {
         @Override
@@ -53,14 +53,13 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
     };
 
     private final Handler mHandler;
-    private final ScheduledThreadPoolExecutor mScheduledThreadPoolExecutor;
     private boolean mIsLoading;
     private String mAdUnitId;
 
 
     public VungleRewardedVideo() {
+        sVungleListener = new VungleRewardedVideoListener();
         mHandler = new Handler(Looper.getMainLooper());
-        mScheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
         mIsLoading = false;
     }
 
@@ -105,7 +104,22 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         if (adUnitObject instanceof String) {
             mAdUnitId = (String) adUnitObject;
         }
-        scheduleOnVideoLoaded();
+        if (sVunglePub.isAdPlayable()){
+            NotifyAdAvailable();
+        }else{
+            mIsLoading = true;
+        }
+    }
+
+    private void NotifyAdAvailable(){
+        mIsLoading = false;
+        MoPubLog.d("Vungle interstitial ad successfully loaded.");
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                MoPubRewardedVideoManager.onRewardedVideoLoadSuccess(VungleRewardedVideo.class, VUNGLE_AD_NETWORK_CONSTANT);
+            }
+        });
     }
 
     @Override
@@ -154,36 +168,12 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         }
     }
 
-    private void scheduleOnVideoLoaded() {
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                if (sVunglePub.isAdPlayable()) {
-                    MoPubLog.d("Vungle interstitial ad successfully loaded.");
-                    mScheduledThreadPoolExecutor.shutdownNow();
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            MoPubRewardedVideoManager.onRewardedVideoLoadSuccess(VungleRewardedVideo.class, VUNGLE_AD_NETWORK_CONSTANT);
-                        }
-                    });
-                    mIsLoading = false;
-                }
-            }
-        };
-
-        if (!mIsLoading) {
-            mScheduledThreadPoolExecutor.scheduleAtFixedRate(runnable, 1, 1, TimeUnit.SECONDS);
-            mIsLoading = true;
-        }
-    }
-
     @Override
     protected void onInvalidate() {
-        mScheduledThreadPoolExecutor.shutdownNow();
+        mIsLoading = false;
     }
 
-    private static class VungleRewardedVideoListener implements EventListener,
+    private class VungleRewardedVideoListener implements EventListener,
             CustomEventRewardedVideoListener {
 
         @Override
@@ -210,8 +200,8 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
 
         @Override
         public void onAdPlayableChanged(final boolean playable) {
-            // Do nothing here. After loading is kicked off, we scheduleOnInterstitialLoaded and check until
-            // we have a playable ad or we timeout.
+            if (mIsLoading && playable)
+                NotifyAdAvailable();
         }
 
         @Override
