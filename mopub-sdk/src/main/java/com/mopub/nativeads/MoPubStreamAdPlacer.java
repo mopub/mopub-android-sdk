@@ -332,25 +332,12 @@ public class MoPubStreamAdPlacer {
 	void handleAdsAvailable() {
 		// If we've already placed ads, just notify that we need placement.
 		if (mHasPlacedAds) {
-			notifyNeedsPlacement();
+//			notifyNeedsPlacement();
 			return;
 		}
 
 		// Otherwise, we may need to place initial ads.
 		if (mHasReceivedPositions) {
-			int stackedCount = mPendingPlacementData.getStackedCount();
-			if (stackedCount > 0) {
-				for (int i = 0; i < stackedCount; ++i) {
-					final NativeResponse adResponse = mAdSource.dequeueAd();
-					if (adResponse == null) {
-						return;
-					}
-
-					final NativeAdData adData = createAdData(adResponse);
-					int insertPosition = mPendingPlacementData.placeInStack(adData);
-					mAdLoadedListener.onAdLoaded(insertPosition);
-				}
-			}
 			placeInitialAds(mPendingPlacementData);
 		}
 		mHasReceivedAds = true;
@@ -362,13 +349,21 @@ public class MoPubStreamAdPlacer {
 		removeAdsInRange(0, mItemCount);
 
 		mPlacementData = placementData;
-		placeAds();
+//		placeAds();
 		mHasPlacedAds = true;
+		for (Integer integer : delayedStackRequests){
+			placeAd(integer);
+		}
+		delayedStackRequests.clear();
 	}
 
 	public void setVisibleRange(int start, int end) {
 		mVisibleRangeStart = start;
 		mVisibleRangeEnd = end;
+	}
+
+	public void stackPlace(int position){
+		delayedStackRequests.add(position);
 	}
 
 	public int getItemCount() {
@@ -377,6 +372,10 @@ public class MoPubStreamAdPlacer {
 
 	public boolean isAdLoaded(int position) {
 		return mPlacementData.isAdLoaded(position);
+	}
+
+	public boolean isAdLoadedByOriginalPosition(int position) {
+		return mPlacementData.isAdLoadedByOriginalPosition(position);
 	}
 
 	public boolean isAdLoadedByIndex(int index) {
@@ -475,6 +474,11 @@ public class MoPubStreamAdPlacer {
 	@Nullable
 	public NativeAdData getAdDataByIndex(final int index) {
 		return mPlacementData.getPlacedAdByIndex(index);
+	}
+
+	@Nullable
+	public NativeAdData getAdDataByOriginalPosition(final int index) {
+		return mPlacementData.getPlacedAdByOriginalPosition(index);
 	}
 
 	/**
@@ -684,9 +688,9 @@ public class MoPubStreamAdPlacer {
 		mItemCount = mPlacementData.getAdjustedCount(originalCount);
 
 		// If we haven't already placed ads, we'll let ads get placed by the normal loadAds call
-		if (mHasPlacedAds) {
-			notifyNeedsPlacement();
-		}
+//		if (mHasPlacedAds) {
+//			notifyNeedsPlacement();
+//		}
 	}
 
 	/**
@@ -755,13 +759,13 @@ public class MoPubStreamAdPlacer {
 
 	private void notifyNeedsPlacement() {
 		// Avoid posting if this method has already been called.
-		if (mNeedsPlacement) {
-			return;
-		}
-		mNeedsPlacement = true;
-
-		// Post the placement to happen on the next UI render loop.
-		mPlacementHandler.post(mPlacementRunnable);
+//		if (mNeedsPlacement) {
+//			return;
+//		}
+//		mNeedsPlacement = true;
+//
+//		// Post the placement to happen on the next UI render loop.
+//		mPlacementHandler.post(mPlacementRunnable);
 	}
 
 	/**
@@ -773,7 +777,7 @@ public class MoPubStreamAdPlacer {
 				if (!tryPlaceAd(integer)) {
 					return;
 				}
-			}else {
+			} else {
 				MoPubLog.e("there is no place for stacked ad");
 			}
 		}
@@ -819,6 +823,13 @@ public class MoPubStreamAdPlacer {
 		return true;
 	}
 
+	public boolean placeAd(int position) {
+		if (mPlacementData.shouldPlaceAd(position)) {
+			return tryPlaceAd(position);
+		}
+		return false;
+	}
+
 	/**
 	 * Attempts to place an ad at the given position, returning false if there is no ad available to
 	 * be placed.
@@ -826,7 +837,7 @@ public class MoPubStreamAdPlacer {
 	 * @param position The position to place the ad at.
 	 * @return false if there is no ad available to be placed.
 	 */
-	private boolean tryPlaceAd(final int position) {
+	public boolean tryPlaceAd(final int position) {
 		final NativeResponse adResponse = mAdSource.dequeueAd();
 		if (adResponse == null) {
 			return false;
@@ -838,33 +849,6 @@ public class MoPubStreamAdPlacer {
 
 		mAdLoadedListener.onAdLoaded(position);
 		return true;
-	}
-
-	public void stackPlace(final int position) {
-		stackPlace(position, mPlacementData);
-	}
-
-	public void stackPlace(final int position, PlacementData placementData) {
-		if (!mHasReceivedPositions) {
-			delayedStackRequests.add(position);
-			return;
-		}
-
-		if (!placementData.shouldPlaceAd(position)) {
-			return;
-		}
-		final NativeResponse adResponse = mAdSource.dequeueAd();
-		NativeAdData adData = null;
-		if (adResponse != null) {
-			adData = createAdData(adResponse);
-		}
-
-		placementData.placeAd(position, adData);
-		mItemCount++;
-
-		if (adData != null) {
-			mAdLoadedListener.onAdLoaded(position);
-		}
 	}
 
 	@NonNull
