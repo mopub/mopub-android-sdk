@@ -11,13 +11,13 @@ import java.util.List;
 /**
  * A data that represents placed ads in a {@link com.mopub.nativeads.MoPubStreamAdPlacer},
  * useful for tracking insertion and placed ad positions.
- *
+ * <p/>
  * It maintains four lists of integers
  * 1) Desired insertion positions - positions to place ads
  * 2) Desired original positions - original position for each ad to place
  * 2) Adjusted ad positions - ad positions that were placed
  * 3) Original ad positions - original position of the item after each placed ad
- *
+ * <p/>
  * For example, consider the following ad positions:
  * ORIGINAL LIST    ADJUSTED LIST
  * Item 0           Item 0
@@ -27,7 +27,7 @@ import java.util.List;
  * Item 2
  * Ad
  * Item 3
- *
+ * <p/>
  * List starts as:
  * Item 0
  * Item 1
@@ -37,7 +37,7 @@ import java.util.List;
  * desiredInsertionPositions: {1, 2, 3}
  * originalPositions: {}
  * adjustedPositions: {}
- *
+ * <p/>
  * If we place at position 2:
  * Item 0
  * Item 1
@@ -48,7 +48,7 @@ import java.util.List;
  * desiredInsertionPositions: {1, 4}
  * originalPositions: {2}
  * adjustedPositions: {2}
- *
+ * <p/>
  * If the developer adds a content item at position 2
  * Item 0
  * Item 1
@@ -60,7 +60,7 @@ import java.util.List;
  * desiredInsertionPositions: {1, 5}
  * originalPositions: {3}
  * adjustedPositions: {3}
- *
+ * <p/>
  * Now, place at position 1
  * Item 0
  * Ad
@@ -73,7 +73,7 @@ import java.util.List;
  * desiredInsertionPositions: {6}
  * originalPositions: {1, 3}
  * adjustedPositions: {1, 4}
- *
+ * <p/>
  * Place at position 6
  * Item 0
  * Ad
@@ -87,7 +87,7 @@ import java.util.List;
  * desiredInsertionPositions: {}
  * originalPositions: {1, 3, 4}
  * adjustedPositions: {1, 4, 6}
- *
+ * <p/>
  * Clear ad at position 1
  * Item 0
  * Item 1
@@ -100,7 +100,7 @@ import java.util.List;
  * desiredInsertionPositions: {1}
  * originalPositions: {3, 4}
  * adjustedPositions: {3, 5}
- *
+ * <p/>
  * Clear ad at position 5
  * Item 0
  * Item 1
@@ -112,7 +112,7 @@ import java.util.List;
  * desiredInsertionPositions: {1, 5}
  * originalPositions: {3}
  * adjustedPositions: {3}
- *
+ * <p/>
  * Some runtime guarantees in terms of number of insertion ads:
  * - Finds the next or previous insertion position in O(logN)
  * - Maps from adjusted to original positions and vice versa in O(logN)
@@ -130,12 +130,17 @@ class PlacementData {
 
 	// Initialize all of these to their max capacity. This prevents garbage collection when
 	// reallocating the list, which causes noticeable stuttering when scrolling on some devices.
-    @NonNull private final int[] mDesiredOriginalPositions = new int[MAX_ADS];
-    @NonNull private final int[] mDesiredInsertionPositions = new int[MAX_ADS];
+	@NonNull
+	private final int[] mDesiredOriginalPositions = new int[MAX_ADS];
+	@NonNull
+	private final int[] mDesiredInsertionPositions = new int[MAX_ADS];
 	private int mDesiredCount = 0;
-    @NonNull private final int[] mOriginalAdPositions = new int[MAX_ADS];
-    @NonNull private final int[] mAdjustedAdPositions = new int[MAX_ADS];
-    @NonNull private final NativeAdData[] mAdDataObjects = new NativeAdData[MAX_ADS];
+	@NonNull
+	private final int[] mOriginalAdPositions = new int[MAX_ADS];
+	@NonNull
+	private final int[] mAdjustedAdPositions = new int[MAX_ADS];
+	@NonNull
+	private final NativeAdData[] mAdDataObjects = new NativeAdData[MAX_ADS];
 	private int mPlacedCount = 0;
 
 	/**
@@ -332,6 +337,17 @@ class PlacementData {
 
 		// This is an ad - there is no original position
 		return NOT_FOUND;
+	}
+
+	int getOriginalAdPosition(final int position) {
+		final int index = binarySearch(mAdjustedAdPositions, 0, mPlacedCount, position);
+
+		// No match, ~index is the number of ads before this pos.
+		if (index < 0) {
+			return NOT_FOUND;
+		}
+
+		return mOriginalAdPositions[index];
 	}
 
 	int getPlacedPosition(final int position) {

@@ -633,6 +633,10 @@ public class MoPubStreamAdPlacer {
 		return mPlacementData.getOriginalPosition(position);
 	}
 
+	public int getOriginalAdPosition(final int position) {
+		return mPlacementData.getOriginalAdPosition(position);
+	}
+
 	public int getPlacedPosition(final int position) {
 		return mPlacementData.getPlacedPosition(position);
 	}
