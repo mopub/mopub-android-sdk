@@ -47,6 +47,11 @@ public class MoPubStreamAdPlacer {
 				}
 
 				@Override
+				public void onInitialAdLoaded() {
+
+				}
+
+				@Override
 				public void onAdLoaded(final int position) {
 				}
 
@@ -349,12 +354,17 @@ public class MoPubStreamAdPlacer {
 		removeAdsInRange(0, mItemCount);
 
 		mPlacementData = placementData;
+
 //		placeAds();
 		mHasPlacedAds = true;
-		for (Integer integer : delayedStackRequests){
+		for (Integer integer : delayedStackRequests) {
 			placeAd(integer);
 		}
 		delayedStackRequests.clear();
+
+		if (mAdLoadedListener != null) {
+			mAdLoadedListener.onInitialAdLoaded();
+		}
 	}
 
 	public void setVisibleRange(int start, int end) {
@@ -362,7 +372,7 @@ public class MoPubStreamAdPlacer {
 		mVisibleRangeEnd = end;
 	}
 
-	public void stackPlace(int position){
+	public void stackPlace(int position) {
 		delayedStackRequests.add(position);
 	}
 

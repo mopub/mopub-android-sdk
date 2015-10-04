@@ -83,6 +83,11 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
             }
 
             @Override
+            public void onInitialAdLoaded() {
+
+            }
+
+            @Override
             public void onAdRemoved(final int position) {
                 handleAdRemoved(position);
             }

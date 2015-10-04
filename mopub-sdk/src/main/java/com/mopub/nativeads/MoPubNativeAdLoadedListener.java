@@ -5,6 +5,8 @@ package com.mopub.nativeads;
  */
 public interface MoPubNativeAdLoadedListener {
     void onPositionsLoaded();
+
+    void onInitialAdLoaded();
     /**
      * Called when an ad is loaded at the specified position.
      *
