@@ -11,7 +11,6 @@ import com.mopub.common.Preconditions;
 import com.mopub.common.Preconditions.NoThrow;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
-import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubClientPositioning;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubServerPositioning;
 import com.mopub.nativeads.PositioningSource.PositioningListener;
@@ -19,6 +18,7 @@ import com.mopub.nativeads.PositioningSource.PositioningListener;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
@@ -257,13 +257,17 @@ public class MoPubStreamAdPlacer {
 	/**
 	 * Start loading ads from the MoPub server.
 	 * <p/>
-	 * We recommend using {@link #loadAds(String, RequestParameters)} instead of this method, in
+	 * We recommend using {@link #loadAds(String, RequestParameters,Map<String,Object>)} instead of this method, in
 	 * order to pass targeting information to the server.
 	 *
 	 * @param adUnitId The ad unit ID to use when loading ads.
 	 */
 	public void loadAds(@NonNull final String adUnitId) {
-		loadAds(adUnitId, /* requestParameters */ null);
+		loadAds(adUnitId, /* requestParameters */ null, null);
+	}
+
+	public void loadAds(@NonNull final String adUnitId,@Nullable Map<String,Object> localExtras) {
+		loadAds(adUnitId, /* requestParameters */ null, localExtras);
 	}
 
 	/**
@@ -281,7 +285,7 @@ public class MoPubStreamAdPlacer {
 	 * @param requestParameters Targeting information to pass to the ad server.
 	 */
 	public void loadAds(@NonNull final String adUnitId,
-	                    @Nullable final RequestParameters requestParameters) {
+	                    @Nullable final RequestParameters requestParameters,@Nullable Map<String,Object> localExtras) {
 		if (!NoThrow.checkNotNull(adUnitId, "Cannot load ads with a null ad unit ID")) {
 			return;
 		}
@@ -318,7 +322,7 @@ public class MoPubStreamAdPlacer {
 			}
 		});
 
-		mAdSource.loadAds(mContext, adUnitId, requestParameters);
+		mAdSource.loadAds(mContext, adUnitId, requestParameters, localExtras);
 	}
 
 	@VisibleForTesting
@@ -543,17 +547,6 @@ public class MoPubStreamAdPlacer {
 			return;
 		}
 		NativeResponse nativeResponse = adData.getAd();
-		WeakReference<View> mappedViewRef = mViewMap.get(nativeResponse);
-		View mappedView = null;
-		if (mappedViewRef != null) {
-			mappedView = mappedViewRef.get();
-		}
-		clearNativeResponse(adView);
-		if (!adView.equals(mappedView)) {
-			if (BuildConfig.DEBUG) {
-				throw new IllegalStateException();
-			}
-		}
 		clearNativeResponse(adView);
 		mViewMap.remove(nativeResponse);
 	}

@@ -10,6 +10,7 @@ import com.mopub.common.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.mopub.nativeads.MoPubNative.MoPubNativeNetworkListener;
 
@@ -142,6 +143,14 @@ class NativeAdSource {
             @NonNull final String adUnitId,
             final RequestParameters requestParameters) {
         loadAds(requestParameters, new MoPubNative(context, adUnitId, mMoPubNativeNetworkListener));
+    }
+
+    void loadAds(@NonNull final Context context,
+                 @NonNull final String adUnitId,
+                 final RequestParameters requestParameters,@Nullable Map<String, Object> localExtras) {
+        MoPubNative mopubNative = new MoPubNative(context, adUnitId, mMoPubNativeNetworkListener);
+        mopubNative.setLocalExtras(localExtras);
+        loadAds(requestParameters, mopubNative);
     }
 
     @VisibleForTesting
