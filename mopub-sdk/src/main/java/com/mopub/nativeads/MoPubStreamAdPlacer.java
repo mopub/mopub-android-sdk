@@ -88,7 +88,7 @@ public class MoPubStreamAdPlacer {
 
 	private int adViewType = DEFAULT_AD_VIEW_TYPE;
 	@Nullable
-	private MoPubAdRenderer mAdRenderer;
+	private MoPubNativeAdRenderer mAdRenderer;
 	@Nullable
 	private String mAdUnitId;
 
@@ -217,11 +217,11 @@ public class MoPubStreamAdPlacer {
 	 *
 	 * @param adRenderer The ad renderer.
 	 */
-	public void registerAdRenderer(@NonNull final MoPubAdRenderer adRenderer) {
+	public void registerAdRenderer(@NonNull final MoPubNativeAdRenderer adRenderer) {
 		registerAdRenderer(adRenderer, -1);
 	}
 
-	public void registerAdRenderer(@NonNull final MoPubAdRenderer adRenderer, int viewType) {
+	public void registerAdRenderer(@NonNull final MoPubNativeAdRenderer adRenderer, int viewType) {
 		if (!NoThrow.checkNotNull(adRenderer, "Cannot register a null adRenderer")) {
 			return;
 		}
@@ -893,6 +893,6 @@ public class MoPubStreamAdPlacer {
 		if (!nativeResponse.isOverridingImpressionTracker()) {
 			mImpressionTracker.addView(view, nativeResponse);
 		}
-		nativeResponse.prepare(view);
+		nativeResponse.prepare(view,mAdRenderer.getViewBinder());
 	}
 }

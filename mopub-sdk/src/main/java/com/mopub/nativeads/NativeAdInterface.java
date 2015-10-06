@@ -60,7 +60,7 @@ interface NativeAdInterface {
     void setNativeEventListener(@Nullable final NativeEventListener nativeEventListener);
 
     // Event Handlers
-    void prepare(@NonNull final View view);
+    void prepare(@NonNull final View view,@Nullable ViewBinder viewBinder);
     void recordImpression();
     void handleClick(@Nullable final View view);
     void clear(@NonNull final View view);

@@ -89,7 +89,7 @@ class NativeAdViewHelper {
         if (!nativeResponse.isOverridingImpressionTracker()) {
             getImpressionTracker(context).addView(view, nativeResponse);
         }
-        nativeResponse.prepare(view);
+        nativeResponse.prepare(view,null);
     }
 
     private static ImpressionTracker getImpressionTracker(@NonNull final Context context) {

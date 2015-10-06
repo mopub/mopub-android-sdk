@@ -238,7 +238,7 @@ public class NativeResponse {
     }
 
     // Event Handlers
-    public void prepare(@NonNull final View view) {
+    public void prepare(@NonNull final View view,@Nullable ViewBinder viewBinder) {
         if (isDestroyed()) {
             return;
         }
@@ -247,7 +247,7 @@ public class NativeResponse {
             setOnClickListener(view, new NativeViewClickListener());
         }
 
-        mNativeAd.prepare(view);
+        mNativeAd.prepare(view,viewBinder);
     }
 
     public void recordImpression(@Nullable final View view) {

@@ -170,7 +170,7 @@ public class MoPubAdAdapter extends BaseAdapter {
      * @deprecated in version 3.9.0, use {@link #registerViewBinder(ViewBinder)} instead.
      */
     @Deprecated
-    public final void registerAdRenderer(@NonNull final MoPubAdRenderer adRenderer) {
+    public final void registerAdRenderer(@NonNull final MoPubNativeAdRenderer adRenderer) {
         if (!Preconditions.NoThrow.checkNotNull(
                 adRenderer, "Tried to set a null ad renderer on the placer.")) {
             return;
@@ -239,7 +239,7 @@ public class MoPubAdAdapter extends BaseAdapter {
      */
     public void loadAds(@NonNull final String adUnitId,
             @Nullable final RequestParameters requestParameters) {
-        mStreamAdPlacer.loadAds(adUnitId, requestParameters);
+        mStreamAdPlacer.loadAds(adUnitId, requestParameters,null);
     }
 
     /**

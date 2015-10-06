@@ -54,4 +54,8 @@ public class MoPubNativeAdRenderer implements MoPubAdRenderer<NativeResponse> {
         nativeViewHolder.updateExtras(nativeResponse, mViewBinder);
         nativeViewHolder.setViewVisibility(VISIBLE);
     }
+
+    public ViewBinder getViewBinder(){
+        return mViewBinder;
+    }
 }

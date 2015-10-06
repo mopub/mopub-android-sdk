@@ -312,7 +312,7 @@ abstract class BaseForwardingNativeAd implements NativeAdInterface {
      * This method is optional.
      */
     @Override
-    public void prepare(@Nullable final View view) { }
+    public void prepare(@Nullable final View view,@Nullable ViewBinder viewBinder) { }
 
     /**
      * Your base native ad subclass should implement this method if the network requires the developer
