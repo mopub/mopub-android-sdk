@@ -7,7 +7,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
-
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
@@ -18,7 +17,6 @@ import java.util.List;
 import java.util.WeakHashMap;
 
 import static com.mopub.nativeads.MoPubRecyclerAdapter.ContentChangeStrategy.INSERT_AT_END;
-import static com.mopub.nativeads.MoPubRecyclerAdapter.ContentChangeStrategy.KEEP_ADS_FIXED;
 
 
 public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -98,58 +96,83 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
 
             @Override
             public void onItemRangeChanged(final int positionStart, final int itemCount) {
-                int adjustedEndPosition = mStreamAdPlacer.getAdjustedPosition(positionStart + itemCount - 1);
                 int adjustedStartPosition = mStreamAdPlacer.getAdjustedPosition(positionStart);
+                int adjustedEndPosition = mStreamAdPlacer.getAdjustedPosition(positionStart + itemCount - 1);
                 int adjustedCount = adjustedEndPosition - adjustedStartPosition + 1;
                 notifyItemRangeChanged(adjustedStartPosition, adjustedCount);
             }
 
             @Override
             public void onItemRangeInserted(final int positionStart, final int itemCount) {
-                final int adjustedStartPosition = mStreamAdPlacer.getAdjustedPosition(positionStart);
+                int adjustedStartPosition = mStreamAdPlacer.getAdjustedPosition(positionStart);
+                int adjustedEndPosition = mStreamAdPlacer.getAdjustedPosition(positionStart + itemCount - 1);
+                int adjustedCount = adjustedEndPosition - adjustedStartPosition + 1;
+
                 final int newOriginalCount = mOriginalAdapter.getItemCount();
-                mStreamAdPlacer.setItemCount(newOriginalCount);
                 final boolean addingToEnd = positionStart + itemCount >= newOriginalCount;
-                if (KEEP_ADS_FIXED == mStrategy
-                        || (INSERT_AT_END == mStrategy
-                        && addingToEnd)) {
-                    notifyDataSetChanged();
-                } else {
-                    for (int i = 0; i < itemCount; i++) {
-                        // We insert itemCount items at the original position, moving ads downstream.
-                        mStreamAdPlacer.insertItem(positionStart);
-                    }
-                    notifyItemRangeInserted(adjustedStartPosition, itemCount);
+                mStreamAdPlacer.setItemCount(newOriginalCount);
+
+                switch (mStrategy) {
+                    case KEEP_ADS_FIXED:
+                        break;
+
+                    case INSERT_AT_END:
+                        if (addingToEnd) break;
+
+                    case MOVE_ALL_ADS_WITH_CONTENT:
+                        // We insert itemCount items at the original position, moving ads downstream
+                        for (int i = 0; i < itemCount; i++) {
+                            mStreamAdPlacer.insertItem(positionStart);
+                        }
+                        adjustedCount = itemCount;
+                        break;
+
+                    default:
+                        throw new RuntimeException("Unknown strategy: " + mStrategy);
                 }
+
+                notifyItemRangeInserted(adjustedStartPosition, adjustedCount);
             }
 
             @Override
-            public void onItemRangeRemoved(final int positionStart, final int itemsRemoved) {
+            public void onItemRangeRemoved(final int positionStart, final int itemCount) {
                 int adjustedStartPosition = mStreamAdPlacer.getAdjustedPosition(positionStart);
-                final int newOriginalCount = mOriginalAdapter.getItemCount();
-                mStreamAdPlacer.setItemCount(newOriginalCount);
-                final boolean removingFromEnd = positionStart + itemsRemoved >= newOriginalCount;
-                if (KEEP_ADS_FIXED == mStrategy
-                        || (INSERT_AT_END == mStrategy
-                        && removingFromEnd)) {
-                    notifyDataSetChanged();
-                } else {
-                    final int oldAdjustedCount = mStreamAdPlacer.getAdjustedCount(newOriginalCount + itemsRemoved);
-                    for (int i = 0; i < itemsRemoved; i++) {
-                        // We remove itemsRemoved items at the original position.
-                        mStreamAdPlacer.removeItem(positionStart);
-                    }
+                int adjustedEndPosition = mStreamAdPlacer.getAdjustedPosition(positionStart + itemCount - 1);
+                int adjustedCount = adjustedEndPosition - adjustedStartPosition + 1;
 
-                    final int itemsRemovedIncludingAds = oldAdjustedCount - mStreamAdPlacer.getAdjustedCount(newOriginalCount);
-                    // Need to move the start position back by the # of ads removed.
-                    adjustedStartPosition -= itemsRemovedIncludingAds - itemsRemoved;
-                    notifyItemRangeRemoved(adjustedStartPosition, itemsRemovedIncludingAds);
+                final int newOriginalCount = mOriginalAdapter.getItemCount();
+                final boolean removingFromEnd = positionStart + itemCount >= newOriginalCount;
+                mStreamAdPlacer.setItemCount(newOriginalCount);
+
+                switch (mStrategy) {
+                    case KEEP_ADS_FIXED:
+                        break;
+
+                    case INSERT_AT_END:
+                        if (removingFromEnd) break;
+
+                    case MOVE_ALL_ADS_WITH_CONTENT:
+                        // We remove itemsRemoved items at the original position
+                        for (int i = 0; i < itemCount; i++) {
+                            mStreamAdPlacer.removeItem(positionStart);
+                        }
+
+                        final int oldAdjustedCount = mStreamAdPlacer.getAdjustedCount(newOriginalCount + itemCount);
+                        adjustedCount = oldAdjustedCount - mStreamAdPlacer.getAdjustedCount(newOriginalCount);
+                        // Need to move the start position back by the # of ads removed.
+                        adjustedStartPosition -= adjustedCount - itemCount;
+                        break;
+
+                    default:
+                        throw new RuntimeException("Unknown strategy: " + mStrategy);
                 }
+
+                notifyItemRangeRemoved(adjustedStartPosition, adjustedCount);
             }
 
             @Override
             public void onItemRangeMoved(final int fromPosition, final int toPosition,
-                    final int itemCount) {
+                                         final int itemCount) {
                 notifyDataSetChanged();
             }
         };
