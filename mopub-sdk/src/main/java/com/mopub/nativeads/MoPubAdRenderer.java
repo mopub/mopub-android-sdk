@@ -9,14 +9,14 @@ import android.view.ViewGroup;
 /**
  * An interface for creating ad views and rendering them using ad data.
  *
- * Normally you will use the subclass {@link com.mopub.nativeads.MoPubNativeAdRenderer} with {@link
+ * Normally you will use the subclass {@link MoPubStaticNativeAdRenderer} with {@link
  * com.mopub.nativeads.ViewBinder} to customize your ad view with your own layout. However, if you
  * wish to programmatically create or manage your ad view, you can implement {@code MoPubAdRenderer}
  * directly.
  *
  * @param <T> The ad payload type.
  */
-public interface MoPubAdRenderer<T> {
+public interface MoPubAdRenderer<T extends BaseNativeAd> {
     /**
      * Creates a new view to be used as an ad.
      *
@@ -39,4 +39,12 @@ public interface MoPubAdRenderer<T> {
      * @param ad The ad data that should be bound to the view.
      */
     void renderAdView(@NonNull View view, @NonNull T ad);
+
+    /**
+     * Determines if this renderer supports the type of native ad passed in.
+     *
+     * @param nativeAd The native ad to render.
+     * @return True if the renderer can render the native ad and false if it cannot.
+     */
+    boolean supports(@NonNull BaseNativeAd nativeAd);
 }

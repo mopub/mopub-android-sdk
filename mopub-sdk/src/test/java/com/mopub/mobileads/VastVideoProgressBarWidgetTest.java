@@ -27,7 +27,8 @@ public class VastVideoProgressBarWidgetTest {
     @Before
     public void setUp() throws Exception {
         context = Robolectric.buildActivity(Activity.class).create().get();
-        subject = new VastVideoProgressBarWidget(context, 0);
+        subject = new VastVideoProgressBarWidget(context);
+        subject.setAnchorId(0);
         progressBarDrawableSpy = spy(subject.getImageViewDrawable());
         subject.setImageViewDrawable(progressBarDrawableSpy);
     }

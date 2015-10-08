@@ -10,12 +10,13 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.mopub.nativeads.MoPubAdAdapter;
-import com.mopub.nativeads.MoPubNativeAdRenderer;
+import com.mopub.nativeads.MoPubStaticNativeAdRenderer;
 import com.mopub.nativeads.RequestParameters;
 import com.mopub.nativeads.ViewBinder;
 
 import java.util.EnumSet;
 
+import static com.mopub.nativeads.MoPubNativeAdPositioning.MoPubServerPositioning;
 import static com.mopub.nativeads.RequestParameters.NativeAdAsset;
 
 public class NativeListViewFragment extends Fragment {
@@ -70,22 +71,24 @@ public class NativeListViewFragment extends Fragment {
 
         // Create an ad adapter that gets its positioning information from the MoPub Ad Server.
         // This adapter will be used in place of the original adapter for the ListView.
-        mAdAdapter = new MoPubAdAdapter(getActivity(), adapter);
+        mAdAdapter = new MoPubAdAdapter(getActivity(), adapter, new MoPubServerPositioning());
 
-        // Set up an renderer that knows how to put ad data in an ad view.
-        final MoPubNativeAdRenderer adRenderer = new MoPubNativeAdRenderer(
+        // Set up a renderer that knows how to put ad data in your custom native view.
+        final MoPubStaticNativeAdRenderer staticAdRender = new MoPubStaticNativeAdRenderer(
                 new ViewBinder.Builder(R.layout.native_ad_list_item)
                         .titleId(R.id.native_title)
                         .textId(R.id.native_text)
                         .mainImageId(R.id.native_main_image)
                         .iconImageId(R.id.native_icon_image)
                         .callToActionId(R.id.native_cta)
-                        .daaIconImageId(R.id.native_daa_icon_image)
+                        .privacyInformationIconImageId(R.id.native_privacy_information_icon_image)
                         .build());
 
         // Register the renderer with the MoPubAdAdapter and then set the adapter on the ListView.
-        mAdAdapter.registerAdRenderer(adRenderer);
+        mAdAdapter.registerAdRenderer(staticAdRender);
         listView.setAdapter(mAdAdapter);
+
+        mAdAdapter.loadAds(mAdConfiguration.getAdUnitId(), mRequestParameters);
         return view;
     }
 
@@ -94,12 +97,5 @@ public class NativeListViewFragment extends Fragment {
         // You must call this or the ad adapter may cause a memory leak.
         mAdAdapter.destroy();
         super.onDestroyView();
-    }
-
-    @Override
-    public void onResume() {
-        // MoPub recommends loading knew ads when the user returns to your activity.
-        mAdAdapter.loadAds(mAdConfiguration.getAdUnitId(), mRequestParameters);
-        super.onResume();
     }
 }

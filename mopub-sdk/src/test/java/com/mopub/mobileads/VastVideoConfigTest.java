@@ -144,22 +144,22 @@ public class VastVideoConfigTest {
     }
 
     @Test
-    public void handleClick_withNullClickThroughUrl_shouldNotOpenNewActivity() throws Exception {
-        subject.handleClick(activity, 1234, 1);
+    public void handleClickForResult_withNullClickThroughUrl_shouldNotOpenNewActivity() throws Exception {
+        subject.handleClickForResult(activity, 1234, 1);
 
         Robolectric.getUiThreadScheduler().unPause();
         assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
     }
 
     @Test
-    public void handleClick_withMoPubNativeBrowserClickThroughUrl_shouldOpenExternalBrowser_shouldMakeTrackingHttpRequest() throws Exception {
+    public void handleClickForResult_withMoPubNativeBrowserClickThroughUrl_shouldOpenExternalBrowser_shouldMakeTrackingHttpRequest() throws Exception {
         subject.setClickThroughUrl(
                 "mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.mopub.com%2F");
         subject.addClickTrackers(
                 Arrays.asList(new VastTracker("http://trackerone+content=[CONTENTPLAYHEAD]"),
                         new VastTracker("http://trackertwo+error=[ERRORCODE]&asset=[ASSETURI]")));
 
-        subject.handleClick(activity, 2345, 1234);
+        subject.handleClickForResult(activity, 2345, 1234);
 
         Robolectric.getUiThreadScheduler().unPause();
         Robolectric.runBackgroundTasks();
@@ -172,21 +172,41 @@ public class VastVideoConfigTest {
     }
 
     @Test
-    public void handleClick_withMalformedMoPubNativeBrowserClickThroughUrl_shouldNotOpenANewActivity() throws Exception {
+    public void handleClickWithoutResult_shouldOpenExternalBrowser_shouldMakeTrackingHttpRequest() throws Exception {
+        subject.setClickThroughUrl(
+                "mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.mopub.com%2F");
+        subject.addClickTrackers(
+                Arrays.asList(new VastTracker("http://trackerone+content=[CONTENTPLAYHEAD]"),
+                        new VastTracker("http://trackertwo+error=[ERRORCODE]&asset=[ASSETURI]")));
+
+        subject.handleClickWithoutResult(activity.getApplicationContext(), 2345);
+
+        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.runBackgroundTasks();
+        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        assertThat(intent.getDataString()).isEqualTo("http://www.mopub.com/");
+        assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
+        verify(mockRequestQueue).add(argThat(isUrl("http://trackerone+content=00:00:02.345")));
+        verify(mockRequestQueue).add(argThat(isUrl("http://trackertwo+error=&asset=video_url")));
+        verifyNoMoreInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void handleClickForResult_withMalformedMoPubNativeBrowserClickThroughUrl_shouldNotOpenANewActivity() throws Exception {
         // url2 is an invalid query parameter
         subject.setClickThroughUrl(
                 "mopubnativebrowser://navigate?url2=http%3A%2F%2Fwww.mopub.com%2F");
 
-        subject.handleClick(activity, 3456, 1);
+        subject.handleClickForResult(activity, 3456, 1);
 
         assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
     }
 
     @Test
-    public void handleClick_withAboutBlankClickThroughUrl_shouldFailSilently() throws Exception {
+    public void handleClickForResult_withAboutBlankClickThroughUrl_shouldFailSilently() throws Exception {
         subject.setClickThroughUrl("about:blank");
 
-        subject.handleClick(activity, 4567, 1);
+        subject.handleClickForResult(activity, 4567, 1);
 
         assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
     }

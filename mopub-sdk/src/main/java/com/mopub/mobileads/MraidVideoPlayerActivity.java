@@ -14,6 +14,7 @@ import android.view.WindowManager;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Intents;
 import com.mopub.mraid.MraidVideoViewController;
+import com.mopub.nativeads.NativeVideoViewController;
 
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_FAIL;
@@ -79,7 +80,7 @@ public class MraidVideoPlayerActivity extends BaseVideoPlayerActivity implements
     }
 
     @Override
-    public void onConfigurationChanged(@Nullable Configuration newConfig) {
+    public void onConfigurationChanged(final Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         if (mBaseVideoController != null) {
             mBaseVideoController.onConfigurationChanged(newConfig);
@@ -90,6 +91,7 @@ public class MraidVideoPlayerActivity extends BaseVideoPlayerActivity implements
     public void onBackPressed() {
         if (mBaseVideoController != null && mBaseVideoController.backButtonEnabled()) {
             super.onBackPressed();
+            mBaseVideoController.onBackPressed();
         }
     }
 
@@ -107,6 +109,8 @@ public class MraidVideoPlayerActivity extends BaseVideoPlayerActivity implements
             return new VastVideoViewController(this, getIntent().getExtras(), savedInstanceState, mBroadcastIdentifier, this);
         } else if ("mraid".equals(clazz)) {
             return new MraidVideoViewController(this, getIntent().getExtras(), savedInstanceState, this);
+        } else if ("native".equals(clazz)) {
+            return new NativeVideoViewController(this, getIntent().getExtras(), savedInstanceState, this);
         } else {
             throw new IllegalStateException("Unsupported video type: " + clazz);
         }

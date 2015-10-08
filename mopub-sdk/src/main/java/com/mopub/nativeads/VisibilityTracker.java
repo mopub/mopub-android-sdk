@@ -41,7 +41,7 @@ class VisibilityTracker {
     private long mAccessCounter = 0;
 
     // Listener that passes all visible and invisible views when a visibility check occurs
-    static interface VisibilityTrackerListener {
+    interface VisibilityTrackerListener {
         void onVisibilityChanged(List<View> visibleViews, List<View> invisibleViews);
     }
 
@@ -50,7 +50,10 @@ class VisibilityTracker {
 
     static class TrackingInfo {
         int mMinViewablePercent;
+        // Must be less than mMinVisiblePercent
+        int mMaxInvisiblePercent;
         long mAccessOrder;
+        View mRootView;
     }
 
     // Views that are being tracked, mapped to the min viewable percentage
@@ -116,6 +119,14 @@ class VisibilityTracker {
      * Tracks the given view for visibility.
      */
     void addView(@NonNull final View view, final int minPercentageViewed) {
+        addView(view, view, minPercentageViewed);
+    }
+
+    void addView(@NonNull View rootView, @NonNull final View view, final int minPercentageViewed) {
+      addView(rootView, view, minPercentageViewed, minPercentageViewed);
+    }
+
+    void addView(@NonNull View rootView, @NonNull final View view, final int minVisiblePercentageViewed, final int maxInvisiblePercentageViewed) {
         // Find the view if already tracked
         TrackingInfo trackingInfo = mTrackedViews.get(view);
         if (trackingInfo == null) {
@@ -123,7 +134,12 @@ class VisibilityTracker {
             mTrackedViews.put(view, trackingInfo);
             scheduleVisibilityCheck();
         }
-        trackingInfo.mMinViewablePercent = minPercentageViewed;
+
+        int maxInvisiblePercent = Math.min(maxInvisiblePercentageViewed, minVisiblePercentageViewed);
+
+        trackingInfo.mRootView = rootView;
+        trackingInfo.mMinViewablePercent = minVisiblePercentageViewed;
+        trackingInfo.mMaxInvisiblePercent = maxInvisiblePercent;
         trackingInfo.mAccessOrder = mAccessCounter;
 
         // Trim the number of tracked views to a reasonable number
@@ -207,10 +223,12 @@ class VisibilityTracker {
             for (final Map.Entry<View, TrackingInfo> entry : mTrackedViews.entrySet()) {
                 final View view = entry.getKey();
                 final int minPercentageViewed = entry.getValue().mMinViewablePercent;
+                final int maxInvisiblePercent = entry.getValue().mMaxInvisiblePercent;
+                final View rootView = entry.getValue().mRootView;
 
-                if (mVisibilityChecker.isVisible(view, minPercentageViewed)) {
+                if (mVisibilityChecker.isVisible(rootView, view, minPercentageViewed)) {
                     mVisibleViews.add(view);
-                } else {
+                } else if (!mVisibilityChecker.isVisible(rootView, view, maxInvisiblePercent)){
                     mInvisibleViews.add(view);
                 }
             }
@@ -239,14 +257,14 @@ class VisibilityTracker {
         /**
          * Whether the view is at least certain % visible
          */
-        boolean isVisible(@Nullable final View view, final int minPercentageViewed) {
+        boolean isVisible(@Nullable final View rootView, @Nullable final View view, final int minPercentageViewed) {
             // ListView & GridView both call detachFromParent() for views that can be recycled for
             // new data. This is one of the rare instances where a view will have a null parent for
             // an extended period of time and will not be the main window.
             // view.getGlobalVisibleRect() doesn't check that case, so if the view has visibility
-            // of View.VISIBLE but has no parent it is likely in the recycle bin of a
+            // of View.VISIBLE but it's group has no parent it is likely in the recycle bin of a
             // ListView / GridView and not on screen.
-            if (view == null || view.getVisibility() != View.VISIBLE || view.getParent() == null) {
+            if (view == null || view.getVisibility() != View.VISIBLE || rootView.getParent() == null) {
                 return false;
             }
 

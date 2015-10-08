@@ -26,6 +26,7 @@ public class AdTypeTranslator {
         HTML_INTERSTITIAL("html_interstitial", "com.mopub.mobileads.HtmlInterstitial"),
         VAST_VIDEO_INTERSTITIAL("vast_interstitial", "com.mopub.mobileads.VastVideoInterstitial"),
         MOPUB_NATIVE("mopub_native", "com.mopub.nativeads.MoPubCustomEventNative"),
+        MOPUB_VIDEO_NATIVE("mopub_video_native", "com.mopub.nativeads.MoPubCustomEventVideoNative"),
 
         UNSPECIFIED("", null);
 
@@ -67,8 +68,10 @@ public class AdTypeTranslator {
             @NonNull Map<String, String> headers) {
         if (AdType.CUSTOM.equalsIgnoreCase(adType)) {
             return extractHeader(headers, ResponseHeader.CUSTOM_EVENT_NAME);
-        } else if (AdType.NATIVE.equalsIgnoreCase(adType)){
+        } else if (AdType.STATIC_NATIVE.equalsIgnoreCase(adType)){
             return CustomEventType.MOPUB_NATIVE.toString();
+        } else if (AdType.VIDEO_NATIVE.equalsIgnoreCase(adType)){
+            return CustomEventType.MOPUB_VIDEO_NATIVE.toString();
         } else if (AdType.HTML.equalsIgnoreCase(adType) || AdType.MRAID.equalsIgnoreCase(adType)) {
             return (AdFormat.INTERSTITIAL.equals(adFormat)
                     ? CustomEventType.fromString(adType + INTERSTITIAL_SUFFIX)

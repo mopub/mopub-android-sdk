@@ -118,7 +118,7 @@ public class AdTypeTranslatorTest {
 
     @Test
     public void getCustomEventName_withNativeFormat_shouldBeMoPubNative() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.NATIVE, AdType.NATIVE, null, headers);
+        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.NATIVE, AdType.STATIC_NATIVE, null, headers);
 
         assertThat(customEventName).isEqualTo("com.mopub.nativeads.MoPubCustomEventNative");
     }

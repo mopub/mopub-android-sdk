@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.mopub.nativeads.MoPubNativeAdPositioning;
 import com.mopub.nativeads.MoPubRecyclerAdapter;
+import com.mopub.nativeads.MoPubStaticNativeAdRenderer;
 import com.mopub.nativeads.RequestParameters;
 import com.mopub.nativeads.ViewBinder;
 
@@ -82,14 +83,19 @@ public class NativeRecyclerViewFragment extends Fragment {
 
         mRecyclerAdapter = new MoPubRecyclerAdapter(getActivity(), originalAdapter,
                 new MoPubNativeAdPositioning.MoPubServerPositioning());
-        mRecyclerAdapter.registerViewBinder(new ViewBinder.Builder(R.layout.native_ad_list_item)
-                .titleId(R.id.native_title)
-                .textId(R.id.native_text)
-                .mainImageId(R.id.native_main_image)
-                .iconImageId(R.id.native_icon_image)
-                .callToActionId(R.id.native_cta)
-                .daaIconImageId(R.id.native_daa_icon_image)
-                .build());
+
+        MoPubStaticNativeAdRenderer moPubStaticNativeAdRenderer = new MoPubStaticNativeAdRenderer(
+                new ViewBinder.Builder(R.layout.native_ad_list_item)
+                        .titleId(R.id.native_title)
+                        .textId(R.id.native_text)
+                        .mainImageId(R.id.native_main_image)
+                        .iconImageId(R.id.native_icon_image)
+                        .callToActionId(R.id.native_cta)
+                        .privacyInformationIconImageId(R.id.native_privacy_information_icon_image)
+                        .build()
+        );
+
+        mRecyclerAdapter.registerAdRenderer(moPubStaticNativeAdRenderer);
 
         mRecyclerView.setAdapter(mRecyclerAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));

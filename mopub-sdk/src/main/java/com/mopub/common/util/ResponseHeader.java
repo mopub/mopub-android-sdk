@@ -25,6 +25,13 @@ public enum ResponseHeader {
     USER_AGENT("User-Agent"),
     ACCEPT_LANGUAGE("Accept-Language"),
 
+    // Native Video fields
+    PLAY_VISIBLE_PERCENT("X-Play-Visible-Percent"),
+    PAUSE_VISIBLE_PERCENT("X-Pause-Visible-Percent"),
+    IMPRESSION_MIN_VISIBLE_PERCENT("X-Impression-Min-Visible-Percent"),
+    IMPRESSION_VISIBLE_MS("X-Impression-Visible-Ms"),
+    MAX_BUFFER_MS("X-Max-Buffer-Ms"),
+
     @Deprecated CUSTOM_SELECTOR("X-Customselector");
 
     private final String key;

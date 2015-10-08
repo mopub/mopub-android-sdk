@@ -36,31 +36,15 @@ public abstract class CustomEventNative {
             @NonNull final Map<String, Object> localExtras,
             @NonNull final Map<String, String> serverExtras);
 
-    public interface ImageListener {
-        /**
-         * Called when images are successfully cached. If you haven't already called {@link
-         * CustomEventNativeListener#onNativeAdLoaded}, you should typically do so now.
-         */
-        void onImagesCached();
-
-        /**
-         * Called when images failed to cache. You should typically call {@link
-         * CustomEventNativeListener#onNativeAdFailed} from this callback.
-         *
-         * @param errorCode An enum value with the relevant error message.
-         */
-        void onImagesFailedToCache(NativeErrorCode errorCode);
-    }
-
     public interface CustomEventNativeListener {
         /**
          * Your custom event subclass must call this method when it successfully loads a native ad.
          * Failure to do so will disrupt the mediation waterfall and cause future ad requests to
          * stall.
          *
-         * @param nativeAd The ad that was succesfully loaded.
+         * @param nativeAd The ad that was successfully loaded.
          */
-        void onNativeAdLoaded(NativeAdInterface nativeAd);
+        void onNativeAdLoaded(BaseNativeAd nativeAd);
 
         /**
          * Your custom event subclass must call this method when it fails to load a native ad.

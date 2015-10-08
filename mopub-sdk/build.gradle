@@ -25,6 +25,10 @@ repositories {
     }
 }
 
+configurations {
+    javadocDeps
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'org.robolectric'
@@ -35,14 +39,14 @@ task wrapper(type: Wrapper) {
 
 group = 'com.mopub'
 description = '''MoPub Android SDK'''
-version = '3.12.0'
+version = '4.0.0'
 
 android {
     compileSdkVersion 22
     buildToolsVersion '22.0.1'
 
     defaultConfig {
-        versionCode 29
+        versionCode 31
         versionName version
         minSdkVersion 9
         targetSdkVersion 22
@@ -102,7 +106,14 @@ dependencies {
     compile 'com.android.support:support-annotations:22.0.0'
     compile 'com.android.support:recyclerview-v7:22.0.0'
     compile 'com.mopub.volley:mopub-volley:1.1.0'
+    compile 'com.google.android.exoplayer:exoplayer:r1.4.2'
     // anchor: additional dependencies
+
+    javadocDeps 'com.google.android.exoplayer:exoplayer:r1.4.2:sources'
+    javadocDeps 'com.mopub.volley:mopub-volley:1.1.0:sources'
+    javadocDeps 'com.android.support:support-v4:22.0.0:sources'
+    javadocDeps 'com.android.support:support-annotations:22.0.0:sources'
+    javadocDeps 'com.android.support:recyclerview-v7:22.0.0:sources'
 
     testCompile 'junit:junit:4.10'
     testCompile 'org.robolectric:robolectric:2.4'
@@ -203,6 +214,7 @@ task sourcesJar(type: Jar) {
 task javadoc(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
     classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    classpath += configurations.javadocDeps
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {

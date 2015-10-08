@@ -35,6 +35,7 @@ import static com.mopub.common.util.Drawables.RIGHT_ARROW;
 
 public class MoPubBrowser extends Activity {
     public static final String DESTINATION_URL_KEY = "URL";
+    public static final int MOPUB_BROWSER_REQUEST_CODE = 1;
     private static final int INNER_LAYOUT_ID = 1;
 
     private WebView mWebView;

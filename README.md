@@ -27,7 +27,7 @@ The MoPub SDK is available via:
     }
 
     dependencies {
-        compile('com.mopub:mopub-sdk:3.11.0@aar') {
+        compile('com.mopub:mopub-sdk:4.0.0@aar') {
             transitive = true
         }
     }
@@ -61,10 +61,24 @@ The MoPub SDK is available via:
 
 ## New in this Version
 
-Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the lastest release..
+Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-- **Rewarded Video Mediation** is now Generally Available. We provide support for Unity Ads, Chartboost, Vungle, and Ad Colony rewarded video.
-- **Privacy Information Icon** is now available for native ads. You should add this view to your ViewBinder. See the example in the MoPub Sample app.
+Version 4.0.0 includes a number of improvements to our Native Ads systems under the hood. This means a few changes for publishers integrating the ads. The [Native Ads Integration Guide](https://github.com/mopub/mopub-android-sdk/wiki/Native-Ads-Integration) describes all the steps you'll need to integrate 4.0.0.
+
+**Native Ads Changes**
+ - `MoPubNativeAdRenderer` has been replaced by `MoPubStaticNativeRenderer` 
+ - When requesting ads using `MoPubNative`, you must instantiate and register a `MoPubStaticNativeAdRenderer`. See the [Integration Document](https://github.com/mopub/mopub-android-sdk/wiki/Legacy-Native-Ads-Integration) for more details.
+ - `NativeResponse` has been replaced with `NativeAd`
+ - `NativeAd` has a new API that supports creating and rendering `View`s for Native Ads.
+   - `#createAdView` returns a `View` that can hold data for the `NativeAd`
+   - `#renderAdView` will populate the `View` with ad data. 
+   - Other lifecycle methods from `NativeResponse` remain:
+     - `#prepare`, `#clear`, `#destroy`
+ - The process of writing new `CustomEventNative` instances has changed. These changes will support more dynamic, flexible, and attractive Native Ad formats in the future. All bundled native Custom Event files have been updated to use the new API.
+
+**Removed Old Code**
+ - Removed legacy banner/interestitial listeners, deprecated in 1.11
+ - Removed legacy custom event implementation ("custom event methods") deprecated in 1.10
 
 ## Requirements
 

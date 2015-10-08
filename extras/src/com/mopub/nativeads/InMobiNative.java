@@ -10,6 +10,8 @@ import com.inmobi.commons.InMobi;
 import com.inmobi.monetization.IMErrorCode;
 import com.inmobi.monetization.IMNative;
 import com.inmobi.monetization.IMNativeListener;
+import com.mopub.common.logging.MoPubLog;
+import com.mopub.network.TrackingRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,6 +23,7 @@ import java.util.Map;
 
 import static com.mopub.common.util.Json.getJsonValue;
 import static com.mopub.common.util.Numbers.parseDouble;
+import static com.mopub.nativeads.NativeImageHelper.preCacheImages;
 
 /*
  * Tested with InMobi SDK 4.4.1
@@ -50,10 +53,13 @@ class InMobiNative extends CustomEventNative {
         }
 
         InMobi.initialize(activity, appId);
-        final InMobiForwardingNativeAd inMobiForwardingNativeAd =
-                new InMobiForwardingNativeAd(context, customEventNativeListener);
-        inMobiForwardingNativeAd.setIMNative(new IMNative(inMobiForwardingNativeAd));
-        inMobiForwardingNativeAd.loadAd();
+        final InMobiStaticNativeAd inMobiStaticNativeAd =
+                new InMobiStaticNativeAd(context,
+                        new ImpressionTracker(context),
+                        new NativeClickHandler(context),
+                        customEventNativeListener);
+        inMobiStaticNativeAd.setIMNative(new IMNative(inMobiStaticNativeAd));
+        inMobiStaticNativeAd.loadAd();
     }
 
     private boolean extrasAreValid(final Map<String, String> serverExtras) {
@@ -61,7 +67,7 @@ class InMobiNative extends CustomEventNative {
         return (placementId != null && placementId.length() > 0);
     }
 
-    static class InMobiForwardingNativeAd extends BaseForwardingNativeAd implements IMNativeListener {
+    static class InMobiStaticNativeAd extends StaticNativeAd implements IMNativeListener {
         static final int IMPRESSION_MIN_TIME_VIEWED = 0;
 
         // Modifiable keys
@@ -78,11 +84,17 @@ class InMobiNative extends CustomEventNative {
 
         private final Context mContext;
         private final CustomEventNativeListener mCustomEventNativeListener;
+        private final ImpressionTracker mImpressionTracker;
+        private final NativeClickHandler mNativeClickHandler;
         private IMNative mImNative;
 
-        InMobiForwardingNativeAd(final Context context,
+        InMobiStaticNativeAd(final Context context,
+                final ImpressionTracker impressionTracker,
+                final NativeClickHandler nativeClickHandler,
                 final CustomEventNativeListener customEventNativeListener) {
             mContext = context.getApplicationContext();
+            mImpressionTracker = impressionTracker;
+            mNativeClickHandler = nativeClickHandler;
             mCustomEventNativeListener = customEventNativeListener;
         }
 
@@ -105,7 +117,7 @@ class InMobiNative extends CustomEventNative {
             try {
                 parseJson(imNative);
             } catch (JSONException e) {
-                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.INVALID_JSON);
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.INVALID_RESPONSE);
                 return;
             }
 
@@ -120,10 +132,10 @@ class InMobiNative extends CustomEventNative {
                 imageUrls.add(iconUrl);
             }
 
-            preCacheImages(mContext, imageUrls, new ImageListener() {
+            preCacheImages(mContext, imageUrls, new NativeImageHelper.ImageListener() {
                 @Override
                 public void onImagesCached() {
-                    mCustomEventNativeListener.onNativeAdLoaded(InMobiForwardingNativeAd.this);
+                    mCustomEventNativeListener.onNativeAdLoaded(InMobiStaticNativeAd.this);
                 }
 
                 @Override
@@ -146,6 +158,7 @@ class InMobiNative extends CustomEventNative {
             }
         }
 
+        // Lifecycle Handlers
         @Override
         public void prepare(final View view) {
             if (view != null && view instanceof ViewGroup) {
@@ -155,16 +168,33 @@ class InMobiNative extends CustomEventNative {
             } else {
                 Log.e("MoPub", "InMobi did not receive ViewGroup to attachToView, unable to record impressions");
             }
+            mImpressionTracker.addView(view, this);
+            mNativeClickHandler.setOnClickListener(view, this);
         }
 
         @Override
-        public void handleClick(final View view) {
-            mImNative.handleClick(null);
+        public void clear(final View view) {
+            mImpressionTracker.removeView(view);
+            mNativeClickHandler.clearOnClickListener(view);
         }
 
         @Override
         public void destroy() {
             mImNative.detachFromView();
+            mImpressionTracker.destroy();
+        }
+
+        // Event Handlers
+        @Override
+        public void recordImpression(final View view) {
+            notifyAdImpressed();
+        }
+
+        @Override
+        public void handleClick(final View view) {
+            notifyAdClicked();
+            mNativeClickHandler.openClickDestinationUrl(getClickDestinationUrl(), view);
+            mImNative.handleClick(null);
         }
 
         void parseJson(final IMNative imNative) throws JSONException  {
@@ -184,7 +214,15 @@ class InMobiNative extends CustomEventNative {
                 setIconImageUrl(getJsonValue(iconJsonObject, URL, String.class));
             }
 
-            setClickDestinationUrl(getJsonValue(jsonObject, LANDING_URL, String.class));
+            final String clickDestinationUrl = getJsonValue(jsonObject, LANDING_URL, String.class);
+            if (clickDestinationUrl == null) {
+                final String errorMessage = "InMobi JSON response missing required key: "
+                        + LANDING_URL + ". Failing over.";
+                MoPubLog.d(errorMessage);
+                throw new JSONException(errorMessage);
+            }
+
+            setClickDestinationUrl(clickDestinationUrl);
             setCallToAction(getJsonValue(jsonObject, CTA, String.class));
 
             try {

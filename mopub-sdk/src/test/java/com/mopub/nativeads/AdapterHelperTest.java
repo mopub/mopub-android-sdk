@@ -37,9 +37,8 @@ public class AdapterHelperTest {
     @Test
     public void getAdView_withNullActivityContext_shouldReturnEmptyViewWithApplicationContext() {
         subject.clearActivityContext();
-        Context viewContext = subject.getAdView(null, null, mock(NativeResponse.class),
-                mock(ViewBinder.class),
-                null).getContext();
+        Context viewContext = subject.getAdView(null, null, mock(NativeAd.class),
+                mock(ViewBinder.class)).getContext();
         assertThat(viewContext).isEqualTo(context.getApplication());
     }
 

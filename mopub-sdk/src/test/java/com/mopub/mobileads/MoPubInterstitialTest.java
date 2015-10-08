@@ -106,13 +106,6 @@ public class MoPubInterstitialTest {
     }
 
     @Test
-    public void setLocationAwarenss_shouldChangeGlobalSetting() {
-        assertThat(MoPub.getLocationAwareness()).isEqualTo(MoPub.LocationAwareness.NORMAL);
-        subject.setLocationAwareness(LocationService.LocationAwareness.DISABLED);
-        assertThat(MoPub.getLocationAwareness()).isEqualTo(MoPub.LocationAwareness.DISABLED);
-    }
-
-    @Test
     public void getTestingTest() throws Exception {
         subject.setInterstitialView(interstitialView);
         subject.getTesting();

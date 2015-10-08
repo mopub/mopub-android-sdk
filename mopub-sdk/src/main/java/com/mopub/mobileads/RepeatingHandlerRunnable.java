@@ -13,9 +13,9 @@ import com.mopub.common.VisibleForTesting;
 public abstract class RepeatingHandlerRunnable implements Runnable {
     @NonNull protected final Handler mHandler;
     private volatile boolean mIsRunning;
-    private volatile long mUpdateIntervalMillis;
+    protected volatile long mUpdateIntervalMillis;
 
-    RepeatingHandlerRunnable(@NonNull final Handler handler) {
+    public RepeatingHandlerRunnable(@NonNull final Handler handler) {
         Preconditions.checkNotNull(handler);
         mHandler = handler;
     }

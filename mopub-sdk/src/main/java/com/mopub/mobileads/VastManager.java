@@ -11,8 +11,7 @@ import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
-
-import static com.mopub.mobileads.VastVideoDownloadTask.VastVideoDownloadTaskListener;
+import com.mopub.mobileads.VideoDownloader.VideoDownloaderListener;
 
 /**
  * Given a VAST xml document, this class manages the lifecycle of parsing and finding a video and
@@ -32,8 +31,7 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
          * @param vastVideoConfig A configuration that can be used for displaying a VAST
          *                               video or {@code null} if the VAST document is invalid.
          */
-        void onVastVideoConfigurationPrepared(
-                @Nullable final VastVideoConfig vastVideoConfig);
+        void onVastVideoConfigurationPrepared(@Nullable final VastVideoConfig vastVideoConfig);
     }
 
     @Nullable private VastManagerListener mVastManagerListener;
@@ -41,8 +39,11 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
     private double mScreenAspectRatio;
     private int mScreenAreaDp;
 
-    public VastManager(@NonNull final Context context) {
+    private final boolean mShouldPreCacheVideo;
+
+    public VastManager(@NonNull final Context context, boolean shouldPreCacheVideo) {
         initializeScreenDimensions(context);
+        mShouldPreCacheVideo = shouldPreCacheVideo;
     }
 
     /**
@@ -57,6 +58,7 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
             @NonNull final Context context) {
         Preconditions.checkNotNull(vastManagerListener, "vastManagerListener cannot be null");
         Preconditions.checkNotNull(context, "context cannot be null");
+
         if (mVastXmlManagerAggregator == null) {
             mVastManagerListener = vastManagerListener;
             mVastXmlManagerAggregator = new VastXmlManagerAggregator(this, mScreenAspectRatio,
@@ -88,38 +90,31 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
                     "mVastManagerListener cannot be null here. Did you call " +
                             "prepareVastVideoConfiguration()?");
         }
+
         if (vastVideoConfig == null) {
             mVastManagerListener.onVastVideoConfigurationPrepared(null);
             return;
         }
 
-        if (updateDiskMediaFileUrl(vastVideoConfig)) {
+        // Return immediately if we already have a cached video or if video precache is not required.
+        if (!mShouldPreCacheVideo || updateDiskMediaFileUrl(vastVideoConfig)) {
             mVastManagerListener.onVastVideoConfigurationPrepared(vastVideoConfig);
             return;
         }
 
-        final VastVideoDownloadTask vastVideoDownloadTask = new VastVideoDownloadTask(
-                new VastVideoDownloadTaskListener() {
-                    @Override
-                    public void onComplete(boolean success) {
-                        if (success && updateDiskMediaFileUrl(vastVideoConfig)) {
-                            mVastManagerListener.onVastVideoConfigurationPrepared(vastVideoConfig);
-                        } else {
-                            mVastManagerListener.onVastVideoConfigurationPrepared(null);
-                        }
-                    }
+        final VideoDownloaderListener videoDownloaderListener = new VideoDownloaderListener() {
+            @Override
+            public void onComplete(boolean success) {
+                if (success && updateDiskMediaFileUrl(vastVideoConfig)) {
+                    mVastManagerListener.onVastVideoConfigurationPrepared(vastVideoConfig);
+                } else {
+                    MoPubLog.d("Failed to download VAST video.");
+                    mVastManagerListener.onVastVideoConfigurationPrepared(null);
                 }
-        );
+            }
+        };
 
-        try {
-            AsyncTasks.safeExecuteOnExecutor(
-                    vastVideoDownloadTask,
-                    vastVideoConfig.getNetworkMediaFileUrl()
-            );
-        } catch (Exception e) {
-            MoPubLog.d("Failed to download vast video", e);
-            mVastManagerListener.onVastVideoConfigurationPrepared(null);
-        }
+        VideoDownloader.cache(vastVideoConfig.getNetworkMediaFileUrl(), videoDownloaderListener);
     }
 
     /**

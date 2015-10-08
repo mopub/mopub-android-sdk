@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.mopub.nativeads.NativeImageHelper.preCacheImages;
+
 public class MillennialNative extends CustomEventNative {
     public static final String DCN_KEY = "dcn";
     public static final String APID_KEY = "adUnitID";
@@ -81,9 +83,14 @@ public class MillennialNative extends CustomEventNative {
         }
 
         try {
-            NativeAd n = NativeAd.createInstance(placementId, NativeAd.NATIVE_TYPE_INLINE);
-            final MillennialForwardingNativeAd mmForwardingNativeAd = new MillennialForwardingNativeAd(context, n, listener);
-            mmForwardingNativeAd.loadAd();
+            NativeAd nativeAd = NativeAd.createInstance(placementId, NativeAd.NATIVE_TYPE_INLINE);
+            final MillennialStaticNativeAd millennialStaticNativeAd =
+                    new MillennialStaticNativeAd(context,
+                            nativeAd,
+                            new ImpressionTracker(context),
+                            new NativeClickHandler(context),
+                            listener);
+            millennialStaticNativeAd.loadAd();
         } catch ( MMException e ) {
             UI_THREAD_HANDLER.post(new Runnable() {
                 @Override
@@ -97,21 +104,29 @@ public class MillennialNative extends CustomEventNative {
     private boolean extrasAreValid(final Map<String, String> serverExtras) {
         String placementId = serverExtras.get(APID_KEY);
         return (serverExtras.containsKey(APID_KEY) &&
-                placementId != null & placementId.length() > 0 );
+                placementId != null && placementId.length() > 0 );
     }
 
 
-    static class MillennialForwardingNativeAd extends BaseForwardingNativeAd implements NativeAd.NativeListener {
-        private Context context;
-        private NativeAd nativeAd;
-        private CustomEventNativeListener listener;
-        private MillennialForwardingNativeAd millennialForwardingNativeAd;
+    static class MillennialStaticNativeAd extends StaticNativeAd implements NativeAd.NativeListener {
+        private final Context mContext;
+        private NativeAd mNativeAd;
+        private final ImpressionTracker mImpressionTracker;
+        private final NativeClickHandler mNativeClickHandler;
+        private final CustomEventNativeListener mListener;
+        private final MillennialStaticNativeAd mMillennialStaticNativeAd;
 
-        public MillennialForwardingNativeAd(final Context context, final NativeAd nativeAd, final CustomEventNativeListener customEventNativeListener) {
-            this.context = context.getApplicationContext();
-            this.nativeAd = nativeAd;
-            this.listener = customEventNativeListener;
-            this.millennialForwardingNativeAd = this;
+        public MillennialStaticNativeAd(final Context context,
+                final NativeAd nativeAd,
+                final ImpressionTracker impressionTracker,
+                final NativeClickHandler nativeClickHandler,
+                final CustomEventNativeListener customEventNativeListener) {
+            mContext = context.getApplicationContext();
+            mNativeAd = nativeAd;
+            mImpressionTracker = impressionTracker;
+            mNativeClickHandler = nativeClickHandler;
+            mListener = customEventNativeListener;
+            mMillennialStaticNativeAd = this;
 
             nativeAd.setListener(this);
         }
@@ -119,86 +134,110 @@ public class MillennialNative extends CustomEventNative {
         void loadAd() {
             Log.i(LOGCAT_TAG, "Loading native ad...");
             try {
-                nativeAd.load(this.context, null);
+                mNativeAd.load(mContext, null);
             } catch (MMException e) {
                 Log.w(MillennialNative.LOGCAT_TAG, "Caught configuration error Exception.");
                 e.printStackTrace();
                 UI_THREAD_HANDLER.post(new Runnable() {
                     @Override
                     public void run() {
-                        listener.onNativeAdFailed(NativeErrorCode.NATIVE_ADAPTER_CONFIGURATION_ERROR);
+                        mListener.onNativeAdFailed(NativeErrorCode
+                                .NATIVE_ADAPTER_CONFIGURATION_ERROR);
                     }
                 });
             }
         }
 
-        // BaseForwardingNativeAd
-        @Override
-        public void destroy() {
-            nativeAd.setListener(null);
-            nativeAd = null;
-        }
-
+        // Lifecycle Handlers
         @Override
         public void prepare(final View view) {
             // Must access these methods directly to get impressions to fire.
-            nativeAd.getIconImage();
-            nativeAd.getDisclaimer();
+            mNativeAd.getIconImage();
+            mNativeAd.getDisclaimer();
+            mImpressionTracker.addView(view, this);
+            mNativeClickHandler.setOnClickListener(view, this);
         }
 
         @Override
-        public void handleClick(final View view) {
-            nativeAd.fireClicked();
-            Log.i(LOGCAT_TAG, "Millennial native ad clicked!");
+        public void clear(final View view) {
+            mImpressionTracker.removeView(view);
+            mNativeClickHandler.clearOnClickListener(view);
         }
 
         @Override
-        public void recordImpression() {
-            super.recordImpression();
+        public void destroy() {
+            mImpressionTracker.destroy();
+            mNativeAd.setListener(null);
+            mNativeAd = null;
+        }
+
+        // Event Handlers
+        @Override
+        public void recordImpression(final View view) {
+            notifyAdImpressed();
             try {
-                nativeAd.fireImpression();
+                mNativeAd.fireImpression();
                 Log.i(LOGCAT_TAG, "Millennial native impression recorded.");
             } catch ( MMException m ) {
                 Log.e(LOGCAT_TAG, "Millennial native impression NOT tracked: " + m.getMessage() );
             }
         }
 
-        // MM'S Native listener
+        @Override
+        public void handleClick(final View view) {
+            notifyAdClicked();
+            mNativeClickHandler.openClickDestinationUrl(getClickDestinationUrl(), view);
+            mNativeAd.fireClicked();
+            Log.i(LOGCAT_TAG, "Millennial native ad clicked!");
+        }
+
+        // MM'S Native mListener
         @Override
         public void onLoaded(NativeAd nativeAd) {
             // Set assets
             String iconImageUrl = nativeAd.getImageUrl(NativeAd.ComponentName.ICON_IMAGE, 1);
             String mainImageUrl = nativeAd.getImageUrl(NativeAd.ComponentName.MAIN_IMAGE, 1);
 
-            this.setTitle(nativeAd.getTitle().getText().toString());
-            this.setText(nativeAd.getBody().getText().toString());
-            this.setCallToAction(nativeAd.getCallToActionButton().getText().toString());
-            this.setClickDestinationUrl(nativeAd.getCallToActionUrl());
-            this.setIconImageUrl(iconImageUrl);
-            this.setMainImageUrl(mainImageUrl);
+            setTitle(nativeAd.getTitle().getText().toString());
+            setText(nativeAd.getBody().getText().toString());
+            setCallToAction(nativeAd.getCallToActionButton().getText().toString());
+
+            final String clickDestinationUrl = nativeAd.getCallToActionUrl();
+            if (clickDestinationUrl == null) {
+                UI_THREAD_HANDLER.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(LOGCAT_TAG,
+                                "Millennial native encountered null destination url. Failing over.");
+                        mListener.onNativeAdFailed(
+                                NativeErrorCode.NATIVE_ADAPTER_CONFIGURATION_ERROR);
+                    }
+                });
+                return;
+            }
+
+            setClickDestinationUrl(clickDestinationUrl);
+            setIconImageUrl(iconImageUrl);
+            setMainImageUrl(mainImageUrl);
 
             final List<String> urls = new ArrayList<String>();
             if ( iconImageUrl != null ) { urls.add(iconImageUrl); }
             if ( mainImageUrl != null ) { urls.add(mainImageUrl); }
 
-            // Use MoPub's click/impression trackers
-            this.setOverridingImpressionTracker(false);
-            this.setOverridingClickTracker(false);
-
             UI_THREAD_HANDLER.post(new Runnable() {
                 @Override
                 public void run() {
                     // This has to be run on the main thread:
-                    preCacheImages(context, urls, new ImageListener() {
+                    preCacheImages(mContext, urls, new NativeImageHelper.ImageListener() {
                         @Override
                         public void onImagesCached() {
-                            listener.onNativeAdLoaded(millennialForwardingNativeAd);
+                            mListener.onNativeAdLoaded(mMillennialStaticNativeAd);
                             Log.i(LOGCAT_TAG, "Millennial native ad loaded");
                         }
 
                         @Override
                         public void onImagesFailedToCache(NativeErrorCode errorCode) {
-                            listener.onNativeAdFailed(errorCode);
+                            mListener.onNativeAdFailed(errorCode);
                         }
                     });
 
@@ -236,7 +275,7 @@ public class MillennialNative extends CustomEventNative {
             UI_THREAD_HANDLER.post(new Runnable() {
                 @Override
                 public void run() {
-                    listener.onNativeAdFailed(error);
+                    mListener.onNativeAdFailed(error);
                 }
             });
             Log.i(LOGCAT_TAG, "Millennial native ad failed: " + nativeErrorStatus.getDescription() );

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 
 import com.mopub.common.DataKeys;
+import com.mopub.common.event.EventDetails;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.nativeads.factories.CustomEventNativeFactory;
 import com.mopub.network.AdResponse;
@@ -30,6 +31,13 @@ final class CustomEventNativeAdapter {
         if (adResponse.hasJson()) {
             localExtras.put(DataKeys.JSON_BODY_KEY, adResponse.getJsonBody());
         }
+
+        final EventDetails eventDetails = adResponse.getEventDetails();
+        if (eventDetails != null) {
+            localExtras.put(DataKeys.EVENT_DETAILS, eventDetails);
+        }
+
+        localExtras.put(DataKeys.CLICK_TRACKING_URL_KEY, adResponse.getClickTrackingUrl());
 
         // Custom event classes can be developed by any third party and may not be tested.
         // We catch all exceptions here to prevent crashes from untested code.

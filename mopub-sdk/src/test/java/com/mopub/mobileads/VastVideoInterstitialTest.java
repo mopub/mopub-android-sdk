@@ -9,7 +9,6 @@ import com.mopub.common.DataKeys;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 import com.mopub.mobileads.test.support.TestVastManagerFactory;
-import com.mopub.mobileads.test.support.TestVastVideoDownloadTaskFactory;
 import com.mopub.mobileads.test.support.VastUtils;
 
 import org.junit.After;
@@ -51,14 +50,12 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
     private String expectedResponse;
     private VastManager vastManager;
     private String videoUrl;
-    private VastVideoDownloadTask vastVideoDownloadTask;
     private long broadcastIdentifier;
 
     @Before
     public void setUp() throws Exception {
         subject = new VastVideoInterstitial();
 
-        vastVideoDownloadTask = TestVastVideoDownloadTaskFactory.getSingletonMock();
         vastManager = TestVastManagerFactory.getSingletonMock();
         expectedResponse = "<VAST>hello</VAST>";
         videoUrl = "http://www.video.com";
@@ -73,11 +70,6 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
 
         broadcastIdentifier = 2222;
         localExtras.put(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        reset(vastVideoDownloadTask);
     }
 
     @Test

@@ -327,6 +327,13 @@ public class VastXmlManagerTest {
             "                           <MoPubSkipText>skip</MoPubSkipText>" +
             "                           <MoPubCloseIcon>http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png</MoPubCloseIcon>" +
             "                           <MoPubForceOrientation>device</MoPubForceOrientation>" +
+            "                           <MoPubViewabilityTracker" +
+"                                           viewablePlaytime=\"2.5\"" +
+            "                               percentViewable=\"50%\">" +
+            "                               <![CDATA[" +
+            "                                   http://ad.server.com/impression/dot.gif" +
+            "                               ]]>" +
+            "                           </MoPubViewabilityTracker>" +
             "                        </Extension>" +
             "                    </Extensions>" +
             "                </InLine>" +

@@ -8,7 +8,7 @@
     <string name="show_ad">Show Ad</string>
     <string name="native_icon_image">native_icon_image</string>
     <string name="native_main_image">native_main_image</string>
-    <string name="native_daa_icon_image">DAA icon image</string>
+    <string name="native_privacy_information_icon_image">Privacy Information Icon image</string>
     <string name="learn_more">Learn More</string>
     <string name="save">Save Ad Unit</string>
     <string name="ad_unit_id">Ad Unit Id:</string>

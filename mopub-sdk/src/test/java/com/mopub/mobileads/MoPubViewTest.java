@@ -191,13 +191,6 @@ public class MoPubViewTest {
         verify(customEventBannerAdapter, never()).loadAd();
     }
 
-    @Test
-    public void setLocationAwarenss_shouldChangeGlobalSetting() {
-        assertThat(MoPub.getLocationAwareness()).isEqualTo(MoPub.LocationAwareness.NORMAL);
-        subject.setLocationAwareness(LocationService.LocationAwareness.DISABLED);
-        assertThat(MoPub.getLocationAwareness()).isEqualTo(MoPub.LocationAwareness.DISABLED);
-    }
-
     private void broadcastIntent(final Intent intent) {
         final List<ShadowApplication.Wrapper> wrappers = Robolectric.getShadowApplication().getRegisteredReceivers();
 

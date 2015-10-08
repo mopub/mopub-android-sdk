@@ -22,6 +22,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.VideoView;
 
+import com.mopub.common.MoPubBrowser;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.util.Dips;
@@ -31,6 +32,7 @@ import java.io.Serializable;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static com.mopub.common.MoPubBrowser.MOPUB_BROWSER_REQUEST_CODE;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
@@ -43,7 +45,6 @@ public class VastVideoViewController extends BaseVideoViewController {
 
     private static final long VIDEO_PROGRESS_TIMER_CHECKER_DELAY = 50;
     private static final long VIDEO_COUNTDOWN_UPDATE_INTERVAL = 250;
-    private static final int MOPUB_BROWSER_REQUEST_CODE = 1;
     private static final int SEEKER_POSITION_NOT_INITIALIZED = -1;
 
     /**
@@ -133,7 +134,7 @@ public class VastVideoViewController extends BaseVideoViewController {
                 if (motionEvent.getAction() == MotionEvent.ACTION_UP && shouldAllowClickThrough()) {
                     mIsClosing = true;
                     broadcastAction(ACTION_INTERSTITIAL_CLICK);
-                    mVastVideoConfig.handleClick(activity,
+                    mVastVideoConfig.handleClickForResult(activity,
                             mIsVideoFinishedPlaying ? mDuration : getCurrentPosition(),
                             MOPUB_BROWSER_REQUEST_CODE);
                 }
@@ -258,7 +259,7 @@ public class VastVideoViewController extends BaseVideoViewController {
     }
 
     @Override
-    protected void onConfigurationChanged(@Nullable final Configuration newConfig) {
+    protected void onConfigurationChanged(final Configuration newConfig) {
         final int orientation = getContext().getResources().getConfiguration().orientation;
         mVastCompanionAdConfig = mVastVideoConfig.getVastCompanionAd(orientation);
         if (mLandscapeCompanionAdView.getVisibility() == View.VISIBLE ||
@@ -275,6 +276,9 @@ public class VastVideoViewController extends BaseVideoViewController {
             }
         }
     }
+
+    @Override
+    protected void onBackPressed() { }
 
     // Enable the device's back button when the video close button has been displayed
     @Override
@@ -425,7 +429,8 @@ public class VastVideoViewController extends BaseVideoViewController {
     }
 
     private void addProgressBarWidget(@NonNull final Context context, int initialVisibility) {
-        mProgressBarWidget = new VastVideoProgressBarWidget(context, mVideoView.getId());
+        mProgressBarWidget = new VastVideoProgressBarWidget(context);
+        mProgressBarWidget.setAnchorId(mVideoView.getId());
         mProgressBarWidget.setVisibility(initialVisibility);
         getLayout().addView(mProgressBarWidget);
     }

@@ -14,7 +14,6 @@ import android.webkit.WebViewDatabase;
 import android.widget.FrameLayout;
 
 import com.mopub.common.AdFormat;
-import com.mopub.common.MoPub;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.ManifestUtils;
 import com.mopub.common.util.Visibility;
@@ -24,7 +23,6 @@ import com.mopub.mobileads.factories.CustomEventBannerAdapterFactory;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.mopub.common.LocationService.LocationAwareness;
 import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_NOT_FOUND;
 
 public class MoPubView extends FrameLayout {
@@ -36,7 +34,6 @@ public class MoPubView extends FrameLayout {
         public void onBannerCollapsed(MoPubView banner);
     }
 
-    public static final int DEFAULT_LOCATION_PRECISION = 6;
     @Nullable
     protected AdViewController mAdViewController;
     protected CustomEventBannerAdapter mCustomEventBannerAdapter;
@@ -46,13 +43,6 @@ public class MoPubView extends FrameLayout {
     private BroadcastReceiver mScreenStateReceiver;
 
     private BannerAdListener mBannerAdListener;
-    
-    private OnAdWillLoadListener mOnAdWillLoadListener;
-    private OnAdLoadedListener mOnAdLoadedListener;
-    private OnAdFailedListener mOnAdFailedListener;
-    private OnAdPresentedOverlayListener mOnAdPresentedOverlayListener;
-    private OnAdClosedListener mOnAdClosedListener;
-    private OnAdClickedListener mOnAdClickedListener;
 
     public MoPubView(Context context) {
         this(context, null);
@@ -213,40 +203,30 @@ public class MoPubView extends FrameLayout {
         
         if (mBannerAdListener != null) {
             mBannerAdListener.onBannerLoaded(this);
-        } else if (mOnAdLoadedListener != null) {
-            mOnAdLoadedListener.OnAdLoaded(this);
         }
     }
 
     protected void adFailed(MoPubErrorCode errorCode) {
         if (mBannerAdListener != null) {
             mBannerAdListener.onBannerFailed(this, errorCode);
-        } else if (mOnAdFailedListener != null) {
-            mOnAdFailedListener.OnAdFailed(this);
         }
     }
 
     protected void adPresentedOverlay() {
         if (mBannerAdListener != null) {
             mBannerAdListener.onBannerExpanded(this);
-        } else if (mOnAdPresentedOverlayListener != null) {
-            mOnAdPresentedOverlayListener.OnAdPresentedOverlay(this);
         }
     }
 
     protected void adClosed() {
         if (mBannerAdListener != null) {
             mBannerAdListener.onBannerCollapsed(this);
-        } else if (mOnAdClosedListener != null) {
-            mOnAdClosedListener.OnAdClosed(this);
         }
     }
 
     protected void adClicked() {
         if (mBannerAdListener != null) {
             mBannerAdListener.onBannerClicked(this);
-        } else if (mOnAdClickedListener != null) {
-            mOnAdClickedListener.OnAdClicked(this);
         }
     }
 
@@ -291,24 +271,6 @@ public class MoPubView extends FrameLayout {
 
     public int getAdHeight() {
         return (mAdViewController != null) ? mAdViewController.getAdHeight() : 0;
-    }
-
-    public String getResponseString() {
-        return (mAdViewController != null) ? mAdViewController.getResponseString() : null;
-    }
-
-    @Deprecated
-    public void setClickthroughUrl(String url) {
-        // Does nothing.
-    }
-
-    public String getClickTrackingUrl() {
-        return (mAdViewController != null) ? mAdViewController.getClickTrackingUrl() : null;
-    }
-
-    @Deprecated
-    public String getClickthroughUrl() {
-        return getClickTrackingUrl();
     }
 
     public Activity getActivity() {
@@ -384,117 +346,12 @@ public class MoPubView extends FrameLayout {
     }
 
     @Deprecated
-    public void setLocationAwareness(LocationAwareness locationAwareness) {
-        MoPub.setLocationAwareness(locationAwareness.getNewLocationAwareness());
+    public String getResponseString() {
+        return null;
     }
 
     @Deprecated
-    public LocationAwareness getLocationAwareness() {
-        return LocationAwareness.fromMoPubLocationAwareness(MoPub.getLocationAwareness());
-    }
-
-    @Deprecated
-    public void setLocationPrecision(int precision) {
-        MoPub.setLocationPrecision(precision);
-    }
-
-    @Deprecated
-    public int getLocationPrecision() {
-        return MoPub.getLocationPrecision();
-    }
-
-    @Deprecated
-    public interface OnAdWillLoadListener {
-        public void OnAdWillLoad(MoPubView m, String url);
-    }
-
-    @Deprecated
-    public interface OnAdLoadedListener {
-        public void OnAdLoaded(MoPubView m);
-    }
-
-    @Deprecated
-    public interface OnAdFailedListener {
-        public void OnAdFailed(MoPubView m);
-    }
-
-    @Deprecated
-    public interface OnAdClosedListener {
-        public void OnAdClosed(MoPubView m);
-    }
-
-    @Deprecated
-    public interface OnAdClickedListener {
-        public void OnAdClicked(MoPubView m);
-    }
-
-    @Deprecated
-    public interface OnAdPresentedOverlayListener {
-        public void OnAdPresentedOverlay(MoPubView m);
-    }
-
-    @Deprecated
-    public void setOnAdWillLoadListener(OnAdWillLoadListener listener) {
-        mOnAdWillLoadListener = listener;
-    }
-
-    @Deprecated
-    public void setOnAdLoadedListener(OnAdLoadedListener listener) {
-        mOnAdLoadedListener = listener;
-    }
-
-    @Deprecated
-    public void setOnAdFailedListener(OnAdFailedListener listener) {
-        mOnAdFailedListener = listener;
-    }
-
-    @Deprecated
-    public void setOnAdPresentedOverlayListener(OnAdPresentedOverlayListener listener) {
-        mOnAdPresentedOverlayListener = listener;
-    }
-
-    @Deprecated
-    public void setOnAdClosedListener(OnAdClosedListener listener) {
-        mOnAdClosedListener = listener;
-    }
-
-    @Deprecated
-    public void setOnAdClickedListener(OnAdClickedListener listener) {
-        mOnAdClickedListener = listener;
-    }
-
-    @Deprecated
-    protected void adWillLoad(String url) {
-        MoPubLog.d("adWillLoad: " + url);
-        if (mOnAdWillLoadListener != null) mOnAdWillLoadListener.OnAdWillLoad(this, url);
-    }
-
-    @Deprecated
-    public void customEventDidLoadAd() {
-        if (mAdViewController != null) mAdViewController.customEventDidLoadAd();
-    }
-
-    @Deprecated
-    public void customEventDidFailToLoadAd() {
-        if (mAdViewController != null) mAdViewController.customEventDidFailToLoadAd();
-    }
-
-    @Deprecated
-    public void customEventActionWillBegin() {
-        if (mAdViewController != null) mAdViewController.customEventActionWillBegin();
-    }
-
-    /**
-     * @deprecated As of release 2.4
-     */
-    @Deprecated
-    public void setFacebookSupported(boolean enabled) {}
-
-    /**
-     * @deprecated As of release 2.4
-     */
-    @Deprecated
-    public boolean isFacebookSupported() {
-        return false;
+    public String getClickTrackingUrl() {
+        return null;
     }
 }

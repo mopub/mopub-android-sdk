@@ -13,7 +13,7 @@ import com.mopub.common.logging.MoPubLog;
 import java.util.WeakHashMap;
 
 /**
- * @deprecated As of release 2.4, use {@link com.mopub.nativeads.MoPubNativeAdRenderer} instead
+ * @deprecated As of release 2.4, use {@link MoPubStaticNativeAdRenderer} instead
  */
 @Deprecated
 class NativeAdViewHelper {
@@ -26,33 +26,29 @@ class NativeAdViewHelper {
         AD
     }
 
-    // Because the impression tracker requires tracking drawing views,
-    // each context requires a separate impression tracker. To avoid leaking, keep weak references.
-    @VisibleForTesting
-    static final WeakHashMap<Context, ImpressionTracker> sImpressionTrackerMap =
-            new WeakHashMap<Context, ImpressionTracker>();
-
-    // Used to keep track of the last NativeResponse a view was associated with in order to clean
-    // up its state before associating with a new NativeResponse
-    static private final WeakHashMap<View, NativeResponse> sNativeResponseMap =
-            new WeakHashMap<View, NativeResponse>();
+    /**
+     * Used to keep track of the last {@link NativeAd} a view was associated with in order to clean
+     * up its state before associating with a new {@link NativeAd}
+     */
+    static private final WeakHashMap<View, NativeAd> sNativeAdMap =
+            new WeakHashMap<View, NativeAd>();
 
     @Deprecated
     @NonNull
     static View getAdView(@Nullable View convertView,
             @Nullable final ViewGroup parent,
             @NonNull final Context context,
-            @Nullable final NativeResponse nativeResponse,
+            @Nullable final NativeAd nativeAd,
             @Nullable final ViewBinder viewBinder) {
 
         Preconditions.NoThrow.checkNotNull(viewBinder, "ViewBinder is null.");
 
         if (convertView != null) {
-            clearNativeResponse(context, convertView);
+            clearNativeAd(context, convertView);
         }
 
-        if (nativeResponse == null || nativeResponse.isDestroyed() || viewBinder == null) {
-            MoPubLog.d("nativeResponse or viewBinder null or invalid. Returning empty view");
+        if (nativeAd == null || nativeAd.isDestroyed() || viewBinder == null) {
+            MoPubLog.d("NativeAd or viewBinder null or invalid. Returning empty view");
             // Only create a view if one hasn't been created already
             if (convertView == null || !ViewType.EMPTY.equals(convertView.getTag())) {
                 convertView = new View(context);
@@ -60,44 +56,30 @@ class NativeAdViewHelper {
                 convertView.setVisibility(View.GONE);
             }
         } else {
-            final MoPubNativeAdRenderer moPubNativeAdRenderer = new MoPubNativeAdRenderer(viewBinder);
             // Only create a view if one hasn't been created already
             if (convertView == null || !ViewType.AD.equals(convertView.getTag())) {
-                convertView = moPubNativeAdRenderer.createAdView(context, parent);
+                convertView = nativeAd.createAdView(parent);
                 convertView.setTag(ViewType.AD);
             }
-            prepareNativeResponse(context, convertView, nativeResponse);
-            moPubNativeAdRenderer.renderAdView(convertView, nativeResponse);
+            prepareNativeAd(context, convertView, nativeAd);
+            nativeAd.renderAdView(convertView);
         }
 
         return convertView;
     }
 
-    private static void clearNativeResponse(@NonNull final Context context,
+    private static void clearNativeAd(@NonNull final Context context,
             @NonNull final View view) {
-        getImpressionTracker(context).removeView(view);
-        final NativeResponse nativeResponse = sNativeResponseMap.get(view);
-        if (nativeResponse != null) {
-            nativeResponse.clear(view);
+        final NativeAd nativeAd = sNativeAdMap.get(view);
+        if (nativeAd != null) {
+            nativeAd.clear(view);
         }
     }
 
-    private static void prepareNativeResponse(@NonNull final Context context,
+    private static void prepareNativeAd(@NonNull final Context context,
             @NonNull final View view,
-            @NonNull final NativeResponse nativeResponse) {
-        sNativeResponseMap.put(view, nativeResponse);
-        if (!nativeResponse.isOverridingImpressionTracker()) {
-            getImpressionTracker(context).addView(view, nativeResponse);
-        }
-        nativeResponse.prepare(view);
-    }
-
-    private static ImpressionTracker getImpressionTracker(@NonNull final Context context) {
-        ImpressionTracker impressionTracker = sImpressionTrackerMap.get(context);
-        if (impressionTracker == null) {
-            impressionTracker = new ImpressionTracker(context);
-            sImpressionTrackerMap.put(context, impressionTracker);
-        }
-        return impressionTracker;
+            @NonNull final NativeAd nativeAd) {
+        sNativeAdMap.put(view, nativeAd);
+        nativeAd.prepare(view);
     }
 }

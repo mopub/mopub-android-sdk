@@ -7,6 +7,7 @@ import android.text.TextUtils;
 
 import com.mopub.common.AdFormat;
 import com.mopub.common.MoPub;
+import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.mobileads.factories.CustomEventInterstitialAdapterFactory;
 
@@ -40,14 +41,6 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         public void onInterstitialShown(MoPubInterstitial interstitial);
         public void onInterstitialClicked(MoPubInterstitial interstitial);
         public void onInterstitialDismissed(MoPubInterstitial interstitial);
-    }
-
-    private MoPubInterstitialListener mListener;
-
-    @Deprecated
-    public interface MoPubInterstitialListener {
-        public void OnInterstitialLoaded();
-        public void OnInterstitialFailed();
     }
 
     public MoPubInterstitial(Activity activity, String id) {
@@ -177,8 +170,6 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
 
         if (mInterstitialAdListener != null) {
             mInterstitialAdListener.onInterstitialLoaded(this);
-        } else if (mListener != null) {
-            mListener.OnInterstitialLoaded();
         }
     }
 
@@ -221,26 +212,6 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         if (mInterstitialAdListener != null) {
             mInterstitialAdListener.onInterstitialDismissed(this);
         }
-    }
-
-    @Deprecated
-    public void setLocationAwareness(LocationAwareness locationAwareness) {
-        MoPub.setLocationAwareness(locationAwareness.getNewLocationAwareness());
-    }
-
-    @Deprecated
-    public LocationAwareness getLocationAwareness() {
-        return LocationAwareness.fromMoPubLocationAwareness(MoPub.getLocationAwareness());
-    }
-
-    @Deprecated
-    public void setLocationPrecision(int precision) {
-        MoPub.setLocationPrecision(precision);
-    }
-
-    @Deprecated
-    public int getLocationPrecision() {
-        return MoPub.getLocationPrecision();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -298,47 +269,9 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         }
     }
 
-    @Deprecated // for testing
+    @VisibleForTesting
+    @Deprecated
     void setInterstitialView(MoPubInterstitialView interstitialView) {
         mInterstitialView = interstitialView;
-    }
-
-    @Deprecated
-    public void setListener(MoPubInterstitialListener listener) {
-        mListener = listener;
-    }
-
-    @Deprecated
-    public MoPubInterstitialListener getListener() {
-        return mListener;
-    }
-
-    @Deprecated
-    public void customEventDidLoadAd() {
-        if (mInterstitialView != null) mInterstitialView.trackImpression();
-    }
-
-    @Deprecated
-    public void customEventDidFailToLoadAd() {
-        if (mInterstitialView != null) mInterstitialView.loadFailUrl(MoPubErrorCode.UNSPECIFIED);
-    }
-
-    @Deprecated
-    public void customEventActionWillBegin() {
-        if (mInterstitialView != null) mInterstitialView.registerClick();
-    }
-
-    /**
-     * @deprecated As of release 2.4
-     */
-    @Deprecated
-    public void setFacebookSupported(boolean enabled) {}
-
-    /**
-     * @deprecated As of release 2.4
-     */
-    @Deprecated
-    public boolean isFacebookSupported() {
-        return false;
     }
 }

@@ -3,9 +3,11 @@ package com.mopub.nativeads;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.view.View;
 
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.nativeads.NativeImageHelper.ImageListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,7 +23,7 @@ import java.util.Set;
 
 import static com.mopub.common.DataKeys.JSON_BODY_KEY;
 import static com.mopub.common.util.Numbers.parseDouble;
-import static com.mopub.nativeads.NativeResponse.Parameter;
+import static com.mopub.nativeads.NativeImageHelper.preCacheImages;
 
 public class MoPubCustomEventNative extends CustomEventNative {
 
@@ -34,36 +36,88 @@ public class MoPubCustomEventNative extends CustomEventNative {
         Object json = localExtras.get(JSON_BODY_KEY);
         // null or non-JSONObjects should not be passed in localExtras as JSON_BODY_KEY
         if (!(json instanceof JSONObject)) {
-            customEventNativeListener.onNativeAdFailed(NativeErrorCode.INVALID_JSON);
+            customEventNativeListener.onNativeAdFailed(NativeErrorCode.INVALID_RESPONSE);
             return;
         }
 
-        final MoPubForwardingNativeAd moPubForwardingNativeAd =
-                new MoPubForwardingNativeAd(context.getApplicationContext(),
+        final MoPubStaticNativeAd moPubStaticNativeAd =
+                new MoPubStaticNativeAd(context,
                         (JSONObject) json,
+                        new ImpressionTracker(context),
+                        new NativeClickHandler(context),
                         customEventNativeListener);
 
         try {
-            moPubForwardingNativeAd.loadAd();
+            moPubStaticNativeAd.loadAd();
         } catch (IllegalArgumentException e) {
             customEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
         }
     }
 
-    static class MoPubForwardingNativeAd extends BaseForwardingNativeAd {
+    static class MoPubStaticNativeAd extends StaticNativeAd {
+        enum Parameter {
+            IMPRESSION_TRACKER("imptracker", true),
+            CLICK_TRACKER("clktracker", true),
+
+            TITLE("title", false),
+            TEXT("text", false),
+            MAIN_IMAGE("mainimage", false),
+            ICON_IMAGE("iconimage", false),
+
+            CLICK_DESTINATION("clk", false),
+            FALLBACK("fallback", false),
+            CALL_TO_ACTION("ctatext", false),
+            STAR_RATING("starrating", false);
+
+            @NonNull final String name;
+            final boolean required;
+
+            Parameter(@NonNull final String name, final boolean required) {
+                this.name = name;
+                this.required = required;
+            }
+
+            @Nullable
+            static Parameter from(@NonNull final String name) {
+                for (final Parameter parameter : values()) {
+                    if (parameter.name.equals(name)) {
+                        return parameter;
+                    }
+                }
+
+                return null;
+            }
+
+            @NonNull
+            @VisibleForTesting
+            static final Set<String> requiredKeys = new HashSet<String>();
+            static {
+                for (final Parameter parameter : values()) {
+                    if (parameter.required) {
+                        requiredKeys.add(parameter.name);
+                    }
+                }
+            }
+        }
 
         @VisibleForTesting
-        static final String DAA_CLICKTHROUGH_URL = "https://www.mopub.com/optout";
+        static final String PRIVACY_INFORMATION_CLICKTHROUGH_URL = "https://www.mopub.com/optout";
 
         @NonNull private final Context mContext;
         @NonNull private final CustomEventNativeListener mCustomEventNativeListener;
         @NonNull private final JSONObject mJsonObject;
+        @NonNull private final ImpressionTracker mImpressionTracker;
+        @NonNull private final NativeClickHandler mNativeClickHandler;
 
-        MoPubForwardingNativeAd(@NonNull final Context context,
+        MoPubStaticNativeAd(@NonNull final Context context,
                 @NonNull final JSONObject jsonBody,
+                @NonNull final ImpressionTracker impressionTracker,
+                @NonNull final NativeClickHandler nativeClickHandler,
                 @NonNull final CustomEventNativeListener customEventNativeListener) {
             mJsonObject = jsonBody;
-            mContext = context;
+            mContext = context.getApplicationContext();
+            mImpressionTracker = impressionTracker;
+            mNativeClickHandler = nativeClickHandler;
             mCustomEventNativeListener = customEventNativeListener;
         }
 
@@ -87,11 +141,12 @@ public class MoPubCustomEventNative extends CustomEventNative {
                     addExtra(key, mJsonObject.opt(key));
                 }
             }
+            setPrivacyInformationIconClickThroughUrl(PRIVACY_INFORMATION_CLICKTHROUGH_URL);
 
             preCacheImages(mContext, getAllImageUrls(), new ImageListener() {
                 @Override
                 public void onImagesCached() {
-                    mCustomEventNativeListener.onNativeAdLoaded(MoPubForwardingNativeAd.this);
+                    mCustomEventNativeListener.onNativeAdLoaded(MoPubStaticNativeAd.this);
                 }
 
                 @Override
@@ -123,8 +178,6 @@ public class MoPubCustomEventNative extends CustomEventNative {
                         break;
                     case IMPRESSION_TRACKER:
                         addImpressionTrackers(value);
-                        break;
-                    case CLICK_TRACKER:
                         break;
                     case CLICK_DESTINATION:
                         setClickDestinationUrl((String) value);
@@ -200,9 +253,34 @@ public class MoPubCustomEventNative extends CustomEventNative {
             return imageUrls;
         }
 
+        // Lifecycle Handlers
         @Override
-        public String getDaaIconClickthroughUrl() {
-            return DAA_CLICKTHROUGH_URL;
+        public void prepare(@NonNull final View view) {
+            mImpressionTracker.addView(view, this);
+            mNativeClickHandler.setOnClickListener(view, this);
+        }
+
+        @Override
+        public void clear(@NonNull final View view) {
+            mImpressionTracker.removeView(view);
+            mNativeClickHandler.clearOnClickListener(view);
+        }
+
+        @Override
+        public void destroy() {
+            mImpressionTracker.destroy();
+        }
+
+        // Event Handlers
+        @Override
+        public void recordImpression(@NonNull final View view) {
+            notifyAdImpressed();
+        }
+
+        @Override
+        public void handleClick(@Nullable final View view) {
+            notifyAdClicked();
+            mNativeClickHandler.openClickDestinationUrl(getClickDestinationUrl(), view);
         }
     }
 }

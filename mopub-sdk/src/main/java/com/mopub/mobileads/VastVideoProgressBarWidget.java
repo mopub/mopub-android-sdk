@@ -14,8 +14,9 @@ import com.mopub.mobileads.resource.ProgressBarDrawable;
 
 public class VastVideoProgressBarWidget extends ImageView {
     @NonNull private ProgressBarDrawable mProgressBarDrawable;
+    private final int mProgressBarHeight;
 
-    public VastVideoProgressBarWidget(@NonNull final Context context, final int anchorId) {
+    public VastVideoProgressBarWidget(@NonNull final Context context) {
         super(context);
 
         setId((int) Utils.generateUniqueId());
@@ -23,25 +24,31 @@ public class VastVideoProgressBarWidget extends ImageView {
         mProgressBarDrawable = new ProgressBarDrawable(context);
         setImageDrawable(mProgressBarDrawable);
 
-        final int progressBarHeight
-                = Dips.dipsToIntPixels(DrawableConstants.ProgressBar.HEIGHT_DIPS, context);
-
-        final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT,
-                progressBarHeight);
-
-        layoutParams.addRule(RelativeLayout.ALIGN_BOTTOM, anchorId);
-
-        setLayoutParams(layoutParams);
+        mProgressBarHeight =
+                Dips.dipsToIntPixels(DrawableConstants.ProgressBar.HEIGHT_DIPS, context);
     }
 
-    void calibrateAndMakeVisible(final int duration, final int skipOffset) {
+    public void setAnchorId(final int anchorId) {
+        final RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                mProgressBarHeight);
+        layoutParams.addRule(RelativeLayout.ALIGN_BOTTOM, anchorId);
+        setLayoutParams(layoutParams);
+
+    }
+
+    public void calibrateAndMakeVisible(final int duration, final int skipOffset) {
         mProgressBarDrawable.setDurationAndSkipOffset(duration, skipOffset);
         setVisibility(View.VISIBLE);
     }
 
-    void updateProgress(final int progress) {
+    public void updateProgress(final int progress) {
         mProgressBarDrawable.setProgress(progress);
+    }
+
+    public void reset() {
+        mProgressBarDrawable.reset();
+        mProgressBarDrawable.setProgress(0);
     }
 
     // for testing
