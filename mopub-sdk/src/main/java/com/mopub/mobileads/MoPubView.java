@@ -196,6 +196,14 @@ public class MoPubView extends FrameLayout {
         }
     }
 
+    @Override
+    protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        if (changedView == this){
+            setAdVisibility(visibility);
+        }
+    }
+
     private void setAdVisibility(final int visibility) {
         if (mAdViewController == null) {
             return;
