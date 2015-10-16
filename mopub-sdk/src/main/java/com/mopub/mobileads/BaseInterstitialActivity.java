@@ -7,16 +7,15 @@ import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.WebView;
 import android.widget.FrameLayout.LayoutParams;
 
 import com.integralads.verification.app_verification_library.AvidManager;
+import com.mopub.avid.AvidUtil;
 import com.mopub.common.AdReport;
 import com.mopub.common.CloseableLayout;
 import com.mopub.common.CloseableLayout.OnCloseListener;
 import com.mopub.common.DataKeys;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 
@@ -45,6 +44,7 @@ abstract class BaseInterstitialActivity extends Activity {
 
     private CloseableLayout mCloseableLayout;
     private Long mBroadcastIdentifier;
+    private WebView adWebView;
 
     public abstract View getAdView();
 
@@ -60,6 +60,7 @@ abstract class BaseInterstitialActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         View adView = getAdView();
+        adWebView = AvidUtil.findWebView(adView);
 
         mCloseableLayout = new CloseableLayout(this);
         mCloseableLayout.setOnCloseListener(new OnCloseListener() {
@@ -71,14 +72,26 @@ abstract class BaseInterstitialActivity extends Activity {
         mCloseableLayout.addView(adView,
                 new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         setContentView(mCloseableLayout);
+    }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (adWebView != null) {
+            AvidManager.getInstance().registerAdView(adWebView, this);
+        }
+    }
 
-        AvidManager.getInstance().registerAdClasses(new ArrayList<Class<?>>(Arrays.asList(BaseWebView.class)), this);
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (adWebView != null) {
+            AvidManager.getInstance().unregisterAdView(adWebView);
+        }
     }
 
     @Override
     protected void onDestroy() {
-        AvidManager.getInstance().unregisterAdClasses();
         mCloseableLayout.removeAllViews();
         super.onDestroy();
     }

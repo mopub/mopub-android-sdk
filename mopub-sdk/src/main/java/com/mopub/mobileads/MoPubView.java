@@ -13,7 +13,6 @@ import android.view.View;
 import android.webkit.WebViewDatabase;
 import android.widget.FrameLayout;
 
-import com.integralads.verification.app_verification_library.AvidManager;
 import com.mopub.common.AdFormat;
 import com.mopub.common.MoPub;
 import com.mopub.common.logging.MoPubLog;
@@ -22,8 +21,6 @@ import com.mopub.common.util.Visibility;
 import com.mopub.mobileads.factories.AdViewControllerFactory;
 import com.mopub.mobileads.factories.CustomEventBannerAdapterFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -86,7 +83,6 @@ public class MoPubView extends FrameLayout {
 
         mAdViewController = AdViewControllerFactory.create(context, this);
         registerScreenStateBroadcastReceiver();
-        AvidManager.getInstance().registerAdClasses(new ArrayList<Class<?>>(Arrays.asList(BaseWebView.class)), (Activity)mContext);
     }
 
     private void registerScreenStateBroadcastReceiver() {
@@ -130,7 +126,6 @@ public class MoPubView extends FrameLayout {
      * Activity's onDestroy implementation must include a call to this method.
      */
     public void destroy() {
-        AvidManager.getInstance().unregisterAdClasses();
         unregisterScreenStateBroadcastReceiver();
         removeAllViews();
 
