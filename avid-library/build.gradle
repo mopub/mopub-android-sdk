@@ -1,2 +1,2 @@
 configurations.create("default")
-artifacts.add("default", file('avid-library.aar'))
+artifacts.add("default", file('avid-library-1.0.0-BETA.aar'))
