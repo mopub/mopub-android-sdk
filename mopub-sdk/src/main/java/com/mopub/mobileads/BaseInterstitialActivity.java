@@ -10,8 +10,6 @@ import android.view.WindowManager;
 import android.webkit.WebView;
 import android.widget.FrameLayout.LayoutParams;
 
-import com.integralads.verification.app_verification_library.AvidManager;
-import com.mopub.avid.AvidUtil;
 import com.mopub.common.AdReport;
 import com.mopub.common.CloseableLayout;
 import com.mopub.common.CloseableLayout.OnCloseListener;
@@ -60,7 +58,6 @@ abstract class BaseInterstitialActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         View adView = getAdView();
-        adWebView = AvidUtil.findWebView(adView);
 
         mCloseableLayout = new CloseableLayout(this);
         mCloseableLayout.setOnCloseListener(new OnCloseListener() {
@@ -72,22 +69,6 @@ abstract class BaseInterstitialActivity extends Activity {
         mCloseableLayout.addView(adView,
                 new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         setContentView(mCloseableLayout);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        if (adWebView != null) {
-            AvidManager.getInstance().registerAdView(adWebView, this);
-        }
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (adWebView != null) {
-            AvidManager.getInstance().unregisterAdView(adWebView);
-        }
     }
 
     @Override

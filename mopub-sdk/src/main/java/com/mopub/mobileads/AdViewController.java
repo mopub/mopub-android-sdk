@@ -16,8 +16,6 @@ import android.view.View;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 
-import com.integralads.verification.app_verification_library.AvidManager;
-import com.mopub.avid.AvidUtil;
 import com.mopub.common.AdReport;
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.Constants;
@@ -93,8 +91,6 @@ public class AdViewController {
     private AdRequest mActiveRequest;
     @Nullable
     private Integer mRefreshTimeMillis;
-
-    private WebView adWebView;
 
     public static void setShouldHonorServerDimensions(View view) {
         sViewShouldHonorServerDimensions.put(view, true);
@@ -427,7 +423,6 @@ public class AdViewController {
 
         setAutorefreshEnabled(false);
         cancelRefreshTimer();
-        unregisterAdWebView();
 
         // WebView subclasses are not garbage-collected in a timely fashion on Froyo and below,
         // thanks to some persistent references in WebViewCore. We manually release some resources
@@ -559,22 +554,10 @@ public class AdViewController {
                 if (moPubView == null) {
                     return;
                 }
-                unregisterAdWebView();
                 moPubView.removeAllViews();
                 moPubView.addView(view, getAdLayoutParams(view));
-                adWebView = AvidUtil.findWebView(view);
-                if (adWebView != null) {
-                    AvidManager.getInstance().registerAdView(adWebView, (Activity)mContext);
-                }
             }
         });
-    }
-
-    private void unregisterAdWebView() {
-        if (adWebView != null) {
-            AvidManager.getInstance().unregisterAdView(adWebView);
-            adWebView = null;
-        }
     }
 
     private FrameLayout.LayoutParams getAdLayoutParams(View view) {

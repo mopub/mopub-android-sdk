@@ -1,7 +1,9 @@
 package com.mopub.mobileads;
 
+import android.app.Activity;
 import android.content.Context;
 
+import com.integralads.verification.app_verification_library.AvidManager;
 import com.mopub.common.AdReport;
 import com.mopub.common.DataKeys;
 import com.mopub.common.logging.MoPubLog;
@@ -48,12 +50,14 @@ public class HtmlBanner extends CustomEventBanner {
 
         mHtmlBannerWebView = HtmlBannerWebViewFactory.create(context, adReport, customEventBannerListener, isScrollable, redirectUrl, clickthroughUrl);
         AdViewController.setShouldHonorServerDimensions(mHtmlBannerWebView);
+        AvidManager.getInstance().registerAdView(mHtmlBannerWebView, (Activity)context);
         mHtmlBannerWebView.loadHtmlResponse(htmlData);
     }
 
     @Override
     protected void onInvalidate() {
         if (mHtmlBannerWebView != null) {
+            AvidManager.getInstance().unregisterAdView(mHtmlBannerWebView);
             mHtmlBannerWebView.destroy();
         }
     }
