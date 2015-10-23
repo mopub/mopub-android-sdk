@@ -50,7 +50,9 @@ public class HtmlBanner extends CustomEventBanner {
 
         mHtmlBannerWebView = HtmlBannerWebViewFactory.create(context, adReport, customEventBannerListener, isScrollable, redirectUrl, clickthroughUrl);
         AdViewController.setShouldHonorServerDimensions(mHtmlBannerWebView);
-        AvidManager.getInstance().registerAdView(mHtmlBannerWebView, (Activity)context);
+        if (context instanceof Activity) {
+            AvidManager.getInstance().registerAdView(mHtmlBannerWebView, (Activity) context);
+        }
         mHtmlBannerWebView.loadHtmlResponse(htmlData);
     }
 
