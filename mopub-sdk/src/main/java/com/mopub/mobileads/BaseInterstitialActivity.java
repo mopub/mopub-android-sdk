@@ -7,7 +7,6 @@ import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.webkit.WebView;
 import android.widget.FrameLayout.LayoutParams;
 
 import com.mopub.common.AdReport;
@@ -42,7 +41,6 @@ abstract class BaseInterstitialActivity extends Activity {
 
     private CloseableLayout mCloseableLayout;
     private Long mBroadcastIdentifier;
-    private WebView adWebView;
 
     public abstract View getAdView();
 
@@ -69,6 +67,8 @@ abstract class BaseInterstitialActivity extends Activity {
         mCloseableLayout.addView(adView,
                 new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         setContentView(mCloseableLayout);
+
+
     }
 
     @Override

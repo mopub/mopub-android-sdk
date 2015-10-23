@@ -1,6 +1,5 @@
 package com.mopub.mobileads;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -13,7 +12,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.webkit.WebView;
 import android.widget.FrameLayout;
 
 import com.mopub.common.AdReport;
