@@ -576,6 +576,10 @@ public class AdViewController {
         }
     }
 
+    public AdResponse getAdResponse(){
+        return mAdResponse;
+    }
+
     @Deprecated // for testing
     @VisibleForTesting
     Integer getRefreshTimeMillis() {
