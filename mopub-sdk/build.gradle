@@ -76,6 +76,7 @@ dependencies {
     compile 'com.android.support:support-annotations:22.0.0'
     compile 'com.android.support:recyclerview-v7:22.0.0'
     compile 'com.mopub.volley:mopub-volley:1.1.0'
+    compile project(':avid-library')
 
     testCompile 'junit:junit:4.10'
     testCompile 'org.robolectric:robolectric:2.4'
