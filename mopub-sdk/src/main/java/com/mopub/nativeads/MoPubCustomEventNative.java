@@ -3,9 +3,12 @@ package com.mopub.nativeads;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.view.View;
 
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.nativeads.events.NativeAdEventsObserver;
+import com.mopub.nativeads.events.NativeAdType;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -203,6 +206,19 @@ public class MoPubCustomEventNative extends CustomEventNative {
         @Override
         public String getDaaIconClickthroughUrl() {
             return DAA_CLICKTHROUGH_URL;
+        }
+
+        @Override
+        public void handleClick(@Nullable View view) {
+            super.handleClick(view);
+            NativeAdEventsObserver.instance().onAdClicked(NativeAdType.Mopub);
+        }
+
+        @Override
+        public void recordImpression() {
+            super.recordImpression();
+            NativeAdEventsObserver.instance().onAdImpressed(NativeAdType.Mopub);
+
         }
     }
 }
