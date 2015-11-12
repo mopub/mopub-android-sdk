@@ -66,7 +66,7 @@ public class MoPubActivity extends BaseInterstitialActivity {
         return intent;
     }
 
-    static void preRenderHtml(final Context context, final AdReport adReport,
+    static WebView preRenderHtml(final Context context, final AdReport adReport,
             final CustomEventInterstitialListener customEventInterstitialListener,
             String htmlData) {
         HtmlInterstitialWebView dummyWebView = HtmlInterstitialWebViewFactory.create(context, adReport, customEventInterstitialListener, false, null, null);
@@ -84,6 +84,7 @@ public class MoPubActivity extends BaseInterstitialActivity {
             }
         });
         dummyWebView.loadHtmlResponse(htmlData);
+        return dummyWebView;
     }
 
     @Override
