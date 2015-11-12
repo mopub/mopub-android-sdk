@@ -27,6 +27,7 @@ import android.webkit.JsResult;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
+import com.integralads.verification.app_verification_library.AvidManager;
 import com.mopub.common.AdReport;
 import com.mopub.common.UrlHandler;
 import com.mopub.common.CloseableLayout;
@@ -333,6 +334,11 @@ public class MraidController {
         Preconditions.checkState(mMraidWebView == null, "loadContent should only be called once");
 
         mMraidWebView = new MraidWebView(mContext);
+        Activity activity = mWeakActivity.get();
+        if (activity != null) {
+            mMraidWebView.getSettings().setJavaScriptEnabled(true);
+            AvidManager.getInstance().registerAdView(mMraidWebView, activity);
+        }
         mMraidBridge.attachView(mMraidWebView);
         mDefaultAdContainer.addView(mMraidWebView,
                 new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
@@ -600,6 +606,7 @@ public class MraidController {
         // Calling destroy eliminates a memory leak on Gingerbread devices
         mMraidBridge.detach();
         if (mMraidWebView != null) {
+            AvidManager.getInstance().unregisterAdView(mMraidWebView);
             mMraidWebView.destroy();
             mMraidWebView = null;
         }

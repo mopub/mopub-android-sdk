@@ -9,6 +9,7 @@ import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.integralads.verification.app_verification_library.AvidManager;
 import com.mopub.common.AdReport;
 import com.mopub.common.CreativeOrientation;
 import com.mopub.common.DataKeys;
@@ -94,6 +95,7 @@ public class MoPubActivity extends BaseInterstitialActivity {
         String htmlResponse = intent.getStringExtra(HTML_RESPONSE_BODY_KEY);
 
         mHtmlInterstitialWebView = HtmlInterstitialWebViewFactory.create(getApplicationContext(), mAdReport, new BroadcastingInterstitialListener(), isScrollable, redirectUrl, clickthroughUrl);
+        AvidManager.getInstance().registerAdView(mHtmlInterstitialWebView, this);
         mHtmlInterstitialWebView.loadHtmlResponse(htmlResponse);
 
         return mHtmlInterstitialWebView;
@@ -117,6 +119,7 @@ public class MoPubActivity extends BaseInterstitialActivity {
 
     @Override
     protected void onDestroy() {
+        AvidManager.getInstance().unregisterAdView(mHtmlInterstitialWebView);
         mHtmlInterstitialWebView.loadUrl(WEB_VIEW_DID_CLOSE.getUrl());
         mHtmlInterstitialWebView.destroy();
         broadcastAction(this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_DISMISS);
