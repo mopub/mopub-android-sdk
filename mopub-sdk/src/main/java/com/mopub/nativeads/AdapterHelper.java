@@ -13,8 +13,6 @@ import com.mopub.common.logging.MoPubLog;
 
 import java.lang.ref.WeakReference;
 
-import static com.mopub.nativeads.MoPubNative.MoPubNativeListener;
-
 /**
  * @deprecated As of release 2.4, use {@link com.mopub.nativeads.MoPubAdAdapter} or
  * {@link com.mopub.nativeads.MoPubStreamAdPlacer} instead
@@ -43,9 +41,8 @@ public final class AdapterHelper {
     @NonNull
     public View getAdView(@Nullable final View convertView,
             @Nullable final ViewGroup parent,
-            @Nullable final NativeResponse nativeResponse,
-            @Nullable final ViewBinder viewBinder,
-            @Nullable @SuppressWarnings("unused") final MoPubNativeListener moPubNativeListener) {
+            @Nullable final NativeAd nativeAd,
+            @Nullable final ViewBinder viewBinder) {
         final Activity activity = mActivity.get();
         if (activity == null) {
             MoPubLog.w("Weak reference to Activity Context in"
@@ -57,7 +54,7 @@ public final class AdapterHelper {
                 convertView,
                 parent,
                 activity,
-                nativeResponse,
+                nativeAd,
                 viewBinder
         );
     }

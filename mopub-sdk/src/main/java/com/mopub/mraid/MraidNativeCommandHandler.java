@@ -15,11 +15,14 @@ import android.os.Build.VERSION_CODES;
 import android.os.Environment;
 import android.provider.CalendarContract;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.mopub.common.MoPubHttpUrlConnection;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
@@ -28,30 +31,24 @@ import com.mopub.common.util.Intents;
 import com.mopub.common.util.Streams;
 import com.mopub.common.util.Utils;
 import com.mopub.common.util.VersionCode;
-import com.mopub.mobileads.factories.HttpClientFactory;
-import com.mopub.network.HeaderUtils;
 
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.os.Environment.MEDIA_MOUNTED;
-import static com.mopub.common.HttpClient.*;
 import static com.mopub.common.util.ResponseHeader.LOCATION;
 
 public class MraidNativeCommandHandler {
@@ -439,10 +436,18 @@ public class MraidNativeCommandHandler {
                 .show();
     }
 
-    private static class DownloadImageAsyncTask extends AsyncTask<String, Void, Boolean> {
+    /**
+     * Downloads an image from a remote URL and stores it in the user's photo gallery.
+     *
+     * This runs on the background thread, creates the appropriate photo gallery directory if not
+     * present, and uses the mime-type to append a file extension if necessary.
+     *
+     * The DownloadImageAsyncTaskListener parameter is notified of task success or failure.
+     */
+    @VisibleForTesting
+    static class DownloadImageAsyncTask extends AsyncTask<String, Void, Boolean> {
         interface DownloadImageAsyncTaskListener {
             void onSuccess();
-
             void onFailure();
         }
 
@@ -458,8 +463,9 @@ public class MraidNativeCommandHandler {
 
         @Override
         protected Boolean doInBackground(@NonNull String[] params) {
-            Preconditions.checkState(params.length > 0);
-            Preconditions.checkNotNull(params[0]);
+            if (params == null || params.length == 0 || params[0] == null) {
+                return false;
+            }
 
             final File pictureStoragePath = getPictureStoragePath();
 
@@ -469,21 +475,20 @@ public class MraidNativeCommandHandler {
             final String uriString = params[0];
             URI uri = URI.create(uriString);
 
-            final HttpClient httpClient = HttpClientFactory.create();
-            final HttpGet httpGet = initializeHttpGet(uri.toString());
-
             InputStream pictureInputStream = null;
             OutputStream pictureOutputStream = null;
             try {
-                final HttpResponse httpResponse = httpClient.execute(httpGet);
-                pictureInputStream = httpResponse.getEntity().getContent();
+                final HttpURLConnection urlConnection =
+                        MoPubHttpUrlConnection.getHttpUrlConnection(uriString);
+                pictureInputStream = new BufferedInputStream(urlConnection.getInputStream());
 
-                final String redirectLocation = HeaderUtils.extractHeader(httpResponse, LOCATION);
-                if (redirectLocation != null) {
+                final String redirectLocation = urlConnection.getHeaderField(LOCATION.getKey());
+                if (!TextUtils.isEmpty(redirectLocation)) {
                     uri = URI.create(redirectLocation);
                 }
 
-                final String pictureFileName = getFileNameForUriAndHttpResponse(uri, httpResponse);
+                final String pictureFileName =
+                        getFileNameForUriAndHeaders(uri, urlConnection.getHeaderFields());
                 final File pictureFile = new File(pictureStoragePath, pictureFileName);
                 pictureOutputStream = new FileOutputStream(pictureFile);
                 Streams.copyContent(pictureInputStream, pictureOutputStream);
@@ -492,7 +497,7 @@ public class MraidNativeCommandHandler {
                 loadPictureIntoGalleryApp(pictureFileFullPath);
 
                 return true;
-            } catch (IOException e) {
+            } catch (Exception e) {
                 return false;
             } finally {
                 Streams.closeStream(pictureInputStream);
@@ -509,27 +514,36 @@ public class MraidNativeCommandHandler {
             }
         }
 
-        private String getFileNameForUriAndHttpResponse(final URI uri, final HttpResponse response) {
+        @Nullable
+        private String getFileNameForUriAndHeaders(@NonNull final URI uri,
+                @Nullable final Map<String, List<String>> headers) {
+            Preconditions.checkNotNull(uri);
             final String path = uri.getPath();
 
-            if (path == null) {
+            if (path == null || headers == null) {
                 return null;
             }
-
             String filename = new File(path).getName();
 
-            Header header = response.getFirstHeader(MIME_TYPE_HEADER);
-            if (header != null) {
-                String[] fields = header.getValue().split(";");
-                for (final String field : fields) {
-                    String extension;
-                    if (field.contains("image/")) {
-                        extension = "." + field.split("/")[1];
-                        if (!filename.endsWith(extension)) {
-                            filename += extension;
-                        }
-                        break;
+            final List<String> mimeTypeHeaders = headers.get(MIME_TYPE_HEADER);
+            if (mimeTypeHeaders == null || mimeTypeHeaders.isEmpty()
+                    || mimeTypeHeaders.get(0) == null) {
+                return filename;
+            }
+
+            // Capture the first MIME_TYPE_HEADER (e.g. "text/plain; image/jpeg; image/gif") and
+            // parse out supported Content-Types (e.g. {"text/plain", "image/jpeg", "image/gif"}).
+            // If any of the Content-Types are of type "image", use the extension matching the first
+            // associated content subtype: add this extension to the filename if it does not already
+            // include it.
+            final String[] fields = mimeTypeHeaders.get(0).split(";");
+            for (final String field : fields) {
+                if (field.contains("image/")) {
+                    final String extension = "." + field.split("/")[1];
+                    if (!filename.endsWith(extension)) {
+                        filename += extension;
                     }
+                    break;
                 }
             }
 
@@ -547,6 +561,12 @@ public class MraidNativeCommandHandler {
                     new MediaScannerConnection(mContext, mediaScannerConnectionClient);
             mediaScannerConnectionClient.setMediaScannerConnection(mediaScannerConnection);
             mediaScannerConnection.connect();
+        }
+
+        @VisibleForTesting
+        @Deprecated
+        DownloadImageAsyncTaskListener getListener() {
+            return mListener;
         }
     }
 

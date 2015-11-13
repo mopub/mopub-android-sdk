@@ -1,3 +1,46 @@
+## Version 4.0.0 (October 6, 2015)
+
+Version 4.0.0 includes a number of improvements to our Native Ads systems under the hood. This means a few changes for publishers integrating the ads. The [Native Ads Integration Guide](https://github.com/mopub/mopub-android-sdk/wiki/Native-Ads-Integration) describes all the steps you'll need to integrate 4.0.0.
+
+**Native Ads Changes**
+ - `MoPubNativeAdRenderer` has been replaced by `MoPubStaticNativeRenderer` 
+ - When requesting ads using `MoPubNative`, you must instantiate and register a `MoPubStaticNativeAdRenderer`. See the [Integration Document](https://github.com/mopub/mopub-android-sdk/wiki/Legacy-Native-Ads-Integration) for more details.
+ - `NativeResponse` has been replaced with `NativeAd`
+ - `NativeAd` has a new API that supports creating and rendering `View`s for Native Ads.
+   - `#createAdView` returns a `View` that can hold data for the `NativeAd`
+   - `#renderAdView` will populate the `View` with ad data. 
+   - Other lifecycle methods from `NativeResponse` remain:
+     - `#prepare`, `#clear`, `#destroy`
+ - The process of writing new `CustomEventNative` instances has changed. These changes will support more dynamic, flexible, and attractive Native Ad formats in the future. All bundled native Custom Event files have been updated to use the new API.
+
+**Removed Old Code**
+ - Removed legacy banner/interestitial listeners, deprecated in 1.11
+ - Removed legacy custom event implementation ("custom event methods") deprecated in 1.10
+
+## Version 3.13.0 (September 21, 2015)
+
+- **Android M Support** - Replaced usage of the now-deprecated HttpClient with HttpURLConnection.
+
+## Version 3.12.0 (August 31, 2015)
+
+- **Rewarded Video Mediation** is now Generally Available. We provide support for Unity Ads, Chartboost, Vungle, and Ad Colony rewarded video.
+- **Privacy Information Icon** is now available for native ads. You should add this view to your ViewBinder. See the example in the MoPub Sample app.
+
+## Version 3.11.0 (August 20, 2015)
+
+- Updated Millennial Media support to 6.0.0, including updates to the `MillennialBanner.java` and `MillennialInterstitial.java` custom events.
+- Added mediation for Millennial Media native ads: `MillennialNative.java`, located in the native extras directory of the SDK (`/extras/src/com/mopub/nativeads`).
+
+## Version 3.10.0 (August 3, 2015)
+
+- VAST UI improvements and bug fixes.
+  - Pause trackers no longer fire when the ad is skipped.
+  - Improved retrieval of blurred video frame when there is no companion ad.
+- Added com.mopub:mopub-sdk AAR to [jCenter](https://bintray.com/mopub/mopub-android-sdk/mopub-android-sdk/view).
+- Bug Fixes:
+  - Fixed a NullPointerException in CacheService on devices with low storage space.
+  - Improved redirect loading for in-app browser.
+
 ## Version 3.9.0 (July 1, 2015)
 
 - Added **VAST 3.0** standard support for video ads.
@@ -8,6 +51,7 @@
   - MRAID video interstitials now play automatically when displayed on Jellybean MR1 and newer.
   - MRAID relative assets are correctly rendered.
   - MoPubLog no longer duplicates some messages.
+  - Fixed erroneous output of DeviceUtils.getScreenOrientationFromRotationAndOrientation().
 
 ## Version 3.8.0 (June 1, 2015)
 

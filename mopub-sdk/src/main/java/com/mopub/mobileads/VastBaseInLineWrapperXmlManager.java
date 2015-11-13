@@ -1,6 +1,7 @@
 package com.mopub.mobileads;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import com.mopub.common.Preconditions;
@@ -21,6 +22,7 @@ abstract class VastBaseInLineWrapperXmlManager {
     private static final String CREATIVE = "Creative";
     private static final String COMPANION_ADS = "CompanionAds";
     private static final String ERROR = "Error";
+    private static final String EXTENSIONS = "Extensions";
 
     @NonNull protected final Node mNode;
 
@@ -139,5 +141,21 @@ abstract class VastBaseInLineWrapperXmlManager {
         }
 
         return companionAdXmlManagers;
+    }
+
+    /**
+     * If there is an Extensions section with at least one Extension, return its XML manager.
+     *
+     * @return The {@link VastExtensionParentXmlManager} or null if there are no Extensions or
+     * Extension child nodes.
+     */
+    @Nullable
+    VastExtensionParentXmlManager getVastExtensionParentXmlManager() {
+        Node vastExtensionsNode = XmlUtils.getFirstMatchingChildNode(mNode, EXTENSIONS);
+        if (vastExtensionsNode == null) {
+            return null;
+        }
+
+        return new VastExtensionParentXmlManager(vastExtensionsNode);
     }
 }

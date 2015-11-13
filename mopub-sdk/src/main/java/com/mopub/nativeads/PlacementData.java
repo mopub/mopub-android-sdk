@@ -135,7 +135,7 @@ class PlacementData {
     private int mDesiredCount = 0;
     @NonNull private final int[] mOriginalAdPositions = new int[MAX_ADS];
     @NonNull private final int[] mAdjustedAdPositions = new int[MAX_ADS];
-    @NonNull private final NativeAdData[] mAdDataObjects = new NativeAdData[MAX_ADS];
+    @NonNull private final NativeAd[] mNativeAds = new NativeAd[MAX_ADS];
     private int mPlacedCount = 0;
 
     /**
@@ -214,7 +214,7 @@ class PlacementData {
     /**
      * Sets ad data at the given position.
      */
-    void placeAd(final int adjustedPosition, final NativeAdData adData) {
+    void placeAd(final int adjustedPosition, final NativeAd nativeAd) {
         // See if this is a insertion ad
         final int desiredIndex = binarySearchFirstEquals(
                 mDesiredInsertionPositions, mDesiredCount, adjustedPosition);
@@ -234,11 +234,11 @@ class PlacementData {
                     mOriginalAdPositions, placeIndex + 1, num);
             System.arraycopy(mAdjustedAdPositions, placeIndex,
                     mAdjustedAdPositions, placeIndex + 1, num);
-            System.arraycopy(mAdDataObjects, placeIndex, mAdDataObjects, placeIndex + 1, num);
+            System.arraycopy(mNativeAds, placeIndex, mNativeAds, placeIndex + 1, num);
         }
         mOriginalAdPositions[placeIndex] = originalPosition;
         mAdjustedAdPositions[placeIndex] = adjustedPosition;
-        mAdDataObjects[placeIndex] = adData;
+        mNativeAds[placeIndex] = nativeAd;
         mPlacedCount++;
 
         // Remove desired index
@@ -271,12 +271,12 @@ class PlacementData {
      * no ad at this position.
      */
     @Nullable
-    NativeAdData getPlacedAd(final int position) {
+    NativeAd getPlacedAd(final int position) {
         final int index = binarySearch(mAdjustedAdPositions, 0, mPlacedCount, position);
         if (index < 0) {
             return null;
         }
-        return mAdDataObjects[index];
+        return mNativeAds[index];
     }
 
     /**
@@ -361,15 +361,15 @@ class PlacementData {
                 clearAdjustedPositions[clearCount] = adjustedPosition - clearCount;
 
                 // Destroying and nulling out the ad objects to avoids a memory leak.
-                mAdDataObjects[i].getAd().destroy();
-                mAdDataObjects[i] = null;
+                mNativeAds[i].destroy();
+                mNativeAds[i] = null;
                 clearCount++;
             } else if (clearCount > 0) {
                 // The position is not in the range; shift it by the number of cleared ads.
                 int newIndex = i - clearCount;
                 mOriginalAdPositions[newIndex] = originalPosition;
                 mAdjustedAdPositions[newIndex] = adjustedPosition - clearCount;
-                mAdDataObjects[newIndex] = mAdDataObjects[i];
+                mNativeAds[newIndex] = mNativeAds[i];
             }
         }
 

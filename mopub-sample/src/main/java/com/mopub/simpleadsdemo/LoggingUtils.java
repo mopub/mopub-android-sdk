@@ -67,7 +67,7 @@ public class LoggingUtils {
             if (MoPubErrorCode.WARMUP.toString().equals(logRecord.getMessage())) {
                 Utils.logToast(mContext, MoPubErrorCode.WARMUP.toString());
             }
-            // Toasts the no connection message if a native response failed due to no internet
+            // Toasts the no connection message if a native ad failed due to no internet
             if (MoPubErrorCode.NO_CONNECTION.toString().equals(logRecord.getMessage())) {
                 Utils.logToast(mContext, MoPubErrorCode.NO_CONNECTION.toString());
             }

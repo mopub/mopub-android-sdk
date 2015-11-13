@@ -6,6 +6,8 @@ import android.graphics.Typeface;
 
 public class DrawableConstants {
 
+    public static final int TRANSPARENT_GRAY = 0x88000000;
+
     public static class ProgressBar {
         public static final int HEIGHT_DIPS = 4;
         public static final int NUGGET_WIDTH_DIPS = 4;
@@ -82,7 +84,7 @@ public class DrawableConstants {
     public static class GradientStrip {
         public static final int GRADIENT_STRIP_HEIGHT_DIPS = 72;
         public static final int START_COLOR = Color.argb(102, 0, 0, 0);
-        public static final int END_COLOR = Color.argb(0, 255, 255, 255);
+        public static final int END_COLOR = Color.argb(0, 0, 0, 0);
     }
 
     public static class BlurredLastVideoFrame {

@@ -55,10 +55,9 @@ public class MoPubStreamAdPlacer {
     @NonNull private final Runnable mPlacementRunnable;
     @NonNull private final PositioningSource mPositioningSource;
     @NonNull private final NativeAdSource mAdSource;
-    @NonNull private final ImpressionTracker mImpressionTracker;
 
-    @NonNull private final HashMap<NativeResponse, WeakReference<View>> mViewMap;
-    @NonNull private final WeakHashMap<View, NativeResponse> mNativeResponseMap;
+    @NonNull private final HashMap<NativeAd, WeakReference<View>> mViewMap;
+    @NonNull private final WeakHashMap<View, NativeAd> mNativeAdMap;
 
     private boolean mHasReceivedPositions;
     @Nullable private PlacementData mPendingPlacementData;
@@ -66,8 +65,6 @@ public class MoPubStreamAdPlacer {
     private boolean mHasPlacedAds;
     @NonNull private PlacementData mPlacementData;
 
-    private int adViewType = DEFAULT_AD_VIEW_TYPE;
-    @Nullable private MoPubAdRenderer mAdRenderer;
     @Nullable private String mAdUnitId;
 
     @NonNull private MoPubNativeAdLoadedListener mAdLoadedListener =
@@ -82,7 +79,7 @@ public class MoPubStreamAdPlacer {
 
     private int mItemCount;
     // A buffer around the visible range where we'll place ads if possible.
-    private static final int RANGE_BUFFER = 10;
+    private static final int RANGE_BUFFER = 6;
     private boolean mNeedsPlacement;
 
     /**
@@ -111,7 +108,6 @@ public class MoPubStreamAdPlacer {
             @NonNull final MoPubServerPositioning adPositioning) {
         this(context,
                 new NativeAdSource(),
-                new ImpressionTracker(context),
                 new ServerPositioningSource(context));
     }
 
@@ -128,29 +124,24 @@ public class MoPubStreamAdPlacer {
         // reference to it that might be subsequently modified by the caller.
         this(context,
                 new NativeAdSource(),
-                new ImpressionTracker(context),
                 new ClientPositioningSource(adPositioning));
     }
 
     @VisibleForTesting
     MoPubStreamAdPlacer(@NonNull final Context context,
             @NonNull final NativeAdSource adSource,
-            @NonNull final ImpressionTracker impressionTracker,
             @NonNull final PositioningSource positioningSource) {
         Preconditions.checkNotNull(context, "context is not allowed to be null");
         Preconditions.checkNotNull(adSource, "adSource is not allowed to be null");
-        Preconditions.checkNotNull(impressionTracker, "impressionTracker is not allowed to be " +
-                "null");
         Preconditions.checkNotNull(positioningSource, "positioningSource is not allowed to be " +
                 "null");
 
         mContext = context;
-        mImpressionTracker = impressionTracker;
         mPositioningSource = positioningSource;
         mAdSource = adSource;
         mPlacementData = PlacementData.empty();
 
-        mNativeResponseMap = new WeakHashMap<>();
+        mNativeAdMap = new WeakHashMap<>();
         mViewMap = new HashMap<>();
 
         mPlacementHandler = new Handler();
@@ -170,33 +161,26 @@ public class MoPubStreamAdPlacer {
     }
 
     /**
-     * Registers an ad renderer to use when displaying ads in your stream.
+     * Registers an ad renderer for rendering a specific native ad format in your stream.
+     * Note that if multiple ad renderers support a specific native ad format, the first
+     * one registered will be used.
      *
      * This renderer will automatically create and render your view when you call {@link
-     * #getAdView}. If you register a second renderer, it will replace the first, although this
-     * behavior is subject to change in a future SDK version.
+     * #getAdView}.
      *
      * @param adRenderer The ad renderer.
      */
     public void registerAdRenderer(@NonNull final MoPubAdRenderer adRenderer) {
-        registerAdRenderer(adRenderer, -1);
-    }
-
-    public void registerAdRenderer(@NonNull final MoPubAdRenderer adRenderer, int viewType) {
         if (!NoThrow.checkNotNull(adRenderer, "Cannot register a null adRenderer")) {
             return;
         }
-        adViewType = viewType;
-        mAdRenderer = adRenderer;
+
+        mAdSource.registerAdRenderer(adRenderer);
     }
 
     @Nullable
     public MoPubAdRenderer getAdRendererForViewType(int viewType) {
-        if (viewType == adViewType) {
-            return mAdRenderer;
-        }
-
-        return null;
+        return mAdSource.getAdRendererForViewType(viewType);
     }
 
     /**
@@ -247,8 +231,9 @@ public class MoPubStreamAdPlacer {
             return;
         }
 
-        if (mAdRenderer == null) {
-            MoPubLog.w("You must call registerAdRenderer before loading ads");
+        if (mAdSource.getAdRendererCount() == 0) {
+            MoPubLog.w("You must register at least 1 ad renderer by calling registerAdRenderer " +
+                    "before loading ads");
             return;
         }
 
@@ -384,7 +369,6 @@ public class MoPubStreamAdPlacer {
     public void destroy() {
         mPlacementHandler.removeMessages(0);
         mAdSource.clear();
-        mImpressionTracker.destroy();
         mPlacementData.clearAds();
     }
 
@@ -417,35 +401,33 @@ public class MoPubStreamAdPlacer {
     @Nullable
     public View getAdView(final int position, @Nullable final View convertView,
             @Nullable final ViewGroup parent) {
-        final NativeAdData adData = mPlacementData.getPlacedAd(position);
-        if (adData == null) {
+        final NativeAd nativeAd = mPlacementData.getPlacedAd(position);
+        if (nativeAd == null) {
             return null;
         }
 
         final View view = (convertView != null) ?
-                convertView : adData.getAdRenderer().createAdView(mContext, parent);
-        bindAdView(adData, view);
+                convertView : nativeAd.createAdView(parent);
+        bindAdView(nativeAd, view);
         return view;
     }
 
     /**
      * Given an ad and a view, attaches the ad data to the view and prepares the ad for display.
-     * @param adData the ad to bind.
+     * @param nativeAd the ad to bind.
      * @param adView the view to bind it to.
      */
-    public void bindAdView(@NonNull NativeAdData adData, @NonNull View adView) {
-        NativeResponse nativeResponse = adData.getAd();
-        WeakReference<View> mappedViewRef = mViewMap.get(nativeResponse);
+    public void bindAdView(@NonNull NativeAd nativeAd, @NonNull View adView) {
+        WeakReference<View> mappedViewRef = mViewMap.get(nativeAd);
         View mappedView = null;
         if (mappedViewRef != null) {
             mappedView = mappedViewRef.get();
         }
         if (!adView.equals(mappedView)) {
-            clearNativeResponse(mappedView);
-            clearNativeResponse(adView);
-            prepareNativeResponse(nativeResponse, adView);
-            //noinspection unchecked
-            adData.getAdRenderer().renderAdView(adView, nativeResponse);
+            clearNativeAd(mappedView);
+            clearNativeAd(adView);
+            prepareNativeAd(nativeAd, adView);
+            nativeAd.renderAdView(adView);
         }
     }
 
@@ -498,7 +480,7 @@ public class MoPubStreamAdPlacer {
      * @see #getAdViewType
      */
     public int getAdViewTypeCount() {
-        return 1;
+        return mAdSource.getAdRendererCount();
     }
 
     /**
@@ -515,7 +497,12 @@ public class MoPubStreamAdPlacer {
      * @return The ad view type.
      */
     public int getAdViewType(final int position) {
-        return isAd(position) ? 1 : CONTENT_VIEW_TYPE;
+        NativeAd nativeAd = mPlacementData.getPlacedAd(position);
+        if (nativeAd == null) {
+            return CONTENT_VIEW_TYPE;
+        }
+
+        return mAdSource.getViewTypeForAd(nativeAd);
     }
 
     /**
@@ -706,54 +693,40 @@ public class MoPubStreamAdPlacer {
      * @return false if there is no ad available to be placed.
      */
     private boolean tryPlaceAd(final int position) {
-        final NativeResponse adResponse = mAdSource.dequeueAd();
-        if (adResponse == null) {
+        final NativeAd nativeAd = mAdSource.dequeueAd();
+        if (nativeAd == null) {
             return false;
         }
 
-        final NativeAdData adData = createAdData(adResponse);
-        mPlacementData.placeAd(position, adData);
+        mPlacementData.placeAd(position, nativeAd);
         mItemCount++;
 
         mAdLoadedListener.onAdLoaded(position);
         return true;
     }
 
-    @NonNull
-    private NativeAdData createAdData(@NonNull final NativeResponse adResponse) {
-        Preconditions.checkNotNull(mAdUnitId);
-        Preconditions.checkNotNull(mAdRenderer);
-
-        //noinspection ConstantConditions
-        return new NativeAdData(mAdUnitId, mAdRenderer, adResponse);
-    }
-
     /**
-     * Clears any native response click trackers and impression tracking are set up for this view.
+     * Clears any {@link NativeAd} click trackers and impression tracking are set up for this view.
      */
-    private void clearNativeResponse(@Nullable final View view) {
+    private void clearNativeAd(@Nullable final View view) {
         if (view == null) {
             return;
         }
-        mImpressionTracker.removeView(view);
-        final NativeResponse lastNativeResponse = mNativeResponseMap.get(view);
-        if (lastNativeResponse != null) {
-            lastNativeResponse.clear(view);
-            mNativeResponseMap.remove(view);
-            mViewMap.remove(lastNativeResponse);
+        final NativeAd lastNativeAd = mNativeAdMap.get(view);
+        if (lastNativeAd != null) {
+            lastNativeAd.clear(view);
+            mNativeAdMap.remove(view);
+            mViewMap.remove(lastNativeAd);
         }
     }
 
     /**
-     * Prepares a view and nativeresponse for display by attaching click handlers
+     * Prepares a view and {@link NativeAd} for display by attaching click handlers
      * and setting up impression tracking.
      */
-    private void prepareNativeResponse(@NonNull final NativeResponse nativeResponse, @NonNull final View view) {
-        mViewMap.put(nativeResponse, new WeakReference<View>(view));
-        mNativeResponseMap.put(view, nativeResponse);
-        if (!nativeResponse.isOverridingImpressionTracker()) {
-            mImpressionTracker.addView(view, nativeResponse);
-        }
-        nativeResponse.prepare(view);
+    private void prepareNativeAd(@NonNull final NativeAd nativeAd, @NonNull final View view) {
+        mViewMap.put(nativeAd, new WeakReference<View>(view));
+        mNativeAdMap.put(view, nativeAd);
+        nativeAd.prepare(view);
     }
 }

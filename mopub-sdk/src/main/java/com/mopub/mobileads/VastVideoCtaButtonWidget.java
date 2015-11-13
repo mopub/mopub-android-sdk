@@ -22,12 +22,14 @@ public class VastVideoCtaButtonWidget extends ImageView {
     private boolean mIsVideoSkippable;
     private boolean mIsVideoComplete;
     private boolean mHasCompanionAd;
+    private boolean mHasClickthroughUrl;
 
     public VastVideoCtaButtonWidget(@NonNull final Context context, final int videoViewId,
-            final boolean hasCompanionAd) {
+            final boolean hasCompanionAd, final boolean hasClickthroughUrl) {
         super(context);
 
         mHasCompanionAd = hasCompanionAd;
+        mHasClickthroughUrl = hasClickthroughUrl;
 
         setId((int) Utils.generateUniqueId());
 
@@ -76,8 +78,21 @@ public class VastVideoCtaButtonWidget extends ImageView {
     }
 
     private void updateLayoutAndVisibility() {
+        // If the video does not have a clickthrough url, never show the CTA button
+        if (!mHasClickthroughUrl) {
+            setVisibility(View.GONE);
+            return;
+        }
+
         // If video is not skippable yet, do not show CTA button
         if (!mIsVideoSkippable) {
+            setVisibility(View.INVISIBLE);
+            return;
+        }
+
+        // If video has finished playing and there's a companion ad, do not show CTA button
+        if (mIsVideoComplete && mHasCompanionAd) {
+            setVisibility(View.GONE);
             return;
         }
 
@@ -85,16 +100,8 @@ public class VastVideoCtaButtonWidget extends ImageView {
 
         switch (currentOrientation) {
             case Configuration.ORIENTATION_LANDSCAPE:
-                // Do not show CTA button if ALL these conditions are satisfied:
-                // 1. device in landscape mode
-                // 2. video has finished playing
-                // 3. there is a companion ad
-                if (mIsVideoComplete && mHasCompanionAd) {
-                    setVisibility(View.GONE);
-                } else {
-                    setVisibility(View.VISIBLE);
-                    setLayoutParams(mLandscapeLayoutParams);
-                }
+                setVisibility(View.VISIBLE);
+                setLayoutParams(mLandscapeLayoutParams);
                 break;
             case Configuration.ORIENTATION_PORTRAIT:
                 setVisibility(View.VISIBLE);

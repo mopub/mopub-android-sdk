@@ -11,20 +11,26 @@ import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.CalendarContract;
+import android.support.annotation.NonNull;
+import android.util.Pair;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.util.test.support.ShadowAsyncTasks;
+import com.mopub.common.util.test.support.ShadowMoPubHttpUrlConnection;
 import com.mopub.mobileads.test.support.FileUtils;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 import com.mopub.mobileads.test.support.ThreadUtils;
+import com.mopub.mraid.MraidNativeCommandHandler.DownloadImageAsyncTask;
+import com.mopub.mraid.MraidNativeCommandHandler.DownloadImageAsyncTask.DownloadImageAsyncTaskListener;
 import com.mopub.mraid.MraidNativeCommandHandler.MraidCommandFailureListener;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -40,14 +46,16 @@ import org.robolectric.shadows.ShadowLog;
 import org.robolectric.shadows.ShadowToast;
 
 import java.io.File;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static android.content.DialogInterface.BUTTON_NEGATIVE;
 import static android.content.DialogInterface.BUTTON_POSITIVE;
+import static android.os.Environment.MEDIA_MOUNTED;
 import static com.mopub.mraid.MraidNativeCommandHandler.ANDROID_CALENDAR_CONTENT_TYPE;
+import static com.mopub.mraid.MraidNativeCommandHandler.MIME_TYPE_HEADER;
 import static java.io.File.separator;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -61,16 +69,18 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.robolectric.Robolectric.shadowOf;
 
+@Config(shadows = {ShadowAsyncTasks.class, ShadowMoPubHttpUrlConnection.class})
 @RunWith(SdkTestRunner.class)
 public class MraidNativeCommandHandlerTest {
     private static final String IMAGE_URI_VALUE = "file://tmp/expectedFile.jpg";
+    private static final String REMOTE_IMAGE_URL = "http://www.mopub.com/expectedFile.jpg";
     private static final int TIME_TO_PAUSE_FOR_NETWORK = 300;
     private static final String FAKE_IMAGE_DATA = "imageFileData";
     //XXX: Robolectric or JUNIT doesn't support the correct suffix ZZZZZ in the parse pattern, so replacing xx:xx with xxxx for time.
     private static final String CALENDAR_START_TIME = "2013-08-14T20:00:00-0000";
 
-
-    @Mock MraidCommandFailureListener mraidCommandFailureListener;
+    @Mock MraidCommandFailureListener mockMraidCommandFailureListener;
+    @Mock DownloadImageAsyncTaskListener mockDownloadImageAsyncTaskListener;
     private MraidNativeCommandHandler subject;
     private Context context;
     private Map<String, String> params;
@@ -79,7 +89,6 @@ public class MraidNativeCommandHandlerTest {
     private File pictureDirectory;
     private File fileWithoutExtension;
     private TestHttpResponseWithHeaders response;
-
 
     @Before
     public void setUp() throws Exception {
@@ -90,14 +99,20 @@ public class MraidNativeCommandHandlerTest {
         expectedFile = new File(Environment.getExternalStorageDirectory(), "Pictures" + separator + "expectedFile.jpg");
         pictureDirectory = new File(Environment.getExternalStorageDirectory(), "Pictures");
         fileWithoutExtension = new File(pictureDirectory, "file");
+
+        // Mount external storage and grant necessary permissions
+        ShadowEnvironment.setExternalStorageState(MEDIA_MOUNTED);
+        Robolectric.getShadowApplication().grantPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
     }
 
-    @Ignore("Mraid 2.0")
+    @After
+    public void tearDown() {
+        ShadowToast.reset();
+    }
+
     @Test
     public void showUserDownloadImageAlert_withActivityContext_shouldDisplayAlertDialog() throws Exception {
-        response = new TestHttpResponseWithHeaders(200, FAKE_IMAGE_DATA);
-
-        subject.storePicture(context, IMAGE_URI_VALUE, mraidCommandFailureListener);
+        subject.storePicture(context, IMAGE_URI_VALUE, mockMraidCommandFailureListener);
 
         AlertDialog alertDialog = ShadowAlertDialog.getLatestAlertDialog();
         ShadowAlertDialog shadowAlertDialog = shadowOf(alertDialog);
@@ -112,96 +127,165 @@ public class MraidNativeCommandHandlerTest {
         assertThat(alertDialog.getButton(BUTTON_NEGATIVE)).isNotNull();
     }
 
-    @Ignore("Mraid 2.0")
     @Test
-    public void showUserDownloadImageAlert_whenOkayClicked_shouldDownloadImage() throws Exception {
-        response = new TestHttpResponseWithHeaders(200, FAKE_IMAGE_DATA);
-        Robolectric.addPendingHttpResponse(response);
+    public void showUserDownloadImageAlert_withAppContext_shouldToastAndStartDownloadImageAsyncTask() throws Exception {
+        assertThat(ShadowToast.shownToastCount()).isEqualTo(0);
 
-        subject.storePicture(context, IMAGE_URI_VALUE, mraidCommandFailureListener);
+        subject.storePicture(context.getApplicationContext(), IMAGE_URI_VALUE, mockMraidCommandFailureListener);
 
-        ShadowAlertDialog.getLatestAlertDialog().getButton(BUTTON_POSITIVE).performClick();
-        ThreadUtils.pause(TIME_TO_PAUSE_FOR_NETWORK);
+        assertThat(ShadowToast.shownToastCount()).isEqualTo(1);
+        assertThat(ShadowToast.getTextOfLatestToast()).isEqualTo("Downloading image to Picture gallery...");
 
-        assertThat(expectedFile.exists()).isTrue();
-        assertThat(expectedFile.length()).isEqualTo(FAKE_IMAGE_DATA.length());
+        assertThat(ShadowAsyncTasks.wasCalled()).isTrue();
+        assertThat(ShadowAsyncTasks.getLatestAsyncTask()).isInstanceOf(DownloadImageAsyncTask.class);
+        final List<?> latestParams = ShadowAsyncTasks.getLatestParams();
+        assertThat(latestParams).hasSize(1);
+        assertThat(latestParams.get(0)).isEqualTo(IMAGE_URI_VALUE);
     }
 
-    @Ignore("Mraid 2.0")
-    @Test
-    public void showUserDownloadImageAlert_whenCancelClicked_shouldDismissDialog() throws Exception {
-        response = new TestHttpResponseWithHeaders(200, FAKE_IMAGE_DATA);
+    @Test(expected = MraidCommandException.class)
+    public void showUserDownloadImageAlert_whenStorePictureNotSupported_shouldThrowMraidCommandException() throws Exception {
+        Robolectric.getShadowApplication().denyPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-        subject.storePicture(context, IMAGE_URI_VALUE, mraidCommandFailureListener);
+        subject.storePicture(context, IMAGE_URI_VALUE, mockMraidCommandFailureListener);
+    }
+
+    @Test
+    public void showUserDownloadImageAlert_whenOkayClicked_shouldStartDownloadImageAsyncTask() throws Exception {
+        subject.storePicture(context, IMAGE_URI_VALUE, mockMraidCommandFailureListener);
+
+        ShadowAlertDialog.getLatestAlertDialog().getButton(BUTTON_POSITIVE).performClick();
+
+        assertThat(ShadowAsyncTasks.wasCalled()).isTrue();
+        assertThat(ShadowAsyncTasks.getLatestAsyncTask()).isInstanceOf(DownloadImageAsyncTask.class);
+        final List<?> latestParams = ShadowAsyncTasks.getLatestParams();
+        assertThat(latestParams).hasSize(1);
+        assertThat(latestParams.get(0)).isEqualTo(IMAGE_URI_VALUE);
+    }
+
+    @Test
+    public void showUserDownloadImageAlert_whenCancelClicked_shouldDismissDialog_shouldNotStartDownloadImageAsyncTask() throws Exception {
+        subject.storePicture(context, IMAGE_URI_VALUE, mockMraidCommandFailureListener);
 
         AlertDialog alertDialog = ShadowAlertDialog.getLatestAlertDialog();
         ShadowAlertDialog shadowAlertDialog = shadowOf(alertDialog);
 
         alertDialog.getButton(BUTTON_NEGATIVE).performClick();
         assertThat(shadowAlertDialog.hasBeenDismissed()).isTrue();
-
-        assertThat(expectedFile.exists()).isFalse();
-        assertThat(expectedFile.length()).isEqualTo(0);
+        assertThat(ShadowAsyncTasks.wasCalled()).isFalse();
     }
 
-    @Ignore("MRAID 2.0")
     @Test
-    public void showUserDownloadImageAlert_withAppContext_shouldToastAndDownloadImage() throws Exception {
-        response = new TestHttpResponseWithHeaders(200, FAKE_IMAGE_DATA);
-        Robolectric.addPendingHttpResponse(response);
+    public void downloadImageAsyncTask_doInBackground_shouldReturnTrueAndCreateFile() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, FAKE_IMAGE_DATA,
+                createHeaders(new Pair<String, String>("Content-Type", "image/jpg")));
 
-        assertThat(ShadowToast.shownToastCount()).isEqualTo(0);
+        final DownloadImageAsyncTask downloadImageAsyncTask =
+                new DownloadImageAsyncTask(context, mockDownloadImageAsyncTaskListener);
 
-        subject.storePicture(context.getApplicationContext(), IMAGE_URI_VALUE, mraidCommandFailureListener);
-        ThreadUtils.pause(TIME_TO_PAUSE_FOR_NETWORK);
+        final Boolean result =
+                downloadImageAsyncTask.doInBackground(new String[]{REMOTE_IMAGE_URL});
 
-        assertThat(ShadowToast.shownToastCount()).isEqualTo(1);
-        assertThat(ShadowToast.getTextOfLatestToast()).isEqualTo("Downloading image to Picture gallery...");
-
-        Robolectric.runUiThreadTasks();
-
+        assertThat(result).isTrue();
         assertThat(expectedFile.exists()).isTrue();
         assertThat(expectedFile.length()).isEqualTo(FAKE_IMAGE_DATA.length());
     }
 
-    @Ignore("MRAID 2.0")
     @Test
-    public void showUserDownloadImageAlert_withAppContext_whenDownloadImageFails_shouldDisplayFailureToastAndNotDownloadImage() throws Exception {
-        response = new TestHttpResponseWithHeaders(200, FAKE_IMAGE_DATA);
-        Robolectric.addPendingHttpResponse(response);
+    public void downloadImageAsyncTask_doInBackground_withLocationHeaderSet_shouldUseLocationHeaderAsFilename() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, FAKE_IMAGE_DATA,
+                createHeaders(
+                        new Pair<String, String>("Content-Type", "image/jpg"),
+                        new Pair<String, String>("Location", "https://www.newhost.com/images/blah/file.wow")
+                )
+        );
 
+        final DownloadImageAsyncTask downloadImageAsyncTask =
+                new DownloadImageAsyncTask(context, mockDownloadImageAsyncTaskListener);
+        final Boolean result =
+                downloadImageAsyncTask.doInBackground(new String[]{REMOTE_IMAGE_URL});
+
+        expectedFile = new File(Environment.getExternalStorageDirectory(), "Pictures" + separator + "file.wow.jpg");
+
+        assertThat(result).isTrue();
+        assertThat(expectedFile.exists()).isTrue();
+        assertThat(expectedFile.length()).isEqualTo(FAKE_IMAGE_DATA.length());
+    }
+
+    @Test
+    public void downloadImageAsyncTask_doInBackground_withMissingMimeTypeHeaders_shouldUseDefaultFilename() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, FAKE_IMAGE_DATA);
+
+        final DownloadImageAsyncTask downloadImageAsyncTask =
+                new DownloadImageAsyncTask(context, mockDownloadImageAsyncTaskListener);
+        final Boolean result =
+                downloadImageAsyncTask.doInBackground(new String[]{REMOTE_IMAGE_URL});
+
+        assertThat(result).isTrue();
+        assertThat(expectedFile.exists()).isTrue();
+        assertThat(expectedFile.length()).isEqualTo(FAKE_IMAGE_DATA.length());
+    }
+
+    @Test
+    public void downloadImageAsyncTask_doInBackground_withNullArray_shouldReturnFalseAndNotCreateFile() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, FAKE_IMAGE_DATA,
+                createHeaders(new Pair<String, String>("Content-Type", "image/jpg")));
+
+        final DownloadImageAsyncTask downloadImageAsyncTask =
+                new DownloadImageAsyncTask(context, mockDownloadImageAsyncTaskListener);
+
+        final Boolean result =
+                downloadImageAsyncTask.doInBackground(null);
+
+        assertThat(result).isFalse();
+        assertThat(expectedFile.exists()).isFalse();
+    }
+
+    @Test
+    public void downloadImageAsyncTask_doInBackground_withEmptyArray_shouldReturnFalseAndNotCreateFile() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, FAKE_IMAGE_DATA,
+                createHeaders(new Pair<String, String>("Content-Type", "image/jpg")));
+
+        final DownloadImageAsyncTask downloadImageAsyncTask =
+                new DownloadImageAsyncTask(context, mockDownloadImageAsyncTaskListener);
+
+        final Boolean result =
+                downloadImageAsyncTask.doInBackground(new String[]{});
+
+        assertThat(result).isFalse();
+        assertThat(expectedFile.exists()).isFalse();
+    }
+
+    @Test
+    public void downloadImageAsyncTask_doInBackground_withArrayContainingNull_shouldReturnFalseAndNotCreateFile() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, FAKE_IMAGE_DATA,
+                createHeaders(new Pair<String, String>("Content-Type", "image/jpg")));
+
+        final DownloadImageAsyncTask downloadImageAsyncTask =
+                new DownloadImageAsyncTask(context, mockDownloadImageAsyncTaskListener);
+
+        final Boolean result =
+                downloadImageAsyncTask.doInBackground(new String[]{null});
+
+        assertThat(result).isFalse();
+        assertThat(expectedFile.exists()).isFalse();
+    }
+
+    @Test
+    public void downloadImage_withFailedImageDownload_shouldToastErrorMessageAndNotifyOnFailure() {
         assertThat(ShadowToast.shownToastCount()).isEqualTo(0);
+        subject.downloadImage(context.getApplicationContext(), IMAGE_URI_VALUE, mockMraidCommandFailureListener);
 
-        subject.storePicture(context, "this is an invalid image url and cannot be downloaded", mraidCommandFailureListener);
-        ThreadUtils.pause(TIME_TO_PAUSE_FOR_NETWORK);
+        DownloadImageAsyncTask latestAsyncTask = (DownloadImageAsyncTask) ShadowAsyncTasks.getLatestAsyncTask();
+        latestAsyncTask.getListener().onFailure();
 
         assertThat(ShadowToast.shownToastCount()).isEqualTo(1);
-        assertThat(ShadowToast.getTextOfLatestToast()).isEqualTo("Downloading image to Picture gallery...");
-
-        Robolectric.runUiThreadTasks();
-
-        assertThat(ShadowToast.shownToastCount()).isEqualTo(2);
         assertThat(ShadowToast.getTextOfLatestToast()).isEqualTo("Image failed to download.");
-
-        assertThat(expectedFile.exists()).isFalse();
-        assertThat(expectedFile.length()).isEqualTo(0);
+        verify(mockMraidCommandFailureListener).onFailure(any(MraidCommandException.class));
     }
 
-    @Ignore("Mraid 2.0")
     @Test
-    public void showUserDownloadImageAlert_whenStorePictureNotSupported_shouldFireErrorEvent_andNotToastNorAlertDialog() throws Exception {
-        Robolectric.getShadowApplication().denyPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-        subject.storePicture(context, "http://image.jpg", mraidCommandFailureListener);
-
-        assertThat(ShadowToast.shownToastCount()).isEqualTo(0);
-        assertThat(ShadowAlertDialog.getLatestAlertDialog()).isNull();
-        verify(mraidCommandFailureListener).onFailure(any(MraidCommandException.class));
-    }
-
-    @Ignore("Mraid 2.0")
-    @Test
-    public void showUserDownloadImageAlert_withMimeTypeAndNoFileExtension_shouldSavePictureWithMimeType() throws Exception {
+    public void downloadImage_withMimeTypeAndNoFileExtension_shouldSavePictureWithMimeType() throws Exception {
         String fileNameWithNoExtension = "https://www.somewhere.com/images/blah/file";
 
         assertThatMimeTypeWasAddedCorrectly(
@@ -211,9 +295,8 @@ public class MraidNativeCommandHandlerTest {
                 ".jpg");
     }
 
-    @Ignore("Mraid 2.0")
     @Test
-    public void showUserDownloadImageAlert_withMultipleContentTypesAndNoFileExtension_shouldSavePictureWithMimeType() throws Exception {
+    public void downloadImage_withMultipleContentTypesAndNoFileExtension_shouldSavePictureWithMimeType() throws Exception {
         String fileNameWithNoExtension = "https://www.somewhere.com/images/blah/file";
 
         assertThatMimeTypeWasAddedCorrectly(
@@ -223,9 +306,8 @@ public class MraidNativeCommandHandlerTest {
                 ".png");
     }
 
-    @Ignore("Mraid 2.0")
     @Test
-    public void showUserDownloadImageAlert_withMimeTypeAndFileExtension_shouldSavePictureWithFileExtension() throws Exception {
+    public void downloadImage_withMimeTypeAndFileExtension_shouldSavePictureWithFileExtension() throws Exception {
         String fileNameWithExtension = "https://www.somewhere.com/images/blah/file.extension";
 
         assertThatMimeTypeWasAddedCorrectly(
@@ -238,16 +320,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Test
-    public void showUserDownloadImageAlert_withHttpUri_shouldRequestPictureFromNetwork() throws Exception {
-        response = new TestHttpResponseWithHeaders(200, "OK");
-        downloadImageForPendingResponse("https://www.google.com/images/srpr/logo4w.png", response);
-
-        HttpUriRequest latestRequest = (HttpUriRequest) Robolectric.getLatestSentHttpRequest();
-        assertThat(latestRequest.getURI()).isEqualTo(URI.create("https://www.google.com/images/srpr/logo4w.png"));
-    }
-
-    @Ignore("Mraid 2.0")
     @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withMinimumValidParams_atLeastICS_shouldCreateEventIntent() throws Exception {
@@ -255,7 +327,7 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        verify(mraidCommandFailureListener, never()).onFailure(any(MraidCommandException.class));
+        verify(mockMraidCommandFailureListener, never()).onFailure(any(MraidCommandException.class));
 
         Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
 
@@ -274,7 +346,7 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        verify(mraidCommandFailureListener, never()).onFailure(any(MraidCommandException.class));
+        verify(mockMraidCommandFailureListener, never()).onFailure(any(MraidCommandException.class));
 
         Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
 
@@ -477,7 +549,7 @@ public class MraidNativeCommandHandlerTest {
     public void createCalendarEvent_beforeIcs_shouldFireErrorEvent() throws Exception {
         subject.createCalendarEvent(context, params);
 
-        verify(mraidCommandFailureListener).onFailure(any(MraidCommandException.class));
+        verify(mockMraidCommandFailureListener).onFailure(any(MraidCommandException.class));
     }
 
     @Ignore("Mraid 2.0")
@@ -488,7 +560,7 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        verify(mraidCommandFailureListener).onFailure(any(MraidCommandException.class));
+        verify(mockMraidCommandFailureListener).onFailure(any(MraidCommandException.class));
     }
 
     @Ignore("Mraid 2.0")
@@ -499,7 +571,7 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        verify(mraidCommandFailureListener).onFailure(any(MraidCommandException.class));
+        verify(mockMraidCommandFailureListener).onFailure(any(MraidCommandException.class));
     }
 
     @Ignore("Mraid 2.0")
@@ -510,7 +582,7 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        verify(mraidCommandFailureListener).onFailure(any(MraidCommandException.class));
+        verify(mockMraidCommandFailureListener).onFailure(any(MraidCommandException.class));
     }
 
     @Ignore("Mraid 2.0")
@@ -739,22 +811,34 @@ public class MraidNativeCommandHandlerTest {
         return context;
     }
 
-    private void downloadImageForPendingResponse(String uri, HttpResponse response) throws Exception {
-        Robolectric.addPendingHttpResponse(response);
+    private Map<String, List<String>> createHeaders(@NonNull final Pair<String, String>... pairs) {
+        final TreeMap<String, List<String>> headers = new TreeMap<String, List<String>>();
+        for (final Pair<String, String> pair : pairs) {
+            String key = pair.first;
+            String value = pair.second;
 
-        subject.storePicture(context, uri, mraidCommandFailureListener);
+            if (!headers.containsKey(key)) {
+                headers.put(key, new ArrayList<String>());
+            }
+            headers.get(key).add(value);
+        }
 
-        ThreadUtils.pause(TIME_TO_PAUSE_FOR_NETWORK);
+        return headers;
     }
 
     private void assertThatMimeTypeWasAddedCorrectly(String originalFileName, String contentType,
             String expectedFileName, String expectedExtension) throws Exception {
         expectedFile = new File(pictureDirectory, expectedFileName);
-        response = new TestHttpResponseWithHeaders(200, FAKE_IMAGE_DATA);
-        response.addHeader(MraidNativeCommandHandler.MIME_TYPE_HEADER, contentType);
 
-        downloadImageForPendingResponse(originalFileName, response);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, FAKE_IMAGE_DATA,
+                createHeaders(new Pair<String, String>(MIME_TYPE_HEADER, contentType)));
 
+        final DownloadImageAsyncTask downloadImageAsyncTask =
+                new DownloadImageAsyncTask(context, mockDownloadImageAsyncTaskListener);
+        final Boolean result =
+                downloadImageAsyncTask.doInBackground(new String[]{originalFileName});
+
+        assertThat(result).isTrue();
         assertThat(expectedFile.exists()).isTrue();
         assertThat(expectedFile.getName()).endsWith(expectedExtension);
         assertThat(fileWithoutExtension.exists()).isFalse();
@@ -765,7 +849,7 @@ public class MraidNativeCommandHandlerTest {
         Context mockContext = createMockContextWithSpecificIntentData(null,
                 null, ANDROID_CALENDAR_CONTENT_TYPE, "android.intent.action.INSERT");
 
-        //but a mock context does't know how to startActivity(), so we stub it to use ShadowContext for starting activity
+        //but a mock context doesn't know how to startActivity(), so we stub it to use ShadowContext for starting activity
         doAnswer(new Answer<Void>() {
             public Void answer(InvocationOnMock invocation) throws Throwable {
                 if (!(invocation.getArguments()[0] instanceof Intent)) {

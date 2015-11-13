@@ -1,8 +1,8 @@
 package com.mopub.mobileads;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Point;
-import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -10,18 +10,20 @@ import android.text.TextUtils;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.mopub.common.HttpClient;
+import com.mopub.common.MoPubHttpUrlConnection;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Dips;
+import com.mopub.common.util.Streams;
 import com.mopub.common.util.Strings;
+import com.mopub.network.Networking;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,10 +35,12 @@ import static com.mopub.network.TrackingRequest.makeVastTrackingHttpRequest;
 
 /**
  * AsyncTask that reads in VAST xml and resolves redirects. This returns a
- * fully formed {@link VastVideoConfiguration} so that the video can be
+ * fully formed {@link VastVideoConfig} so that the video can be
  * displayed with the settings and trackers set in the configuration.
  */
-public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoConfiguration> {
+public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoConfig> {
+
+    private static final String MOPUB = "MoPub";
 
     /**
      * Listener for when the xml parsing is done.
@@ -45,22 +49,32 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
         /**
          * When all the wrappers have resolved and aggregation is done, this passes in
          * a video configuration or null if one is not found.
-         * @param vastVideoConfiguration The video configuration found or null if
+         * @param vastVideoConfig The video configuration found or null if
          *                               no video was found.
          */
-        void onAggregationComplete(final @Nullable VastVideoConfiguration vastVideoConfiguration);
+        void onAggregationComplete(final @Nullable VastVideoConfig vastVideoConfig);
+    }
+
+    /**
+     * Flag for companion ad orientation during xml parsing.
+     */
+    enum CompanionOrientation {
+        LANDSCAPE,
+        PORTRAIT
     }
 
     // More than reasonable number of nested VAST urls to follow
     static final int MAX_TIMES_TO_FOLLOW_VAST_REDIRECT = 10;
-    private static final double ASPECT_RATIO_WEIGHT = 40;
-    private static final double AREA_WEIGHT = 60;
+    private static final double ASPECT_RATIO_WEIGHT = 70;
+    private static final double AREA_WEIGHT = 30;
     private static final List<String> VIDEO_MIME_TYPES =
             Arrays.asList("video/mp4", "video/3gpp");
+    private static final int MINIMUM_COMPANION_AD_WIDTH = 300;
+    private static final int MINIMUM_COMPANION_AD_HEIGHT = 250;
 
     @NonNull private final WeakReference<VastXmlManagerAggregatorListener> mVastXmlManagerAggregatorListener;
     private final double mScreenAspectRatio;
-    private final int mScreenArea;
+    private final int mScreenAreaDp;
     @NonNull private final Context mContext;
 
     /**
@@ -71,7 +85,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
 
     VastXmlManagerAggregator(@NonNull final VastXmlManagerAggregatorListener vastXmlManagerAggregatorListener,
             final double screenAspectRatio,
-            final int screenArea,
+            final int screenAreaDp,
             @NonNull final Context context) {
         super();
 
@@ -80,38 +94,37 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
         mVastXmlManagerAggregatorListener =
                 new WeakReference<VastXmlManagerAggregatorListener>(vastXmlManagerAggregatorListener);
         mScreenAspectRatio = screenAspectRatio;
-        mScreenArea = screenArea;
+        mScreenAreaDp = screenAreaDp;
         mContext = context.getApplicationContext();
     }
 
     @Override
-    protected VastVideoConfiguration doInBackground(@Nullable String... strings) {
-        AndroidHttpClient httpClient = null;
-        try {
-            httpClient = HttpClient.getHttpClient();
-            if (strings != null && strings.length > 0) {
-                String vastXml = strings[0];
-                if (vastXml == null) {
-                    return null;
-                }
-                return evaluateVastXmlManager(vastXml, httpClient, new ArrayList<VastTracker>());
-            }
-        } catch (Exception e) {
-            MoPubLog.d("Failed to parse VAST XML", e);
-        } finally {
-            if (httpClient != null) {
-                httpClient.close();
-            }
-        }
-
-        return null;
+    protected void onPreExecute() {
+        // This is to set the WebView user agent in case it was not already set by some other
+        // element (such as the request queue).
+        Networking.getUserAgent(mContext);
     }
 
     @Override
-    protected void onPostExecute(final @Nullable VastVideoConfiguration vastVideoConfiguration) {
+    protected VastVideoConfig doInBackground(@Nullable String... strings) {
+        if (strings == null || strings.length == 0 || strings[0] == null) {
+            return null;
+        }
+
+        try {
+            final String vastXml = strings[0];
+            return evaluateVastXmlManager(vastXml, new ArrayList<VastTracker>());
+        } catch (Exception e) {
+            MoPubLog.d("Unable to generate VastVideoConfig.", e);
+            return null;
+        }
+    }
+
+    @Override
+    protected void onPostExecute(final @Nullable VastVideoConfig vastVideoConfig) {
         final VastXmlManagerAggregatorListener listener = mVastXmlManagerAggregatorListener.get();
         if (listener != null) {
-            listener.onAggregationComplete(vastVideoConfiguration);
+            listener.onAggregationComplete(vastVideoConfig);
         }
     }
 
@@ -136,19 +149,16 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
      * non-xml errors.
      *
      * @param vastXml           The xml that this class parses
-     * @param androidHttpClient This is used to follow redirects
      * @param errorTrackers     This is the current list of error tracker URLs to hit if something
      *                          goes wrong.
-     * @return {@link VastVideoConfiguration} with all available fields set or null if the xml is
+     * @return {@link VastVideoConfig} with all available fields set or null if the xml is
      * invalid or null.
      */
     @VisibleForTesting
     @Nullable
-    VastVideoConfiguration evaluateVastXmlManager(@NonNull final String vastXml,
-            @NonNull final AndroidHttpClient androidHttpClient,
+    VastVideoConfig evaluateVastXmlManager(@NonNull final String vastXml,
             @NonNull final List<VastTracker> errorTrackers) {
         Preconditions.checkNotNull(vastXml, "vastXml cannot be null");
-        Preconditions.checkNotNull(androidHttpClient, "androidHttpClient cannot be null");
         Preconditions.checkNotNull(errorTrackers, "errorTrackers cannot be null");
 
         final VastXmlManager xmlManager = new VastXmlManager();
@@ -161,7 +171,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
             return null;
         }
 
-        List<VastAdXmlManager> vastAdXmlManagers = xmlManager.getAdXmlManagers();
+        final List<VastAdXmlManager> vastAdXmlManagers = xmlManager.getAdXmlManagers();
 
         // If there are no ads, fire the error trackers
         if (fireErrorTrackerIfNoAds(vastAdXmlManagers, xmlManager, mContext)) {
@@ -169,76 +179,90 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
         }
 
         for (VastAdXmlManager vastAdXmlManager : vastAdXmlManagers) {
-
             if (!isValidSequenceNumber(vastAdXmlManager.getSequence())) {
                 continue;
             }
 
             // InLine evaluation
-            VastInLineXmlManager vastInLineXmlManager = vastAdXmlManager.getInLineXmlManager();
+            final VastInLineXmlManager vastInLineXmlManager =
+                    vastAdXmlManager.getInLineXmlManager();
             if (vastInLineXmlManager != null) {
-                VastVideoConfiguration vastVideoConfiguration = evaluateInLineXmlManager(
+                final VastVideoConfig vastVideoConfig = evaluateInLineXmlManager(
                         vastInLineXmlManager, errorTrackers);
-                // If the vastVideoConfiguration is non null, it means we found a valid media file
-                if (vastVideoConfiguration != null) {
-                    populateMoPubCustomElements(xmlManager, vastVideoConfiguration);
-                    return vastVideoConfiguration;
+                // If the vastVideoConfig is non null, it means we found a valid media file
+                if (vastVideoConfig != null) {
+                    populateMoPubCustomElements(xmlManager, vastVideoConfig);
+                    return vastVideoConfig;
                 }
             }
 
             // Wrapper evaluation
-            VastWrapperXmlManager vastWrapperXmlManager = vastAdXmlManager.getWrapperXmlManager();
+            final VastWrapperXmlManager vastWrapperXmlManager
+                    = vastAdXmlManager.getWrapperXmlManager();
             if (vastWrapperXmlManager != null) {
                 final List<VastTracker> wrapperErrorTrackers = new ArrayList<VastTracker>(errorTrackers);
                 wrapperErrorTrackers.addAll(vastWrapperXmlManager.getErrorTrackers());
-                String vastRedirectXml = evaluateWrapperRedirect(vastWrapperXmlManager,
-                        androidHttpClient, wrapperErrorTrackers);
+                final String vastRedirectXml = evaluateWrapperRedirect(vastWrapperXmlManager,
+                        wrapperErrorTrackers);
                 if (vastRedirectXml == null) {
                     continue;
                 }
 
-                VastVideoConfiguration vastVideoConfiguration = evaluateVastXmlManager(
+                final VastVideoConfig vastVideoConfig = evaluateVastXmlManager(
                         vastRedirectXml,
-                        androidHttpClient,
                         wrapperErrorTrackers);
                 // If we don't find a valid video creative somewhere down this wrapper chain,
                 // look at the next Ad element
                 // NOTE: Wrapper elements will never contain media files according to the VAST
                 // 3.0 spec
-                if (vastVideoConfiguration == null) {
+                if (vastVideoConfig == null) {
                     continue;
                 }
 
-                // If we have a vastVideoConfiguration it means that we found a valid media file
+                // If we have a vastVideoConfig it means that we found a valid media file
                 // in one of Wrapper redirects. Therefore, aggregate all trackers in the wrapper
-                vastVideoConfiguration.addImpressionTrackers(
+                vastVideoConfig.addImpressionTrackers(
                         vastWrapperXmlManager.getImpressionTrackers());
-                List<VastLinearXmlManager> linearXmlManagers =
+                final List<VastLinearXmlManager> linearXmlManagers =
                         vastWrapperXmlManager.getLinearXmlManagers();
                 for (VastLinearXmlManager linearXmlManager : linearXmlManagers) {
-                    populateLinearTrackersAndIcon(linearXmlManager, vastVideoConfiguration);
+                    populateLinearTrackersAndIcon(linearXmlManager, vastVideoConfig);
                 }
+                populateVideoViewabilityTracker(vastWrapperXmlManager, vastVideoConfig);
 
                 // Only populate a companion ad if we don't already have one from one of the
                 // redirects
-                final VastCompanionAd companionAd = vastVideoConfiguration.getVastCompanionAd();
-                if (companionAd == null) {
-                    vastVideoConfiguration.setVastCompanionAd(
-                            getBestCompanionAd(vastWrapperXmlManager.getCompanionAdXmlManagers()));
+                if (!vastVideoConfig.hasCompanionAd()) {
+                    vastVideoConfig.setVastCompanionAd(
+                            getBestCompanionAd(vastWrapperXmlManager.getCompanionAdXmlManagers(),
+                                    CompanionOrientation.LANDSCAPE),
+                            getBestCompanionAd(vastWrapperXmlManager.getCompanionAdXmlManagers(),
+                                    CompanionOrientation.PORTRAIT));
                 } else {
                     // Otherwise append the companion trackers if it doesn't have resources
-                    for (final VastCompanionAdXmlManager companionAdXmlManager : vastWrapperXmlManager.getCompanionAdXmlManagers()) {
-                        if (!companionAdXmlManager.hasResources()) {
-                            companionAd.addClickTrackers(companionAdXmlManager.getClickTrackers());
-                            companionAd.addCreativeViewTrackers(
-                                    companionAdXmlManager.getCompanionCreativeViewTrackers());
+                    final VastCompanionAdConfig landscapeCompanionAd = vastVideoConfig.getVastCompanionAd(
+                            Configuration.ORIENTATION_LANDSCAPE);
+                    final VastCompanionAdConfig portraitCompanionAd = vastVideoConfig.getVastCompanionAd(
+                            Configuration.ORIENTATION_PORTRAIT);
+                    if (landscapeCompanionAd != null && portraitCompanionAd != null) {
+                        for (final VastCompanionAdXmlManager companionAdXmlManager : vastWrapperXmlManager.getCompanionAdXmlManagers()) {
+                            if (!companionAdXmlManager.hasResources()) {
+                                landscapeCompanionAd.addClickTrackers(
+                                        companionAdXmlManager.getClickTrackers());
+                                landscapeCompanionAd.addCreativeViewTrackers(
+                                        companionAdXmlManager.getCompanionCreativeViewTrackers());
+                                portraitCompanionAd.addClickTrackers(
+                                        companionAdXmlManager.getClickTrackers());
+                                portraitCompanionAd.addCreativeViewTrackers(
+                                        companionAdXmlManager.getCompanionCreativeViewTrackers());
+                            }
                         }
                     }
                 }
 
-                populateMoPubCustomElements(xmlManager, vastVideoConfiguration);
+                populateMoPubCustomElements(xmlManager, vastVideoConfig);
 
-                return vastVideoConfiguration;
+                return vastVideoConfig;
             }
         }
 
@@ -248,66 +272,97 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
     /**
      * Parses and evaluates an InLine element looking for a valid media file. InLine elements are
      * evaluated in order and the first valid media file found is used. If a media file is
-     * found, a {@link VastVideoConfiguration} is created and trackers are aggregated. If a
+     * found, a {@link VastVideoConfig} is created and trackers are aggregated. If a
      * valid companion ad is found, it is also added to the configuration.
      *
      * @param vastInLineXmlManager used to extract the media file, clickthrough link, trackers, and
      *                         companion ad
      * @param errorTrackers The error trackers from previous wrappers
-     * @return a {@link VastVideoConfiguration} or null if a valid media file was not found
+     * @return a {@link VastVideoConfig} or null if a valid media file was not found
      */
     @Nullable
-    private VastVideoConfiguration evaluateInLineXmlManager(
+    private VastVideoConfig evaluateInLineXmlManager(
             @NonNull final VastInLineXmlManager vastInLineXmlManager,
             @NonNull final List<VastTracker> errorTrackers) {
         Preconditions.checkNotNull(vastInLineXmlManager);
+        Preconditions.checkNotNull(errorTrackers);
 
-        List<VastLinearXmlManager> linearXmlManagers = vastInLineXmlManager.getLinearXmlManagers();
+        final List<VastLinearXmlManager> linearXmlManagers
+                = vastInLineXmlManager.getLinearXmlManagers();
+
         for (VastLinearXmlManager linearXmlManager : linearXmlManagers) {
             String bestMediaFileUrl = getBestMediaFileUrl(linearXmlManager.getMediaXmlManagers());
             if (bestMediaFileUrl != null) {
                 // Create vast video configuration and populate initial trackers
-                VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-                vastVideoConfiguration.addImpressionTrackers(vastInLineXmlManager.getImpressionTrackers());
-                populateLinearTrackersAndIcon(linearXmlManager, vastVideoConfiguration);
+                final VastVideoConfig vastVideoConfig = new VastVideoConfig();
+                vastVideoConfig.addImpressionTrackers(vastInLineXmlManager.getImpressionTrackers());
+                populateLinearTrackersAndIcon(linearXmlManager, vastVideoConfig);
 
                 // Linear nodes will only have a click through url and network media file when they
                 // are under an InLine element. They will not have these assets when they are under
                 // a Wrapper element.
-                vastVideoConfiguration.setClickThroughUrl(linearXmlManager.getClickThroughUrl());
-                vastVideoConfiguration.setNetworkMediaFileUrl(bestMediaFileUrl);
+                vastVideoConfig.setClickThroughUrl(linearXmlManager.getClickThroughUrl());
+                vastVideoConfig.setNetworkMediaFileUrl(bestMediaFileUrl);
 
-                vastVideoConfiguration.setVastCompanionAd(getBestCompanionAd(vastInLineXmlManager
-                        .getCompanionAdXmlManagers()));
+                vastVideoConfig.setVastCompanionAd(
+                        getBestCompanionAd(vastInLineXmlManager.getCompanionAdXmlManagers(),
+                                CompanionOrientation.LANDSCAPE),
+                        getBestCompanionAd(vastInLineXmlManager.getCompanionAdXmlManagers(),
+                                CompanionOrientation.PORTRAIT));
                 errorTrackers.addAll(vastInLineXmlManager.getErrorTrackers());
-                vastVideoConfiguration.addErrorTrackers(errorTrackers);
-                return vastVideoConfiguration;
+                vastVideoConfig.addErrorTrackers(errorTrackers);
+                populateVideoViewabilityTracker(vastInLineXmlManager, vastVideoConfig);
+
+                return vastVideoConfig;
             }
         }
 
         return null;
     }
 
+    private void populateVideoViewabilityTracker(
+            @NonNull final VastBaseInLineWrapperXmlManager vastInLineXmlManager,
+            @NonNull VastVideoConfig vastVideoConfig) {
+        Preconditions.checkNotNull(vastInLineXmlManager);
+        Preconditions.checkNotNull(vastVideoConfig);
+
+        if (vastVideoConfig.getVideoViewabilityTracker() != null) {
+            return;
+        }
+
+        final VastExtensionParentXmlManager vastExtensionParentXmlManager =
+                vastInLineXmlManager.getVastExtensionParentXmlManager();
+        if (vastExtensionParentXmlManager != null) {
+            final List<VastExtensionXmlManager> vastExtensionXmlManagers =
+                    vastExtensionParentXmlManager.getVastExtensionXmlManagers();
+            for (VastExtensionXmlManager vastExtensionXmlManager : vastExtensionXmlManagers) {
+                if (MOPUB.equals(vastExtensionXmlManager.getType())) {
+                    vastVideoConfig.setVideoViewabilityTracker(vastExtensionXmlManager
+                            .getVideoViewabilityTracker());
+                    break;
+                }
+            }
+        }
+    }
+
     /**
      * Retrieves the Wrapper's redirect uri and follows it to return the next VAST xml String.
      *
      * @param vastWrapperXmlManager used to get the redirect uri
-     * @param androidHttpClient     the http client
      * @param wrapperErrorTrackers  Error trackers to hit if something goes wrong
      * @return the next VAST xml String or {@code null} if it could not be resolved
      */
     @Nullable
     private String evaluateWrapperRedirect(@NonNull VastWrapperXmlManager vastWrapperXmlManager,
-            @NonNull AndroidHttpClient androidHttpClient,
             @NonNull List<VastTracker> wrapperErrorTrackers) {
-        String vastAdTagUri = vastWrapperXmlManager.getVastAdTagURI();
+        final String vastAdTagUri = vastWrapperXmlManager.getVastAdTagURI();
         if (vastAdTagUri == null) {
             return null;
         }
 
         String vastRedirectXml = null;
         try {
-            vastRedirectXml = followVastRedirect(androidHttpClient, vastAdTagUri);
+            vastRedirectXml = followVastRedirect(vastAdTagUri);
         } catch (Exception e) {
             MoPubLog.d("Failed to follow VAST redirect", e);
             if (!wrapperErrorTrackers.isEmpty()) {
@@ -321,65 +376,65 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
 
     /**
      * This method aggregates all trackers found in the linearXmlManager and adds them to the
-     * {@link VastVideoConfiguration}. This method also populates the skip offset and icon if they
+     * {@link VastVideoConfig}. This method also populates the skip offset and icon if they
      * have not already been populated in one of the wrapper redirects.
      *
      * @param linearXmlManager used to retrieve trackers, and assets
-     * @param vastVideoConfiguration modified in this method to store trackers and assets
+     * @param vastVideoConfig modified in this method to store trackers and assets
      */
     private void populateLinearTrackersAndIcon(@NonNull final VastLinearXmlManager linearXmlManager,
-            @NonNull final VastVideoConfiguration vastVideoConfiguration) {
+            @NonNull final VastVideoConfig vastVideoConfig) {
         Preconditions.checkNotNull(linearXmlManager, "linearXmlManager cannot be null");
-        Preconditions.checkNotNull(vastVideoConfiguration, "vastVideoConfiguration cannot be null");
+        Preconditions.checkNotNull(vastVideoConfig, "vastVideoConfig cannot be null");
 
-        vastVideoConfiguration.addAbsoluteTrackers(linearXmlManager.getAbsoluteProgressTrackers());
-        vastVideoConfiguration.addFractionalTrackers(
+        vastVideoConfig.addAbsoluteTrackers(linearXmlManager.getAbsoluteProgressTrackers());
+        vastVideoConfig.addFractionalTrackers(
                 linearXmlManager.getFractionalProgressTrackers());
-        vastVideoConfiguration.addPauseTrackers(linearXmlManager.getPauseTrackers());
-        vastVideoConfiguration.addResumeTrackers(linearXmlManager.getResumeTrackers());
-        vastVideoConfiguration.addCompleteTrackers(linearXmlManager.getVideoCompleteTrackers());
-        vastVideoConfiguration.addCloseTrackers(linearXmlManager.getVideoCloseTrackers());
-        vastVideoConfiguration.addSkipTrackers(linearXmlManager.getVideoSkipTrackers());
-        vastVideoConfiguration.addClickTrackers(linearXmlManager.getClickTrackers());
+        vastVideoConfig.addPauseTrackers(linearXmlManager.getPauseTrackers());
+        vastVideoConfig.addResumeTrackers(linearXmlManager.getResumeTrackers());
+        vastVideoConfig.addCompleteTrackers(linearXmlManager.getVideoCompleteTrackers());
+        vastVideoConfig.addCloseTrackers(linearXmlManager.getVideoCloseTrackers());
+        vastVideoConfig.addSkipTrackers(linearXmlManager.getVideoSkipTrackers());
+        vastVideoConfig.addClickTrackers(linearXmlManager.getClickTrackers());
 
         // Only set the skip offset if we haven't set it already in one of the redirects
-        if (vastVideoConfiguration.getSkipOffset() == null) {
-            vastVideoConfiguration.setSkipOffset(linearXmlManager.getSkipOffset());
+        if (vastVideoConfig.getSkipOffsetString() == null) {
+            vastVideoConfig.setSkipOffset(linearXmlManager.getSkipOffset());
         }
 
         // Only set the icon if we haven't set it already in one of the redirects
-        if (vastVideoConfiguration.getVastIcon() == null) {
-            vastVideoConfiguration.setVastIcon(getBestIcon(linearXmlManager.getIconXmlManagers()));
+        if (vastVideoConfig.getVastIconConfig() == null) {
+            vastVideoConfig.setVastIconConfig(getBestIcon(linearXmlManager.getIconXmlManagers()));
         }
     }
 
     /**
      * Parses all custom MoPub specific custom extensions and impression trackers
-     * and populates them in the {@link VastVideoConfiguration}. These extensions are not part
+     * and populates them in the {@link VastVideoConfig}. These extensions are not part
      * of the Vast 3.0 spec and are appended to the root of the xml document.
      *
      * @param xmlManager used to retrieve the custom extensions and impression trackers
-     * @param vastVideoConfiguration modified in this method to store custom extensions and
+     * @param vastVideoConfig modified in this method to store custom extensions and
      *                               impression trackers
      */
     private void populateMoPubCustomElements(@NonNull final VastXmlManager xmlManager,
-            @NonNull final VastVideoConfiguration vastVideoConfiguration) {
+            @NonNull final VastVideoConfig vastVideoConfig) {
         Preconditions.checkNotNull(xmlManager, "xmlManager cannot be null");
-        Preconditions.checkNotNull(vastVideoConfiguration, "vastVideoConfiguration cannot be null");
+        Preconditions.checkNotNull(vastVideoConfig, "vastVideoConfig cannot be null");
 
-        vastVideoConfiguration.addImpressionTrackers(xmlManager.getMoPubImpressionTrackers());
+        vastVideoConfig.addImpressionTrackers(xmlManager.getMoPubImpressionTrackers());
 
-        if (vastVideoConfiguration.getCustomCtaText() == null) {
-            vastVideoConfiguration.setCustomCtaText(xmlManager.getCustomCtaText());
+        if (vastVideoConfig.getCustomCtaText() == null) {
+            vastVideoConfig.setCustomCtaText(xmlManager.getCustomCtaText());
         }
-        if (vastVideoConfiguration.getCustomSkipText() == null) {
-            vastVideoConfiguration.setCustomSkipText(xmlManager.getCustomSkipText());
+        if (vastVideoConfig.getCustomSkipText() == null) {
+            vastVideoConfig.setCustomSkipText(xmlManager.getCustomSkipText());
         }
-        if (vastVideoConfiguration.getCustomCloseIconUrl() == null) {
-            vastVideoConfiguration.setCustomCloseIconUrl(xmlManager.getCustomCloseIconUrl());
+        if (vastVideoConfig.getCustomCloseIconUrl() == null) {
+            vastVideoConfig.setCustomCloseIconUrl(xmlManager.getCustomCloseIconUrl());
         }
-        if (!vastVideoConfiguration.isCustomForceOrientationSet()) {
-            vastVideoConfiguration.setCustomForceOrientation(xmlManager.getCustomForceOrientation());
+        if (!vastVideoConfig.isCustomForceOrientationSet()) {
+            vastVideoConfig.setCustomForceOrientation(xmlManager.getCustomForceOrientation());
         }
     }
 
@@ -450,9 +505,12 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
 
     @VisibleForTesting
     @Nullable
-    VastCompanionAd getBestCompanionAd(
-            @NonNull final List<VastCompanionAdXmlManager> managers) {
+    VastCompanionAdConfig getBestCompanionAd(
+            @NonNull final List<VastCompanionAdXmlManager> managers,
+            @NonNull final CompanionOrientation orientation) {
         Preconditions.checkNotNull(managers, "managers cannot be null");
+        Preconditions.checkNotNull(orientation, "orientation cannot be null");
+
         final List<VastCompanionAdXmlManager> companionXmlManagers =
                 new ArrayList<VastCompanionAdXmlManager>(managers);
         double bestCompanionFitness = Double.POSITIVE_INFINITY;
@@ -469,8 +527,8 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
 
                 final Integer width = companionXmlManager.getWidth();
                 final Integer height = companionXmlManager.getHeight();
-                if (width == null || width <= 0 ||
-                        height == null || height <= 0) {
+                if (width == null || width < MINIMUM_COMPANION_AD_WIDTH ||
+                        height == null || height < MINIMUM_COMPANION_AD_HEIGHT) {
                     continue;
                 }
 
@@ -482,7 +540,12 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
                     continue;
                 }
 
-                final double companionFitness = calculateFitness(width, height);
+                final double companionFitness;
+                if (CompanionOrientation.PORTRAIT == orientation) {
+                    companionFitness = calculateFitness(height, width);
+                } else {
+                    companionFitness = calculateFitness(width, height);
+                }
                 if (companionFitness < bestCompanionFitness) {
                     bestCompanionFitness = companionFitness;
                     bestCompanionXmlManager = companionXmlManager;
@@ -496,7 +559,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
         }
 
         if (bestCompanionXmlManager != null) {
-            return new VastCompanionAd(
+            return new VastCompanionAdConfig(
                     bestVastScaledDimensions.x,
                     bestVastScaledDimensions.y,
                     bestVastResource,
@@ -561,7 +624,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
 
     @VisibleForTesting
     @Nullable
-    VastIcon getBestIcon(@NonNull final List<VastIconXmlManager> managers) {
+    VastIconConfig getBestIcon(@NonNull final List<VastIconXmlManager> managers) {
         Preconditions.checkNotNull(managers, "managers cannot be null");
         final List<VastIconXmlManager> iconXmlManagers = new ArrayList<VastIconXmlManager>(managers);
 
@@ -587,7 +650,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
                     continue;
                 }
 
-                return new VastIcon(
+                return new VastIconConfig(
                         iconXmlManager.getWidth(),
                         iconXmlManager.getHeight(),
                         iconXmlManager.getOffsetMS(),
@@ -607,15 +670,15 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
      * area to those of the device. The closer to 0 the score, the better. The fitness function
      * weighs aspect ratios and areas differently.
      *
-     * @param width the width of the media file or companion ad
-     * @param height the height of th media file or companion ad
+     * @param widthDp the width of the media file or companion ad
+     * @param heightDp the height of th media file or companion ad
      * @return the fitness score. The closer to 0, the better.
      */
-    private double calculateFitness(final int width, final int height) {
-        final double mediaAspectRatio = (double) width / height;
-        final int mediaArea = width * height;
+    private double calculateFitness(final int widthDp, final int heightDp) {
+        final double mediaAspectRatio = (double) widthDp / heightDp;
+        final int mediaAreaDp = widthDp * heightDp;
         final double aspectRatioRatio = mediaAspectRatio / mScreenAspectRatio;
-        final double areaRatio = (double) mediaArea / mScreenArea;
+        final double areaRatio = (double) mediaAreaDp / mScreenAreaDp;
         return ASPECT_RATIO_WEIGHT * Math.abs(Math.log(aspectRatioRatio))
                 + AREA_WEIGHT * Math.abs(Math.log(areaRatio));
     }
@@ -645,19 +708,27 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
     }
 
     @Nullable
-    private String followVastRedirect(@NonNull final AndroidHttpClient httpClient,
-            @NonNull final String redirectUrl) throws Exception {
-        Preconditions.checkNotNull(httpClient);
+    private String followVastRedirect(@NonNull final String redirectUrl) throws IOException {
         Preconditions.checkNotNull(redirectUrl);
 
         if (mTimesFollowedVastRedirect < MAX_TIMES_TO_FOLLOW_VAST_REDIRECT) {
             mTimesFollowedVastRedirect++;
 
-            final HttpGet httpget = HttpClient.initializeHttpGet(redirectUrl);
-            final HttpResponse response = httpClient.execute(httpget);
-            final HttpEntity entity = response.getEntity();
-            return (entity != null) ? Strings.fromStream(entity.getContent()) : null;
+            HttpURLConnection urlConnection = null;
+            InputStream inputStream = null;
+            try {
+                urlConnection = MoPubHttpUrlConnection.getHttpUrlConnection(redirectUrl);
+                inputStream = new BufferedInputStream(urlConnection.getInputStream());
+
+                return Strings.fromStream(inputStream);
+            } finally {
+                Streams.closeStream(inputStream);
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+            }
         }
+
         return null;
     }
 

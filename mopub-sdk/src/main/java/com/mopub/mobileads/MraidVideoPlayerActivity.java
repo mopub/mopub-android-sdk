@@ -3,6 +3,7 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -13,6 +14,7 @@ import android.view.WindowManager;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Intents;
 import com.mopub.mraid.MraidVideoViewController;
+import com.mopub.nativeads.NativeVideoViewController;
 
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_FAIL;
@@ -36,7 +38,7 @@ public class MraidVideoPlayerActivity extends BaseVideoPlayerActivity implements
         } catch (IllegalStateException e) {
             // This can happen if the activity was started without valid intent extras. We leave
             // mBaseVideoController set to null, and finish the activity immediately.
-            
+
             broadcastAction(this, mBroadcastIdentifier, ACTION_INTERSTITIAL_FAIL);
             finish();
             return;
@@ -78,9 +80,18 @@ public class MraidVideoPlayerActivity extends BaseVideoPlayerActivity implements
     }
 
     @Override
+    public void onConfigurationChanged(final Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (mBaseVideoController != null) {
+            mBaseVideoController.onConfigurationChanged(newConfig);
+        }
+    }
+
+    @Override
     public void onBackPressed() {
         if (mBaseVideoController != null && mBaseVideoController.backButtonEnabled()) {
             super.onBackPressed();
+            mBaseVideoController.onBackPressed();
         }
     }
 
@@ -98,6 +109,8 @@ public class MraidVideoPlayerActivity extends BaseVideoPlayerActivity implements
             return new VastVideoViewController(this, getIntent().getExtras(), savedInstanceState, mBroadcastIdentifier, this);
         } else if ("mraid".equals(clazz)) {
             return new MraidVideoViewController(this, getIntent().getExtras(), savedInstanceState, this);
+        } else if ("native".equals(clazz)) {
+            return new NativeVideoViewController(this, getIntent().getExtras(), savedInstanceState, this);
         } else {
             throw new IllegalStateException("Unsupported video type: " + clazz);
         }

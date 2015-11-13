@@ -187,23 +187,6 @@ public class MoPubAdAdapterTest {
     }
 
     @Test
-    public void registerViewBinder_shouldCallAdPlacer() {
-        subject.registerViewBinder(mockViewBinder);
-
-        final ArgumentCaptor<MoPubAdRenderer> rendererCaptor = new ArgumentCaptor<MoPubAdRenderer>();
-        verify(mockStreamAdPlacer).registerAdRenderer(rendererCaptor.capture());
-        MoPubAdRenderer renderer = rendererCaptor.getValue();
-        assertThat(renderer).isExactlyInstanceOf(MoPubNativeAdRenderer.class);
-    }
-
-    @Test
-    public void registerViewBinder_withNull_shouldNotCallAdPlacer() {
-        subject.registerViewBinder(null);
-
-        verify(mockStreamAdPlacer, never()).registerAdRenderer(any(MoPubAdRenderer.class));
-    }
-
-    @Test
     public void setAdLoadedListener_handleAdLoaded_shouldCallCallback_shouldCallObserver() {
         subject.setAdLoadedListener(mockAdLoadedListener);
         subject.registerDataSetObserver(mockDataSetObserver);

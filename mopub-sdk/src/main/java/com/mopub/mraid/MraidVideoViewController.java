@@ -1,6 +1,7 @@
 package com.mopub.mraid;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.drawable.StateListDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -84,6 +85,12 @@ public class MraidVideoViewController extends BaseVideoViewController {
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {}
+
+    @Override
+    protected void onConfigurationChanged(final Configuration newConfig) {}
+
+    @Override
+    protected void onBackPressed() {}
 
     private void createInterstitialCloseButton() {
         mCloseButton = new ImageButton(getContext());

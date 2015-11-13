@@ -176,9 +176,9 @@ public class MraidVideoPlayerActivityTest {
 
     private void initializeSubjectForVast() {
         intent.putExtra(BaseVideoPlayerActivity.VIDEO_CLASS_EXTRAS_KEY, "vast");
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setDiskMediaFileUrl("video_path");
-        intent.putExtra(VastVideoViewController.VAST_VIDEO_CONFIGURATION, vastVideoConfiguration);
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("video_path");
+        intent.putExtra(VastVideoViewController.VAST_VIDEO_CONFIG, vastVideoConfig);
 
         subject = Robolectric.buildActivity(MraidVideoPlayerActivity.class)
                 .withIntent(intent)

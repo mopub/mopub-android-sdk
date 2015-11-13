@@ -48,14 +48,14 @@ public class UrlHandlerTest {
 
     @Test
     public void urlHandler_withoutMoPubBrowser_shouldCallOnClickSuccessButNotStartActivity() {
-        final String url = "http://some_url";
+        final String url = "http://www.mopub.com/";
 
         new UrlHandler.Builder()
                 .withSupportedUrlActions(OPEN_IN_APP_BROWSER)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
                 .withoutMoPubBrowser()
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingSucceeded(url, OPEN_IN_APP_BROWSER);
         verifyNoMoreCallbacks();
@@ -70,7 +70,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(HANDLE_MOPUB_SCHEME)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockMoPubSchemeListener).onFinishLoad();
         verifyNoMoreCallbacks();
@@ -83,7 +83,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(HANDLE_MOPUB_SCHEME)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockMoPubSchemeListener).onClose();
         verifyNoMoreCallbacks();
@@ -96,7 +96,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(HANDLE_MOPUB_SCHEME)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockMoPubSchemeListener).onFailLoad();
         verifyNoMoreCallbacks();
@@ -112,7 +112,7 @@ public class UrlHandlerTest {
                         HANDLE_PHONE_SCHEME)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verifyNoMoreCallbacks();
         verifyNoStartedActivity();
@@ -157,7 +157,7 @@ public class UrlHandlerTest {
                         OPEN_IN_APP_BROWSER, HANDLE_PHONE_SCHEME, OPEN_NATIVE_BROWSER, HANDLE_SHARE_TWEET)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
         assertThat(startedActivity.getAction()).isEqualTo(Intent.ACTION_VIEW);
@@ -166,7 +166,7 @@ public class UrlHandlerTest {
 
     @Test
     public void urlHandler_withValidNativeBrowserUrl_shouldCallOnClickSuccess_shouldStartActivity() {
-        final String urlToLoad = "some_url";
+        final String urlToLoad = "http://www.mopub.com/";
         final String url = "mopubnativebrowser://navigate?url=" + urlToLoad;
 
         new UrlHandler.Builder()
@@ -174,7 +174,7 @@ public class UrlHandlerTest {
                         OPEN_IN_APP_BROWSER, HANDLE_PHONE_SCHEME, OPEN_NATIVE_BROWSER, HANDLE_SHARE_TWEET)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingSucceeded(url, OPEN_NATIVE_BROWSER);
         verifyNoMoreCallbacks();
@@ -192,7 +192,7 @@ public class UrlHandlerTest {
                         OPEN_IN_APP_BROWSER, HANDLE_PHONE_SCHEME, OPEN_NATIVE_BROWSER, HANDLE_SHARE_TWEET)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingSucceeded(url, OPEN_IN_APP_BROWSER);
         verifyNoMoreCallbacks();
@@ -204,14 +204,14 @@ public class UrlHandlerTest {
 
     @Test
     public void urlHandler_withMatchingInAppBrowserHttpsUrl_shouldCallOnClickSuccess_shouldStartActivity() {
-        final String url = "https://some_url";
+        final String url = "https://www.mopub.com/";
 
         new UrlHandler.Builder()
                 .withSupportedUrlActions(IGNORE_ABOUT_SCHEME, HANDLE_MOPUB_SCHEME, FOLLOW_DEEP_LINK,
                         OPEN_IN_APP_BROWSER, HANDLE_PHONE_SCHEME, OPEN_NATIVE_BROWSER, HANDLE_SHARE_TWEET)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingSucceeded(url, OPEN_IN_APP_BROWSER);
         verifyNoMoreCallbacks();
@@ -228,7 +228,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(HANDLE_SHARE_TWEET)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, shareTweetUrl);
+                .build().handleResolvedUrl(context, shareTweetUrl, true, null);
 
         verify(mockResultActions).urlHandlingSucceeded(shareTweetUrl, HANDLE_SHARE_TWEET);
         verifyNoMoreCallbacks();
@@ -245,7 +245,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, deepLinkUrl);
+                .build().handleResolvedUrl(context, deepLinkUrl, true, null);
 
         verify(mockResultActions).urlHandlingSucceeded(deepLinkUrl, FOLLOW_DEEP_LINK);
         verifyNoMoreCallbacks();
@@ -263,7 +263,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, deeplinkPlusUrl);
+                .build().handleResolvedUrl(context, deeplinkPlusUrl, true, null);
 
         verify(mockResultActions).urlHandlingSucceeded(deeplinkPlusUrl, FOLLOW_DEEP_LINK_WITH_FALLBACK);
         verifyNoMoreCallbacks();
@@ -273,9 +273,10 @@ public class UrlHandlerTest {
     }
 
     @Test
-    public void urlHandler_withMatchingUnresolvableDeeplinkPlus_withResolvableFallback_shouldCallOnClickSuccess_shouldStartActivity() {
+    public void urlHandler_withMatchingUnresolvableDeeplinkPlus_withResolvableFallback_shouldResolveRedirects_shouldCallOnClickSuccess_shouldStartActivity() {
         final String primaryUrl = "missingApp://somePath";
-        final String fallbackUrl = "http://twitter.com";
+        final String fallbackUrl = "http://www.twitter.com";
+        final String fallbackUrlAfterRedirects = "https://twitter.com/";
         final String deeplinkPlusUrl = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
                 + "&fallbackUrl=" + Uri.encode(fallbackUrl);
 
@@ -284,32 +285,30 @@ public class UrlHandlerTest {
                 .withResultActions(mockResultActions)
                 .build().handleUrl(context, deeplinkPlusUrl);
 
-        verify(mockResultActions).urlHandlingSucceeded(fallbackUrl, OPEN_IN_APP_BROWSER);
+        Robolectric.runBackgroundTasks();
+        verify(mockResultActions).urlHandlingSucceeded(fallbackUrlAfterRedirects,
+                OPEN_IN_APP_BROWSER);
         verifyNoMoreCallbacks();
         final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo(MoPubBrowser.class.getName());
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY))
-                .isEqualTo(fallbackUrl);
+                .isEqualTo(fallbackUrlAfterRedirects);
     }
 
     @Test
-    public void urlHandler_withMatchingUnresolvableDeeplinkPlus_withUnresolvableFallback_shouldAttemptAsDeeplink() {
+    public void urlHandler_withMatchingUnresolvableDeeplinkPlus_withUnresolvableFallback_shouldDoNothing() {
         final String primaryUrl = "missingApp://somePath";
         final String fallbackUrl = "unresolvableUrl";
         final String deeplinkPlusUrl = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
                 + "&fallbackUrl=" + Uri.encode(fallbackUrl);
-        makeDeeplinkResolvable(deeplinkPlusUrl);
 
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK, FOLLOW_DEEP_LINK)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, deeplinkPlusUrl);
+                .build().handleResolvedUrl(context, deeplinkPlusUrl, true, null);
 
-        // There should really be only one of these fired at a time, but this is such an edge-case
-        // that we're not fixing at the moment (see ADF-1700).
         verify(mockResultActions).urlHandlingFailed(fallbackUrl, NOOP);
-        verify(mockResultActions).urlHandlingSucceeded(deeplinkPlusUrl, FOLLOW_DEEP_LINK);
         verifyNoMoreCallbacks();
     }
 
@@ -329,7 +328,7 @@ public class UrlHandlerTest {
 
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockRequestQueue).add(argThat(isUrl(primaryTracker)));
         verify(mockRequestQueue, never()).add(argThat(isUrl(fallbackTracker)));
@@ -348,7 +347,7 @@ public class UrlHandlerTest {
 
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockRequestQueue).add(argThat(isUrl(primaryTracker1)));
         verify(mockRequestQueue).add(argThat(isUrl(primaryTracker2)));
@@ -369,7 +368,7 @@ public class UrlHandlerTest {
 
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK, OPEN_IN_APP_BROWSER)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockRequestQueue).add(argThat(isUrl(fallbackTracker)));
         verify(mockRequestQueue, never()).add(argThat(isUrl(primaryTracker)));
@@ -389,7 +388,7 @@ public class UrlHandlerTest {
 
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK, OPEN_IN_APP_BROWSER)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockRequestQueue).add(argThat(isUrl(fallbackTracker1)));
         verify(mockRequestQueue).add(argThat(isUrl(fallbackTracker2)));
@@ -404,7 +403,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingSucceeded(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
     }
@@ -418,7 +417,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingSucceeded(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
     }
@@ -430,7 +429,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, NOOP);
         verifyNoMoreCallbacks();
@@ -444,7 +443,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
         verifyNoMoreCallbacks();
@@ -459,7 +458,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
         verifyNoMoreCallbacks();
@@ -475,7 +474,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
         verifyNoMoreCallbacks();
@@ -489,7 +488,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
         verifyNoMoreCallbacks();
@@ -503,7 +502,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
         verifyNoMoreCallbacks();
@@ -518,7 +517,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(HANDLE_MOPUB_SCHEME, FOLLOW_DEEP_LINK)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK);
         verifyNoMoreCallbacks();
@@ -531,7 +530,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(HANDLE_SHARE_TWEET, FOLLOW_DEEP_LINK)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, FOLLOW_DEEP_LINK);
         verifyNoMoreCallbacks();
@@ -539,7 +538,7 @@ public class UrlHandlerTest {
 
     @Test
     public void urlHandler_withNoConfiguration_shouldDoNothing() {
-        new UrlHandler.Builder().build().handleUrl(context, "");
+        new UrlHandler.Builder().build().handleResolvedUrl(context, "", true, null);
 
         verifyNoMoreCallbacks();
     }
@@ -550,7 +549,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(IGNORE_ABOUT_SCHEME)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, "");
+                .build().handleResolvedUrl(context, "", true, null);
 
         verify(mockResultActions).urlHandlingFailed("", NOOP);
         verifyNoMoreCallbacks();
@@ -561,7 +560,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, "about:blank");
+                .build().handleResolvedUrl(context, "about:blank", true, null);
 
         verify(mockResultActions).urlHandlingFailed("about:blank", NOOP);
         verifyNoMoreCallbacks();
@@ -572,7 +571,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(IGNORE_ABOUT_SCHEME)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, "about:blank");
+                .build().handleResolvedUrl(context, "about:blank", true, null);
 
         verifyNoMoreCallbacks();
     }
@@ -582,7 +581,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(IGNORE_ABOUT_SCHEME)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, "about:blank");
+                .build().handleResolvedUrl(context, "about:blank", true, null);
 
         verifyNoMoreCallbacks();
     }
@@ -594,7 +593,7 @@ public class UrlHandlerTest {
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
                 .withoutMoPubBrowser()
-                .build().handleUrl(context, "about:blank");
+                .build().handleResolvedUrl(context, "about:blank", true, null);
 
         verifyNoMoreCallbacks();
     }
@@ -695,7 +694,7 @@ public class UrlHandlerTest {
                         OPEN_IN_APP_BROWSER, HANDLE_PHONE_SCHEME, OPEN_NATIVE_BROWSER, HANDLE_SHARE_TWEET)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, nullUrl);
+                .build().handleResolvedUrl(context, nullUrl, true, null);
 
         verify(mockResultActions).urlHandlingFailed(nullUrl, NOOP);
         verifyNoMoreCallbacks();
@@ -710,7 +709,7 @@ public class UrlHandlerTest {
                         OPEN_IN_APP_BROWSER, HANDLE_PHONE_SCHEME, OPEN_NATIVE_BROWSER, HANDLE_SHARE_TWEET)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, emptyUrl);
+                .build().handleResolvedUrl(context, emptyUrl, true, null);
 
         verify(mockResultActions).urlHandlingFailed(emptyUrl, NOOP);
         verifyNoMoreCallbacks();
@@ -726,7 +725,7 @@ public class UrlHandlerTest {
                         OPEN_IN_APP_BROWSER, HANDLE_PHONE_SCHEME, OPEN_NATIVE_BROWSER, HANDLE_SHARE_TWEET)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, invalidUrl);
+                .build().handleResolvedUrl(context, invalidUrl, true, null);
 
         verify(mockResultActions).urlHandlingFailed(invalidUrl, NOOP);
         verifyNoMoreCallbacks();
@@ -739,7 +738,7 @@ public class UrlHandlerTest {
         new UrlHandler.Builder()
                 .withSupportedUrlActions(HANDLE_MOPUB_SCHEME)
                 .withResultActions(mockResultActions)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verifyNoMoreCallbacks();
     }
@@ -751,7 +750,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(HANDLE_MOPUB_SCHEME)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, HANDLE_MOPUB_SCHEME);
         verifyNoMoreCallbacks();
@@ -765,7 +764,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(OPEN_NATIVE_BROWSER)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, OPEN_NATIVE_BROWSER);
         verifyNoMoreCallbacks();
@@ -780,7 +779,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(HANDLE_SHARE_TWEET)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, NOOP);
         verifyNoMoreCallbacks();
@@ -795,7 +794,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(HANDLE_SHARE_TWEET)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, HANDLE_SHARE_TWEET);
         verifyNoMoreCallbacks();
@@ -810,7 +809,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(HANDLE_SHARE_TWEET)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingFailed(url, HANDLE_SHARE_TWEET);
         verifyNoMoreCallbacks();
@@ -828,7 +827,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(FOLLOW_DEEP_LINK)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, deepLinkUrl);
+                .build().handleResolvedUrl(context, deepLinkUrl, true, null);
 
         verify(mockResultActions).urlHandlingFailed(deepLinkUrl, FOLLOW_DEEP_LINK);
         verifyNoMoreCallbacks();
@@ -840,7 +839,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(HANDLE_PHONE_SCHEME)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
 
         verify(mockResultActions).urlHandlingSucceeded(url, HANDLE_PHONE_SCHEME);
         verifyNoMoreCallbacks();
@@ -858,7 +857,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(urlAction)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
         verify(mockResultActions).urlHandlingFailed(url, expectedFailUrlAction);
         verifyNoMoreCallbacks();
     }
@@ -869,7 +868,7 @@ public class UrlHandlerTest {
                 .withSupportedUrlActions(NOOP, otherTypes)
                 .withResultActions(mockResultActions)
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
-                .build().handleUrl(context, url);
+                .build().handleResolvedUrl(context, url, true, null);
         verify(mockResultActions).urlHandlingFailed(url, NOOP);
         verifyNoMoreCallbacks();
     }

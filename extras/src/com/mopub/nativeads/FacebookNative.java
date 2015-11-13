@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.mopub.nativeads.NativeImageHelper.preCacheImages;
+
 /*
  * Tested with Facebook SDK 3.23.1
  */
@@ -35,10 +37,10 @@ public class FacebookNative extends CustomEventNative {
             return;
         }
 
-        final FacebookForwardingNativeAd facebookForwardingNativeAd =
-                new FacebookForwardingNativeAd(context,
+        final FacebookStaticNativeAd facebookStaticNativeAd =
+                new FacebookStaticNativeAd(context,
                         new NativeAd(context, placementId), customEventNativeListener);
-        facebookForwardingNativeAd.loadAd();
+        facebookStaticNativeAd.loadAd();
     }
 
     private boolean extrasAreValid(final Map<String, String> serverExtras) {
@@ -46,14 +48,14 @@ public class FacebookNative extends CustomEventNative {
         return (placementId != null && placementId.length() > 0);
     }
 
-    static class FacebookForwardingNativeAd extends BaseForwardingNativeAd implements AdListener, ImpressionListener {
+    static class FacebookStaticNativeAd extends StaticNativeAd implements AdListener, ImpressionListener {
         private static final String SOCIAL_CONTEXT_FOR_AD = "socialContextForAd";
 
         private final Context mContext;
         private final NativeAd mNativeAd;
         private final CustomEventNativeListener mCustomEventNativeListener;
 
-        FacebookForwardingNativeAd(final Context context,
+        FacebookStaticNativeAd(final Context context,
                 final NativeAd nativeAd,
                 final CustomEventNativeListener customEventNativeListener) {
             mContext = context.getApplicationContext();
@@ -101,10 +103,10 @@ public class FacebookNative extends CustomEventNative {
                 imageUrls.add(getIconImageUrl());
             }
 
-            preCacheImages(mContext, imageUrls, new ImageListener() {
+            preCacheImages(mContext, imageUrls, new NativeImageHelper.ImageListener() {
                 @Override
                 public void onImagesCached() {
-                    mCustomEventNativeListener.onNativeAdLoaded(FacebookForwardingNativeAd.this);
+                    mCustomEventNativeListener.onNativeAdLoaded(FacebookStaticNativeAd.this);
                 }
 
                 @Override
@@ -142,8 +144,6 @@ public class FacebookNative extends CustomEventNative {
         @Override
         public void prepare(final View view) {
             mNativeAd.registerViewForInteraction(view);
-            setOverridingClickTracker(true);
-            setOverridingImpressionTracker(true);
         }
 
         @Override

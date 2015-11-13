@@ -270,11 +270,6 @@ public class AdViewController {
         }
     }
 
-    @Deprecated
-    void setFailUrl(String failUrl) {
-        // Does nothing.
-    }
-
     void setNotLoading() {
         this.mIsLoading = false;
         if (mActiveRequest != null) {
@@ -333,21 +328,6 @@ public class AdViewController {
         return 0;
     }
 
-    @Deprecated
-    public String getClickTrackingUrl() {
-        return mAdResponse == null ? null : mAdResponse.getClickTrackingUrl();
-    }
-
-    @Deprecated
-    public String getRedirectUrl() {
-        return mAdResponse == null ? null : mAdResponse.getRedirectUrl();
-    }
-
-    @Deprecated
-    public String getResponseString() {
-        return mAdResponse == null ? null : mAdResponse.getStringBody();
-    }
-
     public boolean getAutorefreshEnabled() {
         return mAutoRefreshEnabled;
     }
@@ -395,11 +375,6 @@ public class AdViewController {
 
     public void setTesting(boolean enabled) {
         mIsTesting = enabled;
-    }
-
-    @Deprecated
-    Object getAdConfiguration() {
-        return null;
     }
 
     boolean isDestroyed() {
@@ -587,40 +562,4 @@ public class AdViewController {
     void setRefreshTimeMillis(@Nullable final Integer refreshTimeMillis) {
         mRefreshTimeMillis = refreshTimeMillis;
     }
-
-    @Deprecated
-    public void customEventDidLoadAd() {
-        setNotLoading();
-        trackImpression();
-        scheduleRefreshTimerIfEnabled();
-    }
-
-    @Deprecated
-    public void customEventDidFailToLoadAd() {
-        loadFailUrl(MoPubErrorCode.UNSPECIFIED);
-    }
-
-    @Deprecated
-    public void customEventActionWillBegin() {
-        registerClick();
-    }
-
-    @Deprecated
-    public void setClickthroughUrl(String clickthroughUrl) {
-        // Does nothing
-    }
-
-    /**
-     * @deprecated As of release 2.4
-     */
-    @Deprecated
-    public boolean isFacebookSupported() {
-        return false;
-    }
-
-    /**
-     * @deprecated As of release 2.4
-     */
-    @Deprecated
-    public void setFacebookSupported(boolean enabled) {}
 }

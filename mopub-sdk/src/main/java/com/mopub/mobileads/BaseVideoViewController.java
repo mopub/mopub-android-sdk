@@ -3,6 +3,7 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -31,7 +32,7 @@ public abstract class BaseVideoViewController {
     }
 
     protected BaseVideoViewController(final Context context, @Nullable final Long broadcastIdentifier, final BaseVideoViewControllerListener baseVideoViewControllerListener) {
-        mContext = context.getApplicationContext();
+        mContext = context;
         mBroadcastIdentifier = broadcastIdentifier;
         mBaseVideoViewControllerListener = baseVideoViewControllerListener;
         mLayout = new RelativeLayout(mContext);
@@ -50,6 +51,8 @@ public abstract class BaseVideoViewController {
     protected abstract void onResume();
     protected abstract void onDestroy();
     protected abstract void onSaveInstanceState(@NonNull Bundle outState);
+    protected abstract void onConfigurationChanged(Configuration configuration);
+    protected abstract void onBackPressed();
 
     public boolean backButtonEnabled() {
         return true;

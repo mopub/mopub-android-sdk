@@ -23,6 +23,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
 public class CacheServiceTest {
@@ -53,6 +54,14 @@ public class CacheServiceTest {
                 return null;
             }
         }).when(diskCacheGetListener).onComplete(anyString(), any(byte[].class));
+    }
+
+    @Test
+    public void initializeDiskCache_withNullCacheDirectory_shouldNotThrowNpe_shouldReturnFalse() {
+        Activity mockContext = mock(Activity.class);
+        when(mockContext.getCacheDir()).thenReturn(null);
+
+        assertThat(CacheService.initializeDiskCache(mockContext)).isFalse();
     }
 
     @Test

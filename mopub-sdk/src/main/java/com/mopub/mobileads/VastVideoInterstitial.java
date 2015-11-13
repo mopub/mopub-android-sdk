@@ -10,7 +10,7 @@ class VastVideoInterstitial extends ResponseBodyInterstitial implements VastMana
     private CustomEventInterstitialListener mCustomEventInterstitialListener;
     private String mVastResponse;
     private VastManager mVastManager;
-    private VastVideoConfiguration mVastVideoConfiguration;
+    private VastVideoConfig mVastVideoConfig;
 
     @Override
     protected void extractExtras(Map<String, String> serverExtras) {
@@ -32,7 +32,7 @@ class VastVideoInterstitial extends ResponseBodyInterstitial implements VastMana
 
     @Override
     public void showInterstitial() {
-        MraidVideoPlayerActivity.startVast(mContext, mVastVideoConfiguration, mBroadcastIdentifier);
+        MraidVideoPlayerActivity.startVast(mContext, mVastVideoConfig, mBroadcastIdentifier);
     }
 
     @Override
@@ -49,13 +49,13 @@ class VastVideoInterstitial extends ResponseBodyInterstitial implements VastMana
      */
 
     @Override
-    public void onVastVideoConfigurationPrepared(final VastVideoConfiguration vastVideoConfiguration) {
-        if (vastVideoConfiguration == null) {
+    public void onVastVideoConfigurationPrepared(final VastVideoConfig vastVideoConfig) {
+        if (vastVideoConfig == null) {
             mCustomEventInterstitialListener.onInterstitialFailed(MoPubErrorCode.VIDEO_DOWNLOAD_ERROR);
             return;
         }
 
-        mVastVideoConfiguration = vastVideoConfiguration;
+        mVastVideoConfig = vastVideoConfig;
         mCustomEventInterstitialListener.onInterstitialLoaded();
     }
 

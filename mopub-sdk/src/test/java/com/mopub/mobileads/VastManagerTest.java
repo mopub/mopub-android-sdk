@@ -5,15 +5,17 @@ import android.app.Activity;
 import com.mopub.common.CacheService;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.DeviceUtils;
+import com.mopub.common.util.test.support.ShadowMoPubHttpUrlConnection;
 import com.mopub.mobileads.test.support.VastUtils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
-import org.robolectric.tester.org.apache.http.FakeHttpLayer;
+import org.robolectric.annotation.Config;
 
 import java.util.concurrent.Semaphore;
 
@@ -24,6 +26,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+@Config(shadows = {ShadowMoPubHttpUrlConnection.class})
 @RunWith(SdkTestRunner.class)
 public class VastManagerTest {
     static final String EXTENSIONS_SNIPPET_PLACEHOLDER = "<![CDATA[EXTENSIONS_SNIPPET]]>";
@@ -32,18 +35,16 @@ public class VastManagerTest {
     static final String TEST_VAST_BAD_NEST_URL_XML_STRING = "<VAST version='2.0'><Ad id='62833'><Wrapper><AdSystem>Tapad</AdSystem><VASTAdTagURI>http://dsp.x-team.staging.mopub.com/xml\"$|||</VASTAdTagURI><Impression>http://myTrackingURL/wrapper/impression1</Impression><Impression>http://myTrackingURL/wrapper/impression2</Impression><Creatives><Creative AdID='62833'><Linear><TrackingEvents><Tracking event='creativeView'>http://myTrackingURL/wrapper/creativeView</Tracking><Tracking event='start'>http://myTrackingURL/wrapper/start</Tracking><Tracking event='midpoint'>http://myTrackingURL/wrapper/midpoint</Tracking><Tracking event='firstQuartile'>http://myTrackingURL/wrapper/firstQuartile</Tracking><Tracking event='thirdQuartile'>http://myTrackingURL/wrapper/thirdQuartile</Tracking><Tracking event='complete'>http://myTrackingURL/wrapper/complete</Tracking><Tracking event='mute'>http://myTrackingURL/wrapper/mute</Tracking><Tracking event='unmute'>http://myTrackingURL/wrapper/unmute</Tracking><Tracking event='pause'>http://myTrackingURL/wrapper/pause</Tracking><Tracking event='resume'>http://myTrackingURL/wrapper/resume</Tracking><Tracking event='fullscreen'>http://myTrackingURL/wrapper/fullscreen</Tracking></TrackingEvents><VideoClicks><ClickTracking>http://myTrackingURL/wrapper/click</ClickTracking></VideoClicks></Linear></Creative></Creatives></Wrapper></Ad></VAST><MP_TRACKING_URLS><MP_TRACKING_URL>http://www.mopub.com/imp1</MP_TRACKING_URL><MP_TRACKING_URL>http://www.mopub.com/imp2</MP_TRACKING_URL></MP_TRACKING_URLS>";
 
     private VastManager subject;
-    private FakeHttpLayer mFakeHttpLayer;
     private VastManagerListener vastManagerListener;
     private Activity context;
-    private VastVideoConfiguration vastVideoConfiguration;
+    private VastVideoConfig mVastVideoConfig;
     private Semaphore semaphore;
 
     @Before
     public void setup() {
         context = Robolectric.buildActivity(Activity.class).create().get();
         CacheService.initializeDiskCache(context);
-        subject = new VastManager(context);
-        mFakeHttpLayer = Robolectric.getFakeHttpLayer();
+        subject = new VastManager(context, true);
 
         semaphore = new Semaphore(0);
         vastManagerListener = mock(VastManagerListener.class);
@@ -51,11 +52,16 @@ public class VastManagerTest {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Object[] args = invocationOnMock.getArguments();
-                VastManagerTest.this.vastVideoConfiguration = (VastVideoConfiguration) args[0];
+                VastManagerTest.this.mVastVideoConfig = (VastVideoConfig) args[0];
                 semaphore.release();
                 return null;
             }
-        }).when(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        }).when(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
+    }
+
+    @After
+    public void tearDown() {
+        CacheService.clearAndNullCaches();
     }
 
     private void prepareVastVideoConfiguration() {
@@ -68,57 +74,58 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_shouldNotifyTheListenerAndContainTheCorrectVastValues() throws Exception {
         // Vast redirect responses
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
-        assertThat(vastVideoConfiguration.getNetworkMediaFileUrl()).isEqualTo("https://s3.amazonaws.com/mopub-vast/tapad-video.mp4");
+        assertThat(mVastVideoConfig.getNetworkMediaFileUrl()).isEqualTo("https://s3.amazonaws.com/mopub-vast/tapad-video.mp4");
 
-        final String expectedFilePathDiskCache = CacheService.getFilePathDiskCache(vastVideoConfiguration.getNetworkMediaFileUrl());
-        assertThat(vastVideoConfiguration.getDiskMediaFileUrl()).isEqualTo(expectedFilePathDiskCache);
+        final String expectedFilePathDiskCache = CacheService.getFilePathDiskCache(mVastVideoConfig.getNetworkMediaFileUrl());
+        assertThat(mVastVideoConfig.getDiskMediaFileUrl()).isEqualTo(expectedFilePathDiskCache);
 
-        assertThat(vastVideoConfiguration.getClickThroughUrl()).isEqualTo("http://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com");
-        assertThat(vastVideoConfiguration.getImpressionTrackers().size()).isEqualTo(5);
+        assertThat(mVastVideoConfig.getClickThroughUrl()).isEqualTo("http://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com");
+        assertThat(mVastVideoConfig.getImpressionTrackers().size()).isEqualTo(5);
 
         // Verify quartile trackers
-        assertThat(vastVideoConfiguration.getFractionalTrackers().size()).isEqualTo(3);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(0).trackingFraction()).isEqualTo(0.25f);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(1).trackingFraction()).isEqualTo(0.5f);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(2).trackingFraction()).isEqualTo(0.75f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().size()).isEqualTo(3);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(0).trackingFraction()).isEqualTo(0.25f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(1).trackingFraction()).isEqualTo(0.5f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(2).trackingFraction()).isEqualTo(0.75f);
 
         // Verify start tracker.
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().size()).isEqualTo(3);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(0).getTrackingMilliseconds())
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().size()).isEqualTo(3);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(0).getTrackingMilliseconds())
                 .isEqualTo(0);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(1).getTrackingMilliseconds())
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(1).getTrackingMilliseconds())
                 .isEqualTo(2000);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(2).getTrackingMilliseconds())
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(2).getTrackingMilliseconds())
                 .isEqualTo(3100);
 
-        assertThat(vastVideoConfiguration.getCompleteTrackers().size()).isEqualTo(1);
+        assertThat(mVastVideoConfig.getCompleteTrackers().size()).isEqualTo(1);
 
         // We specifically added a close tracker and a skip tracker to the nested vast test case as well,
         // therefore there are two expected trackers total for each type.
-        assertThat(vastVideoConfiguration.getCloseTrackers().size()).isEqualTo(2);
-        assertThat(vastVideoConfiguration.getSkipTrackers().size()).isEqualTo(2);
-        assertThat(vastVideoConfiguration.getClickTrackers().size()).isEqualTo(1);
+        assertThat(mVastVideoConfig.getCloseTrackers().size()).isEqualTo(2);
+        assertThat(mVastVideoConfig.getSkipTrackers().size()).isEqualTo(2);
+        assertThat(mVastVideoConfig.getClickTrackers().size()).isEqualTo(1);
 
-        final VastCompanionAd vastCompanionAd = vastVideoConfiguration.getVastCompanionAd();
-        assertThat(vastCompanionAd.getWidth()).isEqualTo(300);
-        assertThat(vastCompanionAd.getHeight()).isEqualTo(250);
-        assertThat(vastCompanionAd.getVastResource().getResource())
+        final VastCompanionAdConfig vastCompanionAdConfig = mVastVideoConfig.getVastCompanionAd(
+                context.getResources().getConfiguration().orientation);
+        assertThat(vastCompanionAdConfig.getWidth()).isEqualTo(300);
+        assertThat(vastCompanionAdConfig.getHeight()).isEqualTo(250);
+        assertThat(vastCompanionAdConfig.getVastResource().getResource())
                 .isEqualTo("http://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
-        assertThat(vastCompanionAd.getVastResource().getType())
+        assertThat(vastCompanionAdConfig.getVastResource().getType())
                 .isEqualTo(VastResource.Type.STATIC_RESOURCE);
-        assertThat(vastCompanionAd.getVastResource().getCreativeType())
+        assertThat(vastCompanionAdConfig.getVastResource().getCreativeType())
                 .isEqualTo(VastResource.CreativeType.IMAGE);
-        assertThat(vastCompanionAd.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
+        assertThat(vastCompanionAdConfig.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
 
-        assertThat(VastUtils.vastTrackersToStrings(vastCompanionAd.getClickTrackers()))
+        assertThat(VastUtils.vastTrackersToStrings(vastCompanionAdConfig.getClickTrackers()))
                 .containsOnly("http://companionClickTracking1",
                         "http://companionClickTracking2");
     }
@@ -126,65 +133,66 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_shouldHandleMultipleRedirects() throws Exception {
         // Vast redirect responses
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_VAST_XML_STRING);
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_VAST_XML_STRING);
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig
                 .class));
 
         // at this point it should have 3 sets of data from TEST_VAST_XML_STRING and one set from TEST_NESTED_VAST_XML_STRING
-        assertThat(vastVideoConfiguration.getNetworkMediaFileUrl()).isEqualTo("https://s3.amazonaws.com/mopub-vast/tapad-video.mp4");
-        final String expectedFilePathDiskCache = CacheService.getFilePathDiskCache(vastVideoConfiguration.getNetworkMediaFileUrl());
-        assertThat(vastVideoConfiguration.getDiskMediaFileUrl()).isEqualTo(expectedFilePathDiskCache);
+        assertThat(mVastVideoConfig.getNetworkMediaFileUrl()).isEqualTo("https://s3.amazonaws.com/mopub-vast/tapad-video.mp4");
+        final String expectedFilePathDiskCache = CacheService.getFilePathDiskCache(mVastVideoConfig.getNetworkMediaFileUrl());
+        assertThat(mVastVideoConfig.getDiskMediaFileUrl()).isEqualTo(expectedFilePathDiskCache);
 
-        assertThat(vastVideoConfiguration.getClickThroughUrl()).isEqualTo("http://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com");
-        assertThat(vastVideoConfiguration.getImpressionTrackers().size()).isEqualTo(13);
+        assertThat(mVastVideoConfig.getClickThroughUrl()).isEqualTo("http://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com");
+        assertThat(mVastVideoConfig.getImpressionTrackers().size()).isEqualTo(13);
 
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().size()).isEqualTo(9);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(0).getTrackingMilliseconds()).isEqualTo(0);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(1).getTrackingMilliseconds()).isEqualTo(0);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(2).getTrackingMilliseconds()).isEqualTo(0);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(3).getTrackingMilliseconds()).isEqualTo(2000);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(4).getTrackingMilliseconds()).isEqualTo(2000);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(5).getTrackingMilliseconds()).isEqualTo(2000);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(6).getTrackingMilliseconds()).isEqualTo(3100);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(7).getTrackingMilliseconds()).isEqualTo(3100);
-        assertThat(vastVideoConfiguration.getAbsoluteTrackers().get(8).getTrackingMilliseconds()).isEqualTo(3100);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().size()).isEqualTo(9);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(0).getTrackingMilliseconds()).isEqualTo(0);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(1).getTrackingMilliseconds()).isEqualTo(0);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(2).getTrackingMilliseconds()).isEqualTo(0);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(3).getTrackingMilliseconds()).isEqualTo(2000);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(4).getTrackingMilliseconds()).isEqualTo(2000);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(5).getTrackingMilliseconds()).isEqualTo(2000);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(6).getTrackingMilliseconds()).isEqualTo(3100);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(7).getTrackingMilliseconds()).isEqualTo(3100);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(8).getTrackingMilliseconds()).isEqualTo(3100);
 
 
-        assertThat(vastVideoConfiguration.getFractionalTrackers().size()).isEqualTo(9);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(0).trackingFraction()).isEqualTo(0.25f);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(1).trackingFraction()).isEqualTo(0.25f);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(2).trackingFraction()).isEqualTo(0.25f);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(3).trackingFraction()).isEqualTo(0.5f);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(4).trackingFraction()).isEqualTo(0.5f);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(5).trackingFraction()).isEqualTo(0.5f);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(6).trackingFraction()).isEqualTo(0.75f);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(7).trackingFraction()).isEqualTo(0.75f);
-        assertThat(vastVideoConfiguration.getFractionalTrackers().get(8).trackingFraction()).isEqualTo(0.75f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().size()).isEqualTo(9);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(0).trackingFraction()).isEqualTo(0.25f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(1).trackingFraction()).isEqualTo(0.25f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(2).trackingFraction()).isEqualTo(0.25f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(3).trackingFraction()).isEqualTo(0.5f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(4).trackingFraction()).isEqualTo(0.5f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(5).trackingFraction()).isEqualTo(0.5f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(6).trackingFraction()).isEqualTo(0.75f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(7).trackingFraction()).isEqualTo(0.75f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(8).trackingFraction()).isEqualTo(0.75f);
 
-        assertThat(vastVideoConfiguration.getCompleteTrackers().size()).isEqualTo(3);
-        assertThat(vastVideoConfiguration.getCloseTrackers().size()).isEqualTo(4);
-        assertThat(vastVideoConfiguration.getSkipTrackers().size()).isEqualTo(4);
-        assertThat(vastVideoConfiguration.getClickTrackers().size()).isEqualTo(3);
-        assertThat(vastVideoConfiguration.getErrorTrackers().size()).isEqualTo(4);
+        assertThat(mVastVideoConfig.getCompleteTrackers().size()).isEqualTo(3);
+        assertThat(mVastVideoConfig.getCloseTrackers().size()).isEqualTo(4);
+        assertThat(mVastVideoConfig.getSkipTrackers().size()).isEqualTo(4);
+        assertThat(mVastVideoConfig.getClickTrackers().size()).isEqualTo(3);
+        assertThat(mVastVideoConfig.getErrorTrackers().size()).isEqualTo(4);
 
-        final VastCompanionAd vastCompanionAd = vastVideoConfiguration.getVastCompanionAd();
-        assertThat(vastCompanionAd.getWidth()).isEqualTo(300);
-        assertThat(vastCompanionAd.getHeight()).isEqualTo(250);
-        assertThat(vastCompanionAd.getVastResource().getResource())
+        final VastCompanionAdConfig vastCompanionAdConfig = mVastVideoConfig.getVastCompanionAd(
+                context.getResources().getConfiguration().orientation);
+        assertThat(vastCompanionAdConfig.getWidth()).isEqualTo(300);
+        assertThat(vastCompanionAdConfig.getHeight()).isEqualTo(250);
+        assertThat(vastCompanionAdConfig.getVastResource().getResource())
                 .isEqualTo("http://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
-        assertThat(vastCompanionAd.getVastResource().getType())
+        assertThat(vastCompanionAdConfig.getVastResource().getType())
                 .isEqualTo(VastResource.Type.STATIC_RESOURCE);
-        assertThat(vastCompanionAd.getVastResource().getCreativeType())
+        assertThat(vastCompanionAdConfig.getVastResource().getCreativeType())
                 .isEqualTo(VastResource.CreativeType.IMAGE);
-        assertThat(vastCompanionAd.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
-        assertThat(VastUtils.vastTrackersToStrings(vastCompanionAd.getClickTrackers()))
+        assertThat(vastCompanionAdConfig.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
+        assertThat(VastUtils.vastTrackersToStrings(vastCompanionAdConfig.getClickTrackers()))
                 .containsOnly("http://companionClickTracking1",
                         "http://companionClickTracking2");
     }
@@ -192,40 +200,40 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_shouldReturnCorrectVastValuesWhenAVastRedirectFails() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(404, "");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(404, "");
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
-        assertThat(vastVideoConfiguration).isNull();
+        assertThat(mVastVideoConfig).isNull();
     }
 
     @Test
     public void prepareVastVideoConfiguration_withNoExtensions_shouldContainTheCorrectDefaultExtensionValues() throws Exception {
         // Vast redirect response to XML without VAST extensions
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
-        assertThat(vastVideoConfiguration.getCustomCtaText()).isNull();
-        assertThat(vastVideoConfiguration.getCustomSkipText()).isNull();
-        assertThat(vastVideoConfiguration.getCustomCloseIconUrl()).isNull();
-        assertThat(vastVideoConfiguration.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.FORCE_LANDSCAPE);
+        assertThat(mVastVideoConfig.getCustomCtaText()).isNull();
+        assertThat(mVastVideoConfig.getCustomSkipText()).isNull();
+        assertThat(mVastVideoConfig.getCustomCloseIconUrl()).isNull();
+        assertThat(mVastVideoConfig.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.FORCE_LANDSCAPE);
     }
 
     @Test
     public void prepareVastVideoConfiguration_withExtensionsUnderWrapper_shouldContainTheCorrectCustomExtensionValues() throws Exception {
         // Vast redirect response to XML without extensions
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         // Add extensions under Wrapper element in TEST_VAST_XML_STRING
         subject.prepareVastVideoConfiguration(
@@ -244,58 +252,58 @@ public class VastManagerTest {
         Robolectric.runBackgroundTasks();
         Robolectric.runUiThreadTasks();
         semaphore.acquire();
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
         // Verify custom extensions
-        assertThat(vastVideoConfiguration.getCustomCtaText()).isEqualTo("custom CTA text");
-        assertThat(vastVideoConfiguration.getCustomSkipText()).isEqualTo("skip");
-        assertThat(vastVideoConfiguration.getCustomCloseIconUrl()).isEqualTo("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png");
-        assertThat(vastVideoConfiguration.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.DEVICE_ORIENTATION);
+        assertThat(mVastVideoConfig.getCustomCtaText()).isEqualTo("custom CTA text");
+        assertThat(mVastVideoConfig.getCustomSkipText()).isEqualTo("skip");
+        assertThat(mVastVideoConfig.getCustomCloseIconUrl()).isEqualTo("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png");
+        assertThat(mVastVideoConfig.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.DEVICE_ORIENTATION);
     }
 
     @Test
     public void prepareVastVideoConfiguration_withExtensionsUnderInline_shouldContainTheCorrectCustomExtensionValues() throws Exception {
         // Vast redirect response to XML with extensions under Inline element
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText>custom CTA text</MoPubCtaText>" +
                                 "<MoPubSkipText>skip</MoPubSkipText>" +
                                 "<MoPubCloseIcon>http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png</MoPubCloseIcon>" +
                                 "<MoPubForceOrientation>device</MoPubForceOrientation>" +
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
         // Verify custom extensions
-        assertThat(vastVideoConfiguration.getCustomCtaText()).isEqualTo("custom CTA text");
-        assertThat(vastVideoConfiguration.getCustomSkipText()).isEqualTo("skip");
-        assertThat(vastVideoConfiguration.getCustomCloseIconUrl()).isEqualTo("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png");
-        assertThat(vastVideoConfiguration.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.DEVICE_ORIENTATION);
+        assertThat(mVastVideoConfig.getCustomCtaText()).isEqualTo("custom CTA text");
+        assertThat(mVastVideoConfig.getCustomSkipText()).isEqualTo("skip");
+        assertThat(mVastVideoConfig.getCustomCloseIconUrl()).isEqualTo("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png");
+        assertThat(mVastVideoConfig.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.DEVICE_ORIENTATION);
     }
 
     @Test
     public void prepareVastVideoConfiguration_withExtensionsUnderBothWrapperAndInline_shouldContainLastParsedCustomExtensionValues() throws Exception {
         // Vast redirect response to XML with extensions under Inline element in TEST_NESTED_VAST_XML_STRING, will be parsed last
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText>CTA 2</MoPubCtaText>" +
                                 "<MoPubSkipText>skip 2</MoPubSkipText>" +
                                 "<MoPubCloseIcon>http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_2.png</MoPubCloseIcon>" +
                                 "<MoPubForceOrientation>landscape</MoPubForceOrientation>" +
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         // Also add extensions under Wrapper element in TEST_VAST_XML_STRING
         subject.prepareVastVideoConfiguration(
@@ -315,167 +323,167 @@ public class VastManagerTest {
         Robolectric.runUiThreadTasks();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
         // Verify custom extension values are the ones last parsed in TEST_NESTED_VAST_XML_STRING
-        assertThat(vastVideoConfiguration.getCustomCtaText()).isEqualTo("CTA 2");
-        assertThat(vastVideoConfiguration.getCustomSkipText()).isEqualTo("skip 2");
-        assertThat(vastVideoConfiguration.getCustomCloseIconUrl()).isEqualTo("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_2.png");
-        assertThat(vastVideoConfiguration.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.FORCE_LANDSCAPE);
+        assertThat(mVastVideoConfig.getCustomCtaText()).isEqualTo("CTA 2");
+        assertThat(mVastVideoConfig.getCustomSkipText()).isEqualTo("skip 2");
+        assertThat(mVastVideoConfig.getCustomCloseIconUrl()).isEqualTo("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_2.png");
+        assertThat(mVastVideoConfig.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.FORCE_LANDSCAPE);
     }
 
     @Test
     public void prepareVastVideoConfiguration_withCustomCtaTextAsSingleSpace_shouldReturnEmptyString() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText> </MoPubCtaText>" +     // single space, i.e. no text
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
-        assertThat(vastVideoConfiguration.getCustomCtaText()).isEmpty();
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
+        assertThat(mVastVideoConfig.getCustomCtaText()).isEmpty();
     }
 
     @Test
     public void prepareVastVideoConfiguration_withCustomCtaTextLongerThan15Chars_shouldReturnNull() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText>1234567890123456</MoPubCtaText>" +     // 16 chars
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
-        assertThat(vastVideoConfiguration.getCustomCtaText()).isNull();
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
+        assertThat(mVastVideoConfig.getCustomCtaText()).isNull();
     }
 
     @Test
     public void prepareVastVideoConfiguration_withCustomSkipTextLongerThan8Chars_shouldReturnNull() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubSkipText>123456789</MoPubSkipText>" +     // 9 chars
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
-        assertThat(vastVideoConfiguration.getCustomSkipText()).isNull();
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
+        assertThat(mVastVideoConfig.getCustomSkipText()).isNull();
     }
 
     @Test
     public void prepareVastVideoConfiguration_withInvalidCustomForceOrientation_shouldReturnDefaultForceLandscapeOrientation() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubForceOrientation>abcd</MoPubForceOrientation>" +   // invalid value
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
-        assertThat(vastVideoConfiguration.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.FORCE_LANDSCAPE);
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
+        assertThat(mVastVideoConfig.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.FORCE_LANDSCAPE);
     }
 
     @Test
     public void prepareVastVideoConfiguration_withCustomForceOrientationInMixedCaseAndUntrimmed_shouldReturnCustomForceOrientation() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200,
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_VAST_XML_STRING.replace(EXTENSIONS_SNIPPET_PLACEHOLDER,
                         "<Extensions>" +
-                            "<Extension type=\"MoPub\">" +
+                                "<Extension type=\"MoPub\">" +
                                 "<MoPubForceOrientation> PortRAIT  </MoPubForceOrientation>" +
-                            "</Extension>" +
-                        "</Extensions>"));
+                                "</Extension>" +
+                                "</Extensions>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
-        assertThat(vastVideoConfiguration.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.FORCE_PORTRAIT);
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
+        assertThat(mVastVideoConfig.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.FORCE_PORTRAIT);
     }
 
     @Test
     public void prepareVastVideoConfiguration_withValidPercentSkipOffset_shouldReturnCorrectValue() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='25%'>"));
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='25%'>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
-        assertThat(vastVideoConfiguration.getSkipOffset()).isEqualTo("25%");
+        assertThat(mVastVideoConfig.getSkipOffsetString()).isEqualTo("25%");
     }
 
 
     @Test
     public void prepareVastVideoConfiguration_withValidAbsoluteSkipOffset_shouldReturnCorrectValue() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='  00:03:14 '>"));
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='  00:03:14 '>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
-        assertThat(vastVideoConfiguration.getSkipOffset()).isEqualTo("00:03:14");
+        assertThat(mVastVideoConfig.getSkipOffsetString()).isEqualTo("00:03:14");
     }
 
     @Test
     public void prepareVastVideoConfiguration_withValidAbsoluteSkipOffsetWithExtraSpace_shouldReturnCorrectTrimmedValue() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='  00:03:14.159 '>"));
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='  00:03:14.159 '>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
-        assertThat(vastVideoConfiguration.getSkipOffset()).isEqualTo("00:03:14.159");
+        assertThat(mVastVideoConfig.getSkipOffsetString()).isEqualTo("00:03:14.159");
     }
 
     @Test
     public void prepareVastVideoConfiguration_withSkipOffsets_shouldReturnLastParsedValue() throws Exception {
         // Vast redirect response with skipoffset in percent format
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='25%'>"));
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='25%'>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         // Also add a skipoffset in absolute format
         subject.prepareVastVideoConfiguration(
@@ -487,25 +495,25 @@ public class VastManagerTest {
         Robolectric.runUiThreadTasks();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
         // Verify that the last parsed skipoffset value is returned
-        assertThat(vastVideoConfiguration.getSkipOffset()).isEqualTo("25%");
+        assertThat(mVastVideoConfig.getSkipOffsetString()).isEqualTo("25%");
     }
 
     @Test
     public void prepareVastVideoConfiguration_withEmptySkipOffset_shouldReturnNull() throws Exception {
         // Vast redirect response
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset=' '>"));
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset=' '>"));
         // Video download response
-        mFakeHttpLayer.addPendingHttpResponse(200, "video_data");
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, "video_data");
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
-        assertThat(vastVideoConfiguration.getSkipOffset()).isNull();
+        assertThat(mVastVideoConfig.getSkipOffsetString()).isNull();
     }
 
     @Test
@@ -518,7 +526,7 @@ public class VastManagerTest {
         semaphore.acquire();
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(null);
-        assertThat(vastVideoConfiguration).isEqualTo(null);
+        assertThat(mVastVideoConfig).isEqualTo(null);
     }
 
     @Test
@@ -530,7 +538,7 @@ public class VastManagerTest {
         semaphore.acquire();
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(null);
-        assertThat(vastVideoConfiguration).isEqualTo(null);
+        assertThat(mVastVideoConfig).isEqualTo(null);
     }
 
     @Test
@@ -542,38 +550,39 @@ public class VastManagerTest {
         semaphore.acquire();
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(null);
-        assertThat(vastVideoConfiguration).isEqualTo(null);
+        assertThat(mVastVideoConfig).isEqualTo(null);
     }
 
     @Test
     public void prepareVastVideoConfiguration_withVideoInDiskCache_shouldNotDownloadVideo() throws Exception {
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
 
         CacheService.putToDiskCache("https://s3.amazonaws.com/mopub-vast/tapad-video.mp4", "video_data".getBytes());
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
-        assertThat(mFakeHttpLayer.getSentHttpRequestInfos().size()).isEqualTo(1);
-        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfiguration.class));
-        assertThat(vastVideoConfiguration.getDiskMediaFileUrl())
+        assertThat(ShadowMoPubHttpUrlConnection.getLatestRequestUrl()).isNotNull();
+        verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
+        assertThat(mVastVideoConfig.getDiskMediaFileUrl())
                 .isEqualTo(CacheService.getFilePathDiskCache("https://s3.amazonaws.com/mopub-vast/tapad-video.mp4"));
     }
 
     @Test
     public void prepareVastVideoConfiguration_withUninitializedDiskCache_shouldReturnNull() throws Exception {
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        CacheService.clearAndNullCaches();
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
 
         prepareVastVideoConfiguration();
         semaphore.acquire();
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(null);
-        assertThat(vastVideoConfiguration).isEqualTo(null);
+        assertThat(mVastVideoConfig).isEqualTo(null);
     }
 
     @Test
     public void cancel_shouldCancelBackgroundProcessingAndNotNotifyListenerWithNull() throws Exception {
-        mFakeHttpLayer.addPendingHttpResponse(200, TEST_NESTED_VAST_XML_STRING);
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
 
         Robolectric.getBackgroundScheduler().pause();
 
@@ -586,6 +595,6 @@ public class VastManagerTest {
         semaphore.acquire();
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(null);
-        assertThat(vastVideoConfiguration).isEqualTo(null);
+        assertThat(mVastVideoConfig).isEqualTo(null);
     }
 }

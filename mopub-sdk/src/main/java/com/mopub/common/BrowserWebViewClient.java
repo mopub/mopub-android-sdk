@@ -47,34 +47,32 @@ class BrowserWebViewClient extends WebViewClient {
             return false;
         }
 
-        try {
-            new UrlHandler.Builder()
-                    .withSupportedUrlActions(SUPPORTED_URL_ACTIONS)
-                    .withoutMoPubBrowser()
-                    .withResultActions(new UrlHandler.ResultActions() {
-                        @Override
-                        public void urlHandlingSucceeded(@NonNull String url,
-                                @NonNull UrlAction urlAction) {
-                            if (urlAction.equals(UrlAction.OPEN_IN_APP_BROWSER)) {
-                                mMoPubBrowser.getWebView().loadUrl(url);
-                            } else {
-                                // UrlAction opened in external app, so close MoPubBrowser
-                                mMoPubBrowser.finish();
-                            }
+        UrlHandler urlHandler = new UrlHandler.Builder()
+                .withSupportedUrlActions(SUPPORTED_URL_ACTIONS)
+                .withoutMoPubBrowser()
+                .withResultActions(new UrlHandler.ResultActions() {
+                    @Override
+                    public void urlHandlingSucceeded(@NonNull String url,
+                            @NonNull UrlAction urlAction) {
+                        if (urlAction.equals(UrlAction.OPEN_IN_APP_BROWSER)) {
+                            mMoPubBrowser.getWebView().loadUrl(url);
+                        } else {
+                            // UrlAction opened in external app, so close MoPubBrowser
+                            mMoPubBrowser.finish();
                         }
+                    }
 
-                        @Override
-                        public void urlHandlingFailed(@NonNull String url,
-                                @NonNull UrlAction lastFailedUrlAction) { }
-                    })
-                    .build().handleUrl(mMoPubBrowser.getApplicationContext(), url,
-                            true, // = fromUserInteraction
-                            true // = throwExceptionOnFailure
-                        );
-            return true;
-        } catch (IntentNotResolvableException e) {
-            return false;
-        }
+                    @Override
+                    public void urlHandlingFailed(@NonNull String url,
+                            @NonNull UrlAction lastFailedUrlAction) {
+                    }
+                })
+                .build();
+
+        return urlHandler.handleResolvedUrl(mMoPubBrowser.getApplicationContext(), url,
+                true, // = fromUserInteraction
+                null // = trackingUrls
+        );
     }
 
     @Override

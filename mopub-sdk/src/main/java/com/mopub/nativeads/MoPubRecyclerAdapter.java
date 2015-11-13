@@ -186,10 +186,14 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
     }
 
     /**
-     * Registers a view binder for rendering "static" native ads with images.
+     * Registers an ad renderer for rendering a specific native ad format. Note that if multiple ad
+     * renderers support a specific native ad format, the first one registered will be used.
      */
-    public void registerViewBinder(@NonNull ViewBinder viewBinder) {
-        mStreamAdPlacer.registerAdRenderer(new MoPubNativeAdRenderer(viewBinder), NATIVE_AD_VIEW_TYPE_BASE + 1);
+    public void registerAdRenderer(@NonNull MoPubAdRenderer adRenderer) {
+        if (!Preconditions.NoThrow.checkNotNull(adRenderer, "Cannot register a null adRenderer")) {
+            return;
+        }
+        mStreamAdPlacer.registerAdRenderer(adRenderer);
     }
 
     /**
@@ -394,7 +398,7 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
     public RecyclerView.ViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
         if (viewType >= NATIVE_AD_VIEW_TYPE_BASE && viewType <= NATIVE_AD_VIEW_TYPE_BASE + mStreamAdPlacer.getAdViewTypeCount()) {
             // Create the view and a view holder.
-            final MoPubAdRenderer adRenderer = mStreamAdPlacer.getAdRendererForViewType(viewType);
+            final MoPubAdRenderer adRenderer = mStreamAdPlacer.getAdRendererForViewType(viewType - NATIVE_AD_VIEW_TYPE_BASE);
             if (adRenderer == null) {
                 MoPubLog.w("No view binder was registered for ads in MoPubRecyclerAdapter.");
                 // This will cause a null pointer exception.
@@ -408,9 +412,9 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
 
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
-        Object adData = mStreamAdPlacer.getAdData(position);
-        if (adData != null) {
-            mStreamAdPlacer.bindAdView((NativeAdData) adData, holder.itemView);
+        Object adResponse = mStreamAdPlacer.getAdData(position);
+        if (adResponse != null) {
+            mStreamAdPlacer.bindAdView((NativeAd) adResponse, holder.itemView);
             return;
         }
 

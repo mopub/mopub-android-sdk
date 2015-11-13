@@ -19,7 +19,7 @@ public class TestVastManagerFactory extends VastManagerFactory {
     }
 
     @Override
-    public VastManager internalCreate(final Context context) {
+    public VastManager internalCreate(final Context context, final boolean preCacheVideo) {
         return getTestFactory().mockVastManager;
     }
 }

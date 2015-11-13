@@ -106,14 +106,14 @@ public class VastWebViewTest {
 
     @Test
     public void createView_shouldInitializeAndReturnView() throws Exception {
-        VastIcon vastIcon = new VastIcon(123, 456, 789, 101,
+        VastIconConfig vastIconConfig = new VastIconConfig(123, 456, 789, 101,
                 mockResource,
                 VastUtils.stringsToVastTrackers("clickTrackerOne", "clickTrackerTwo"),
                 "clickThroughUri",
                 VastUtils.stringsToVastTrackers("viewTrackerOne", "viewTrackerTwo")
         );
 
-        WebView webView = subject.createView(context, vastIcon.getVastResource());
+        WebView webView = subject.createView(context, vastIconConfig.getVastResource());
         assertThat(webView).isNotNull();
         verify(mockResource).initializeWebView(any(VastWebView.class));
     }

@@ -9,7 +9,6 @@ import com.mopub.common.DataKeys;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 import com.mopub.mobileads.test.support.TestVastManagerFactory;
-import com.mopub.mobileads.test.support.TestVastVideoDownloadTaskFactory;
 import com.mopub.mobileads.test.support.VastUtils;
 
 import org.junit.After;
@@ -51,14 +50,12 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
     private String expectedResponse;
     private VastManager vastManager;
     private String videoUrl;
-    private VastVideoDownloadTask vastVideoDownloadTask;
     private long broadcastIdentifier;
 
     @Before
     public void setUp() throws Exception {
         subject = new VastVideoInterstitial();
 
-        vastVideoDownloadTask = TestVastVideoDownloadTaskFactory.getSingletonMock();
         vastManager = TestVastManagerFactory.getSingletonMock();
         expectedResponse = "<VAST>hello</VAST>";
         videoUrl = "http://www.video.com";
@@ -73,11 +70,6 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
 
         broadcastIdentifier = 2222;
         localExtras.put(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        reset(vastVideoDownloadTask);
     }
 
     @Test
@@ -144,28 +136,28 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
 
     @Test
     public void showInterstitial_shouldStartVideoPlayerActivityWithAllValidTrackers() throws Exception {
-        VastCompanionAd vastCompanionAd = mock(VastCompanionAd.class, withSettings().serializable());
-        VastVideoConfiguration vastVideoConfiguration = new VastVideoConfiguration();
-        vastVideoConfiguration.setNetworkMediaFileUrl(videoUrl);
-        vastVideoConfiguration.addAbsoluteTrackers(Arrays.asList(new VastAbsoluteProgressTracker
+        VastCompanionAdConfig vastCompanionAdConfig = mock(VastCompanionAdConfig.class, withSettings().serializable());
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setNetworkMediaFileUrl(videoUrl);
+        vastVideoConfig.addAbsoluteTrackers(Arrays.asList(new VastAbsoluteProgressTracker
                 ("start", 2000)));
-        vastVideoConfiguration.addFractionalTrackers(Arrays.asList(new
+        vastVideoConfig.addFractionalTrackers(Arrays.asList(new
                         VastFractionalProgressTracker("first", 0.25f),
                 new VastFractionalProgressTracker("mid", 0.5f),
                 new VastFractionalProgressTracker("third", 0.75f)));
-        vastVideoConfiguration.addCompleteTrackers(VastUtils.stringsToVastTrackers("complete"));
-        vastVideoConfiguration.addImpressionTrackers(VastUtils.stringsToVastTrackers("imp"));
-        vastVideoConfiguration.setClickThroughUrl("clickThrough");
-        vastVideoConfiguration.addClickTrackers(VastUtils.stringsToVastTrackers("click"));
-        vastVideoConfiguration.setVastCompanionAd(vastCompanionAd);
+        vastVideoConfig.addCompleteTrackers(VastUtils.stringsToVastTrackers("complete"));
+        vastVideoConfig.addImpressionTrackers(VastUtils.stringsToVastTrackers("imp"));
+        vastVideoConfig.setClickThroughUrl("clickThrough");
+        vastVideoConfig.addClickTrackers(VastUtils.stringsToVastTrackers("click"));
+        vastVideoConfig.setVastCompanionAd(vastCompanionAdConfig, vastCompanionAdConfig);
 
         subject.loadInterstitial(context, customEventInterstitialListener, localExtras, serverExtras);
-        ((VastVideoInterstitial) subject).onVastVideoConfigurationPrepared(vastVideoConfiguration);
+        ((VastVideoInterstitial) subject).onVastVideoConfigurationPrepared(vastVideoConfig);
 
         subject.showInterstitial();
         BaseVideoPlayerActivityTest.assertVastVideoPlayerActivityStarted(
                 MraidVideoPlayerActivity.class,
-                vastVideoConfiguration,
+                vastVideoConfig,
                 broadcastIdentifier
                 );
     }
@@ -209,7 +201,7 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
     @Test
     public void onVastVideoConfigurationPrepared_withVastVideoConfiguration_shouldSignalOnInterstitialLoaded() throws Exception {
         subject.loadInterstitial(context, customEventInterstitialListener, localExtras, serverExtras);
-        ((VastVideoInterstitial) subject).onVastVideoConfigurationPrepared(mock(VastVideoConfiguration.class));
+        ((VastVideoInterstitial) subject).onVastVideoConfigurationPrepared(mock(VastVideoConfig.class));
 
         verify(customEventInterstitialListener).onInterstitialLoaded();
     }

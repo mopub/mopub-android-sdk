@@ -516,10 +516,11 @@ public class MraidControllerTest {
 
     @Test
     public void handleOpen_withHttpApplicationUrl_shouldStartMoPubBrowser() {
-        String applicationUrl = "http://blah";
+        String applicationUrl = "http://www.mopub.com/";
 
         subject.handleOpen(applicationUrl);
 
+        Robolectric.runBackgroundTasks();
         Intent startedIntent = Robolectric.getShadowApplication().getNextStartedActivity();
         assertThat(startedIntent).isNotNull();
         // Since we are not using an Activity context, we should have FLAG_ACTIVITY_NEW_TASK

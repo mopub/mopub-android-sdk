@@ -3,6 +3,7 @@ package com.mopub.network;
 import android.content.Context;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -16,6 +17,7 @@ import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.event.BaseEvent;
 import com.mopub.common.event.Event;
+import com.mopub.common.event.EventDetails;
 import com.mopub.common.event.MoPubEvents;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Json;
@@ -38,6 +40,7 @@ import java.util.TreeMap;
 import static com.mopub.network.HeaderUtils.extractBooleanHeader;
 import static com.mopub.network.HeaderUtils.extractHeader;
 import static com.mopub.network.HeaderUtils.extractIntegerHeader;
+import static com.mopub.network.HeaderUtils.extractPercentHeaderString;
 
 public class AdRequest extends Request<AdResponse> {
 
@@ -123,7 +126,8 @@ public class AdRequest extends Request<AdResponse> {
 
         // In the case of a CLEAR response, the REFRESH_TIME header must still be respected. Ensure
         // that it is parsed and passed along to the MoPubNetworkError.
-        final Integer refreshTimeSeconds = extractIntegerHeader(headers, ResponseHeader.REFRESH_TIME);
+        final Integer refreshTimeSeconds = extractIntegerHeader(headers,
+                ResponseHeader.REFRESH_TIME);
         final Integer refreshTimeMilliseconds = refreshTimeSeconds == null
                 ? null
                 : refreshTimeSeconds * 1000;
@@ -141,7 +145,8 @@ public class AdRequest extends Request<AdResponse> {
             );
         }
 
-        builder.setNetworkType(extractHeader(headers, ResponseHeader.NETWORK_TYPE));
+        String networkType = extractHeader(headers, ResponseHeader.NETWORK_TYPE);
+        builder.setNetworkType(networkType);
 
         String redirectUrl = extractHeader(headers, ResponseHeader.REDIRECT_URL);
         builder.setRedirectUrl(redirectUrl);
@@ -160,8 +165,9 @@ public class AdRequest extends Request<AdResponse> {
         boolean isScrollable = extractBooleanHeader(headers, ResponseHeader.SCROLLABLE, false);
         builder.setScrollable(isScrollable);
 
-        builder.setDimensions(extractIntegerHeader(headers, ResponseHeader.WIDTH),
-                extractIntegerHeader(headers, ResponseHeader.HEIGHT));
+        Integer width = extractIntegerHeader(headers, ResponseHeader.WIDTH);
+        Integer height = extractIntegerHeader(headers, ResponseHeader.HEIGHT);
+        builder.setDimensions(width, height);
 
         Integer adTimeoutDelaySeconds = extractIntegerHeader(headers, ResponseHeader.AD_TIMEOUT);
         builder.setAdTimeoutDelayMilliseconds(
@@ -172,7 +178,7 @@ public class AdRequest extends Request<AdResponse> {
         // Response Body encoding / decoding
         String responseBody = parseStringBody(networkResponse);
         builder.setResponseBody(responseBody);
-        if (AdType.NATIVE.equals(adTypeString)) {
+        if (AdType.STATIC_NATIVE.equals(adTypeString) || AdType.VIDEO_NATIVE.equals(adTypeString)) {
             try {
                 builder.setJsonBody(new JSONObject(responseBody));
             } catch (JSONException e) {
@@ -194,28 +200,64 @@ public class AdRequest extends Request<AdResponse> {
         if (TextUtils.isEmpty(customEventData)) {
             customEventData = extractHeader(headers, ResponseHeader.NATIVE_PARAMS);
         }
+
+        final Map<String, String> serverExtras;
         try {
-            builder.setServerExtras(Json.jsonStringToMap(customEventData));
+            serverExtras = Json.jsonStringToMap(customEventData);
         } catch (JSONException e) {
             return Response.error(
                     new MoPubNetworkError("Failed to decode server extras for custom event data.",
                             e, MoPubNetworkError.Reason.BAD_HEADER_DATA));
         }
 
-        // Some MoPub-specific custom events get their serverExtras from the response itself:
-        if (eventDataIsInResponseBody(adTypeString, fullAdTypeString)) {
-            Map<String, String> eventDataMap = new TreeMap<String, String>();
-            eventDataMap.put(DataKeys.HTML_RESPONSE_BODY_KEY, responseBody);
-            eventDataMap.put(DataKeys.SCROLLABLE_KEY, Boolean.toString(isScrollable));
-            eventDataMap.put(DataKeys.CREATIVE_ORIENTATION_KEY, extractHeader(headers, ResponseHeader.ORIENTATION));
-            if (redirectUrl != null) {
-                eventDataMap.put(DataKeys.REDIRECT_URL_KEY, redirectUrl);
-            }
-            if (clickTrackingUrl != null) {
-                eventDataMap.put(DataKeys.CLICKTHROUGH_URL_KEY, clickTrackingUrl);
-            }
-            builder.setServerExtras(eventDataMap);
+        if (redirectUrl != null) {
+            serverExtras.put(DataKeys.REDIRECT_URL_KEY, redirectUrl);
         }
+        if (clickTrackingUrl != null) {
+            serverExtras.put(DataKeys.CLICKTHROUGH_URL_KEY, clickTrackingUrl);
+        }
+        if (eventDataIsInResponseBody(adTypeString, fullAdTypeString)) {
+            // Some MoPub-specific custom events get their serverExtras from the response itself:
+            serverExtras.put(DataKeys.HTML_RESPONSE_BODY_KEY, responseBody);
+            serverExtras.put(DataKeys.SCROLLABLE_KEY, Boolean.toString(isScrollable));
+            serverExtras.put(DataKeys.CREATIVE_ORIENTATION_KEY, extractHeader(headers, ResponseHeader.ORIENTATION));
+        }
+        if (AdType.VIDEO_NATIVE.equals(adTypeString)) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                return Response.error(new MoPubNetworkError("Native Video ads are only supported" +
+                        " for Android API Level 16 (JellyBean) and above.",
+                        MoPubNetworkError.Reason.UNSPECIFIED));
+
+            }
+            serverExtras.put(DataKeys.PLAY_VISIBLE_PERCENT,
+                    extractPercentHeaderString(headers, ResponseHeader.PLAY_VISIBLE_PERCENT));
+            serverExtras.put(DataKeys.PAUSE_VISIBLE_PERCENT,
+                    extractPercentHeaderString(headers, ResponseHeader.PAUSE_VISIBLE_PERCENT));
+            serverExtras.put(DataKeys.IMPRESSION_MIN_VISIBLE_PERCENT,
+                    extractPercentHeaderString(headers,
+                            ResponseHeader.IMPRESSION_MIN_VISIBLE_PERCENT));
+            serverExtras.put(DataKeys.IMPRESSION_VISIBLE_MS, extractHeader(headers,
+                    ResponseHeader.IMPRESSION_VISIBLE_MS));
+            serverExtras.put(DataKeys.MAX_BUFFER_MS, extractHeader(headers,
+                    ResponseHeader.MAX_BUFFER_MS));
+
+            builder.setEventDetails(new EventDetails.Builder()
+                            .adUnitId(mAdUnitId)
+                            .adType(adTypeString)
+                            .adNetworkType(networkType)
+                            .adWidthPx(width)
+                            .adHeightPx(height)
+                            .geoLatitude(location == null ? null : location.getLatitude())
+                            .geoLongitude(location == null ? null : location.getLongitude())
+                            .geoAccuracy(location == null ? null : location.getAccuracy())
+                            .performanceDurationMs(networkResponse.networkTimeMs)
+                            .requestId(requestId)
+                            .requestStatusCode(networkResponse.statusCode)
+                            .requestUri(getUrl())
+                            .build()
+            );
+        }
+        builder.setServerExtras(serverExtras);
 
         AdResponse adResponse = builder.build();
         logScribeEvent(adResponse, networkResponse, location);

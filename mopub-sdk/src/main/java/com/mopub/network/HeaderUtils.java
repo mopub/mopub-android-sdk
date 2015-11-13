@@ -25,6 +25,18 @@ public class HeaderUtils {
         return formatBooleanHeader(extractHeader(headers, responseHeader), defaultValue);
     }
 
+    public static Integer extractPercentHeader(Map<String, String> headers, ResponseHeader responseHeader) {
+        return formatPercentHeader(extractHeader(headers, responseHeader));
+    }
+
+    @Nullable
+    public static String extractPercentHeaderString(Map<String, String> headers,
+            ResponseHeader responseHeader) {
+        Integer percentHeaderValue = extractPercentHeader(headers, responseHeader);
+        return percentHeaderValue != null ? percentHeaderValue.toString() : null;
+    }
+
+
     public static String extractHeader(HttpResponse response, ResponseHeader responseHeader) {
         Header header = response.getFirstHeader(responseHeader.getKey());
         return header != null ? header.getValue() : null;
@@ -65,5 +77,20 @@ public class HeaderUtils {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    @Nullable
+    private static Integer formatPercentHeader(@Nullable String headerValue) {
+        if (headerValue == null) {
+            return null;
+        }
+
+        final Integer percentValue = formatIntHeader(headerValue.replace("%", ""));
+
+        if (percentValue == null || percentValue < 0 || percentValue > 100) {
+            return null;
+        }
+
+        return percentValue;
     }
 }
