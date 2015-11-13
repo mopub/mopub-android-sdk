@@ -424,7 +424,7 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
             final ExtractorSampleSource sampleSource = new ExtractorSampleSource(Uri.parse(videoUrl),
                     httpSource, allocator, BUFFER_SEGMENT_SIZE * BUFFER_SEGMENT_COUNT, extractor);
             mVideoTrackRenderer = new MediaCodecVideoTrackRenderer(
-                    sampleSource, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING,
+                    mContext, sampleSource, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING,
                     0, mHandler, null, 10);
             mAudioTrackRenderer = new MediaCodecAudioTrackRenderer(sampleSource);
             mExoPlayer.prepare(mAudioTrackRenderer, mVideoTrackRenderer);
