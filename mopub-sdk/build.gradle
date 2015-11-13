@@ -105,10 +105,10 @@ dependencies {
     compile 'com.android.support:support-annotations:22.2.0'
     compile 'com.android.support:recyclerview-v7:22.2.0'
     compile 'com.mopub.volley:mopub-volley:1.1.0'
-    compile 'com.google.android.exoplayer:exoplayer:r1.4.2'
+    compile 'com.google.android.exoplayer:exoplayer:r1.5.2'
     // anchor: additional dependencies
 
-    javadocDeps 'com.google.android.exoplayer:exoplayer:r1.4.2:sources'
+    javadocDeps 'com.google.android.exoplayer:exoplayer:r1.5.2:sources'
     javadocDeps 'com.mopub.volley:mopub-volley:1.1.0:sources'
     javadocDeps 'com.android.support:support-v4:22.0.0:sources'
     javadocDeps 'com.android.support:support-annotations:22.0.0:sources'
