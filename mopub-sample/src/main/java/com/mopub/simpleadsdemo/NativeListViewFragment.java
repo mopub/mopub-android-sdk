@@ -84,7 +84,7 @@ public class NativeListViewFragment extends Fragment {
                         .privacyInformationIconImageId(R.id.native_privacy_information_icon_image)
                         .build());
 
-        // Register the renderer with the MoPubAdAdapter and then set the adapter on the ListView.
+        // Register the renderer and set the adapter on the ListView.
         mAdAdapter.registerAdRenderer(staticAdRender);
         listView.setAdapter(mAdAdapter);
 

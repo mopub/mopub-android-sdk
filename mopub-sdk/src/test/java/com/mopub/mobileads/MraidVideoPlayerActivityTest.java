@@ -17,6 +17,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowActivity;
 
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
@@ -24,9 +26,9 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MraidVideoPlayerActivityTest {
     private static final String VAST = "vast";
     private static final String MRAID = "mraid";
@@ -118,7 +120,7 @@ public class MraidVideoPlayerActivityTest {
 
         subject.onSetContentView(expectedView);
 
-        assertThat(shadowOf(subject).getContentView()).isEqualTo(expectedView);
+        assertThat(Shadows.shadowOf(subject).getContentView()).isEqualTo(expectedView);
     }
 
     @Test
@@ -148,7 +150,7 @@ public class MraidVideoPlayerActivityTest {
 
         subject.onStartActivityForResult(MoPubBrowser.class, 100, expectedExtras);
 
-        final ShadowActivity.IntentForResult intentForResult = shadowOf(subject).getNextStartedActivityForResult();
+        final ShadowActivity.IntentForResult intentForResult = Shadows.shadowOf(subject).getNextStartedActivityForResult();
 
         assertThat(intentForResult.intent.getComponent().getClassName()).isEqualTo("com.mopub.common.MoPubBrowser");
         assertThat(intentForResult.intent.getExtras()).isEqualTo(expectedExtras);
@@ -161,7 +163,7 @@ public class MraidVideoPlayerActivityTest {
 
         subject.onStartActivityForResult(null, 100, new Bundle());
 
-        final ShadowActivity.IntentForResult intentForResult = shadowOf(subject).getNextStartedActivityForResult();
+        final ShadowActivity.IntentForResult intentForResult = Shadows.shadowOf(subject).getNextStartedActivityForResult();
         assertThat(intentForResult).isNull();
     }
 

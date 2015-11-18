@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.BaseNativeAd.NativeEventListener;
 import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
@@ -14,6 +15,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -31,10 +33,11 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class NativeAdTest {
 
     private NativeAd subject;
-    private Activity context;
+    private Activity activity;
 
     @Mock private View mockView;
     @Mock private ViewGroup mockParent;
@@ -45,7 +48,7 @@ public class NativeAdTest {
 
     @Before
     public void setUp() {
-        context = Robolectric.buildActivity(Activity.class).create().get();
+        activity = Robolectric.buildActivity(Activity.class).create().get();
         Networking.setRequestQueueForTesting(mockRequestQueue);
 
         Set<String> impUrls = new HashSet<String>();
@@ -56,7 +59,7 @@ public class NativeAdTest {
         clkUrls.add("clkUrl");
         when(mockBaseNativeAd.getClickTrackers()).thenReturn(clkUrls);
 
-        subject = new NativeAd(context,
+        subject = new NativeAd(activity,
                 "moPubImpressionTrackerUrl",
                 "moPubClickTrackerUrl",
                 "adunit_id",
@@ -69,9 +72,21 @@ public class NativeAdTest {
     @Test
     public void constructor_shouldSetNativeEventListener() {
         reset(mockBaseNativeAd);
-        subject = new NativeAd(context, "moPubImpressionTrackerUrl", "moPubClickTrackerUrl",
+        subject = new NativeAd(activity, "moPubImpressionTrackerUrl", "moPubClickTrackerUrl",
                 "adunit_id", mockBaseNativeAd, mockRenderer);
         verify(mockBaseNativeAd).setNativeEventListener(any(NativeEventListener.class));
+    }
+
+    @Test
+    public void constructor_shouldMergeMoPubClickTrackerWithBaseNativeAdClickTrackers() {
+        reset(mockRequestQueue);
+        subject = new NativeAd(activity, "", "moPubClickTrackerUrl", "", mockBaseNativeAd,
+                mockRenderer);
+
+        subject.handleClick(null);
+
+        verify(mockRequestQueue).add(argThat(isUrl("moPubClickTrackerUrl")));
+        verify(mockRequestQueue).add(argThat(isUrl("clkUrl")));
     }
 
     @Test
@@ -91,20 +106,20 @@ public class NativeAdTest {
     @Test
     public void createAdView_shouldCallCreateAdViewOnRenderer() {
         View newView = mock(View.class);
-        when(mockRenderer.createAdView(context.getApplicationContext(), mockParent))
+        when(mockRenderer.createAdView(activity, mockParent))
                 .thenReturn(newView);
 
-        View view = subject.createAdView(mockParent);
+        View view = subject.createAdView(activity, mockParent);
 
-        verify(mockRenderer).createAdView(context.getApplicationContext(), mockParent);
+        verify(mockRenderer).createAdView(activity, mockParent);
         assertThat(view).isEqualTo(newView);
     }
 
     @Test
     public void renderAdView_shouldCallRenderAdViewOnRenderer() {
-        subject.createAdView(mockParent);
+        subject.createAdView(activity, mockParent);
 
-        verify(mockRenderer).createAdView(context.getApplicationContext(), mockParent);
+        verify(mockRenderer).createAdView(activity, mockParent);
     }
 
     @Test

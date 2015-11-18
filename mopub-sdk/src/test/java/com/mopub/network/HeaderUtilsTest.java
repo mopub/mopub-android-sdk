@@ -1,17 +1,20 @@
 package com.mopub.network;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import static com.mopub.common.util.ResponseHeader.AD_TIMEOUT;
 import static com.mopub.common.util.ResponseHeader.SCROLLABLE;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class HeaderUtilsTest {
     private TestHttpResponseWithHeaders response;
 

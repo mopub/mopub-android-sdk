@@ -2,12 +2,14 @@ package com.mopub.common;
 
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.ResponseHeader;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 
 import org.apache.http.HttpResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import java.util.Locale;
 
@@ -19,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class DownloadResponseTest {
 
     DownloadResponse subject;

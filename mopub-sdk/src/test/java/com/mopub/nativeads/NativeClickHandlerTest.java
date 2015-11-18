@@ -9,12 +9,15 @@ import android.widget.TextView;
 
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Utils;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
@@ -22,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class NativeClickHandlerTest {
 
     private NativeClickHandler subject;
@@ -79,30 +83,30 @@ public class NativeClickHandlerTest {
 
     @Test
     public void handleClick_shouldShowSpinner_shouldRemoveSpinner_WhenSucceeded() {
-        Robolectric.getBackgroundScheduler().pause();
+        Robolectric.getBackgroundThreadScheduler().pause();
 
         subject.openClickDestinationUrl("http://www.mopub.com", mockView, mockSpinningProgressView);
 
         verify(mockSpinningProgressView).addToRoot(mockView);
 
-        Robolectric.getBackgroundScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().unPause();
         verify(mockSpinningProgressView).removeFromRoot();
     }
 
     @Test
     public void handleClick_shouldShowSpinner_shouldRemoveSpinner_WhenFailed() {
-        Robolectric.getBackgroundScheduler().pause();
+        Robolectric.getBackgroundThreadScheduler().pause();
 
         subject.openClickDestinationUrl("", mockView, mockSpinningProgressView);
 
         verify(mockSpinningProgressView).addToRoot(mockView);
-        Robolectric.getBackgroundScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().unPause();
         verify(mockSpinningProgressView).removeFromRoot();
     }
 
     @Test
     public void handleClick_shouldShowSpinnerOnceWhileClickIsResolving() {
-        Robolectric.getBackgroundScheduler().pause();
+        Robolectric.getBackgroundThreadScheduler().pause();
 
         subject.openClickDestinationUrl("http://www.mopub.com", mockView, mockSpinningProgressView);
         subject.openClickDestinationUrl("http://www.mopub.com", mockView, mockSpinningProgressView);
@@ -110,7 +114,7 @@ public class NativeClickHandlerTest {
         // only is called once
         verify(mockSpinningProgressView).addToRoot(mockView);
 
-        Robolectric.getBackgroundScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().unPause();
         verify(mockSpinningProgressView).removeFromRoot();
     }
 
@@ -119,17 +123,17 @@ public class NativeClickHandlerTest {
         subject.openClickDestinationUrl(null, mockView, mockSpinningProgressView);
 
         verifyNoMoreInteractions(mockSpinningProgressView);
-        assertThat(Robolectric.getShadowApplication().peekNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().peekNextStartedActivity()).isNull();
     }
 
     @Test
     public void handleClick_withNullView_shouldNotShowSpinner() {
-        Robolectric.getBackgroundScheduler().pause();
+        Robolectric.getBackgroundThreadScheduler().pause();
 
         subject.openClickDestinationUrl("http://www.mopub.com", null, mockSpinningProgressView);
 
         verify(mockSpinningProgressView, never()).addToRoot(mockView);
-        Robolectric.getBackgroundScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().unPause();
         verify(mockSpinningProgressView, never()).removeFromRoot();
     }
 }

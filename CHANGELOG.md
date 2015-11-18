@@ -1,10 +1,26 @@
+## Version 4.1.0 (November 12, 2015)
+
+- A number of Native Ad classes now require `Activity` instances instead of `Context`. Most users should be unaffected by this change, and it fixes a crash caused by handling themes incorrectly. The following classes are affected:
+
+  - `CustomEventNative` and its implementations including `MoPubCustomEventNative`.
+  - `MoPubAdAdapter` and `MoPubRecyclerAdapter`.
+  - `MoPubAdRenderer` and its implementations.
+  - `MoPubStreamAdPlacer`
+  - `MoPubNative`
+  - `NativeAd` and `NativeAdSource`
+  - `NativeAdViewHelper`
+
+- Vungle's ad adapters have been updated for their 3.3.0 SDK.
+- Tapjoy adapters for interstitials and rewarded video are included for their 11.2.2 SDK. 
+- The Play Services adapters have been tested with Play Services 7.8.0.
+
 ## Version 4.0.0 (October 6, 2015)
 
 Version 4.0.0 includes a number of improvements to our Native Ads systems under the hood. This means a few changes for publishers integrating the ads. The [Native Ads Integration Guide](https://github.com/mopub/mopub-android-sdk/wiki/Native-Ads-Integration) describes all the steps you'll need to integrate 4.0.0.
 
 **Native Ads Changes**
  - `MoPubNativeAdRenderer` has been replaced by `MoPubStaticNativeRenderer` 
- - When requesting ads using `MoPubNative`, you must instantiate and register a `MoPubStaticNativeAdRenderer`. See the [Integration Document](https://github.com/mopub/mopub-android-sdk/wiki/Legacy-Native-Ads-Integration) for more details.
+ - When requesting ads using `MoPubNative`, you must instantiate and register a `MoPubStaticNativeAdRenderer`. See the [Integration Document](https://github.com/mopub/mopub-android-sdk/wiki/Manual-Integration-of-Native-Ads) for more details.
  - `NativeResponse` has been replaced with `NativeAd`
  - `NativeAd` has a new API that supports creating and rendering `View`s for Native Ads.
    - `#createAdView` returns a `View` that can hold data for the `NativeAd`

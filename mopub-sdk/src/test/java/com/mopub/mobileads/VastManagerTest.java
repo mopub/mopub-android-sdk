@@ -16,6 +16,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 
 import java.util.concurrent.Semaphore;
 
@@ -26,8 +27,8 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-@Config(shadows = {ShadowMoPubHttpUrlConnection.class})
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class, shadows = {ShadowMoPubHttpUrlConnection.class})
 public class VastManagerTest {
     static final String EXTENSIONS_SNIPPET_PLACEHOLDER = "<![CDATA[EXTENSIONS_SNIPPET]]>";
     static final String TEST_VAST_XML_STRING = "<VAST version='2.0'><Ad id='62833'><Wrapper><AdSystem>Tapad</AdSystem><VASTAdTagURI>http://dsp.x-team.staging.mopub.com/xml</VASTAdTagURI><Impression>http://myTrackingURL/wrapper/impression1</Impression><Impression>http://myTrackingURL/wrapper/impression2</Impression><Creatives><Creative AdID='62833'><Linear><TrackingEvents><Tracking event='creativeView'>http://myTrackingURL/wrapper/creativeView</Tracking><Tracking event='start'>http://myTrackingURL/wrapper/start</Tracking><Tracking event='midpoint'>http://myTrackingURL/wrapper/midpoint</Tracking><Tracking event='progress' offset='00:00:03.100'>http://myTrackingURL/wrapper/progress</Tracking><Tracking event='firstQuartile'>http://myTrackingURL/wrapper/firstQuartile</Tracking><Tracking event='thirdQuartile'>http://myTrackingURL/wrapper/thirdQuartile</Tracking><Tracking event='complete'>http://myTrackingURL/wrapper/complete</Tracking><Tracking event='close'>http://myTrackingURL/wrapper/close</Tracking><Tracking event='skip'>http://myTrackingURL/wrapper/skip</Tracking><Tracking event='mute'>http://myTrackingURL/wrapper/mute</Tracking><Tracking event='unmute'>http://myTrackingURL/wrapper/unmute</Tracking><Tracking event='pause'>http://myTrackingURL/wrapper/pause</Tracking><Tracking event='resume'>http://myTrackingURL/wrapper/resume</Tracking><Tracking event='fullscreen'>http://myTrackingURL/wrapper/fullscreen</Tracking></TrackingEvents><VideoClicks><ClickTracking>http://myTrackingURL/wrapper/click</ClickTracking></VideoClicks></Linear></Creative><Creative AdID=\"601364-Companion\"> <CompanionAds><Companion width=\"9000\"></Companion> </CompanionAds></Creative></Creatives><![CDATA[EXTENSIONS_SNIPPET]]><Error><![CDATA[http://wrapperErrorTracker]]></Error></Wrapper></Ad></VAST><MP_TRACKING_URLS><MP_TRACKING_URL>http://www.mopub.com/imp1</MP_TRACKING_URL><MP_TRACKING_URL>http://www.mopub.com/imp2</MP_TRACKING_URL></MP_TRACKING_URLS>";
@@ -67,8 +68,8 @@ public class VastManagerTest {
     private void prepareVastVideoConfiguration() {
         subject.prepareVastVideoConfiguration(TEST_VAST_XML_STRING, vastManagerListener, context);
 
-        Robolectric.runBackgroundTasks();
-        Robolectric.runUiThreadTasks();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        ShadowLooper.runUiThreadTasks();
     }
 
     @Test
@@ -249,8 +250,8 @@ public class VastManagerTest {
                 vastManagerListener,
                 context);
 
-        Robolectric.runBackgroundTasks();
-        Robolectric.runUiThreadTasks();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        ShadowLooper.runUiThreadTasks();
         semaphore.acquire();
         verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
@@ -319,8 +320,8 @@ public class VastManagerTest {
                 vastManagerListener,
                 context);
 
-        Robolectric.runBackgroundTasks();
-        Robolectric.runUiThreadTasks();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        ShadowLooper.runUiThreadTasks();
         semaphore.acquire();
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
@@ -491,8 +492,8 @@ public class VastManagerTest {
                 vastManagerListener,
                 context);
 
-        Robolectric.runBackgroundTasks();
-        Robolectric.runUiThreadTasks();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        ShadowLooper.runUiThreadTasks();
         semaphore.acquire();
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
@@ -521,8 +522,8 @@ public class VastManagerTest {
         subject.prepareVastVideoConfiguration(TEST_VAST_BAD_NEST_URL_XML_STRING,
                 vastManagerListener, context);
 
-        Robolectric.runBackgroundTasks();
-        Robolectric.runUiThreadTasks();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        ShadowLooper.runUiThreadTasks();
         semaphore.acquire();
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(null);
@@ -533,8 +534,8 @@ public class VastManagerTest {
     public void prepareVastVideoConfiguration_withNullXml_shouldReturnNull() throws Exception {
         subject.prepareVastVideoConfiguration(null, vastManagerListener, context);
 
-        Robolectric.runBackgroundTasks();
-        Robolectric.runUiThreadTasks();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        ShadowLooper.runUiThreadTasks();
         semaphore.acquire();
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(null);
@@ -545,8 +546,8 @@ public class VastManagerTest {
     public void prepareVastVideoConfiguration_withEmptyXml_shouldReturnNull() throws Exception {
         subject.prepareVastVideoConfiguration("", vastManagerListener, context);
 
-        Robolectric.runBackgroundTasks();
-        Robolectric.runUiThreadTasks();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        ShadowLooper.runUiThreadTasks();
         semaphore.acquire();
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(null);
@@ -584,14 +585,14 @@ public class VastManagerTest {
     public void cancel_shouldCancelBackgroundProcessingAndNotNotifyListenerWithNull() throws Exception {
         ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
 
-        Robolectric.getBackgroundScheduler().pause();
+        Robolectric.getBackgroundThreadScheduler().pause();
 
         subject.prepareVastVideoConfiguration(TEST_VAST_XML_STRING, vastManagerListener, context);
 
         subject.cancel();
 
-        Robolectric.runBackgroundTasks();
-        Robolectric.runUiThreadTasks();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        ShadowLooper.runUiThreadTasks();
         semaphore.acquire();
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(null);

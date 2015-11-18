@@ -38,8 +38,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-@Config(shadows = {ShadowMoPubHttpUrlConnection.class})
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class, shadows = {ShadowMoPubHttpUrlConnection.class})
 public class VastXmlManagerAggregatorTest {
     static final String TEST_VAST_XML_STRING = "<VAST version='2.0'>" +
             "    <Ad id='empty'>" +

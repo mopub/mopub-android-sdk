@@ -11,12 +11,13 @@ import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 import com.mopub.mobileads.test.support.TestVastManagerFactory;
 import com.mopub.mobileads.test.support.VastUtils;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
-import org.robolectric.shadows.ShadowLocalBroadcastManager;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.httpclient.FakeHttp;
+import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -36,11 +37,11 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.withSettings;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
     private Context context;
     private CustomEventInterstitialListener customEventInterstitialListener;
@@ -60,7 +61,7 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
         expectedResponse = "<VAST>hello</VAST>";
         videoUrl = "http://www.video.com";
 
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         customEventInterstitialListener = mock(CustomEventInterstitialListener.class);
         localExtras = new HashMap<String, Object>();
         serverExtras = new HashMap<String, String>();
@@ -93,7 +94,7 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
 
     @Test
     public void loadInterstitial_shouldInitializeDiskCache() throws Exception {
-        Robolectric.addPendingHttpResponse(response);
+        FakeHttp.addPendingHttpResponse(response);
 
         CacheServiceTest.assertDiskCacheIsUninitialized();
         subject.loadInterstitial(context, customEventInterstitialListener, localExtras, serverExtras);

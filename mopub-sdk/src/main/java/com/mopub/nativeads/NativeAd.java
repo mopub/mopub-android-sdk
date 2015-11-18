@@ -1,5 +1,6 @@
 package com.mopub.nativeads;
 
+import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -7,6 +8,9 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.mopub.common.VisibleForTesting;
+import com.mopub.nativeads.MoPubCustomEventNative.MoPubStaticNativeAd;
+import com.mopub.nativeads.MoPubCustomEventVideoNative.MoPubVideoNativeAd;
+import com.mopub.network.AdResponse;
 import com.mopub.network.TrackingRequest;
 
 import java.util.HashSet;
@@ -14,6 +18,28 @@ import java.util.Set;
 
 import static com.mopub.nativeads.BaseNativeAd.NativeEventListener;
 
+/**
+ * This class represents a native ad instance returned from the MoPub Ad Server, MoPub Exchange, or
+ * a mediated native ad network. This class can be used to create and render a {@link View} that
+ * displays a native ad, tracking impressions and clicks for it.
+ *
+ * Using {@link MoPubStreamAdPlacer}, you can automatically have {@link NativeAd}s rendered into
+ * {@link View}s and inserted into your app's content stream without manipulating this class
+ * directly.
+ *
+ * In general you should get instances of {@link NativeAd} from {@link MoPubNative} instances in its
+ * {@link MoPubNative.MoPubNativeNetworkListener#onAdLoad(AdResponse)} callback
+ * and should not construct them directly.
+ *
+ * When you have a {@link NativeAd} instance and wish to show a view you should:
+ *
+ * 1. Call {@link #createAdView(Activity, ViewGroup)} to inflate a {@link View} that can show this ad.
+ * 2. Call {@link #renderAdView(View)} with a compatible {@link View} to render the ad data into the view.
+ * 3. Just before the ad is shown to the user, call {@link #prepare(View)}.
+ * 4. When the ad view is no longer shown to the user, call {@link #clear(View)}. You can later
+ *    call {@link #prepare(View)} again if the ad will be shown to users.
+ * 5. When the ad will never be shown again, call {@link #destroy()}.
+ */
 public class NativeAd {
 
     /**
@@ -43,6 +69,7 @@ public class NativeAd {
             @NonNull final BaseNativeAd baseNativeAd,
             @NonNull final MoPubAdRenderer moPubAdRenderer) {
         mContext = context.getApplicationContext();
+
         mAdUnitId = adUnitId;
 
         mImpressionTrackers = new HashSet<String>();
@@ -93,9 +120,21 @@ public class NativeAd {
         return mIsDestroyed;
     }
 
+    /**
+     * Returns the {@link BaseNativeAd} object for this {@link NativeAd}. This object is created by
+     * a {@link CustomEventNative} subclass after a successful ad request and is specific to the ad
+     * source. If it comes from the MoPub Exchange or is a directly-served ad it will be of the type
+     * {@link MoPubStaticNativeAd} or {@link MoPubVideoNativeAd}. If it is returned by a mediated ad
+     * network it may have another type.
+     */
     @NonNull
-    public View createAdView(ViewGroup parent) {
-        return mMoPubAdRenderer.createAdView(mContext, parent);
+    public BaseNativeAd getBaseNativeAd() {
+        return mBaseNativeAd;
+    }
+
+    @NonNull
+    public View createAdView(@NonNull final Activity activity, @Nullable final ViewGroup parent) {
+        return mMoPubAdRenderer.createAdView(activity, parent);
     }
 
     public void renderAdView(View view) {
@@ -109,6 +148,13 @@ public class NativeAd {
     }
 
     // Lifecycle Handlers
+
+    /**
+     * Prepares the {@link NativeAd} to be seen on screen. You should call this method after calling
+     * {@link #renderAdView(View)} with the same {@link View} and before the ad is shown on-screen.
+     * This method is commonly used to initialize impression tracking and other state associated
+     * with the {@link View}.
+     */
     public void prepare(@NonNull final View view) {
         if (mIsDestroyed) {
             return;
@@ -117,6 +163,11 @@ public class NativeAd {
         mBaseNativeAd.prepare(view);
     }
 
+    /**
+     * Clears {@link NativeAd} state associated with this {@link View}. Call this when the {@link NativeAd} is no
+     * longer seen by a user. If you would like to render a different {@link NativeAd} into the same View,
+     * you must call this method first.
+     */
     public void clear(@NonNull final View view) {
         if (mIsDestroyed) {
             return;
@@ -125,6 +176,10 @@ public class NativeAd {
         mBaseNativeAd.clear(view);
     }
 
+    /**
+     * Cleans up all {@link NativeAd} state. Call this method when the {@link NativeAd} will never be shown to a
+     * user again.
+     */
     public void destroy() {
         if (mIsDestroyed) {
             return;

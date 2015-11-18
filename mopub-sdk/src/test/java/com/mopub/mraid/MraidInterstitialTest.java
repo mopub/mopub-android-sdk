@@ -1,10 +1,10 @@
 package com.mopub.mraid;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.ResponseBodyInterstitialTest;
 
 import org.junit.Before;
@@ -13,26 +13,28 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowActivity;
-import org.robolectric.shadows.ShadowLocalBroadcastManager;
+import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
+import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
-import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiverTest.getIntentForActionAndIdentifier;
-import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_INVALID_STATE;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.robolectric.Robolectric.shadowOf_;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MraidInterstitialTest extends ResponseBodyInterstitialTest {
     private static final String EXPECTED_HTML_DATA = "<html></html>";
     private long broadcastIdentifier;
@@ -41,7 +43,7 @@ public class MraidInterstitialTest extends ResponseBodyInterstitialTest {
 
     private Map<String, Object> localExtras;
     private Map<String, String> serverExtras;
-    private Context context;
+    private Activity context;
 
     @Before
     public void setUp() throws Exception {
@@ -105,7 +107,7 @@ public class MraidInterstitialTest extends ResponseBodyInterstitialTest {
                 serverExtras);
         subject.showInterstitial();
 
-        ShadowActivity shadowActivity = shadowOf_(context);
+        ShadowActivity shadowActivity = Shadows.shadowOf(context);
         Intent intent = shadowActivity.getNextStartedActivityForResult().intent;
 
         assertThat(intent.getComponent().getClassName())

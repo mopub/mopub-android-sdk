@@ -1,5 +1,6 @@
 package com.mopub.nativeads;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -50,7 +51,7 @@ public class MoPubStreamAdPlacer {
                 }
             };
 
-    @NonNull private final Context mContext;
+    @NonNull private final Activity mActivity;
     @NonNull private final Handler mPlacementHandler;
     @NonNull private final Runnable mPlacementRunnable;
     @NonNull private final PositioningSource mPositioningSource;
@@ -89,54 +90,50 @@ public class MoPubStreamAdPlacer {
      * wish to hard-code positions in your app, see {@link MoPubStreamAdPlacer(Context,
      * MoPubClientPositioning)}.
      *
-     * @param context The activity context.
+     * @param activity The activity.
      */
-    public MoPubStreamAdPlacer(@NonNull final Context context) {
+    public MoPubStreamAdPlacer(@NonNull final Activity activity) {
         // MoPubClientPositioning is mutable, so we must take care not to hold a
         // reference to it that might be subsequently modified by the caller.
-        this(context, MoPubNativeAdPositioning.serverPositioning());
+        this(activity, MoPubNativeAdPositioning.serverPositioning());
     }
 
     /**
      * Creates a new MoPubStreamAdPlacer object, using server positioning.
      *
-     * @param context The activity context.
+     * @param activity The activity.
      * @param adPositioning A positioning object for specifying where ads will be placed in your
      * stream. See {@link MoPubNativeAdPositioning#serverPositioning()}.
      */
-    public MoPubStreamAdPlacer(@NonNull final Context context,
+    public MoPubStreamAdPlacer(@NonNull final Activity activity,
             @NonNull final MoPubServerPositioning adPositioning) {
-        this(context,
-                new NativeAdSource(),
-                new ServerPositioningSource(context));
+        this(activity, new NativeAdSource(), new ServerPositioningSource(activity));
     }
 
     /**
      * Creates a new MoPubStreamAdPlacer object, using client positioning.
      *
-     * @param context The activity context.
+     * @param activity The activity.
      * @param adPositioning A positioning object for specifying where ads will be placed in your
      * stream. See {@link MoPubNativeAdPositioning#clientPositioning()}.
      */
-    public MoPubStreamAdPlacer(@NonNull final Context context,
+    public MoPubStreamAdPlacer(@NonNull final Activity activity,
             @NonNull final MoPubClientPositioning adPositioning) {
         // MoPubClientPositioning is mutable, so we must take care not to hold a
         // reference to it that might be subsequently modified by the caller.
-        this(context,
-                new NativeAdSource(),
-                new ClientPositioningSource(adPositioning));
+        this(activity, new NativeAdSource(), new ClientPositioningSource(adPositioning));
     }
 
     @VisibleForTesting
-    MoPubStreamAdPlacer(@NonNull final Context context,
+    MoPubStreamAdPlacer(@NonNull final Activity activity,
             @NonNull final NativeAdSource adSource,
             @NonNull final PositioningSource positioningSource) {
-        Preconditions.checkNotNull(context, "context is not allowed to be null");
+        Preconditions.checkNotNull(activity, "activity is not allowed to be null");
         Preconditions.checkNotNull(adSource, "adSource is not allowed to be null");
         Preconditions.checkNotNull(positioningSource, "positioningSource is not allowed to be " +
                 "null");
 
-        mContext = context;
+        mActivity = activity;
         mPositioningSource = positioningSource;
         mAdSource = adSource;
         mPlacementData = PlacementData.empty();
@@ -264,7 +261,7 @@ public class MoPubStreamAdPlacer {
             }
         });
 
-        mAdSource.loadAds(mContext, adUnitId, requestParameters);
+        mAdSource.loadAds(mActivity, adUnitId, requestParameters);
     }
 
     @VisibleForTesting
@@ -391,7 +388,7 @@ public class MoPubStreamAdPlacer {
      * Gets the ad at the given position, or {@code null} if there is no ad at the given position.
      *
      * This method will attempt to reuse the convertView if it is not {@code null}, and will
-     * otherwise create it. See {@link MoPubAdRenderer#createAdView(Context, ViewGroup)}.
+     * otherwise create it. See {@link MoPubAdRenderer#createAdView(Activity, ViewGroup)}.
      *
      * @param position The position to place an ad into.
      * @param convertView A recycled view into which to render data, or {@code null}.
@@ -407,7 +404,7 @@ public class MoPubStreamAdPlacer {
         }
 
         final View view = (convertView != null) ?
-                convertView : nativeAd.createAdView(parent);
+                convertView : nativeAd.createAdView(mActivity, parent);
         bindAdView(nativeAd, view);
         return view;
     }

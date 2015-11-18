@@ -5,6 +5,10 @@ import android.support.annotation.Nullable;
 import android.view.View;
 
 import com.mopub.common.Preconditions;
+import com.mopub.common.logging.MoPubLog;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -81,6 +85,38 @@ public abstract class BaseNativeAd {
     protected final void notifyAdClicked() {
         if (mNativeEventListener != null) {
             mNativeEventListener.onAdClicked();
+        }
+    }
+
+    final protected void addImpressionTrackers(final Object impressionTrackers) throws ClassCastException {
+        if (!(impressionTrackers instanceof JSONArray)) {
+            throw new ClassCastException("Expected impression trackers of type JSONArray.");
+        }
+
+        final JSONArray trackers = (JSONArray) impressionTrackers;
+        for (int i = 0; i < trackers.length(); i++) {
+            try {
+                addImpressionTracker(trackers.getString(i));
+            } catch (JSONException e) {
+                // This will only occur if we access a non-existent index in JSONArray.
+                MoPubLog.d("Unable to parse impression trackers.");
+            }
+        }
+    }
+
+    final protected void addClickTrackers(final Object clickTrackers) throws ClassCastException {
+        if (!(clickTrackers instanceof JSONArray)) {
+            throw new ClassCastException("Expected click trackers of type JSONArray.");
+        }
+
+        final JSONArray trackers = (JSONArray) clickTrackers;
+        for (int i = 0; i < trackers.length(); i++) {
+            try {
+                addClickTracker(trackers.getString(i));
+            } catch (JSONException e) {
+                // This will only occur if we access a non-existent index in JSONArray.
+                MoPubLog.d("Unable to parse click trackers.");
+            }
         }
     }
 

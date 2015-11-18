@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.VastErrorCode;
 import com.mopub.mobileads.VastTracker;
 
@@ -12,18 +13,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.util.Arrays;
 
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.argThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class TrackingRequestTest {
 
     @Mock

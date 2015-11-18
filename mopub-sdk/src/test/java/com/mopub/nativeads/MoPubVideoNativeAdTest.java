@@ -16,8 +16,10 @@ import android.view.View;
 import com.mopub.common.event.EventDetails;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BaseVideoPlayerActivity;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.MraidVideoPlayerActivity;
 import com.mopub.mobileads.VastManager;
+import com.mopub.mobileads.VastTracker;
 import com.mopub.mobileads.VastVideoConfig;
 import com.mopub.mobileads.VideoViewabilityTracker;
 import com.mopub.nativeads.BaseNativeAd.NativeEventListener;
@@ -46,6 +48,8 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import java.util.HashMap;
 import java.util.List;
@@ -68,6 +72,7 @@ import static org.mockito.Mockito.when;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubVideoNativeAdTest {
 
     private MoPubVideoNativeAd subject;
@@ -98,7 +103,7 @@ public class MoPubVideoNativeAdTest {
 
         jsonObject = new JSONObject();
         jsonObject.put("imptracker", new JSONArray("[\"url1\", \"url2\"]"));
-        jsonObject.put("clktracker", "clktracker");
+        jsonObject.put("clktracker", "json click tracker");
         jsonObject.put("title", "title");
         jsonObject.put("text", "text");
         jsonObject.put("mainimage", "mainimageurl");
@@ -122,7 +127,8 @@ public class MoPubVideoNativeAdTest {
 
         subject = new MoPubVideoNativeAd(
                 activity, jsonObject, mockCustomEventNativeListener, videoResponseHeaders,
-                mockVisibilityTracker, mockNativeVideoControllerFactory, null, "", mockVastManager);
+                mockVisibilityTracker, mockNativeVideoControllerFactory, null,
+                "header click tracker", mockVastManager);
         subject.setNativeEventListener(mockNativeEventListener);
         when(mockNativeVideoControllerFactory
                 .createForId(anyInt(), any(Context.class), any(List.class), eq(mockVastVideoConfig),
@@ -234,6 +240,86 @@ public class MoPubVideoNativeAdTest {
         verify(mockVastVideoConfig).addClickTrackers(any(List.class));
         verify(mockVastVideoConfig).setClickThroughUrl("clk");
         verify(mockCustomEventNativeListener).onNativeAdLoaded(subject);
+    }
+
+    @Test
+    public void onVastVideoConfigurationPrepared_shouldMergeHeaderAndJsonClickTrackers() {
+        final ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
+
+        subject.loadAd();
+        subject.onVastVideoConfigurationPrepared(mockVastVideoConfig);
+
+        verify(mockVastVideoConfig).addClickTrackers(argumentCaptor.capture());
+        final List<VastTracker> actualClickTrackers = (List<VastTracker>) argumentCaptor.getValue();
+        assertThat(actualClickTrackers.size()).isEqualTo(2);
+        final VastTracker headerClickTracker = actualClickTrackers.get(0);
+        final VastTracker jsonClickTracker = actualClickTrackers.get(1);
+        assertThat(headerClickTracker.getTrackingUrl()).isEqualTo("header click tracker");
+        assertThat(headerClickTracker.isRepeatable()).isFalse();
+        assertThat(jsonClickTracker.getTrackingUrl()).isEqualTo("json click tracker");
+        assertThat(jsonClickTracker.isRepeatable()).isFalse();
+    }
+
+    @Test
+    public void onVastVideoConfigurationPrepared_shouldDedupeHeaderAndJsonClickTrackers() throws Exception {
+        jsonObject.remove("clktracker");
+        jsonObject.put("clktracker", "header click tracker");
+        final ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
+
+        subject.loadAd();
+        subject.onVastVideoConfigurationPrepared(mockVastVideoConfig);
+
+        verify(mockVastVideoConfig).addClickTrackers(argumentCaptor.capture());
+        final List<VastTracker> actualClickTrackers = (List<VastTracker>) argumentCaptor.getValue();
+        assertThat(actualClickTrackers.size()).isEqualTo(1);
+        final VastTracker clickTracker = actualClickTrackers.get(0);
+        assertThat(clickTracker.getTrackingUrl()).isEqualTo("header click tracker");
+        assertThat(clickTracker.isRepeatable()).isFalse();
+    }
+
+    @Test
+    public void onVastVideoConfigurationPrepared_shouldAcceptJsonArrayClickTrackers() throws Exception {
+        jsonObject.remove("clktracker");
+        jsonObject.put("clktracker",
+                new JSONArray("[\"json click tracker 1\", \"json click tracker 2\"]"));
+        final ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
+
+        subject.loadAd();
+        subject.onVastVideoConfigurationPrepared(mockVastVideoConfig);
+
+        verify(mockVastVideoConfig).addClickTrackers(argumentCaptor.capture());
+        final List<VastTracker> actualClickTrackers = (List<VastTracker>) argumentCaptor.getValue();
+        assertThat(actualClickTrackers.size()).isEqualTo(3);
+        final VastTracker jsonClickTracker1 = actualClickTrackers.get(0);
+        final VastTracker jsonClickTracker2 = actualClickTrackers.get(1);
+        final VastTracker headerClickTracker = actualClickTrackers.get(2);
+        assertThat(jsonClickTracker1.getTrackingUrl()).isEqualTo("json click tracker 1");
+        assertThat(jsonClickTracker1.isRepeatable()).isFalse();
+        assertThat(jsonClickTracker2.getTrackingUrl()).isEqualTo("json click tracker 2");
+        assertThat(jsonClickTracker2.isRepeatable()).isFalse();
+        assertThat(headerClickTracker.getTrackingUrl()).isEqualTo("header click tracker");
+        assertThat(headerClickTracker.isRepeatable()).isFalse();
+    }
+
+    @Test
+    public void onVastVideoConfigurationPrepared_shouldDedupeJsonArrayClickTrackers() throws Exception {
+        jsonObject.remove("clktracker");
+        jsonObject.put("clktracker",
+                new JSONArray("[\"json click tracker\", \"header click tracker\"]"));
+        final ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
+
+        subject.loadAd();
+        subject.onVastVideoConfigurationPrepared(mockVastVideoConfig);
+
+        verify(mockVastVideoConfig).addClickTrackers(argumentCaptor.capture());
+        final List<VastTracker> actualClickTrackers = (List<VastTracker>) argumentCaptor.getValue();
+        assertThat(actualClickTrackers.size()).isEqualTo(2);
+        final VastTracker headerClickTracker = actualClickTrackers.get(0);
+        final VastTracker jsonClickTracker = actualClickTrackers.get(1);
+        assertThat(headerClickTracker.getTrackingUrl()).isEqualTo("header click tracker");
+        assertThat(headerClickTracker.isRepeatable()).isFalse();
+        assertThat(jsonClickTracker.getTrackingUrl()).isEqualTo("json click tracker");
+        assertThat(jsonClickTracker.isRepeatable()).isFalse();
     }
 
     @Test
@@ -426,7 +512,7 @@ public class MoPubVideoNativeAdTest {
         verify(mockMediaLayout).setMode(MediaLayout.Mode.PAUSED);
         verify(mockNativeVideoController, never()).setAppAudioEnabled(anyBoolean());
 
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo(MraidVideoPlayerActivity.class.getName());
         assertThat(startedActivity.getStringExtra(BaseVideoPlayerActivity.VIDEO_CLASS_EXTRAS_KEY))

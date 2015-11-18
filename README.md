@@ -27,7 +27,7 @@ The MoPub SDK is available via:
     }
 
     dependencies {
-        compile('com.mopub:mopub-sdk:4.0.0@aar') {
+        compile('com.mopub:mopub-sdk:4.1.0@aar') {
             transitive = true
         }
     }
@@ -63,22 +63,19 @@ The MoPub SDK is available via:
 
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-Version 4.0.0 includes a number of improvements to our Native Ads systems under the hood. This means a few changes for publishers integrating the ads. The [Native Ads Integration Guide](https://github.com/mopub/mopub-android-sdk/wiki/Native-Ads-Integration) describes all the steps you'll need to integrate 4.0.0.
+- A number of Native Ad classes now require `Activity` instances instead of `Context`. Most users should be unaffected by this change, and it fixes a crash caused by handling themes incorrectly. The following classes are affected:
 
-**Native Ads Changes**
- - `MoPubNativeAdRenderer` has been replaced by `MoPubStaticNativeRenderer` 
- - When requesting ads using `MoPubNative`, you must instantiate and register a `MoPubStaticNativeAdRenderer`. See the [Integration Document](https://github.com/mopub/mopub-android-sdk/wiki/Legacy-Native-Ads-Integration) for more details.
- - `NativeResponse` has been replaced with `NativeAd`
- - `NativeAd` has a new API that supports creating and rendering `View`s for Native Ads.
-   - `#createAdView` returns a `View` that can hold data for the `NativeAd`
-   - `#renderAdView` will populate the `View` with ad data. 
-   - Other lifecycle methods from `NativeResponse` remain:
-     - `#prepare`, `#clear`, `#destroy`
- - The process of writing new `CustomEventNative` instances has changed. These changes will support more dynamic, flexible, and attractive Native Ad formats in the future. All bundled native Custom Event files have been updated to use the new API.
+  - `CustomEventNative` and its implementations including `MoPubCustomEventNative`.
+  - `MoPubAdAdapter` and `MoPubRecyclerAdapter`.
+  - `MoPubAdRenderer` and its implementations.
+  - `MoPubStreamAdPlacer`
+  - `MoPubNative`
+  - `NativeAd` and `NativeAdSource`
+  - `NativeAdViewHelper`
 
-**Removed Old Code**
- - Removed legacy banner/interestitial listeners, deprecated in 1.11
- - Removed legacy custom event implementation ("custom event methods") deprecated in 1.10
+- Vungle's ad adapters have been updated for their 3.3.0 SDK.
+- Tapjoy adapters for interstitials and rewarded video are included for their 11.2.2 SDK. 
+- The Play Services adapters have been tested with Play Services 7.8.0.
 
 ## Requirements
 
@@ -87,7 +84,7 @@ Version 4.0.0 includes a number of improvements to our Native Ads systems under 
 - android-support-annotations.jar, r22 (**Updated in 3.7.0**)
 - android-support-v7-recyclerview.jar, r22 (**Updated in 3.9.0**)
 - MoPub Volley Library (mopub-volley-1.1.0.jar - available on JCenter) (**Updated in 3.6.0**)
-- **Recommended** Google Play Services 7.0.0
+- **Recommended** Google Play Services 7.8.0
 
 ## Upgrading from 3.2.0 and Prior
 In 3.3.0 a dependency on android-support-annotations.jar was added. If you are using Maven or Gradle to include the MoPub SDK, this dependency is included in the build scripts. For instructions on adding dependencies for Eclipse projects, see our [Getting Started Guide](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started#adding-the-support-libraries-to-your-project)

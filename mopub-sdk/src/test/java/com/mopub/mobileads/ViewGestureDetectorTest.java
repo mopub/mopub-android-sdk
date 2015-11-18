@@ -11,6 +11,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.robolectric.Shadows;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowGestureDetector;
 
 import static com.mopub.mobileads.ViewGestureDetector.UserClickListener;
@@ -19,9 +21,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.stub;
 import static org.mockito.Mockito.verify;
-import static org.robolectric.Robolectric.shadowOf;
+
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class ViewGestureDetectorTest {
     private Activity context;
     private ViewGestureDetector subject;
@@ -46,7 +49,7 @@ public class ViewGestureDetectorTest {
     public void constructor_shouldDisableLongPressAndSetGestureListener() throws Exception {
         subject = new ViewGestureDetector(context, view, mockAdReport);
 
-        ShadowGestureDetector shadowGestureDetector = shadowOf(subject);
+        ShadowGestureDetector shadowGestureDetector = Shadows.shadowOf(subject);
 
         assertThat(subject.isLongpressEnabled()).isFalse();
         assertThat(shadowGestureDetector.getListener()).isNotNull();
@@ -84,18 +87,20 @@ public class ViewGestureDetectorTest {
 
         subject.sendTouchEvent(expectedMotionEvent);
 
-        MotionEvent actualMotionEvent = shadowOf(subject).getOnTouchEventMotionEvent();
+        MotionEvent actualMotionEvent = Shadows.shadowOf(subject).getOnTouchEventMotionEvent();
 
         assertThat(actualMotionEvent).isEqualTo(expectedMotionEvent);
     }
 
     @Test
     public void onTouchEvent_whenActionMoveWithinView_shouldForwardOnTouchEvent() throws Exception {
-        MotionEvent expectedMotionEvent = createActionMove(160);
+        MotionEvent downEvent = createMotionEvent(MotionEvent.ACTION_DOWN);
+        subject.sendTouchEvent(downEvent);
 
+        MotionEvent expectedMotionEvent = createActionMove(160);
         subject.sendTouchEvent(expectedMotionEvent);
 
-        MotionEvent actualMotionEvent = shadowOf(subject).getOnTouchEventMotionEvent();
+        MotionEvent actualMotionEvent = Shadows.shadowOf(subject).getOnTouchEventMotionEvent();
 
         assertThat(actualMotionEvent).isEqualTo(expectedMotionEvent);
         verify(adAlertGestureListener, never()).reset();
@@ -105,7 +110,7 @@ public class ViewGestureDetectorTest {
     public void sendTouchEvent_whenReceiveTouchEventOutsideOfViewInXDirection_shouldResetAlertState() throws Exception {
         subject.sendTouchEvent(createActionMove(350));
 
-        MotionEvent actualMotionEvent = shadowOf(subject).getOnTouchEventMotionEvent();
+        MotionEvent actualMotionEvent = Shadows.shadowOf(subject).getOnTouchEventMotionEvent();
 
         assertThat(actualMotionEvent).isNull();
         verify(adAlertGestureListener).reset();
@@ -116,7 +121,7 @@ public class ViewGestureDetectorTest {
         MotionEvent verticalMotion = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, 160, 200, 0);
         subject.sendTouchEvent(verticalMotion);
 
-        MotionEvent actualMotionEvent = shadowOf(subject).getOnTouchEventMotionEvent();
+        MotionEvent actualMotionEvent = Shadows.shadowOf(subject).getOnTouchEventMotionEvent();
 
         assertThat(actualMotionEvent).isNull();
         verify(adAlertGestureListener).reset();

@@ -7,12 +7,11 @@ import android.view.View;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.resource.RadialCountdownDrawable;
 
-import junit.framework.TestCase;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyInt;
@@ -22,6 +21,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastVideoRadialCountdownWidgetTest {
     private Context context;
     private VastVideoRadialCountdownWidget subject;

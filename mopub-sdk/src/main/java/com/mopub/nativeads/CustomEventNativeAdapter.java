@@ -1,6 +1,6 @@
 package com.mopub.nativeads;
 
-import android.content.Context;
+import android.app.Activity;
 import android.support.annotation.NonNull;
 
 import com.mopub.common.DataKeys;
@@ -14,13 +14,15 @@ import java.util.Map;
 final class CustomEventNativeAdapter {
     private CustomEventNativeAdapter() {}
 
-    public static void loadNativeAd(@NonNull final Context context,
+    public static void loadNativeAd(@NonNull final Activity activity,
             @NonNull final Map<String, Object> localExtras,
             @NonNull final AdResponse adResponse,
             @NonNull final CustomEventNative.CustomEventNativeListener customEventNativeListener) {
 
         final CustomEventNative customEventNative;
         String customEventNativeClassName = adResponse.getCustomEventClassName();
+
+        MoPubLog.d("Attempting to invoke custom event: " + customEventNativeClassName);
         try {
             customEventNative = CustomEventNativeFactory.create(customEventNativeClassName);
         } catch (Exception e) {
@@ -43,7 +45,7 @@ final class CustomEventNativeAdapter {
         // We catch all exceptions here to prevent crashes from untested code.
         try {
             customEventNative.loadNativeAd(
-                    context,
+                    activity,
                     customEventNativeListener,
                     localExtras,
                     adResponse.getServerExtras()

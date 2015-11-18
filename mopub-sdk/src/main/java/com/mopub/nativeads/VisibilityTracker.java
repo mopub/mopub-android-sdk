@@ -1,7 +1,6 @@
 package com.mopub.nativeads;
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -74,15 +73,15 @@ class VisibilityTracker {
     // Whether the visibility runnable is scheduled
     private boolean mIsVisibilityScheduled;
 
-    public VisibilityTracker(@NonNull final Context context) {
-        this(context,
+    public VisibilityTracker(@NonNull final Activity activity) {
+        this(activity,
                 new WeakHashMap<View, TrackingInfo>(10),
                 new VisibilityChecker(),
                 new Handler());
     }
 
     @VisibleForTesting
-    VisibilityTracker(@NonNull final Context context,
+    VisibilityTracker(@NonNull final Activity activity,
             @NonNull final Map<View, TrackingInfo> trackedViews,
             @NonNull final VisibilityChecker visibilityChecker,
             @NonNull final Handler visibilityHandler) {
@@ -92,7 +91,7 @@ class VisibilityTracker {
         mVisibilityRunnable = new VisibilityRunnable();
         mTrimmedViews = new ArrayList<View>(NUM_ACCESSES_BEFORE_TRIMMING);
 
-        final View rootView = ((Activity) context).getWindow().getDecorView();
+        final View rootView = activity.getWindow().getDecorView();
         mRootView = new WeakReference<View>(rootView);
         final ViewTreeObserver viewTreeObserver = rootView.getViewTreeObserver();
         if (!viewTreeObserver.isAlive()) {

@@ -9,17 +9,18 @@ apply plugin: 'com.android.application'
 
 group = 'com.mopub'
 description = '''MoPub Sample App'''
-version = '4.0.0'
+version = '4.1.0'
 
 android {
-    compileSdkVersion 22
-    buildToolsVersion '22.0.1'
+    compileSdkVersion 23
+    buildToolsVersion '23.0.2'
+    lintOptions { abortOnError false }
 
     defaultConfig {
-        versionCode 31
+        versionCode 32
         versionName version
         minSdkVersion 9
-        targetSdkVersion 22
+        targetSdkVersion 23
     }
 
     buildTypes {
@@ -54,8 +55,8 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:22.0.0'
-    compile 'com.google.android.gms:play-services-ads:7.0.0'
-    compile 'com.android.support:recyclerview-v7:22.0.0'
+    compile 'com.android.support:support-v4:22.2.0'
+    compile 'com.google.android.gms:play-services-ads:7.8.0'
+    compile 'com.android.support:recyclerview-v7:22.2.0'
     compile project(':mopub-sdk')
 }

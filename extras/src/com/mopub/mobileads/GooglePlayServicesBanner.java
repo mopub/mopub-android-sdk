@@ -17,7 +17,7 @@ import static com.google.android.gms.ads.AdSize.LEADERBOARD;
 import static com.google.android.gms.ads.AdSize.MEDIUM_RECTANGLE;
 
 /*
- * Compatible with version 7.0.0 of the Google Play Services SDK.
+ * Compatible with version 7.8.0 of the Google Play Services SDK.
  */
 
 // Note: AdMob ads will now use this class as Google has deprecated the AdMob SDK.

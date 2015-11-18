@@ -1,6 +1,6 @@
 package com.mopub.nativeads;
 
-import android.content.Context;
+import android.app.Activity;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -46,11 +46,11 @@ public class ImpressionTracker {
     // Listener for when a view becomes visible or non visible
     @Nullable private VisibilityTrackerListener mVisibilityTrackerListener;
 
-    public ImpressionTracker(@NonNull final Context context) {
+    public ImpressionTracker(@NonNull final Activity activity) {
         this(new WeakHashMap<View, ImpressionInterface>(),
                 new WeakHashMap<View, TimestampWrapper<ImpressionInterface>>(),
                 new VisibilityChecker(),
-                new VisibilityTracker(context),
+                new VisibilityTracker(activity),
                 new Handler(Looper.getMainLooper()));
     }
 

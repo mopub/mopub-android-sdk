@@ -1,73 +1,84 @@
 package com.mopub.nativeads;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.mopub.common.MoPub;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Utils;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.MoPubCustomEventNative.MoPubStaticNativeAd;
+import com.mopub.network.MaxWidthImageLoader;
+import com.mopub.network.MoPubRequestQueue;
+import com.mopub.network.Networking;
+import com.mopub.volley.toolbox.ImageLoader;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.stub;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubStaticNativeAdRendererTest {
     private MoPubStaticNativeAdRenderer subject;
     private StaticNativeAd mStaticNativeAd;
-    private RelativeLayout relativeLayout;
-    private ViewGroup viewGroup;
+    @Mock private RelativeLayout relativeLayout;
+    @Mock private ViewGroup viewGroup;
     private ViewBinder viewBinder;
-    private TextView titleView;
-    private TextView textView;
-    private TextView callToActionView;
-    private ImageView mainImageView;
-    private ImageView iconImageView;
-    private ImageView badView;
+    @Mock private TextView titleView;
+    @Mock private TextView textView;
+    @Mock private TextView callToActionView;
+    @Mock private ImageView mainImageView;
+    @Mock private ImageView iconImageView;
+    @Mock private ImageView badView;
+    @Mock private MoPubRequestQueue mockRequestQueue;
+    @Mock private MaxWidthImageLoader mockImageLoader;
+    @Mock private ImageLoader.ImageContainer mockImageContainer;
 
     @Before
     public void setUp() throws Exception {
+        Networking.setRequestQueueForTesting(mockRequestQueue);
+        Networking.setImageLoaderForTesting(mockImageLoader);
+        stub(mockImageContainer.getBitmap()).toReturn(mock(Bitmap.class));
+
         Activity context = Robolectric.buildActivity(Activity.class).create().get();
-        relativeLayout = new RelativeLayout(context);
-        relativeLayout.setId((int) Utils.generateUniqueId());
-        viewGroup = new LinearLayout(context);
+
+        when(relativeLayout.getId()).thenReturn((int) Utils.generateUniqueId());
 
         mStaticNativeAd = new StaticNativeAd() {};
         mStaticNativeAd.setTitle("test title");
         mStaticNativeAd.setText("test text");
         mStaticNativeAd.setCallToAction("test call to action");
         mStaticNativeAd.setClickDestinationUrl("destinationUrl");
+        mStaticNativeAd.setMainImageUrl("testUrl");
+        mStaticNativeAd.setIconImageUrl("testUrl");
 
-        titleView = new TextView(context);
-        titleView.setId((int) Utils.generateUniqueId());
-        textView = new TextView(context);
-        textView.setId((int) Utils.generateUniqueId());
-        callToActionView = new Button(context);
-        callToActionView.setId((int) Utils.generateUniqueId());
-        mainImageView = new ImageView(context);
-        mainImageView.setId((int) Utils.generateUniqueId());
-        iconImageView = new ImageView(context);
-        iconImageView.setId((int) Utils.generateUniqueId());
-        badView = new ImageView(context);
-        badView.setId((int) Utils.generateUniqueId());
-
-        relativeLayout.addView(titleView);
-        relativeLayout.addView(textView);
-        relativeLayout.addView(callToActionView);
-        relativeLayout.addView(mainImageView);
-        relativeLayout.addView(iconImageView);
-        relativeLayout.addView(badView);
+        setViewIdInLayout(titleView, relativeLayout);
+        setViewIdInLayout(textView, relativeLayout);
+        setViewIdInLayout(callToActionView, relativeLayout);
+        setViewIdInLayout(mainImageView, relativeLayout);
+        setViewIdInLayout(iconImageView, relativeLayout);
+        setViewIdInLayout(badView, relativeLayout);
 
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
                 .titleId(titleView.getId())
@@ -78,6 +89,12 @@ public class MoPubStaticNativeAdRendererTest {
                 .build();
 
         subject = new MoPubStaticNativeAdRenderer(viewBinder);
+    }
+
+    private void setViewIdInLayout(View mockView, RelativeLayout mockLayout) {
+        int id = (int) Utils.generateUniqueId();
+        when(mockView.getId()).thenReturn(id);
+        when(relativeLayout.findViewById(eq(id))).thenReturn(mockView);
     }
 
     @Test(expected = NullPointerException.class)
@@ -109,18 +126,15 @@ public class MoPubStaticNativeAdRendererTest {
     public void renderAdView_shouldReturnPopulatedView() {
         subject.renderAdView(relativeLayout, mStaticNativeAd);
 
-        assertThat(((TextView)relativeLayout.findViewById(titleView.getId())).getText())
-                .isEqualTo("test title");
-        assertThat(((TextView)relativeLayout.findViewById(textView.getId())).getText())
-                .isEqualTo("test text");
-        assertThat(((TextView)relativeLayout.findViewById(callToActionView.getId())).getText())
-                .isEqualTo("test call to action");
+        verify(titleView).setText(eq("test title"));
+        verify(textView).setText(eq("test text"));
+        verify(callToActionView).setText(eq("test call to action"));
 
         // not testing images due to testing complexity
     }
 
     @Test
-    public void renderAdView_withFailedViewBinder_shouldReturnEmptyViews() {
+    public void renderAdView_withFailedViewBinder_shouldNotWriteViews() {
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
                 .titleId(titleView.getId())
                 .textId(badView.getId())
@@ -132,12 +146,9 @@ public class MoPubStaticNativeAdRendererTest {
         subject = new MoPubStaticNativeAdRenderer(viewBinder);
         subject.renderAdView(relativeLayout, mStaticNativeAd);
 
-        assertThat(((TextView)relativeLayout.findViewById(titleView.getId())).getText())
-                .isEqualTo("");
-        assertThat(((TextView)relativeLayout.findViewById(textView.getId())).getText())
-                .isEqualTo("");
-        assertThat(((TextView)relativeLayout.findViewById(callToActionView.getId())).getText())
-                .isEqualTo("");
+        verify(titleView, never()).setText(anyString());
+        verify(textView, never()).setText(anyString());
+        verify(callToActionView, never()).setText(anyString());
     }
 
     @Test

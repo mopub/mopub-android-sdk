@@ -1,5 +1,6 @@
 package com.mopub.nativeads;
 
+import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -28,7 +29,7 @@ import static com.mopub.nativeads.NativeImageHelper.preCacheImages;
 public class MoPubCustomEventNative extends CustomEventNative {
 
     @Override
-    protected void loadNativeAd(@NonNull final Context context,
+    protected void loadNativeAd(@NonNull final Activity activity,
             @NonNull final CustomEventNativeListener customEventNativeListener,
             @NonNull final Map<String, Object> localExtras,
             @NonNull final Map<String, String> serverExtras) {
@@ -41,10 +42,10 @@ public class MoPubCustomEventNative extends CustomEventNative {
         }
 
         final MoPubStaticNativeAd moPubStaticNativeAd =
-                new MoPubStaticNativeAd(context,
+                new MoPubStaticNativeAd(activity,
                         (JSONObject) json,
-                        new ImpressionTracker(context),
-                        new NativeClickHandler(context),
+                        new ImpressionTracker(activity),
+                        new NativeClickHandler(activity),
                         customEventNativeListener);
 
         try {
@@ -182,6 +183,9 @@ public class MoPubCustomEventNative extends CustomEventNative {
                     case CLICK_DESTINATION:
                         setClickDestinationUrl((String) value);
                         break;
+                    case CLICK_TRACKER:
+                        parseClickTrackers(value);
+                        break;
                     case CALL_TO_ACTION:
                         setCallToAction((String) value);
                         break;
@@ -207,19 +211,11 @@ public class MoPubCustomEventNative extends CustomEventNative {
             }
         }
 
-        private void addImpressionTrackers(final Object impressionTrackers) throws ClassCastException {
-            if (!(impressionTrackers instanceof JSONArray)) {
-                throw new ClassCastException("Expected impression trackers of type JSONArray.");
-            }
-
-            final JSONArray trackers = (JSONArray) impressionTrackers;
-            for (int i = 0; i < trackers.length(); i++) {
-                try {
-                    addImpressionTracker(trackers.getString(i));
-                } catch (JSONException e) {
-                    // This will only occur if we access a non-existent index in JSONArray.
-                    MoPubLog.d("Unable to parse impression trackers.");
-                }
+        private void parseClickTrackers(@NonNull final Object clickTrackers) {
+            if (clickTrackers instanceof JSONArray) {
+                addClickTrackers(clickTrackers);
+            } else {
+                addClickTracker((String) clickTrackers);
             }
         }
 

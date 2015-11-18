@@ -1,5 +1,6 @@
 package com.mopub.nativeads;
 
+import android.app.Activity;
 import android.content.Context;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -7,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -15,14 +17,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.robolectric.annotation.Config;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import static com.mopub.nativeads.MoPubRecyclerAdapter.ContentChangeStrategy.INSERT_AT_END;
 import static com.mopub.nativeads.MoPubRecyclerAdapter.ContentChangeStrategy.KEEP_ADS_FIXED;
-import static com.mopub.nativeads.MoPubRecyclerAdapter.ContentChangeStrategy
-        .MOVE_ALL_ADS_WITH_CONTENT;
+import static com.mopub.nativeads.MoPubRecyclerAdapter.ContentChangeStrategy.MOVE_ALL_ADS_WITH_CONTENT;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -37,6 +39,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubRecyclerAdapterTest {
     private static final int AD_POSITION_1 = 1;
     private static final int AD_POSITION_7 = 7;
@@ -79,7 +82,8 @@ public class MoPubRecyclerAdapterTest {
         when(mockStreamAdPlacer.getAdData(AD_POSITION_7)).thenReturn(mMockNativeAd2);
         when(mockStreamAdPlacer.getAdRendererForViewType(MoPubRecyclerAdapter.NATIVE_AD_VIEW_TYPE_BASE))
                 .thenReturn(mockAdRenderer);
-        when(mockAdRenderer.createAdView(any(Context.class), any(ViewGroup.class))).thenReturn(mockAdView);
+        when(mockAdRenderer.createAdView(any(Activity.class), any(ViewGroup.class)))
+                .thenReturn(mockAdView);
 
         when(mockStreamAdPlacer.isAd(anyInt())).thenAnswer(new Answer<Boolean>() {
             @Override

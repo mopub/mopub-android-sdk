@@ -3,12 +3,12 @@ package com.mopub.nativeads;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Build.VERSION_CODES;
 
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.DownloadResponse;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubClientPositioning;
 import com.mopub.nativeads.PositioningSource.PositioningListener;
@@ -44,6 +44,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class ServerPositioningSourceTest {
     @Mock PositioningListener mockPositioningListener;
     @Captor ArgumentCaptor<PositioningRequest> positionRequestCaptor;
@@ -64,8 +65,6 @@ public class ServerPositioningSourceTest {
     public void setUp() {
         Activity activity = Robolectric.buildActivity(Activity.class).create().get();
         spyActivity = spy(activity);
-
-
 
         subject = new ServerPositioningSource(spyActivity);
         setupClientMetadata();
@@ -146,22 +145,21 @@ public class ServerPositioningSourceTest {
         verify(mockPositioningListener).onLoad(eq(response));
     }
 
-    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void loadPositions_thenComplete_withErrorResponse_shouldRetry() throws Exception {
         subject.loadPositions("test_ad_unit", mockPositioningListener);
 
         verify(mockRequestQueue).add(positionRequestCaptor.capture());
         reset(mockRequestQueue);
+
         // We get VolleyErrors for invalid JSON, 404s, 5xx, and {"error": "WARMING_UP"}
         positionRequestCaptor.getValue().deliverError(new VolleyError("Some test error"));
 
-        Robolectric.getUiThreadScheduler().advanceToLastPostedRunnable();
+        Robolectric.getForegroundThreadScheduler().advanceToLastPostedRunnable();
         verify(mockRequestQueue).add(any(Request.class));
     }
 
 
-    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void loadPositions_withPendingRetry_shouldNotRetry() {
         subject.loadPositions("test_ad_unit", mockPositioningListener);
@@ -171,7 +169,7 @@ public class ServerPositioningSourceTest {
         positionRequestCaptor.getValue().deliverError(new VolleyError("testError"));
 
         subject.loadPositions("test_ad_unit", mockPositioningListener);
-        Robolectric.getUiThreadScheduler().advanceToLastPostedRunnable();
+        Robolectric.getForegroundThreadScheduler().advanceToLastPostedRunnable();
         // If a retry happened, we'd have two here.
         verify(mockRequestQueue).add(any(Request.class));
     }

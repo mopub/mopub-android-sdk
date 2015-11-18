@@ -1,5 +1,6 @@
 package com.mopub.nativeads;
 
+import android.app.Activity;
 import android.content.Context;
 import android.view.View;
 
@@ -24,7 +25,7 @@ public class FacebookNative extends CustomEventNative {
 
     // CustomEventNative implementation
     @Override
-    protected void loadNativeAd(final Context context,
+    protected void loadNativeAd(final Activity activity,
             final CustomEventNativeListener customEventNativeListener,
             final Map<String, Object> localExtras,
             final Map<String, String> serverExtras) {
@@ -38,8 +39,8 @@ public class FacebookNative extends CustomEventNative {
         }
 
         final FacebookStaticNativeAd facebookStaticNativeAd =
-                new FacebookStaticNativeAd(context,
-                        new NativeAd(context, placementId), customEventNativeListener);
+                new FacebookStaticNativeAd(activity,
+                        new NativeAd(activity, placementId), customEventNativeListener);
         facebookStaticNativeAd.loadAd();
     }
 

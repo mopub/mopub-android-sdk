@@ -16,6 +16,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.robolectric.Robolectric;
+import org.robolectric.RuntimeEnvironment;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import static com.mopub.mobileads.MoPubErrorCode.UNSPECIFIED;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -30,6 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class HtmlWebViewClientTest {
 
     private static final String CLICKTHROUGH_URL = "http://clickthrough";
@@ -88,13 +92,13 @@ public class HtmlWebViewClientTest {
         String customUrl = "myintent://something";
         stub(htmlWebView.wasClicked()).toReturn(true);
         subject = new HtmlWebViewClient(htmlWebViewListener, htmlWebView, null, null);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(customUrl)), new ResolveInfo());
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(customUrl)), new ResolveInfo());
 
         boolean didOverrideUrl = subject.shouldOverrideUrlLoading(htmlWebView, customUrl);
 
         assertThat(didOverrideUrl).isTrue();
         verify(htmlWebViewListener).onClicked();
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent).isNotNull();
     }
 
@@ -109,7 +113,7 @@ public class HtmlWebViewClientTest {
         assertThat(didOverrideUrl).isTrue();
         verify(htmlWebViewListener, never()).onClicked();
         verify(htmlWebView, never()).onResetUserClick();
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -123,7 +127,7 @@ public class HtmlWebViewClientTest {
         assertThat(didOverrideUrl).isTrue();
         verify(htmlWebViewListener, never()).onClicked();
         verify(htmlWebView, never()).onResetUserClick();
-        Intent startedIntent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedIntent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedIntent).isNull();
     }
 
@@ -137,7 +141,7 @@ public class HtmlWebViewClientTest {
         assertThat(didOverrideUrl).isTrue();
         verify(htmlWebViewListener).onClicked();
 
-        Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName()).isEqualTo("com.mopub.common.MoPubBrowser");
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(validUrl);
         assertThat(startedActivity.getData()).isNull();
@@ -153,7 +157,7 @@ public class HtmlWebViewClientTest {
         assertThat(didOverrideUrl).isTrue();
         verify(htmlWebViewListener, never()).onClicked();
         verify(htmlWebView, never()).onResetUserClick();
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -163,7 +167,7 @@ public class HtmlWebViewClientTest {
 
         subject.shouldOverrideUrlLoading(htmlWebView, validUrl);
 
-        Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(validUrl);
     }
 
@@ -174,7 +178,7 @@ public class HtmlWebViewClientTest {
 
         subject.shouldOverrideUrlLoading(htmlWebView, validUrl);
 
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -184,7 +188,7 @@ public class HtmlWebViewClientTest {
 
         subject.shouldOverrideUrlLoading(htmlWebView, "");
 
-        Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedActivity).isNull();
     }
 
@@ -195,7 +199,7 @@ public class HtmlWebViewClientTest {
 
         subject.shouldOverrideUrlLoading(htmlWebView, "");
 
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -209,7 +213,7 @@ public class HtmlWebViewClientTest {
         assertThat(shouldOverrideUrl).isTrue();
         verify(htmlWebViewListener).onClicked();
         verify(htmlWebView).onResetUserClick();
-        Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedActivity.getAction()).isEqualTo("android.intent.action.VIEW");
         assertThat(startedActivity.getData().toString()).isEqualTo("http://www.mopub.com");
     }
@@ -225,7 +229,7 @@ public class HtmlWebViewClientTest {
         assertThat(shouldOverrideUrl).isTrue();
         verify(htmlWebViewListener, never()).onClicked();
         verify(htmlWebView, never()).onResetUserClick();
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -239,7 +243,7 @@ public class HtmlWebViewClientTest {
         assertThat(shouldOverrideUrl).isTrue();
         verify(htmlWebViewListener, never()).onClicked();
         verify(htmlWebView, never()).onResetUserClick();
-        Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedActivity).isNull();
     }
 
@@ -255,7 +259,7 @@ public class HtmlWebViewClientTest {
         verify(htmlWebViewListener, never()).onClicked();
         verify(htmlWebView, never()).onResetUserClick();
 
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -266,7 +270,7 @@ public class HtmlWebViewClientTest {
         boolean shouldOverrideUrl = subject.shouldOverrideUrlLoading(htmlWebView, "something://blah?url=invalid");
 
         assertThat(shouldOverrideUrl).isTrue();
-        Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedActivity).isNull();
 
         verify(htmlWebViewListener, never()).onClicked();
@@ -283,7 +287,7 @@ public class HtmlWebViewClientTest {
         assertThat(shouldOverrideUrl).isTrue();
         verify(htmlWebViewListener, never()).onClicked();
         verify(htmlWebView, never()).onResetUserClick();
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -292,7 +296,7 @@ public class HtmlWebViewClientTest {
 
         subject.shouldOverrideUrlLoading(htmlWebView, "about:blank");
 
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
         verify(htmlWebViewListener, never()).onClicked();
         verify(htmlWebView, never()).onResetUserClick();
     }
@@ -352,7 +356,7 @@ public class HtmlWebViewClientTest {
 
         verify(view).stopLoading();
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(url);
         assertThat(intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0);
         assertThat(intent.getComponent().getClassName()).isEqualTo("com.mopub.common.MoPubBrowser");
@@ -368,7 +372,7 @@ public class HtmlWebViewClientTest {
 
         verify(view).stopLoading();
 
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -380,7 +384,7 @@ public class HtmlWebViewClientTest {
 
         verify(view).stopLoading();
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(url);
         assertThat(intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0);
         assertThat(intent.getComponent().getClassName()).isEqualTo("com.mopub.common.MoPubBrowser");
@@ -395,7 +399,7 @@ public class HtmlWebViewClientTest {
 
         verify(view).stopLoading();
 
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -429,7 +433,7 @@ public class HtmlWebViewClientTest {
 
         verify(view, never()).stopLoading();
 
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     private void assertPhoneUrlStartedCorrectIntent(String url) {
@@ -437,7 +441,7 @@ public class HtmlWebViewClientTest {
 
         stub(htmlWebView.wasClicked()).toReturn(true);
         didOverrideUrl = subject.shouldOverrideUrlLoading(htmlWebView, url);
-        Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedActivity.getAction()).isEqualTo(Intent.ACTION_VIEW);
         assertThat(startedActivity.getData().toString()).isEqualTo(url);
         assertThat(didOverrideUrl).isTrue();
@@ -448,7 +452,7 @@ public class HtmlWebViewClientTest {
 
         stub(htmlWebView.wasClicked()).toReturn(false);
         didOverrideUrl = subject.shouldOverrideUrlLoading(htmlWebView, url);
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
         assertThat(didOverrideUrl).isTrue();
         verify(htmlWebViewListener, never()).onClicked();
         verify(htmlWebView, never()).onResetUserClick();
@@ -463,7 +467,7 @@ public class HtmlWebViewClientTest {
 
         verify(htmlWebViewListener, never()).onClicked();
         verify(htmlWebView, never()).onResetUserClick();
-        Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedActivity).isNull();
     }
 }

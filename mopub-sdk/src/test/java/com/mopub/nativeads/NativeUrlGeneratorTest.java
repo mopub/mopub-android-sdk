@@ -26,6 +26,8 @@ import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLocationManager;
 
@@ -41,11 +43,9 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.robolectric.Robolectric.application;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
-@Config(shadows = {MoPubShadowTelephonyManager.class})
+@Config(constants = BuildConfig.class, shadows = {MoPubShadowTelephonyManager.class})
 public class NativeUrlGeneratorTest {
     public static final String AD_UNIT_ID = "1234";
     private static final int TEST_SCREEN_WIDTH = 999;
@@ -59,10 +59,10 @@ public class NativeUrlGeneratorTest {
     public void setup() {
         Networking.useHttps(false);
         context = spy(Robolectric.buildActivity(Activity.class).create().get());
-        shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
+        Shadows.shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
         when(context.getPackageName()).thenReturn("testBundle");
         shadowTelephonyManager = (MoPubShadowTelephonyManager)
-                shadowOf((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE));
+                Shadows.shadowOf((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE));
 
         // Set the expected screen dimensions to arbitrary numbers
         final Resources spyResources = spy(context.getResources());
@@ -191,8 +191,8 @@ public class NativeUrlGeneratorTest {
 
         // Mock out the LocationManager's last known location to be more recent than the
         // developer-supplied location.
-        ShadowLocationManager shadowLocationManager = Robolectric.shadowOf(
-                (LocationManager) application.getSystemService(Context.LOCATION_SERVICE));
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
         Location locationFromSdk = new Location("");
         locationFromSdk.setLatitude(37);
         locationFromSdk.setLongitude(-122);
@@ -222,8 +222,8 @@ public class NativeUrlGeneratorTest {
         locationFromDeveloper.setAccuracy(3.5f);
         locationFromDeveloper.setTime(System.currentTimeMillis() - 777777);
 
-        ShadowLocationManager shadowLocationManager = Robolectric.shadowOf(
-                (LocationManager) application.getSystemService(Context.LOCATION_SERVICE));
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
 
         // Mock out the LocationManager's last known location to be older than the
         // developer-supplied location.
@@ -258,8 +258,8 @@ public class NativeUrlGeneratorTest {
 
         // Mock out the LocationManager's last known location to be more recent than the
         // developer-supplied location.
-        ShadowLocationManager shadowLocationManager = Robolectric.shadowOf(
-                (LocationManager) application.getSystemService(Context.LOCATION_SERVICE));
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
         Location locationFromSdk = new Location("");
         locationFromSdk.setLatitude(38);
         locationFromSdk.setLongitude(-123);
@@ -329,8 +329,8 @@ public class NativeUrlGeneratorTest {
         subject = new NativeUrlGenerator(context);
 
         // Mock out the LocationManager's last known location.
-        ShadowLocationManager shadowLocationManager = Robolectric.shadowOf(
-                (LocationManager) application.getSystemService(Context.LOCATION_SERVICE));
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
         Location locationFromSdk = new Location("");
         locationFromSdk.setLatitude(37);
         locationFromSdk.setLongitude(-122);

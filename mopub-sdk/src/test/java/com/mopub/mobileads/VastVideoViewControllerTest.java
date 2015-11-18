@@ -21,6 +21,7 @@ import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.VideoView;
 
+import com.mopub.TestSdkHelper;
 import com.mopub.common.MoPubBrowser;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.DeviceUtils.ForceOrientation;
@@ -40,14 +41,18 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
+import org.robolectric.internal.ShadowExtractor;
+import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowImageView;
-import org.robolectric.shadows.ShadowLocalBroadcastManager;
 import org.robolectric.shadows.ShadowRelativeLayout;
 import org.robolectric.shadows.ShadowTextView;
 import org.robolectric.shadows.ShadowVideoView;
-import org.robolectric.tester.org.apache.http.RequestMatcher;
-import org.robolectric.tester.org.apache.http.TestHttpResponse;
+import org.robolectric.shadows.httpclient.FakeHttp;
+import org.robolectric.shadows.httpclient.RequestMatcher;
+import org.robolectric.shadows.httpclient.TestHttpResponse;
+import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
 
 import java.io.File;
 import java.util.Arrays;
@@ -56,7 +61,6 @@ import java.util.Collections;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
-import static com.mopub.common.util.ResponseHeader.USER_AGENT;
 import static com.mopub.mobileads.BaseVideoViewController.BaseVideoViewControllerListener;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_FAIL;
@@ -86,11 +90,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.robolectric.Robolectric.shadowOf;
-import static org.robolectric.Robolectric.shadowOf_;
 
 @RunWith(SdkTestRunner.class)
-@Config(shadows = {ShadowVastVideoView.class})
+@Config(constants = BuildConfig.class, shadows = {ShadowVastVideoView.class})
 public class VastVideoViewControllerTest {
     public static final int NETWORK_DELAY = 100;
 
@@ -206,12 +208,12 @@ public class VastVideoViewControllerTest {
 
         expectedBrowserRequestCode = 1;
 
-        Robolectric.getUiThreadScheduler().pause();
-        Robolectric.getBackgroundScheduler().pause();
-        Robolectric.clearPendingHttpResponses();
+        Robolectric.getForegroundThreadScheduler().pause();
+        Robolectric.getBackgroundThreadScheduler().pause();
+        FakeHttp.clearPendingHttpResponses();
 
         // Used to give responses to Vast Download Tasks.
-        Robolectric.addHttpResponseRule(new RequestMatcher() {
+        FakeHttp.addHttpResponseRule(new RequestMatcher() {
             @Override
             public boolean matches(HttpRequest request) {
                 return true;
@@ -225,8 +227,8 @@ public class VastVideoViewControllerTest {
 
     @After
     public void tearDown() throws Exception {
-        Robolectric.getUiThreadScheduler().reset();
-        Robolectric.getBackgroundScheduler().reset();
+        Robolectric.getForegroundThreadScheduler().reset();
+        Robolectric.getBackgroundThreadScheduler().reset();
 
         ShadowLocalBroadcastManager.getInstance(context).unregisterReceiver(broadcastReceiver);
     }
@@ -238,7 +240,7 @@ public class VastVideoViewControllerTest {
         VastVideoCtaButtonWidget ctaButtonWidget = subject.getCtaButtonWidget();
         assertThat(ctaButtonWidget.getParent()).isEqualTo(subject.getLayout());
         assertThat(ctaButtonWidget.getVisibility()).isEqualTo(View.INVISIBLE);
-        ShadowImageView ctaButtonWidgetShadow = shadowOf(ctaButtonWidget);
+        ShadowImageView ctaButtonWidgetShadow = Shadows.shadowOf(ctaButtonWidget);
         assertThat(ctaButtonWidgetShadow.getOnTouchListener()).isNotNull();
         assertThat(ctaButtonWidgetShadow.getOnTouchListener()).isEqualTo(
                 getShadowVideoView().getOnTouchListener());
@@ -251,7 +253,7 @@ public class VastVideoViewControllerTest {
         VastVideoProgressBarWidget progressBarWidget = subject.getProgressBarWidget();
         assertThat(progressBarWidget.getParent()).isEqualTo(subject.getLayout());
         assertThat(progressBarWidget.getVisibility()).isEqualTo(View.INVISIBLE);
-        ShadowImageView progressBarWidgetShadow = shadowOf(progressBarWidget);
+        ShadowImageView progressBarWidgetShadow = Shadows.shadowOf(progressBarWidget);
         assertThat(progressBarWidgetShadow.getOnTouchListener()).isNull();
     }
 
@@ -262,7 +264,7 @@ public class VastVideoViewControllerTest {
         VastVideoRadialCountdownWidget radialCountdownWidget = subject.getRadialCountdownWidget();
         assertThat(radialCountdownWidget.getParent()).isEqualTo(subject.getLayout());
         assertThat(radialCountdownWidget.getVisibility()).isEqualTo(View.INVISIBLE);
-        ShadowImageView radialCountdownWidgetShadow = shadowOf(radialCountdownWidget);
+        ShadowImageView radialCountdownWidgetShadow = Shadows.shadowOf(radialCountdownWidget);
         assertThat(radialCountdownWidgetShadow.getOnTouchListener()).isNull();
     }
 
@@ -274,13 +276,13 @@ public class VastVideoViewControllerTest {
         assertThat(closeButtonWidget.getParent()).isEqualTo(subject.getLayout());
         assertThat(closeButtonWidget.getVisibility()).isEqualTo(View.GONE);
 
-        ShadowRelativeLayout closeButtonWidgetShadow = (ShadowRelativeLayout) shadowOf(closeButtonWidget);
+        ShadowRelativeLayout closeButtonWidgetShadow = (ShadowRelativeLayout) Shadows.shadowOf(closeButtonWidget);
         assertThat(closeButtonWidgetShadow.getOnTouchListener()).isNull();
 
-        ShadowImageView closeButtonImageViewShadow = shadowOf(closeButtonWidget.getImageView());
+        ShadowImageView closeButtonImageViewShadow = Shadows.shadowOf(closeButtonWidget.getImageView());
         assertThat(closeButtonImageViewShadow.getOnTouchListener()).isNotNull();
 
-        ShadowTextView closeButtonTextViewShadow = shadowOf(closeButtonWidget.getTextView());
+        ShadowTextView closeButtonTextViewShadow = Shadows.shadowOf(closeButtonWidget.getTextView());
         assertThat(closeButtonTextViewShadow.getOnTouchListener()).isNotNull();
     }
 
@@ -291,7 +293,7 @@ public class VastVideoViewControllerTest {
         VastVideoGradientStripWidget topGradientStripWidget = subject.getTopGradientStripWidget();
         assertThat(topGradientStripWidget.getParent()).isEqualTo(subject.getLayout());
 
-        ShadowImageView topGradientStripWidgetShadow = shadowOf(topGradientStripWidget);
+        ShadowImageView topGradientStripWidgetShadow = Shadows.shadowOf(topGradientStripWidget);
         assertThat(topGradientStripWidgetShadow.getOnTouchListener()).isNull();
     }
 
@@ -302,7 +304,7 @@ public class VastVideoViewControllerTest {
         VastVideoGradientStripWidget bottomGradientStripWidget = subject.getBottomGradientStripWidget();
         assertThat(bottomGradientStripWidget.getParent()).isEqualTo(subject.getLayout());
 
-        ShadowImageView bottomGradientStripWidgetShadow = shadowOf(bottomGradientStripWidget);
+        ShadowImageView bottomGradientStripWidgetShadow = Shadows.shadowOf(bottomGradientStripWidget);
         assertThat(bottomGradientStripWidgetShadow.getOnTouchListener()).isNull();
     }
 
@@ -313,14 +315,14 @@ public class VastVideoViewControllerTest {
         ImageView blurredLastVideoFrameImageView = subject.getBlurredLastVideoFrameImageView();
         assertThat(blurredLastVideoFrameImageView.getParent()).isEqualTo(subject.getLayout());
         assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.INVISIBLE);
-        ShadowImageView blurredLastVideoFrameImageViewShadow = shadowOf(blurredLastVideoFrameImageView);
+        ShadowImageView blurredLastVideoFrameImageViewShadow = Shadows.shadowOf(blurredLastVideoFrameImageView);
         assertThat(blurredLastVideoFrameImageViewShadow.getOnTouchListener()).isNull();
     }
 
     @Test
     public void constructor_shouldSetVideoListenersAndVideoPath() throws Exception {
         initializeSubject();
-        ShadowVideoView videoView = shadowOf(subject.getVideoView());
+        ShadowVideoView videoView = Shadows.shadowOf(subject.getVideoView());
 
         assertThat(videoView.getOnCompletionListener()).isNotNull();
         assertThat(videoView.getOnErrorListener()).isNotNull();
@@ -504,7 +506,7 @@ public class VastVideoViewControllerTest {
 
         initializeSubject();
 
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
         subject.onCreate();
         verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
     }
@@ -618,7 +620,7 @@ public class VastVideoViewControllerTest {
         initializeSubject();
 
         subject.onDestroy();
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
     }
@@ -716,11 +718,11 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(0, 0));
 
-        Intent nextStartedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent nextStartedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(nextStartedActivity).isNull();
     }
 
@@ -733,12 +735,12 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(0, 0));
 
-        Robolectric.runBackgroundTasks();
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo(MoPubBrowser.class.getName());
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(
@@ -756,11 +758,11 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(0, 0));
 
-        Intent nextStartedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent nextStartedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(nextStartedActivity).isNull();
     }
 
@@ -773,12 +775,12 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(0, 0));
 
-        Robolectric.runBackgroundTasks();
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo(MoPubBrowser.class.getName());
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(
@@ -825,7 +827,7 @@ public class VastVideoViewControllerTest {
         subject.setCloseButtonVisible(false);
 
         getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(0, 0));
-        assertThat(Robolectric.httpRequestWasMade()).isFalse();
+        assertThat(FakeHttp.httpRequestWasMade()).isFalse();
     }
 
     @Test
@@ -1113,9 +1115,10 @@ public class VastVideoViewControllerTest {
         verify(progressBarWidgetSpy).calibrateAndMakeVisible(10000, 5000);
     }
 
-    @Config(reportSdk = VERSION_CODES.GINGERBREAD)
     @Test
     public void onPrepared_beforeGingerbreadMr1_shouldNotSetBlurredLastVideoFrame() throws Exception {
+
+        TestSdkHelper.setReportedSdkLevel(VERSION_CODES.GINGERBREAD);
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
@@ -1123,19 +1126,19 @@ public class VastVideoViewControllerTest {
         initializeSubject();
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
-        Robolectric.getBackgroundScheduler().unPause();
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
         Thread.sleep(NETWORK_DELAY);
 
         assertThat(subject.getBlurredLastVideoFrameImageView().getDrawable()).isNull();
 
-        ShadowImageView imageView = shadowOf(subject.getBlurredLastVideoFrameImageView());
+        ShadowImageView imageView = Shadows.shadowOf(subject.getBlurredLastVideoFrameImageView());
         assertThat(imageView.getOnTouchListener()).isNull();
     }
 
-    @Config(reportSdk = VERSION_CODES.GINGERBREAD_MR1)
     @Test
     public void onPrepared_atLeastGingerbreadMr1_shouldSetBlurredLastVideoFrame() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(VERSION_CODES.GINGERBREAD_MR1);
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
@@ -1143,8 +1146,8 @@ public class VastVideoViewControllerTest {
         initializeSubject();
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
-        Robolectric.getBackgroundScheduler().unPause();
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
         Thread.sleep(NETWORK_DELAY);
 
         final ImageView blurredLastVideoFrameImageView = subject.getBlurredLastVideoFrameImageView();
@@ -1152,7 +1155,7 @@ public class VastVideoViewControllerTest {
         assertThat(
                 ((BitmapDrawable) blurredLastVideoFrameImageView.getDrawable()).getBitmap()).isNotNull();
 
-        ShadowImageView imageView = shadowOf(subject.getBlurredLastVideoFrameImageView());
+        ShadowImageView imageView = Shadows.shadowOf(subject.getBlurredLastVideoFrameImageView());
         assertThat(imageView.getOnTouchListener()).isNull();
     }
 
@@ -1272,8 +1275,8 @@ public class VastVideoViewControllerTest {
         assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.INVISIBLE);
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
-        Robolectric.getBackgroundScheduler().unPause();
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
         Thread.sleep(NETWORK_DELAY);
 
         getShadowVideoView().getOnCompletionListener().onCompletion(null);
@@ -1292,8 +1295,8 @@ public class VastVideoViewControllerTest {
         final VastVideoGradientStripWidget bottomGradientStripWidget = subject.getBottomGradientStripWidget();
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
-        Robolectric.getBackgroundScheduler().unPause();
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
         Thread.sleep(NETWORK_DELAY);
 
         getShadowVideoView().getOnCompletionListener().onCompletion(null);
@@ -1319,8 +1322,8 @@ public class VastVideoViewControllerTest {
         assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.INVISIBLE);
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
-        Robolectric.getBackgroundScheduler().unPause();
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
         Thread.sleep(NETWORK_DELAY);
 
         getShadowVideoView().getOnCompletionListener().onCompletion(null);
@@ -1347,8 +1350,8 @@ public class VastVideoViewControllerTest {
         final VastVideoGradientStripWidget bottomGradientStripWidget = subject.getBottomGradientStripWidget();
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
-        Robolectric.getBackgroundScheduler().unPause();
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
         Thread.sleep(NETWORK_DELAY);
 
         getShadowVideoView().getOnCompletionListener().onCompletion(null);
@@ -1410,7 +1413,7 @@ public class VastVideoViewControllerTest {
         Intent expectedIntent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_FAIL, testBroadcastIdentifier);
 
         boolean result = getShadowVideoView().getOnErrorListener().onError(null, 0, 0);
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         assertThat(result).isFalse();
         verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
@@ -1431,11 +1434,16 @@ public class VastVideoViewControllerTest {
         verify(spyCountdownRunnable).stop();
     }
 
-    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
+
     @Test
+    @Config(shadows = {MoPubShadowMediaPlayer.class})
     public void onError_withVideoFilePermissionErrorBelowJellyBean_shouldRetryPlayingTheVideo() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(VERSION_CODES.ICE_CREAM_SANDWICH);
+
         File file = new File("disk_video_path");
         file.createNewFile();
+
+        // ShadowMediaPlayer setup needed to
 
         initializeSubject();
 
@@ -1443,6 +1451,9 @@ public class VastVideoViewControllerTest {
 
         assertThat(subject.getVastVideoView().getVideoRetries()).isEqualTo(0);
         getShadowVideoView().getOnErrorListener().onError(new MediaPlayer(), 1, Integer.MIN_VALUE);
+
+        // Robo 3.0 introduces a requirement that ShadowMediaPlayer be set up with MediaInfo for a data source.
+        // Because we generate a file descriptor datasource at runtime, we can't set it up easily in this test.
 
         assertThat(getShadowVideoView().isPlaying()).isTrue();
         assertThat(subject.getVastVideoView().getVideoRetries()).isEqualTo(1);
@@ -1513,7 +1524,7 @@ public class VastVideoViewControllerTest {
         subject.onResume();
 
         // this runs the videoProgressChecker and countdown runnable
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         verify(mockRequestQueue).add(
                 argThat(isUrl("first?errorcode=&asseturi=video_url&contentplayhead=00:00:09.002")));
@@ -1534,11 +1545,12 @@ public class VastVideoViewControllerTest {
         setVideoViewParams(0, 100);
 
         subject.onResume();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(2);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(2);
+        Robolectric.getForegroundThreadScheduler().runOneTask();
+        Robolectric.getForegroundThreadScheduler().runOneTask();
 
-        Robolectric.getUiThreadScheduler().runTasks(2);
         // make sure the repeated task hasn't run yet
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(2);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(2);
         verifyZeroInteractions(mockRequestQueue);
     }
 
@@ -1555,18 +1567,20 @@ public class VastVideoViewControllerTest {
         setVideoViewParams(1999, 100000);
         subject.onResume();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(2);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(2);
 
-        Robolectric.getUiThreadScheduler().runTasks(2);
+        Robolectric.getForegroundThreadScheduler().runOneTask();
+        Robolectric.getForegroundThreadScheduler().runOneTask();
         // make sure the repeated task hasn't run yet
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(2);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(2);
 
         // Since it has not yet been a second, we expect that the start tracker has not been fired
         verifyZeroInteractions(mockRequestQueue);
 
         // run checker another time
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(2);
-        Robolectric.getUiThreadScheduler().runTasks(2);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(2);
+        Robolectric.getForegroundThreadScheduler().runOneTask();
+        Robolectric.getForegroundThreadScheduler().runOneTask();
 
         verifyZeroInteractions(mockRequestQueue);
     }
@@ -1586,16 +1600,17 @@ public class VastVideoViewControllerTest {
         spyOnVideoView();
         setVideoViewParams(2000, 100000);
         subject.onResume();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(2);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(2);
 
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         verify(mockRequestQueue).add(
                 argThat(isUrl("start?errorcode=&asseturi=video_url&contentplayhead=00:00:02.000")));
 
         // run checker another time
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(2);
-        Robolectric.getUiThreadScheduler().runTasks(2);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(2);
+        Robolectric.getForegroundThreadScheduler().runOneTask();
+        Robolectric.getForegroundThreadScheduler().runOneTask();
 
         verifyNoMoreInteractions(mockRequestQueue);
     }
@@ -1616,15 +1631,16 @@ public class VastVideoViewControllerTest {
         setVideoViewParams(26, 100);
         subject.onResume();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(2);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(2);
 
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         verify(mockRequestQueue).add(
                 argThat(isUrl("first?errorcode=&asseturi=video_url&contentplayhead=00:00:00.026")));
 
         // run checker another time
-        Robolectric.getUiThreadScheduler().runTasks(2);
+        Robolectric.getForegroundThreadScheduler().runOneTask();
+        Robolectric.getForegroundThreadScheduler().runOneTask();
 
         verifyNoMoreInteractions(mockRequestQueue);
     }
@@ -1646,16 +1662,17 @@ public class VastVideoViewControllerTest {
         setVideoViewParams(51, 100);
 
         subject.onResume();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(2);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(2);
 
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         verify(mockRequestQueue).add(
                 argThat(isUrl("first?errorcode=&asseturi=video_url&contentplayhead=00:00:00.051")));
         verify(mockRequestQueue).add(argThat(isUrl(
                 "second?errorcode=&asseturi=video_url&contentplayhead=00:00:00.051")));
 
-        Robolectric.getUiThreadScheduler().runTasks(2);
+        Robolectric.getForegroundThreadScheduler().runOneTask();
+        Robolectric.getForegroundThreadScheduler().runOneTask();
 
         verifyNoMoreInteractions(mockRequestQueue);
     }
@@ -1678,9 +1695,9 @@ public class VastVideoViewControllerTest {
         setVideoViewParams(76, 100);
 
         subject.onResume();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(2);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(2);
 
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         verify(mockRequestQueue).add(
                 argThat(isUrl("first?errorcode=&asseturi=video_url&contentplayhead=00:00:00.076")));
@@ -1689,7 +1706,8 @@ public class VastVideoViewControllerTest {
         verify(mockRequestQueue).add(
                 argThat(isUrl("third?errorcode=&asseturi=video_url&contentplayhead=00:00:00.076")));
 
-        Robolectric.getUiThreadScheduler().runTasks(2);
+        Robolectric.getForegroundThreadScheduler().runOneTask();
+        Robolectric.getForegroundThreadScheduler().runOneTask();
 
         verifyNoMoreInteractions(mockRequestQueue);
     }
@@ -1741,9 +1759,9 @@ public class VastVideoViewControllerTest {
 
     private void seekToAndAssertRequestsMade(int position, String... trackingUrls) {
         when(spyVideoView.getCurrentPosition()).thenReturn(position);
+        Robolectric.getForegroundThreadScheduler().advanceToLastPostedRunnable();
 
         for (String url : trackingUrls) {
-            Robolectric.getUiThreadScheduler().unPause();
             verify(mockRequestQueue).add(argThat(isUrl(url)));
         }
     }
@@ -1757,7 +1775,7 @@ public class VastVideoViewControllerTest {
         subject.onResume();
 
         assertThat(subject.isShowCloseButtonEventFired()).isFalse();
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         assertThat(subject.isShowCloseButtonEventFired()).isTrue();
     }
@@ -1781,7 +1799,7 @@ public class VastVideoViewControllerTest {
         assertThat(subject.getHasSkipOffset()).isTrue();
 
         assertThat(subject.isShowCloseButtonEventFired()).isFalse();
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         assertThat(subject.isShowCloseButtonEventFired()).isTrue();
     }
@@ -1804,7 +1822,7 @@ public class VastVideoViewControllerTest {
         assertThat(subject.getHasSkipOffset()).isTrue();
 
         assertThat(subject.isShowCloseButtonEventFired()).isFalse();
-        Robolectric.getUiThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
 
         assertThat(subject.isShowCloseButtonEventFired()).isFalse();
     }
@@ -2023,7 +2041,7 @@ public class VastVideoViewControllerTest {
         // We don't have direct access to the CloseButtonWidget icon's close event, so we manually
         // invoke its onTouchListener's onTouch callback with a fake MotionEvent.ACTION_UP action.
         View.OnTouchListener closeButtonImageViewOnTouchListener =
-                shadowOf(subject.getCloseButtonWidget().getImageView()).getOnTouchListener();
+                Shadows.shadowOf(subject.getCloseButtonWidget().getImageView()).getOnTouchListener();
         closeButtonImageViewOnTouchListener.onTouch(null, GestureUtils.createActionUp(0, 0));
 
         verify(mockRequestQueue).add(
@@ -2046,7 +2064,7 @@ public class VastVideoViewControllerTest {
         // We don't have direct access to the CloseButtonWidget text's close event, so we manually
         // invoke its onTouchListener's onTouch callback with a fake MotionEvent.ACTION_UP action.
         View.OnTouchListener closeButtonTextViewOnTouchListener =
-                shadowOf(subject.getCloseButtonWidget().getTextView()).getOnTouchListener();
+                Shadows.shadowOf(subject.getCloseButtonWidget().getTextView()).getOnTouchListener();
         closeButtonTextViewOnTouchListener.onTouch(null, GestureUtils.createActionUp(0, 0));
 
         verify(mockRequestQueue).add(
@@ -2177,6 +2195,6 @@ public class VastVideoViewControllerTest {
     }
 
     private ShadowVastVideoView getShadowVideoView() {
-        return (ShadowVastVideoView) shadowOf_(subject.getVastVideoView());
+        return (ShadowVastVideoView) ShadowExtractor.extract(subject.getVastVideoView());
     }
 }

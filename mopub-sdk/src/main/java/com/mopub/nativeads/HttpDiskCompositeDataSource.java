@@ -11,6 +11,7 @@ import com.google.android.exoplayer.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer.upstream.HttpDataSource;
 import com.mopub.common.CacheService;
 import com.mopub.common.Preconditions;
+import com.mopub.common.VisibleForTesting;
 import com.mopub.common.event.BaseEvent;
 import com.mopub.common.event.Event;
 import com.mopub.common.event.EventDetails;
@@ -22,8 +23,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.TreeSet;
 
 /**
  * This data source caches data on disk as it is read from an {@link HttpDataSource}. This expects
@@ -34,8 +34,8 @@ public class HttpDiskCompositeDataSource implements DataSource {
 
     // Keys are prefixed since URLs can end basically however they want, and key names could
     // potentially be part of the URL and get the cache confused.
-    private static final String INTERVALS_KEY_PREFIX = "intervals-";
-    private static final String EXPECTED_FILE_SIZE_KEY_PREFIX = "expectedsize-";
+    @VisibleForTesting static final String INTERVALS_KEY_PREFIX = "intervals-sorted-";
+    @VisibleForTesting static final String EXPECTED_FILE_SIZE_KEY_PREFIX = "expectedsize-";
 
     // These are used to serialize/deserialize the intervals list
     private static final String START = "start";
@@ -46,7 +46,7 @@ public class HttpDiskCompositeDataSource implements DataSource {
      * standard constant used in Exoplayer. This represents the constant that tells the HTTP
      * connection to get all remaining bytes available.
      */
-    private static final int LENGTH_UNBOUNDED = -1;
+    @VisibleForTesting static final int LENGTH_UNBOUNDED = -1;
 
     /**
      * HTTP response 416 means trying to request for bytes that the server does not have.
@@ -58,7 +58,7 @@ public class HttpDiskCompositeDataSource implements DataSource {
      * read request from the consumer of this class's read method. This also has to be reasonably
      * small to accommodate devices that don't have a lot of memory to work with.
      */
-    private static final int BLOCK_SIZE = 500 * 1024;
+    @VisibleForTesting static final int BLOCK_SIZE = 500 * 1024;
 
     /**
      * The network data source
@@ -76,10 +76,10 @@ public class HttpDiskCompositeDataSource implements DataSource {
     @Nullable private String mKey;
 
     /**
-     * This is the list of intervals that the cache thinks are valid. Intervals have a start and a
+     * This is the set of intervals that the cache thinks are valid. Intervals have a start and a
      * length.
      */
-    @NonNull private final List<IntInterval> mIntervals;
+    @NonNull private final TreeSet<IntInterval> mIntervals;
 
     /**
      * The absolute index of the first byte that is currently being requested.
@@ -134,12 +134,21 @@ public class HttpDiskCompositeDataSource implements DataSource {
     private boolean mHasLoggedDownloadStart;
 
     public HttpDiskCompositeDataSource(@NonNull final Context context,
-            @NonNull final String userAgent, @Nullable EventDetails eventDetails) {
-        mHttpDataSource = new DefaultHttpDataSource(userAgent, null, null,
-                DefaultHttpDataSource.DEFAULT_CONNECT_TIMEOUT_MILLIS,
-                DefaultHttpDataSource.DEFAULT_READ_TIMEOUT_MILLIS, false);
+            @NonNull final String userAgent, @Nullable final EventDetails eventDetails) {
+        this(context, userAgent, eventDetails,
+                new DefaultHttpDataSource(userAgent, null, null,
+                        DefaultHttpDataSource.DEFAULT_CONNECT_TIMEOUT_MILLIS,
+                        DefaultHttpDataSource.DEFAULT_READ_TIMEOUT_MILLIS,
+                        false));
+    }
+
+    @VisibleForTesting
+    HttpDiskCompositeDataSource(@NonNull final Context context,
+            @NonNull final String userAgent, @Nullable final EventDetails eventDetails,
+            @NonNull final HttpDataSource httpDataSource) {
+        mHttpDataSource = httpDataSource;
         CacheService.initialize(context);
-        mIntervals = new ArrayList<IntInterval>();
+        mIntervals = new TreeSet<IntInterval>();
         mEventDetails = eventDetails;
     }
 
@@ -230,7 +239,7 @@ public class HttpDiskCompositeDataSource implements DataSource {
     }
 
     private static void populateIntervalsFromDisk(@NonNull final String key,
-            @NonNull final List<IntInterval> intervals) {
+            @NonNull final TreeSet<IntInterval> intervals) {
         Preconditions.checkNotNull(key);
         Preconditions.checkNotNull(intervals);
 
@@ -258,7 +267,8 @@ public class HttpDiskCompositeDataSource implements DataSource {
     private static Integer getExpectedFileLengthFromDisk(@NonNull final String key) {
         Preconditions.checkNotNull(key);
 
-        byte[] maxSizeByteArray = CacheService.getFromDiskCache(EXPECTED_FILE_SIZE_KEY_PREFIX + key);
+        byte[] maxSizeByteArray = CacheService.getFromDiskCache(
+                EXPECTED_FILE_SIZE_KEY_PREFIX + key);
         if (maxSizeByteArray != null) {
             try {
                 return Integer.parseInt(new String(maxSizeByteArray));
@@ -273,7 +283,7 @@ public class HttpDiskCompositeDataSource implements DataSource {
     public void close() throws IOException {
         if (!TextUtils.isEmpty(mKey) && mCachedBytes != null) {
             CacheService.putToDiskCache(mSegment + mKey, mCachedBytes);
-            addNewInterval(mStartInFile, mDataBlockOffset);
+            addNewInterval(mIntervals, mStartInFile, mDataBlockOffset);
             writeIntervalsToDisk(mIntervals, mKey);
             if (mIsDirty && mExpectedFileLength != null && getFirstContiguousPointAfter(
                     0, mIntervals) == mExpectedFileLength) {
@@ -295,16 +305,17 @@ public class HttpDiskCompositeDataSource implements DataSource {
         mIsDirty = false;
     }
 
-    private static void writeIntervalsToDisk(@NonNull final List<IntInterval> intervals,
+    private static void writeIntervalsToDisk(@NonNull final TreeSet<IntInterval> intervals,
             @NonNull final String key) {
         Preconditions.checkNotNull(intervals);
         Preconditions.checkNotNull(key);
 
-        JSONArray jsonIntervals = new JSONArray();
+        final JSONArray jsonIntervals = new JSONArray();
         for (IntInterval interval : intervals) {
             jsonIntervals.put(interval);
         }
-        CacheService.putToDiskCache(INTERVALS_KEY_PREFIX + key, jsonIntervals.toString().getBytes());
+        CacheService.putToDiskCache(INTERVALS_KEY_PREFIX + key,
+                jsonIntervals.toString().getBytes());
     }
 
     @Override
@@ -342,7 +353,7 @@ public class HttpDiskCompositeDataSource implements DataSource {
                 System.arraycopy(mCachedBytes, mStartInDataBlock + mDataBlockOffset, buffer, offset,
                         bytesToRead);
                 mDataBlockOffset += bytesToRead;
-                return bytesToRead;
+                bytesReadFromDisk += bytesToRead;
             } else {
                 // Read all of the available bytes in the current block
                 System.arraycopy(mCachedBytes, mStartInDataBlock + mDataBlockOffset, buffer, offset,
@@ -364,8 +375,9 @@ public class HttpDiskCompositeDataSource implements DataSource {
                     mCachedBytes = new byte[BLOCK_SIZE];
                     mHttpDataSource.close();
 
-                    mHttpDataSource.open(new DataSpec(mDataSpec.uri, mStartInFile + mDataBlockOffset,
-                            LENGTH_UNBOUNDED, mDataSpec.key, mDataSpec.flags));
+                    mHttpDataSource.open(
+                            new DataSpec(mDataSpec.uri, mStartInFile + mDataBlockOffset,
+                                    LENGTH_UNBOUNDED, mDataSpec.key, mDataSpec.flags));
                     mIsHttpSourceOpen = true;
                 } else {
                     // If the data is available in the cache, read the remaining bytes into the
@@ -394,16 +406,17 @@ public class HttpDiskCompositeDataSource implements DataSource {
         }
 
         // Read from network and store to disk
-        int readAmount = mHttpDataSource.read(buffer, offset, bytesToReadFromNetwork);
+        int bytesReadFromNetwork = mHttpDataSource.read(buffer, offset + bytesReadFromDisk,
+                bytesToReadFromNetwork);
 
         final int bytesAvailableInCurrentBlockForNetwork =
                 BLOCK_SIZE - mStartInDataBlock - mDataBlockOffset;
-        if (bytesAvailableInCurrentBlockForNetwork < readAmount) {
+        if (bytesAvailableInCurrentBlockForNetwork < bytesReadFromNetwork) {
             // If there is not enough room in the current block, write up to the end of the current
             // block, set up a new segment (which may have data in the cache already), and write
             // the rest of the data.
-            System.arraycopy(buffer, offset, mCachedBytes, mStartInDataBlock + mDataBlockOffset,
-                    bytesAvailableInCurrentBlockForNetwork);
+            System.arraycopy(buffer, offset + bytesReadFromDisk, mCachedBytes,
+                    mStartInDataBlock + mDataBlockOffset, bytesAvailableInCurrentBlockForNetwork);
             mDataBlockOffset += bytesAvailableInCurrentBlockForNetwork;
 
             writeCacheToDiskAndClearVariables();
@@ -413,17 +426,18 @@ public class HttpDiskCompositeDataSource implements DataSource {
                 mCachedBytes = new byte[BLOCK_SIZE];
             }
 
-            System.arraycopy(buffer, offset + bytesAvailableInCurrentBlockForNetwork, mCachedBytes,
-                    mStartInDataBlock + mDataBlockOffset,
-                    readAmount - bytesAvailableInCurrentBlockForNetwork);
-            mDataBlockOffset += readAmount - bytesAvailableInCurrentBlockForNetwork;
+            System.arraycopy(buffer,
+                    offset + bytesAvailableInCurrentBlockForNetwork + bytesReadFromDisk,
+                    mCachedBytes, mStartInDataBlock + mDataBlockOffset,
+                    bytesReadFromNetwork - bytesAvailableInCurrentBlockForNetwork);
+            mDataBlockOffset += bytesReadFromNetwork - bytesAvailableInCurrentBlockForNetwork;
         } else {
-            System.arraycopy(buffer, offset, mCachedBytes, mStartInDataBlock + mDataBlockOffset,
-                    readAmount);
-            mDataBlockOffset += readAmount;
+            System.arraycopy(buffer, offset + bytesReadFromDisk, mCachedBytes,
+                    mStartInDataBlock + mDataBlockOffset, bytesReadFromNetwork);
+            mDataBlockOffset += bytesReadFromNetwork;
         }
 
-        return readAmount;
+        return bytesReadFromNetwork + bytesReadFromDisk;
     }
 
     private static boolean areBytesAvailableInCache(final int farthestContiguousPoint,
@@ -433,7 +447,7 @@ public class HttpDiskCompositeDataSource implements DataSource {
 
     private void writeCacheToDiskAndClearVariables() {
         CacheService.putToDiskCache(mSegment + mKey, mCachedBytes);
-        addNewInterval(mStartInFile, mDataBlockOffset);
+        addNewInterval(mIntervals, mStartInFile, mDataBlockOffset);
         mStartInDataBlock = 0;
         mStartInFile = mStartInFile + mDataBlockOffset;
         mDataBlockOffset = 0;
@@ -444,18 +458,16 @@ public class HttpDiskCompositeDataSource implements DataSource {
      * Gets the first contiguous point from disk that we have starting from the given point. If
      * there is no segment that contains this point, return that point.
      */
-    private static int getFirstContiguousPointAfter(int point,
-            @NonNull List<IntInterval> intervals) {
+    @VisibleForTesting
+    static int getFirstContiguousPointAfter(int point,
+            @NonNull final TreeSet<IntInterval> intervals) {
         Preconditions.checkNotNull(intervals);
 
         int lastContiguousPoint = point;
-        for (int i = 0; i < intervals.size(); i++) {
-            for (int j = 0; j < intervals.size(); j++) {
-                IntInterval interval = intervals.get(j);
-                if (interval.getStart() <= lastContiguousPoint) {
-                    lastContiguousPoint = Math.max(lastContiguousPoint,
-                            interval.getStart() + interval.getLength());
-                }
+        for (final IntInterval interval : intervals) {
+            if (interval.getStart() <= lastContiguousPoint) {
+                lastContiguousPoint = Math.max(lastContiguousPoint,
+                        interval.getStart() + interval.getLength());
             }
         }
         return lastContiguousPoint;
@@ -464,16 +476,18 @@ public class HttpDiskCompositeDataSource implements DataSource {
     /**
      * Adds the interval if the interval does not already exist.
      *
-     * @param start  The starting point of this interval
-     * @param length The length of this interval
+     * @param intervals The current set of intervals
+     * @param start     The starting point of this interval
+     * @param length    The length of this interval
      */
-    private void addNewInterval(int start, int length) {
-        for (int i = 0; i < mIntervals.size(); i++) {
-            final IntInterval existingInterval = mIntervals.get(i);
-            if (existingInterval.equals(start, length)) {
-                return;
-            }
+    @VisibleForTesting
+    static void addNewInterval(@NonNull final TreeSet<IntInterval> intervals, final int start,
+            final int length) {
+        Preconditions.checkNotNull(intervals);
+
+        if (getFirstContiguousPointAfter(start, intervals) >= start + length) {
+            return;
         }
-        mIntervals.add(new IntInterval(start, length));
+        intervals.add(new IntInterval(start, length));
     }
 }

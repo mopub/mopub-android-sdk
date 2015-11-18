@@ -12,6 +12,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastVideoConfigTest {
 
     @Mock MoPubRequestQueue mockRequestQueue;
@@ -147,8 +150,8 @@ public class VastVideoConfigTest {
     public void handleClickForResult_withNullClickThroughUrl_shouldNotOpenNewActivity() throws Exception {
         subject.handleClickForResult(activity, 1234, 1);
 
-        Robolectric.getUiThreadScheduler().unPause();
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        Robolectric.getForegroundThreadScheduler().unPause();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -161,9 +164,9 @@ public class VastVideoConfigTest {
 
         subject.handleClickForResult(activity, 2345, 1234);
 
-        Robolectric.getUiThreadScheduler().unPause();
-        Robolectric.runBackgroundTasks();
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Robolectric.getForegroundThreadScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getDataString()).isEqualTo("http://www.mopub.com/");
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
         verify(mockRequestQueue).add(argThat(isUrl("http://trackerone+content=00:00:02.345")));
@@ -181,9 +184,9 @@ public class VastVideoConfigTest {
 
         subject.handleClickWithoutResult(activity.getApplicationContext(), 2345);
 
-        Robolectric.getUiThreadScheduler().unPause();
-        Robolectric.runBackgroundTasks();
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Robolectric.getForegroundThreadScheduler().unPause();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getDataString()).isEqualTo("http://www.mopub.com/");
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
         verify(mockRequestQueue).add(argThat(isUrl("http://trackerone+content=00:00:02.345")));
@@ -199,7 +202,7 @@ public class VastVideoConfigTest {
 
         subject.handleClickForResult(activity, 3456, 1);
 
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -208,6 +211,6 @@ public class VastVideoConfigTest {
 
         subject.handleClickForResult(activity, 4567, 1);
 
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 }

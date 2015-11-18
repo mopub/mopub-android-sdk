@@ -16,6 +16,7 @@ import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.MediaCodecAudioTrackRenderer;
 import com.google.android.exoplayer.MediaCodecVideoTrackRenderer;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.VastTracker;
 import com.mopub.mobileads.VastVideoConfig;
 import com.mopub.nativeads.NativeVideoController.ExoPlayerFactory;
@@ -33,6 +34,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.util.ReflectionHelpers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +64,7 @@ import static org.mockito.Mockito.when;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class NativeVideoControllerTest {
 
     private NativeVideoController subject;
@@ -82,10 +86,9 @@ public class NativeVideoControllerTest {
 
     @Before
     public void setUp() {
-        Robolectric.Reflection.setFinalStaticField(
-                Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN);
         activity = Robolectric.buildActivity(Activity.class).create().get();
-
+        ReflectionHelpers.setStaticField(
+                Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN);
         visibilityTrackingEvents = new ArrayList<VisibilityTrackingEvent>();
 
         VisibilityTrackingEvent visibilityTrackingEvent = new VisibilityTrackingEvent();

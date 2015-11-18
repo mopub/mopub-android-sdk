@@ -425,6 +425,7 @@ public class AdViewController {
 
     void registerClick() {
         if (mAdResponse != null) {
+            // Click tracker fired from Banners and Interstitials
             TrackingRequest.makeTrackingHttpRequest(mAdResponse.getClickTrackingUrl(),
                     mContext, BaseEvent.Name.CLICK_REQUEST);
         }

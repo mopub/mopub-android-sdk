@@ -11,6 +11,7 @@ import android.webkit.WebViewClient;
 import com.mopub.common.AdReport;
 import com.mopub.common.Constants;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mraid.MraidBridge.MraidBridgeListener;
 import com.mopub.mraid.MraidBridge.MraidWebView;
 import com.mopub.mraid.MraidNativeCommandHandler.MraidCommandFailureListener;
@@ -24,6 +25,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -44,6 +46,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MraidBridgeTest {
     @Mock MraidNativeCommandHandler mockNativeCommandHandler;
     @Mock MraidBridgeListener mockBridgeListener;
@@ -69,7 +72,7 @@ public class MraidBridgeTest {
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-    @Config(reportSdk = Build.VERSION_CODES.JELLY_BEAN_MR1, emulateSdk = Build.VERSION_CODES.JELLY_BEAN_MR1)
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Test
     public void attachView_atLeastJellyBeanMr1_withInterstitial_shouldAutoPlayVideo() {
         when(mockInterstitialWebView.getSettings()).thenReturn(mockWebSettings);
@@ -80,7 +83,7 @@ public class MraidBridgeTest {
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-    @Config(reportSdk = Build.VERSION_CODES.JELLY_BEAN_MR1, emulateSdk = Build.VERSION_CODES.JELLY_BEAN_MR1)
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Test
     public void attachView_atLeastJellyBeanMr1_withInline_shouldNotAutoPlayVideo() {
         when(mockBannerWebView.getSettings()).thenReturn(mockWebSettings);
@@ -91,7 +94,7 @@ public class MraidBridgeTest {
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-    @Config(reportSdk = Build.VERSION_CODES.JELLY_BEAN, emulateSdk = Build.VERSION_CODES.JELLY_BEAN)
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
     @Test
     public void attachView_belowJellyBeanMr1_withInterstitial_shouldNotAutoPlayVideo() {
         when(mockInterstitialWebView.getSettings()).thenReturn(mockWebSettings);
@@ -105,7 +108,7 @@ public class MraidBridgeTest {
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-    @Config(reportSdk = Build.VERSION_CODES.JELLY_BEAN, emulateSdk = Build.VERSION_CODES.JELLY_BEAN)
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
     @Test
     public void attachView_belowJellyBeanMr1_withInline_shouldNotAutoPlayVideo() {
         when(mockBannerWebView.getSettings()).thenReturn(mockWebSettings);
@@ -219,7 +222,7 @@ public class MraidBridgeTest {
 
         boolean result = subjectBanner.handleShouldOverrideUrl("sms://123456789");
 
-        Intent startedIntent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedIntent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedIntent).isNotNull();
         assertThat(startedIntent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0);
         assertThat(startedIntent.getComponent()).isNull();

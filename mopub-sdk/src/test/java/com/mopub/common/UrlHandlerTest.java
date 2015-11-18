@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
 
@@ -16,6 +17,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.RuntimeEnvironment;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import static com.mopub.common.UrlAction.FOLLOW_DEEP_LINK;
 import static com.mopub.common.UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK;
@@ -35,6 +39,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class UrlHandlerTest {
     private Context context;
     @Mock private UrlHandler.ResultActions mockResultActions;
@@ -59,7 +64,7 @@ public class UrlHandlerTest {
 
         verify(mockResultActions).urlHandlingSucceeded(url, OPEN_IN_APP_BROWSER);
         verifyNoMoreCallbacks();
-        final Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedActivity).isNull();
     }
 
@@ -159,7 +164,7 @@ public class UrlHandlerTest {
                 .withMoPubSchemeListener(mockMoPubSchemeListener)
                 .build().handleResolvedUrl(context, url, true, null);
 
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getAction()).isEqualTo(Intent.ACTION_VIEW);
         assertThat(startedActivity.getData()).isEqualTo(Uri.parse(url));
     }
@@ -178,7 +183,7 @@ public class UrlHandlerTest {
 
         verify(mockResultActions).urlHandlingSucceeded(url, OPEN_NATIVE_BROWSER);
         verifyNoMoreCallbacks();
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getAction()).isEqualTo(Intent.ACTION_VIEW);
         assertThat(startedActivity.getData()).isEqualTo(Uri.parse(urlToLoad));
     }
@@ -196,7 +201,7 @@ public class UrlHandlerTest {
 
         verify(mockResultActions).urlHandlingSucceeded(url, OPEN_IN_APP_BROWSER);
         verifyNoMoreCallbacks();
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo(MoPubBrowser.class.getName());
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(url);
@@ -215,7 +220,7 @@ public class UrlHandlerTest {
 
         verify(mockResultActions).urlHandlingSucceeded(url, OPEN_IN_APP_BROWSER);
         verifyNoMoreCallbacks();
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo(MoPubBrowser.class.getName());
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(url);
@@ -232,7 +237,7 @@ public class UrlHandlerTest {
 
         verify(mockResultActions).urlHandlingSucceeded(shareTweetUrl, HANDLE_SHARE_TWEET);
         verifyNoMoreCallbacks();
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getAction()).isEqualTo(Intent.ACTION_CHOOSER);
     }
 
@@ -249,7 +254,7 @@ public class UrlHandlerTest {
 
         verify(mockResultActions).urlHandlingSucceeded(deepLinkUrl, FOLLOW_DEEP_LINK);
         verifyNoMoreCallbacks();
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getAction()).isEqualTo(Intent.ACTION_VIEW);
         assertThat(startedActivity.getData()).isEqualTo(Uri.parse(deepLinkUrl));
     }
@@ -267,7 +272,7 @@ public class UrlHandlerTest {
 
         verify(mockResultActions).urlHandlingSucceeded(deeplinkPlusUrl, FOLLOW_DEEP_LINK_WITH_FALLBACK);
         verifyNoMoreCallbacks();
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getAction()).isEqualTo(Intent.ACTION_VIEW);
         assertThat(startedActivity.getData()).isEqualTo(Uri.parse(primaryUrl));
     }
@@ -285,11 +290,11 @@ public class UrlHandlerTest {
                 .withResultActions(mockResultActions)
                 .build().handleUrl(context, deeplinkPlusUrl);
 
-        Robolectric.runBackgroundTasks();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
         verify(mockResultActions).urlHandlingSucceeded(fallbackUrlAfterRedirects,
                 OPEN_IN_APP_BROWSER);
         verifyNoMoreCallbacks();
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo(MoPubBrowser.class.getName());
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY))
@@ -879,11 +884,11 @@ public class UrlHandlerTest {
     }
 
     private void verifyNoStartedActivity() {
-        assertThat(Robolectric.getShadowApplication().peekNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().peekNextStartedActivity()).isNull();
     }
 
     private void makeDeeplinkResolvable(String deeplink) {
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW,
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW,
                 Uri.parse(deeplink)), new ResolveInfo());
     }
 }

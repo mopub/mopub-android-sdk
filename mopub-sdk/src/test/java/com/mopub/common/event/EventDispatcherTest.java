@@ -6,11 +6,13 @@ import android.os.Looper;
 import android.os.Message;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.robolectric.annotation.Config;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,7 @@ import static org.mockito.Mockito.verify;
 
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class EventDispatcherTest {
 
     private EventDispatcher subject;

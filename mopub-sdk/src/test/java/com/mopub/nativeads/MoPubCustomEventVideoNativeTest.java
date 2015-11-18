@@ -6,6 +6,7 @@ import android.os.Build;
 
 import com.mopub.common.DataKeys;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.MoPubCustomEventVideoNative.VideoResponseHeaders;
 import com.mopub.network.MaxWidthImageLoader;
 import com.mopub.network.Networking;
@@ -18,6 +19,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
 
@@ -31,6 +33,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubCustomEventVideoNativeTest {
 
     private MoPubCustomEventVideoNative subject;

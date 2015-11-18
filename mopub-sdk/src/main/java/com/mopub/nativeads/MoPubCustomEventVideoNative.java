@@ -1,6 +1,7 @@
 package com.mopub.nativeads;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
@@ -35,7 +36,6 @@ import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -57,7 +57,7 @@ import static com.mopub.nativeads.NativeVideoController.VisibilityTrackingEvent;
 public class MoPubCustomEventVideoNative extends CustomEventNative {
 
     @Override
-    protected void loadNativeAd(@NonNull final Context context,
+    protected void loadNativeAd(@NonNull final Activity activity,
             @NonNull final CustomEventNativeListener customEventNativeListener,
             @NonNull final Map<String, Object> localExtras,
             @NonNull final Map<String, String> serverExtras) {
@@ -78,17 +78,19 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
             return;
         }
 
+        final Object clickTrackingUrlFromHeaderObject =
+                localExtras.get(DataKeys.CLICK_TRACKING_URL_KEY);
         // Ensure click tracking url is a non-empty String
-        final Object clickTrackingUrlObject = localExtras.get(DataKeys.CLICK_TRACKING_URL_KEY);
-        if (!(clickTrackingUrlObject instanceof String) ||
-                TextUtils.isEmpty((String) clickTrackingUrlObject)) {
+        if (!(clickTrackingUrlFromHeaderObject instanceof String) ||
+                TextUtils.isEmpty((String) clickTrackingUrlFromHeaderObject)) {
             customEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
             return;
         }
 
-        final String clickTrackingUrl = (String) clickTrackingUrlObject;
-        final MoPubVideoNativeAd videoNativeAd = new MoPubVideoNativeAd(context, (JSONObject) json,
-                customEventNativeListener, videoResponseHeaders, eventDetails, clickTrackingUrl);
+        final String clickTrackingUrlFromHeader = (String) clickTrackingUrlFromHeaderObject;
+        final MoPubVideoNativeAd videoNativeAd = new MoPubVideoNativeAd(activity, (JSONObject) json,
+                customEventNativeListener, videoResponseHeaders, eventDetails,
+                clickTrackingUrlFromHeader);
         try {
             videoNativeAd.loadAd();
         } catch (IllegalArgumentException e) {
@@ -156,7 +158,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         @NonNull private final JSONObject mJsonObject;
         @NonNull private VideoState mVideoState;
         @NonNull private final VisibilityTracker mVideoVisibleTracking;
-        @NonNull private final String mClickTrackingUrl;
+        @NonNull private final String mMoPubClickTrackingUrl;
         @NonNull private final CustomEventNativeListener mCustomEventNativeListener;
         @NonNull private final VideoResponseHeaders mVideoResponseHeaders;
         @NonNull private final NativeVideoControllerFactory mNativeVideoControllerFactory;
@@ -182,20 +184,20 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         private boolean mEnded;
 
         public MoPubVideoNativeAd(
-                @NonNull final Context context,
+                @NonNull final Activity activity,
                 @NonNull final JSONObject jsonObject,
                 @NonNull final CustomEventNativeListener customEventNativeListener,
                 @NonNull final VideoResponseHeaders videoResponseHeaders,
                 @Nullable final EventDetails eventDetails,
                 @NonNull final String clickTrackingUrl) {
-            this(context, jsonObject, customEventNativeListener, videoResponseHeaders,
-                    new VisibilityTracker(context), new NativeVideoControllerFactory(),
-                    eventDetails, clickTrackingUrl, VastManagerFactory.create(context.getApplicationContext(), false));
+            this(activity, jsonObject, customEventNativeListener, videoResponseHeaders,
+                    new VisibilityTracker(activity), new NativeVideoControllerFactory(),
+                    eventDetails, clickTrackingUrl, VastManagerFactory.create(activity.getApplicationContext(), false));
         }
 
         @VisibleForTesting
         MoPubVideoNativeAd(
-                @NonNull final Context context,
+                @NonNull final Activity activity,
                 @NonNull final JSONObject jsonObject,
                 @NonNull final CustomEventNativeListener customEventNativeListener,
                 @NonNull final VideoResponseHeaders videoResponseHeaders,
@@ -204,7 +206,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                 @Nullable final EventDetails eventDetails,
                 @NonNull final String clickTrackingUrl,
                 @NonNull final VastManager vastManager) {
-            Preconditions.checkNotNull(context);
+            Preconditions.checkNotNull(activity);
             Preconditions.checkNotNull(jsonObject);
             Preconditions.checkNotNull(customEventNativeListener);
             Preconditions.checkNotNull(videoResponseHeaders);
@@ -213,13 +215,13 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
             Preconditions.checkNotNull(clickTrackingUrl);
             Preconditions.checkNotNull(vastManager);
 
-            mContext = context.getApplicationContext();
+            mContext = activity.getApplicationContext();
             mJsonObject = jsonObject;
             mCustomEventNativeListener = customEventNativeListener;
             mVideoResponseHeaders = videoResponseHeaders;
 
             mNativeVideoControllerFactory = nativeVideoControllerFactory;
-            mClickTrackingUrl = clickTrackingUrl;
+            mMoPubClickTrackingUrl = clickTrackingUrl;
 
             mEventDetails = eventDetails;
 
@@ -321,9 +323,15 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                 visibilityTrackingEvents.add(vastVisibilityTrackingEvent);
             }
 
-            final VastTracker clickTracker = new VastTracker(mClickTrackingUrl, false);
-            mVastVideoConfig.addClickTrackers(new ArrayList<VastTracker>(
-                    Arrays.asList(clickTracker)));
+            Set<String> clickTrackers = new HashSet<String>();
+            clickTrackers.add(mMoPubClickTrackingUrl);
+            clickTrackers.addAll(getClickTrackers());
+
+            final ArrayList<VastTracker> vastClickTrackers = new ArrayList<VastTracker>();
+            for (String clickTrackingUrl : clickTrackers) {
+                vastClickTrackers.add(new VastTracker(clickTrackingUrl, false));
+            }
+            mVastVideoConfig.addClickTrackers(vastClickTrackers);
 
             // Always use click destination URL from JSON "clk" value instead of from VAST document
             mVastVideoConfig.setClickThroughUrl(getClickDestinationUrl());
@@ -371,6 +379,9 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                     case CLICK_DESTINATION:
                         setClickDestinationUrl((String) value);
                         break;
+                    case CLICK_TRACKER:
+                        parseClickTrackers(value);
+                        break;
                     case CALL_TO_ACTION:
                         setCallToAction((String) value);
                         break;
@@ -387,6 +398,14 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                 } else {
                     throw e;
                 }
+            }
+        }
+
+        private void parseClickTrackers(@NonNull final Object clickTrackers) {
+            if (clickTrackers instanceof JSONArray) {
+                addClickTrackers(clickTrackers);
+            } else {
+                addClickTracker((String) clickTrackers);
             }
         }
 
@@ -687,22 +706,6 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
 
         private boolean isImageKey(@Nullable final String name) {
             return name != null && name.toLowerCase(Locale.US).endsWith("image");
-        }
-
-        private void addImpressionTrackers(final Object impressionTrackers) throws ClassCastException {
-            if (!(impressionTrackers instanceof JSONArray)) {
-                throw new ClassCastException("Expected impression trackers of type JSONArray.");
-            }
-
-            final JSONArray trackers = (JSONArray) impressionTrackers;
-            for (int i = 0; i < trackers.length(); i++) {
-                try {
-                    addImpressionTracker(trackers.getString(i));
-                } catch (JSONException e) {
-                    // This will only occur if we access a non-existent index in JSONArray.
-                    MoPubLog.d("Unable to parse impression trackers.");
-                }
-            }
         }
 
         @NonNull

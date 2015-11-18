@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowWebView;
 
@@ -19,9 +20,9 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class BaseWebViewTest {
     private Activity context;
     private BaseWebView subject;
@@ -31,7 +32,7 @@ public class BaseWebViewTest {
         context = Robolectric.buildActivity(Activity.class).create().get();
     }
 
-    @Config(reportSdk = VERSION_CODES.JELLY_BEAN_MR1)
+    @Config(sdk = VERSION_CODES.JELLY_BEAN_MR1)
     @Test
     public void beforeJellyBeanMr1_shouldDisablePluginsByDefault() throws Exception {
         subject = new BaseWebView(context);
@@ -43,7 +44,7 @@ public class BaseWebViewTest {
         assertThat(webSettings.getPluginState()).isEqualTo(WebSettings.PluginState.ON);
     }
 
-    @Config(reportSdk = VERSION_CODES.JELLY_BEAN_MR2)
+    @Config(sdk = VERSION_CODES.JELLY_BEAN_MR2)
     @Test
     public void atLeastJellybeanMr2_shouldPass() throws Exception {
         subject = new BaseWebView(context);
@@ -57,7 +58,7 @@ public class BaseWebViewTest {
     public void destroy_shouldRemoveSelfFromParent_beforeCallingDestroy() throws Exception {
         subject = new BaseWebView(context);
         ViewGroup parent = mock(ViewGroup.class);
-        ShadowWebView shadow = shadowOf(subject);
+        ShadowWebView shadow = Shadows.shadowOf(subject);
         shadow.setMyParent(parent);
 
         subject.destroy();

@@ -19,6 +19,7 @@ import android.widget.RelativeLayout;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Dips;
 import com.mopub.common.util.Drawables;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.VastVideoProgressBarWidget;
 import com.mopub.mobileads.resource.CloseButtonDrawable;
 import com.mopub.mobileads.resource.CtaButtonDrawable;
@@ -30,6 +31,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowConfiguration;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -43,6 +46,7 @@ import static org.mockito.Mockito.when;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class NativeFullScreenVideoViewTest {
 
     private NativeFullScreenVideoView subject;
@@ -77,7 +81,7 @@ public class NativeFullScreenVideoViewTest {
     public void setUp() {
         context = Robolectric.buildActivity(Activity.class).create().get();
 
-        shadowConfiguration = Robolectric.shadowOf(context.getResources().getConfiguration());
+        shadowConfiguration = Shadows.shadowOf(context.getResources().getConfiguration());
         Configuration configuration = new Configuration();
         configuration.screenWidthDp = screenWidthDp;
         configuration.screenHeightDp = screenHeightDp;

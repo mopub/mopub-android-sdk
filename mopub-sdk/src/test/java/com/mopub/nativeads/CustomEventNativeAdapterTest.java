@@ -5,16 +5,17 @@ import android.app.Activity;
 import com.mopub.common.AdType;
 import com.mopub.common.DataKeys;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.test.support.TestCustomEventNativeFactory;
 import com.mopub.network.AdResponse;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class CustomEventNativeAdapterTest {
 
     private Activity context;

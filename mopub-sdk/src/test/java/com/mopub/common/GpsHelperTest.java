@@ -7,12 +7,15 @@ import android.os.Looper;
 import com.mopub.common.factories.MethodBuilderFactory;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 
 import java.util.concurrent.Semaphore;
 
@@ -25,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class GpsHelperTest {
     private MethodBuilder methodBuilder;
     private Activity context;
@@ -293,8 +297,8 @@ public class GpsHelperTest {
     }
 
     private void safeAcquireSemaphore() throws Exception {
-        Robolectric.runBackgroundTasks();
-        Robolectric.runUiThreadTasks();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        ShadowLooper.runUiThreadTasks();
         semaphore.acquire();
     }
 
