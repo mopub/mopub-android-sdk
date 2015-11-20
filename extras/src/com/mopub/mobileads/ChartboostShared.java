@@ -75,7 +75,7 @@ public class ChartboostShared {
         // Perform all the common SDK initialization steps including startAppWithId
         Chartboost.startWithAppId(launcherActivity, mAppId, mAppSignature);
         Chartboost.setImpressionsUseActivities(false);
-        Chartboost.setFramework(Chartboost.CBFramework.CBFrameworkMoPub);
+        Chartboost.setFramework(Chartboost.CBMediation.CBMediationMoPub);
         Chartboost.setDelegate(sDelegate);
         Chartboost.setShouldRequestInterstitialsInFirstSession(true);
         Chartboost.setAutoCacheAds(false);
