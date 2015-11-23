@@ -56,10 +56,10 @@ public class FacebookNative extends CustomEventNative {
         private final NativeAd mNativeAd;
         private final CustomEventNativeListener mCustomEventNativeListener;
 
-        FacebookStaticNativeAd(final Context context,
+        FacebookStaticNativeAd(final Activity activity,
                 final NativeAd nativeAd,
                 final CustomEventNativeListener customEventNativeListener) {
-            mContext = context.getApplicationContext();
+            mContext = activity.getApplicationContext();
             mNativeAd = nativeAd;
             mCustomEventNativeListener = customEventNativeListener;
         }
