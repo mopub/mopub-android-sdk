@@ -5,20 +5,22 @@ import android.content.Context;
 import android.telephony.TelephonyManager;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.test.support.MoPubShadowTelephonyManager;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
-@Config(shadows = {MoPubShadowTelephonyManager.class})
+@Config(constants = BuildConfig.class,
+        shadows = {MoPubShadowTelephonyManager.class})
 public class ClientMetadataTest {
 
     public Activity activityContext;
@@ -27,9 +29,9 @@ public class ClientMetadataTest {
     @Before
     public void setUp() throws Exception {
         activityContext = Robolectric.buildActivity(Activity.class).create().get();
-        shadowOf(activityContext).grantPermissions(ACCESS_NETWORK_STATE);
+        Shadows.shadowOf(activityContext).grantPermissions(ACCESS_NETWORK_STATE);
         shadowTelephonyManager = (MoPubShadowTelephonyManager)
-                shadowOf((TelephonyManager) activityContext.getSystemService(Context.TELEPHONY_SERVICE));
+                Shadows.shadowOf((TelephonyManager) activityContext.getSystemService(Context.TELEPHONY_SERVICE));
     }
 
     // This has to be first or the singleton will be initialized by an earlier test. We should

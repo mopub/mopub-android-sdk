@@ -6,6 +6,7 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.ShadowAsyncTasks;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.nativeads.MoPubNative.MoPubNativeNetworkListener;
 import com.mopub.network.MoPubNetworkError;
@@ -23,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
@@ -43,10 +45,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
-@Config(shadows = {ShadowAsyncTasks.class})
+@Config(constants = BuildConfig.class, shadows = {ShadowAsyncTasks.class})
 public class MoPubNativeTest {
     private MoPubNative subject;
     private MethodBuilder methodBuilder;
@@ -61,8 +62,8 @@ public class MoPubNativeTest {
     @Before
     public void setup() {
         context = Robolectric.buildActivity(Activity.class).create().get();
-        shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
-        shadowOf(context).grantPermissions(INTERNET);
+        Shadows.shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
+        Shadows.shadowOf(context).grantPermissions(INTERNET);
         subject = new MoPubNative(context, adUnitId, mockAdRendererRegistry, mockNetworkListener);
         methodBuilder = TestMethodBuilderFactory.getSingletonMock();
         Networking.setRequestQueueForTesting(mockRequestQueue);
@@ -82,23 +83,23 @@ public class MoPubNativeTest {
 
     @Test
     public void destroy_shouldSetListenersToEmptyAndClearContext() {
-        assertThat(subject.getContextOrDestroy()).isSameAs(context);
+        assertThat(subject.getActivityOrDestroy()).isSameAs(context);
         assertThat(subject.getMoPubNativeNetworkListener()).isSameAs(mockNetworkListener);
 
         subject.destroy();
 
-        assertThat(subject.getContextOrDestroy()).isNull();
+        assertThat(subject.getActivityOrDestroy()).isNull();
         assertThat(subject.getMoPubNativeNetworkListener()).isSameAs(EMPTY_NETWORK_LISTENER);
     }
 
     @Test
     public void loadNativeAd_shouldReturnFast() {
-        Robolectric.getUiThreadScheduler().pause();
+        Robolectric.getForegroundThreadScheduler().pause();
 
         subject.destroy();
         subject.makeRequest();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
     }
 
     @Test
@@ -127,7 +128,7 @@ public class MoPubNativeTest {
 
     @Test
     public void requestNativeAd_withNullUrl_shouldFireNativeFail() {
-        Robolectric.getUiThreadScheduler().pause();
+        Robolectric.getForegroundThreadScheduler().pause();
 
         subject.requestNativeAd(null);
 
@@ -166,7 +167,7 @@ public class MoPubNativeTest {
     @Test
     public void onAdError_withNoConnection_shouldLogMoPubErrorCodeNoConnection_shouldNotifyListener() {
         MoPubLog.setSdkHandlerLevel(Level.ALL);
-        shadowOf(context).denyPermissions(INTERNET);
+        Shadows.shadowOf(context).denyPermissions(INTERNET);
 
         subject.onAdError(new NoConnectionError());
 

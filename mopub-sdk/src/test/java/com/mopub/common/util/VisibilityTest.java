@@ -3,13 +3,16 @@ package com.mopub.common.util;
 import android.view.View;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VisibilityTest {
     @Test
     public void isScreenVisible_shouldOnlyReturnTrueForViewVisible() throws Exception {

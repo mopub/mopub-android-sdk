@@ -1,9 +1,11 @@
 package com.mopub.nativeads;
 
+import android.support.annotation.Nullable;
+
 /**
  * Stores an integer interval in the form of a start and a length.
  */
-public class IntInterval {
+public class IntInterval implements Comparable<IntInterval>{
     private int start;
     private int length;
 
@@ -62,5 +64,14 @@ public class IntInterval {
         result = 31 * result + start;
         result = 31 * result + length;
         return result;
+    }
+
+    @Override
+    @SuppressWarnings("ConstantConditions")
+    public int compareTo(@Nullable final IntInterval another) {
+        if (start == another.start) {
+            return length - another.length;
+        }
+        return start - another.start;
     }
 }

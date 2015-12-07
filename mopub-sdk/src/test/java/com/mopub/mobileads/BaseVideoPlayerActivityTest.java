@@ -12,6 +12,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.mobileads.BaseVideoPlayerActivity.VIDEO_URL;
@@ -26,6 +28,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class BaseVideoPlayerActivityTest {
     private static final String MRAID_VIDEO_URL = "http://mraidVideo";
 
@@ -68,7 +71,7 @@ public class BaseVideoPlayerActivityTest {
     static void assertVastVideoPlayerActivityStarted(final Class clazz,
             final VastVideoConfig vastVideoConfig,
             final long broadcastIdentifier) {
-        final Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        final Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertIntentAndBroadcastIdentifierAreCorrect(intent, clazz, broadcastIdentifier);
 
         final VastVideoConfig expectedVastVideoConfig =
@@ -77,7 +80,7 @@ public class BaseVideoPlayerActivityTest {
     }
 
     public static void assertMraidVideoPlayerActivityStarted(final Class clazz, final String url) {
-        final Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        final Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertIntentAndBroadcastIdentifierAreCorrect(intent, clazz, null);
 
         assertThat(intent.getStringExtra(VIDEO_URL)).isEqualTo(url);

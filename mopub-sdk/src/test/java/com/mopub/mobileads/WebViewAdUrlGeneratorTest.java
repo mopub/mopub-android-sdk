@@ -38,6 +38,8 @@ import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowConnectivityManager;
 import org.robolectric.shadows.ShadowLocationManager;
@@ -61,11 +63,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.robolectric.Robolectric.application;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
-@Config(shadows = {MoPubShadowTelephonyManager.class})
+@Config(constants = BuildConfig.class, shadows = {MoPubShadowTelephonyManager.class})
 public class WebViewAdUrlGeneratorTest {
 
     private static final String TEST_UDID = "20b013c721c";
@@ -84,7 +84,7 @@ public class WebViewAdUrlGeneratorTest {
     @Before
     public void setup() {
         context = spy(Robolectric.buildActivity(Activity.class).create().get());
-        shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
+        Shadows.shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
 
         // Set the expected screen dimensions to arbitrary numbers
         final Resources spyResources = spy(context.getResources());
@@ -118,11 +118,11 @@ public class WebViewAdUrlGeneratorTest {
 
         subject = new WebViewAdUrlGenerator(context,
                 new MraidNativeCommandHandler().isStorePictureSupported(context));
-        Settings.Secure.putString(application.getContentResolver(), Settings.Secure.ANDROID_ID, TEST_UDID);
+        Settings.Secure.putString(RuntimeEnvironment.application.getContentResolver(), Settings.Secure.ANDROID_ID, TEST_UDID);
         expectedUdid = "sha%3A" + Utils.sha1(TEST_UDID);
-        configuration = application.getResources().getConfiguration();
-        shadowTelephonyManager = (MoPubShadowTelephonyManager) shadowOf((TelephonyManager) application.getSystemService(Context.TELEPHONY_SERVICE));
-        shadowConnectivityManager = shadowOf((ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE));
+        configuration = RuntimeEnvironment.application.getResources().getConfiguration();
+        shadowTelephonyManager = (MoPubShadowTelephonyManager) Shadows.shadowOf((TelephonyManager) RuntimeEnvironment.application.getSystemService(Context.TELEPHONY_SERVICE));
+        shadowConnectivityManager = Shadows.shadowOf((ConnectivityManager) RuntimeEnvironment.application.getSystemService(Context.CONNECTIVITY_SERVICE));
         methodBuilder = TestMethodBuilderFactory.getSingletonMock();
         Networking.useHttps(false);
     }
@@ -332,7 +332,7 @@ public class WebViewAdUrlGeneratorTest {
     public void generateAdUrl_whenNoNetworkPermission_shouldGenerateUnknownNetworkType() throws Exception {
         AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid);
 
-        shadowOf(context).denyPermissions(ACCESS_NETWORK_STATE);
+        Shadows.shadowOf(context).denyPermissions(ACCESS_NETWORK_STATE);
         shadowConnectivityManager.setActiveNetworkInfo(createNetworkInfo(TYPE_MOBILE));
 
         String adUrl = generateMinimumUrlString();
@@ -380,8 +380,8 @@ public class WebViewAdUrlGeneratorTest {
 
         // Mock out the LocationManager's last known location to be more recent than the
         // developer-supplied location.
-        ShadowLocationManager shadowLocationManager = Robolectric.shadowOf(
-                (LocationManager) application.getSystemService(Context.LOCATION_SERVICE));
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
         Location locationFromSdk = new Location("");
         locationFromSdk.setLatitude(37);
         locationFromSdk.setLongitude(-122);
@@ -404,8 +404,8 @@ public class WebViewAdUrlGeneratorTest {
         locationFromDeveloper.setAccuracy(3.5f);
         locationFromDeveloper.setTime(1000);
 
-        ShadowLocationManager shadowLocationManager = Robolectric.shadowOf(
-                (LocationManager) application.getSystemService(Context.LOCATION_SERVICE));
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
 
         // Mock out the LocationManager's last known location to be older than the
         // developer-supplied location.
@@ -433,8 +433,8 @@ public class WebViewAdUrlGeneratorTest {
 
         // Mock out the LocationManager's last known location to be more recent than the
         // developer-supplied location.
-        ShadowLocationManager shadowLocationManager = Robolectric.shadowOf(
-                (LocationManager) application.getSystemService(Context.LOCATION_SERVICE));
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
         Location locationFromSdk = new Location("");
         locationFromSdk.setLatitude(38);
         locationFromSdk.setLongitude(-123);
@@ -480,8 +480,8 @@ public class WebViewAdUrlGeneratorTest {
         MoPub.setLocationAwareness(MoPub.LocationAwareness.DISABLED);
 
         // Mock out the LocationManager's last known location.
-        ShadowLocationManager shadowLocationManager = Robolectric.shadowOf(
-                (LocationManager) application.getSystemService(Context.LOCATION_SERVICE));
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
         Location locationFromSdk = new Location("");
         locationFromSdk.setLatitude(37);
         locationFromSdk.setLongitude(-122);

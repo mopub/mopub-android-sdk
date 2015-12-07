@@ -5,9 +5,10 @@ import android.graphics.Bitmap;
 import android.view.View;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
+import com.mopub.nativeads.BaseNativeAd.NativeEventListener;
 import com.mopub.nativeads.CustomEventNative.CustomEventNativeListener;
 import com.mopub.nativeads.MoPubCustomEventNative.MoPubStaticNativeAd;
-import com.mopub.nativeads.BaseNativeAd.NativeEventListener;
 import com.mopub.nativeads.test.support.MoPubShadowBitmap;
 import com.mopub.nativeads.test.support.MoPubShadowDisplay;
 import com.mopub.network.MaxWidthImageLoader;
@@ -17,6 +18,7 @@ import com.mopub.volley.VolleyError;
 import com.mopub.volley.toolbox.ImageLoader;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,15 +34,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static com.mopub.nativeads.MoPubCustomEventNative.MoPubStaticNativeAd.Parameter;
 import static com.mopub.volley.toolbox.ImageLoader.ImageListener;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.fest.assertions.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -49,7 +50,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
-@Config(shadows={MoPubShadowBitmap.class, MoPubShadowDisplay.class})
+@Config(constants = BuildConfig.class, shadows={MoPubShadowBitmap.class, MoPubShadowDisplay.class})
 public class MoPubStaticNativeAdTest {
 
     private MoPubStaticNativeAd subject;
@@ -307,6 +308,31 @@ public class MoPubStaticNativeAdTest {
     }
 
     @Test
+    public void loadAd_shouldParseSingleClickTracker() {
+        subject = new MoPubStaticNativeAd(context, fakeJsonObject, mockImpressionTracker,
+                mMockNativeClickHandler, mockCustomEventNativeListener);
+        subject.loadAd();
+
+        final Set<String> clickTrackers = subject.getClickTrackers();
+        assertThat(clickTrackers.size()).isEqualTo(1);
+        assertThat(clickTrackers.contains("expected clicktracker")).isTrue();
+    }
+
+    @Test
+    public void loadAd_shouldParseMultipleClickTrackers() throws Exception {
+        fakeJsonObject.remove("clktracker");
+        fakeJsonObject.put("clktracker", new JSONArray("[\"clicktracker1\",\"clicktracker2\"]"));
+        subject = new MoPubStaticNativeAd(context, fakeJsonObject, mockImpressionTracker,
+                mMockNativeClickHandler, mockCustomEventNativeListener);
+        subject.loadAd();
+
+        final Set<String> clickTrackers = subject.getClickTrackers();
+        assertThat(clickTrackers.size()).isEqualTo(2);
+        assertThat(clickTrackers.contains("clicktracker1")).isTrue();
+        assertThat(clickTrackers.contains("clicktracker2")).isTrue();
+    }
+
+    @Test
     public void getExtrasImageUrls_whenExtrasContainsImages_shouldReturnImageUrls() throws Exception {
         // getExtrasImageUrls requires the key to end with a case-insensitive "image" to be counted as an image
         fakeJsonObject.put("test_image", "image_url_1");
@@ -390,8 +416,8 @@ public class MoPubStaticNativeAdTest {
     }
 
     @Test
-    public void recordImpression_shouldNotifyAdImpressed_shouldTrackImpression() {
-        subject.addImpressionTracker("impressionTracker");
+    public void recordImpression_shouldNotifyAdImpressed_shouldTrackImpression() throws Exception {
+        subject.addImpressionTrackers(new JSONArray("[\"impressionUrl\"]"));
         subject.recordImpression(mockView);
 
         verify(mockNativeEventListener).onAdImpressed();

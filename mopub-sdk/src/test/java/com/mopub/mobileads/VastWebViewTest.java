@@ -7,6 +7,7 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import com.mopub.TestSdkHelper;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.GestureUtils;
 import com.mopub.mobileads.test.support.VastUtils;
@@ -16,15 +17,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowWebView;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastWebViewTest {
 
     private VastWebView subject;
@@ -41,11 +43,11 @@ public class VastWebViewTest {
 
     @Test
     public void constructor_shouldSetOnTouchListener() throws Exception {
-        assertThat(Robolectric.shadowOf(subject).getOnTouchListener())
+        assertThat(Shadows.shadowOf(subject).getOnTouchListener())
                 .isInstanceOf(VastWebView.VastWebViewOnTouchListener.class);
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.JELLY_BEAN_MR2)
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN_MR2)
     @Test
     public void pluginState_atLeastJellybeanMr2_shouldDefaultToOff_shouldNeverBeEnabled()  {
         subject = new VastWebView(Robolectric.buildActivity(Activity.class).create().get());
@@ -55,10 +57,10 @@ public class VastWebViewTest {
         assertThat(subject.getSettings().getPluginState()).isEqualTo(WebSettings.PluginState.OFF);
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void pluginState_atLeastIcsButBelowJellybeanMr2_shouldDefaultToOn_shouldAllowToggling() {
-        subject = new VastWebView(Robolectric.buildActivity(Activity.class).create().get());
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
+        subject = new VastWebView(context);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(WebSettings.PluginState.ON);
 
         subject.enablePlugins(false);
@@ -68,10 +70,10 @@ public class VastWebViewTest {
         assertThat(subject.getSettings().getPluginState()).isEqualTo(WebSettings.PluginState.ON);
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.GINGERBREAD_MR1)
     @Test
     public void pluginState_beforeIcs_shouldDefaultToOff_shouldAllowToggling() {
-        subject = new VastWebView(Robolectric.buildActivity(Activity.class).create().get());
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.GINGERBREAD_MR1);
+        subject = new VastWebView(context);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(WebSettings.PluginState.OFF);
 
         subject.enablePlugins(true);
@@ -87,7 +89,7 @@ public class VastWebViewTest {
         subject.loadData(data);
 
         ShadowWebView.LoadDataWithBaseURL lastLoadData
-                = shadowOf(subject).getLastLoadDataWithBaseURL();
+                = Shadows.shadowOf(subject).getLastLoadDataWithBaseURL();
         assertThat(lastLoadData.baseUrl).isEqualTo("http://ads.mopub.com/");
         assertThat(lastLoadData.data).isEqualTo(data);
         assertThat(lastLoadData.mimeType).isEqualTo("text/html");
@@ -97,7 +99,7 @@ public class VastWebViewTest {
 
     @Test
     public void VastWebViewOnTouchListener_withActionDown_withActionUp_shouldCallOnVastWebViewClick() throws Exception {
-        View.OnTouchListener onTouchListener = shadowOf(subject).getOnTouchListener();
+        View.OnTouchListener onTouchListener = Shadows.shadowOf(subject).getOnTouchListener();
         onTouchListener.onTouch(subject, GestureUtils.createActionDown(0, 0));
         onTouchListener.onTouch(subject, GestureUtils.createActionUp(0, 0));
 

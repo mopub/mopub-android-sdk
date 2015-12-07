@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.location.Location;
 import android.os.Build;
 
+import com.mopub.TestSdkHelper;
 import com.mopub.common.AdFormat;
 import com.mopub.common.AdType;
 import com.mopub.common.DataKeys;
@@ -12,6 +13,7 @@ import com.mopub.common.event.EventDispatcher;
 import com.mopub.common.event.MoPubEvents;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.ResponseHeader;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.volley.NetworkResponse;
 import com.mopub.volley.Response;
 
@@ -42,6 +44,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class AdRequestTest {
 
     @Mock private AdRequest.Listener mockListener;
@@ -152,7 +155,7 @@ public class AdRequestTest {
     }
 
     @Test
-    @Config(reportSdk = Build.VERSION_CODES.JELLY_BEAN)
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
     public void parseNetworkResponse_forNativeVideo_shouldSucceed() throws Exception {
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
         NetworkResponse testResponse = new NetworkResponse(200,
@@ -172,7 +175,7 @@ public class AdRequestTest {
     }
 
     @Test
-    @Config(reportSdk = Build.VERSION_CODES.JELLY_BEAN)
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
     public void parseNetworkResponse_forNativeVideo_shouldCombineServerExtrasAndEventData() throws Exception {
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
         defaultHeaders.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "class name");
@@ -199,8 +202,9 @@ public class AdRequestTest {
     }
 
     @Test
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
     public void parseNetworkResponse_forNativeVideo_onAPILevelBefore16_shouldError() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
+
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
         NetworkResponse testResponse = new NetworkResponse(200,
                 "{\"abc\": \"def\"}".getBytes(Charset.defaultCharset()), defaultHeaders, false);
@@ -214,7 +218,7 @@ public class AdRequestTest {
     }
 
     @Test
-    @Config(reportSdk = Build.VERSION_CODES.JELLY_BEAN)
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
     public void parseNetworkResponse_forNativeVideo_withInvalidValues_shouldSucceed_shouldParseNull() throws Exception {
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
         defaultHeaders.put(ResponseHeader.PLAY_VISIBLE_PERCENT.getKey(), "-1");

@@ -15,6 +15,7 @@ import android.view.ViewGroup.LayoutParams;
 import com.mopub.common.MoPubBrowser;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BaseVideoViewController.BaseVideoViewControllerListener;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.VastVideoConfig;
 import com.mopub.mobileads.resource.CtaButtonDrawable;
 import com.mopub.nativeads.MoPubCustomEventVideoNative.MoPubVideoNativeAd;
@@ -29,6 +30,8 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -41,6 +44,7 @@ import static org.mockito.Mockito.when;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class NativeVideoViewControllerTest {
 
     private NativeVideoViewController subject;
@@ -178,7 +182,7 @@ public class NativeVideoViewControllerTest {
 
         verify(mockVideoController).setPlayWhenReady(false);
 
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo(MoPubBrowser.class.getName());
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY))

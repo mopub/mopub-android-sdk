@@ -1,6 +1,6 @@
 package com.mopub.nativeads;
 
-import android.content.Context;
+import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
@@ -39,23 +39,23 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
     @NonNull private ContentChangeStrategy mStrategy = INSERT_AT_END;
     @Nullable private MoPubNativeAdLoadedListener mAdLoadedListener;
 
-    public MoPubRecyclerAdapter(@NonNull Context context,
+    public MoPubRecyclerAdapter(@NonNull Activity activity,
             @NonNull RecyclerView.Adapter originalAdapter) {
-        this(context, originalAdapter, MoPubNativeAdPositioning.serverPositioning());
+        this(activity, originalAdapter, MoPubNativeAdPositioning.serverPositioning());
     }
 
-    public MoPubRecyclerAdapter(@NonNull Context context,
+    public MoPubRecyclerAdapter(@NonNull Activity activity,
             @NonNull RecyclerView.Adapter originalAdapter,
             @NonNull MoPubServerPositioning adPositioning) {
-        this(new MoPubStreamAdPlacer(context, adPositioning), originalAdapter,
-                new VisibilityTracker(context));
+        this(new MoPubStreamAdPlacer(activity, adPositioning), originalAdapter,
+                new VisibilityTracker(activity));
     }
 
-    public MoPubRecyclerAdapter(@NonNull Context context,
+    public MoPubRecyclerAdapter(@NonNull Activity activity,
             @NonNull RecyclerView.Adapter originalAdapter,
             @NonNull MoPubClientPositioning adPositioning) {
-        this(new MoPubStreamAdPlacer(context, adPositioning), originalAdapter,
-                new VisibilityTracker(context));
+        this(new MoPubStreamAdPlacer(activity, adPositioning), originalAdapter,
+                new VisibilityTracker(activity));
     }
 
     @VisibleForTesting
@@ -404,7 +404,8 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
                 // This will cause a null pointer exception.
                 return null;
             }
-            return new MoPubRecyclerViewHolder(adRenderer.createAdView(parent.getContext(), parent));
+            return new MoPubRecyclerViewHolder(
+                    adRenderer.createAdView((Activity) parent.getContext(), parent));
         }
 
         return mOriginalAdapter.onCreateViewHolder(parent, viewType);

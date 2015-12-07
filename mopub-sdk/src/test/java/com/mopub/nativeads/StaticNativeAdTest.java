@@ -1,14 +1,17 @@
 package com.mopub.nativeads;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class StaticNativeAdTest {
 
     private StaticNativeAd subject;
@@ -25,6 +28,7 @@ public class StaticNativeAdTest {
         subject.setCallToAction("callToAction");
         subject.setStarRating(5.0);
         subject.setPrivacyInformationIconClickThroughUrl("privacyInformationIconClickThroughUrl");
+        subject.setPrivacyInformationIconImageUrl("privacyInformationIconImageUrl");
         subject.addExtra("extra", "extraValue");
         subject.addExtra("extraImage", "extraImageUrl");
         subject.addImpressionTracker("impressionUrl");
@@ -42,6 +46,8 @@ public class StaticNativeAdTest {
         assertThat(subject.getStarRating()).isEqualTo(5.0);
         assertThat(subject.getPrivacyInformationIconClickThroughUrl()).isEqualTo(
                 "privacyInformationIconClickThroughUrl");
+        assertThat(subject.getPrivacyInformationIconImageUrl()).isEqualTo
+                ("privacyInformationIconImageUrl");
         assertThat(subject.getExtra("extra")).isEqualTo("extraValue");
         assertThat(subject.getExtra("extraImage")).isEqualTo("extraImageUrl");
         assertThat(subject.getExtras()).hasSize(2);

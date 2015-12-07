@@ -4,8 +4,8 @@ import android.os.Build;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.util.ReflectionHelpers;
 
 import static com.mopub.common.util.VersionCode.BASE;
 import static com.mopub.common.util.VersionCode.CUR_DEVELOPMENT;
@@ -19,19 +19,19 @@ import static org.fest.assertions.api.Assertions.assertThat;
 public class VersionCodeTest {
     @Test
     public void currentApiLevel_shouldReflectActualApiLevel() throws Exception {
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", 4);
+        ReflectionHelpers.setStaticField(Build.VERSION.class, "SDK_INT", 4);
         assertThat(VersionCode.currentApiLevel()).isEqualTo(DONUT);
 
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", 8);
+        ReflectionHelpers.setStaticField(Build.VERSION.class, "SDK_INT", 8);
         assertThat(VersionCode.currentApiLevel()).isEqualTo(FROYO);
 
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", 14);
+        ReflectionHelpers.setStaticField(Build.VERSION.class, "SDK_INT", 14);
         assertThat(VersionCode.currentApiLevel()).isEqualTo(ICE_CREAM_SANDWICH);
     }
 
     @Test
     public void currentApiLevel_whenUnknownApiLevel_shouldReturnCurDevelopment() throws Exception {
-        Robolectric.Reflection.setFinalStaticField(Build.VERSION.class, "SDK_INT", 900);
+        ReflectionHelpers.setStaticField(Build.VERSION.class, "SDK_INT", 900);
         assertThat(VersionCode.currentApiLevel()).isEqualTo(CUR_DEVELOPMENT);
     }
 

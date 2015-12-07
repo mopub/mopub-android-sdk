@@ -6,6 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
 import java.io.File;
@@ -24,7 +25,7 @@ public class FilesTest {
 
     @Before
     public void setup() throws Exception {
-        activity = new Activity();
+        activity = Robolectric.buildActivity(Activity.class).create().get();
 
         expectedDirectoryPath = activity.getFilesDir() + File.separator + "testDirectory";
         expectedFilePath = activity.getFilesDir() + File.separator + "test.txt";

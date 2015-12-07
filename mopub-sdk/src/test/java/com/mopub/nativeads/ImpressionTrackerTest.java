@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.view.View;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.fest.util.Lists;
 import org.junit.Before;
@@ -11,6 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowSystemClock;
 
 import java.util.HashMap;
@@ -25,6 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class ImpressionTrackerTest {
     private ImpressionTracker subject;
     private TimestampWrapper<ImpressionInterface> timeStampWrapper;
@@ -247,7 +250,7 @@ public class ImpressionTrackerTest {
         pollingViews.put(view, timeStampWrapper);
 
         // We progress 999 milliseconds
-        Robolectric.getUiThreadScheduler().advanceBy(5555 + 999);
+        Robolectric.getForegroundThreadScheduler().advanceTo(5555 + 999);
         subject.new PollingRunnable().run();
 
         verify(impressionInterface, never()).recordImpression(view);
@@ -263,7 +266,7 @@ public class ImpressionTrackerTest {
         pollingViews.put(view, timeStampWrapper);
 
         // We progress 1000 milliseconds
-        Robolectric.getUiThreadScheduler().advanceBy(5555 + 1000);
+        Robolectric.getForegroundThreadScheduler().advanceTo(5555 + 1000);
         subject.new PollingRunnable().run();
 
         verify(impressionInterface).recordImpression(view);

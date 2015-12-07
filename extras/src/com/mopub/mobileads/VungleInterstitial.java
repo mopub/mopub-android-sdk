@@ -26,14 +26,13 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
 
     private final VunglePub mVunglePub;
     private final Handler mHandler;
-    private final ScheduledThreadPoolExecutor mScheduledThreadPoolExecutor;
     private CustomEventInterstitialListener mCustomEventInterstitialListener;
     private boolean mIsLoading;
 
     public VungleInterstitial() {
         mHandler = new Handler(Looper.getMainLooper());
-        mScheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(10);
         mVunglePub = VunglePub.getInstance();
+        mIsLoading = false;
     }
 
     @Override
@@ -62,7 +61,11 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
         // init clears the event listener.
         mVunglePub.init(context, appId);
         mVunglePub.setEventListeners(this);
-        scheduleOnInterstitialLoaded();
+        if (mVunglePub.isAdPlayable()) {
+            notifyAdAvailable();
+        } else {
+            mIsLoading = true;
+        }
     }
 
     @Override
@@ -77,7 +80,6 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
     @Override
     protected void onInvalidate() {
         mVunglePub.clearEventListeners();
-        mScheduledThreadPoolExecutor.shutdownNow();
         mIsLoading = false;
     }
 
@@ -85,28 +87,15 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
         return serverExtras.containsKey(APP_ID_KEY);
     }
 
-    private void scheduleOnInterstitialLoaded() {
-        Runnable runnable = new Runnable() {
+    private void notifyAdAvailable() {
+        Log.d("MoPub", "Vungle interstitial ad successfully loaded.");
+        mIsLoading = false;
+        mHandler.post(new Runnable() {
             @Override
             public void run() {
-            if (mVunglePub.isAdPlayable()) {
-                Log.d("MoPub", "Vungle interstitial ad successfully loaded.");
-                mScheduledThreadPoolExecutor.shutdownNow();
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mCustomEventInterstitialListener.onInterstitialLoaded();
-                    }
-                });
-                mIsLoading = false;
+                mCustomEventInterstitialListener.onInterstitialLoaded();
             }
-            }
-        };
-
-        if (!mIsLoading) {
-            mScheduledThreadPoolExecutor.scheduleAtFixedRate(runnable, 1, 1, TimeUnit.SECONDS);
-            mIsLoading = true;
-        }
+        });
     }
 
     /*
@@ -151,12 +140,8 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
 
     @Override
     public void onAdPlayableChanged(final boolean playable) {
-        // Do nothing here. After loading is kicked off, we scheduleOnInterstitialLoaded and check until
-        // we have a playable ad or we timeout.
-    }
-
-    @Deprecated // for testing
-    ScheduledThreadPoolExecutor getScheduledThreadPoolExecutor() {
-        return mScheduledThreadPoolExecutor;
+        if (mIsLoading && playable) {
+            notifyAdAvailable();
+        }
     }
 }

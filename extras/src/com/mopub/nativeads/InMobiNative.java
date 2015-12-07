@@ -11,7 +11,6 @@ import com.inmobi.monetization.IMErrorCode;
 import com.inmobi.monetization.IMNative;
 import com.inmobi.monetization.IMNativeListener;
 import com.mopub.common.logging.MoPubLog;
-import com.mopub.network.TrackingRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,16 +32,10 @@ class InMobiNative extends CustomEventNative {
 
     // CustomEventNative implementation
     @Override
-    protected void loadNativeAd(final Context context,
+    protected void loadNativeAd(final Activity activity,
             final CustomEventNativeListener customEventNativeListener,
             final Map<String, Object> localExtras,
             final Map<String, String> serverExtras) {
-
-        if (!(context instanceof Activity)) {
-            customEventNativeListener.onNativeAdFailed(NativeErrorCode.NATIVE_ADAPTER_CONFIGURATION_ERROR);
-            return;
-        }
-        final Activity activity = (Activity) context;
 
         final String appId;
         if (extrasAreValid(serverExtras)) {
@@ -54,9 +47,9 @@ class InMobiNative extends CustomEventNative {
 
         InMobi.initialize(activity, appId);
         final InMobiStaticNativeAd inMobiStaticNativeAd =
-                new InMobiStaticNativeAd(context,
-                        new ImpressionTracker(context),
-                        new NativeClickHandler(context),
+                new InMobiStaticNativeAd(activity,
+                        new ImpressionTracker(activity),
+                        new NativeClickHandler(activity),
                         customEventNativeListener);
         inMobiStaticNativeAd.setIMNative(new IMNative(inMobiStaticNativeAd));
         inMobiStaticNativeAd.loadAd();

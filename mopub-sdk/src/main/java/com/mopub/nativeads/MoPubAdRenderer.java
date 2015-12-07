@@ -1,6 +1,6 @@
 package com.mopub.nativeads;
 
-import android.content.Context;
+import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.View;
@@ -23,14 +23,14 @@ public interface MoPubAdRenderer<T extends BaseNativeAd> {
      * This method is called when you call {@link com.mopub.nativeads.MoPubStreamAdPlacer#getAdView}
      * and the convertView is null. You must return a valid view.
      *
-     * @param context The context. Useful for creating a view.
+     * @param activity The activity. Useful for creating a view.
      * @param parent The parent that the view will eventually be attached to. You might use the
      * parent to determine layout parameters, but should return the view without attaching it to the
      * parent.
      * @return A new ad view.
      */
     @NonNull
-    View createAdView(@NonNull Context context, @Nullable ViewGroup parent);
+    View createAdView(@NonNull Activity activity, @Nullable ViewGroup parent);
 
     /**
      * Renders a view created by {@link #createAdView} by filling it with ad data.

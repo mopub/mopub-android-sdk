@@ -1,10 +1,12 @@
 package com.mopub.mobileads.util;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
@@ -24,6 +26,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class XmlUtilsTest {
 
     // From Microsoft's sample xml documents page: https://msdn.microsoft.com/en-us/library/bb387026.aspx

@@ -9,6 +9,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
 
+import com.mopub.TestSdkHelper;
 import com.mopub.common.MoPubBrowser;
 import com.mopub.mobileads.MoPubActivity;
 import com.mopub.mobileads.MraidActivity;
@@ -23,7 +24,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowLog;
 import org.robolectric.shadows.ShadowToast;
 
@@ -93,10 +94,10 @@ public class ManifestUtilsTest {
 
     @Test
     public void displayWarningForMissingActivities_withAllActivitiesDeclared_shouldNotShowLogOrToast() throws Exception {
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MraidActivity.class), mockResolveInfo);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MraidVideoPlayerActivity.class), mockResolveInfo);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubBrowser.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MraidActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MraidVideoPlayerActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubBrowser.class), mockResolveInfo);
 
         ShadowLog.setupLogging();
         setDebugMode(true);
@@ -109,9 +110,9 @@ public class ManifestUtilsTest {
 
     @Test
      public void displayWarningForMissingActivities_withOneMissingActivity_shouldLogOnlyThatOne() throws Exception {
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MraidActivity.class), mockResolveInfo);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MraidVideoPlayerActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MraidActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MraidVideoPlayerActivity.class), mockResolveInfo);
         // Here, we leave out MoPubBrowser on purpose
 
         ShadowLog.setupLogging();
@@ -173,10 +174,10 @@ public class ManifestUtilsTest {
         when(mockActivitiyConfigCheck.hasFlag(any(Class.class), anyInt(), eq(ActivityInfo.CONFIG_SCREEN_SIZE))).thenReturn(true);
         ManifestUtils.setFlagCheckUtil(mockActivitiyConfigCheck);
 
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MraidActivity.class), mockResolveInfo);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MraidVideoPlayerActivity.class), mockResolveInfo);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubBrowser.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MraidActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MraidVideoPlayerActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubBrowser.class), mockResolveInfo);
 
         ShadowLog.setupLogging();
         setDebugMode(true);
@@ -206,10 +207,10 @@ public class ManifestUtilsTest {
         when(mockActivitiyConfigCheck.hasFlag(any(Class.class), anyInt(), eq(ActivityInfo.CONFIG_SCREEN_SIZE))).thenReturn(true);
         ManifestUtils.setFlagCheckUtil(mockActivitiyConfigCheck);
 
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MraidActivity.class), mockResolveInfo);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MraidVideoPlayerActivity.class), mockResolveInfo);
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubBrowser.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MraidActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MraidVideoPlayerActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubBrowser.class), mockResolveInfo);
 
         ShadowLog.setupLogging();
 
@@ -237,7 +238,7 @@ public class ManifestUtilsTest {
         when(mockActivitiyConfigCheck.hasFlag(any(Class.class), anyInt(), eq(ActivityInfo.CONFIG_SCREEN_SIZE))).thenReturn(false);
         ManifestUtils.setFlagCheckUtil(mockActivitiyConfigCheck);
 
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
 
         ShadowLog.setupLogging();
 
@@ -249,17 +250,18 @@ public class ManifestUtilsTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Config(reportSdk = Build.VERSION_CODES.HONEYCOMB_MR1)
+
     @TargetApi(13)
     @Test
     public void displayWarningForMisconfiguredActivities_withMissingScreenSize_withApiLessThan13_shouldNotLogOrShowToast() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.HONEYCOMB);
         ManifestUtils.FlagCheckUtil mockActivitiyConfigCheck = mock(ManifestUtils.FlagCheckUtil.class);
         when(mockActivitiyConfigCheck.hasFlag(any(Class.class), anyInt(), eq(ActivityInfo.CONFIG_KEYBOARD_HIDDEN))).thenReturn(true);
         when(mockActivitiyConfigCheck.hasFlag(any(Class.class), anyInt(), eq(ActivityInfo.CONFIG_ORIENTATION))).thenReturn(true);
         when(mockActivitiyConfigCheck.hasFlag(any(Class.class), anyInt(), eq(ActivityInfo.CONFIG_SCREEN_SIZE))).thenReturn(false);
         ManifestUtils.setFlagCheckUtil(mockActivitiyConfigCheck);
 
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
 
         ShadowLog.setupLogging();
         setDebugMode(true);
@@ -285,7 +287,7 @@ public class ManifestUtilsTest {
         when(mockActivitiyConfigCheck.hasFlag(any(Class.class), anyInt(), eq(ActivityInfo.CONFIG_SCREEN_SIZE))).thenReturn(false);
         ManifestUtils.setFlagCheckUtil(mockActivitiyConfigCheck);
 
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
 
         ShadowLog.setupLogging();
         setDebugMode(true);
@@ -306,7 +308,7 @@ public class ManifestUtilsTest {
         when(mockActivitiyConfigCheck.hasFlag(any(Class.class), anyInt(), eq(ActivityInfo.CONFIG_SCREEN_SIZE))).thenReturn(false);
         ManifestUtils.setFlagCheckUtil(mockActivitiyConfigCheck);
 
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
 
         setDebugMode(true);
 
@@ -327,7 +329,7 @@ public class ManifestUtilsTest {
         when(mockActivitiyConfigCheck.hasFlag(any(Class.class), anyInt(), eq(ActivityInfo.CONFIG_SCREEN_SIZE))).thenReturn(false);
         ManifestUtils.setFlagCheckUtil(mockActivitiyConfigCheck);
 
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
 
         setDebugMode(false);
 

@@ -151,6 +151,8 @@ public class AdRequest extends Request<AdResponse> {
         String redirectUrl = extractHeader(headers, ResponseHeader.REDIRECT_URL);
         builder.setRedirectUrl(redirectUrl);
 
+        // X-Clickthrough is parsed into the AdResponse as the click tracker
+        // Used by AdViewController, Rewarded Video, Native Adapter, MoPubNative
         String clickTrackingUrl = extractHeader(headers, ResponseHeader.CLICK_TRACKING_URL);
         builder.setClickTrackingUrl(clickTrackingUrl);
 
@@ -214,6 +216,8 @@ public class AdRequest extends Request<AdResponse> {
             serverExtras.put(DataKeys.REDIRECT_URL_KEY, redirectUrl);
         }
         if (clickTrackingUrl != null) {
+            // X-Clickthrough parsed into serverExtras
+            // Used by Banner, Interstitial
             serverExtras.put(DataKeys.CLICKTHROUGH_URL_KEY, clickTrackingUrl);
         }
         if (eventDataIsInResponseBody(adTypeString, fullAdTypeString)) {

@@ -6,6 +6,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.mopub.TestSdkHelper;
 import com.mopub.common.AdReport;
 import com.mopub.common.test.support.SdkTestRunner;
 
@@ -14,6 +15,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowWebView;
 
@@ -22,9 +24,9 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class BaseHtmlWebViewTest {
 
     @Mock
@@ -32,29 +34,30 @@ public class BaseHtmlWebViewTest {
     private BaseHtmlWebView subject;
     private MotionEvent touchDown;
     private MotionEvent touchUp;
+    private Activity testActivity;
 
     @Before
     public void setUp() throws Exception {
-        subject = new BaseHtmlWebView(Robolectric.buildActivity(Activity.class).create().get(), mockAdReport);
+        testActivity = Robolectric.buildActivity(Activity.class).create().get();
+        subject = new BaseHtmlWebView(testActivity, mockAdReport);
 
         touchDown = createMotionEvent(MotionEvent.ACTION_DOWN);
         touchUp = createMotionEvent(MotionEvent.ACTION_UP);
     }
 
-    @Config(reportSdk = VERSION_CODES.JELLY_BEAN_MR2)
+    @Config(sdk = VERSION_CODES.JELLY_BEAN_MR2)
     @Test
     public void pluginState_atLeastJellybeanMr2_shouldDefaultToOff_shouldNeverBeEnabled()  {
-        subject = new BaseHtmlWebView(Robolectric.buildActivity(Activity.class).create().get(), mockAdReport);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.OFF);
 
         subject.enablePlugins(true);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.OFF);
     }
 
-    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void pluginState_atLeastIcsButBelowJellybeanMr2_shouldDefaultToOn_shouldAllowToggling() {
-        subject = new BaseHtmlWebView(Robolectric.buildActivity(Activity.class).create().get(), mockAdReport);
+        TestSdkHelper.setReportedSdkLevel(VERSION_CODES.ICE_CREAM_SANDWICH);
+        subject = new BaseHtmlWebView(testActivity, mockAdReport);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.ON);
 
         subject.enablePlugins(false);
@@ -64,10 +67,11 @@ public class BaseHtmlWebViewTest {
         assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.ON);
     }
 
-    @Config(reportSdk = VERSION_CODES.GINGERBREAD_MR1)
     @Test
     public void pluginState_beforeIcs_shouldDefaultToOff_shouldAllowToggling() {
-        subject = new BaseHtmlWebView(Robolectric.buildActivity(Activity.class).create().get(), mockAdReport);
+        TestSdkHelper.setReportedSdkLevel(VERSION_CODES.GINGERBREAD_MR1);
+
+        subject = new BaseHtmlWebView(testActivity, mockAdReport);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.OFF);
 
         subject.enablePlugins(true);
@@ -80,10 +84,10 @@ public class BaseHtmlWebViewTest {
     @Test
     public void init_shouldSetWebViewScrollability() throws Exception {
         subject.init(false);
-        assertThat(shadowOf(subject).getOnTouchListener()).isNotNull();
+        assertThat(Shadows.shadowOf(subject).getOnTouchListener()).isNotNull();
 
         subject.init(true);
-        assertThat(shadowOf(subject).getOnTouchListener()).isNotNull();
+        assertThat(Shadows.shadowOf(subject).getOnTouchListener()).isNotNull();
     }
 
     @Test
@@ -97,7 +101,7 @@ public class BaseHtmlWebViewTest {
         String javascriptUrl = "javascript:function() {alert(\"guy\")};";
         subject.loadUrl(javascriptUrl);
 
-        assertThat(shadowOf(subject).getLastLoadedUrl()).isEqualTo(javascriptUrl);
+        assertThat(Shadows.shadowOf(subject).getLastLoadedUrl()).isEqualTo(javascriptUrl);
     }
 
     @Test
@@ -105,7 +109,7 @@ public class BaseHtmlWebViewTest {
         String htmlResponse = "some random html response";
         subject.loadHtmlResponse(htmlResponse);
 
-        ShadowWebView.LoadDataWithBaseURL lastLoadData = shadowOf(subject).getLastLoadDataWithBaseURL();
+        ShadowWebView.LoadDataWithBaseURL lastLoadData = Shadows.shadowOf(subject).getLastLoadDataWithBaseURL();
         assertThat(lastLoadData.baseUrl).isEqualTo("http://ads.mopub.com/");
         assertThat(lastLoadData.data).isEqualTo(htmlResponse);
         assertThat(lastLoadData.mimeType).isEqualTo("text/html");
@@ -118,7 +122,7 @@ public class BaseHtmlWebViewTest {
         assertThat(subject.wasClicked()).isFalse();
 
         subject.initializeOnTouchListener(false);
-        View.OnTouchListener onTouchListener = shadowOf(subject).getOnTouchListener();
+        View.OnTouchListener onTouchListener = Shadows.shadowOf(subject).getOnTouchListener();
 
         onTouchListener.onTouch(subject, touchUp);
         assertThat(subject.wasClicked()).isTrue();
@@ -129,7 +133,7 @@ public class BaseHtmlWebViewTest {
         assertThat(subject.wasClicked()).isFalse();
 
         subject.initializeOnTouchListener(true);
-        View.OnTouchListener onTouchListener = shadowOf(subject).getOnTouchListener();
+        View.OnTouchListener onTouchListener = Shadows.shadowOf(subject).getOnTouchListener();
 
         onTouchListener.onTouch(subject, touchUp);
         assertThat(subject.wasClicked()).isTrue();
@@ -138,7 +142,7 @@ public class BaseHtmlWebViewTest {
     @Test
     public void sendTouchEvent_withScrollingDisabled_withLotsOfRandomMotionEvents_shouldEventuallySetUserClicked() throws Exception {
         subject.initializeOnTouchListener(false);
-        View.OnTouchListener onTouchListener = shadowOf(subject).getOnTouchListener();
+        View.OnTouchListener onTouchListener = Shadows.shadowOf(subject).getOnTouchListener();
 
         onTouchListener.onTouch(subject, touchDown);
         assertThat(subject.wasClicked()).isFalse();
@@ -161,7 +165,7 @@ public class BaseHtmlWebViewTest {
     @Test
     public void sendTouchEvent_withScrollingEnabled_withLotsOfRandomMotionEvents_shouldEventuallySetUserClicked() throws Exception {
         subject.initializeOnTouchListener(true);
-        View.OnTouchListener onTouchListener = shadowOf(subject).getOnTouchListener();
+        View.OnTouchListener onTouchListener = Shadows.shadowOf(subject).getOnTouchListener();
 
         onTouchListener.onTouch(subject, touchDown);
         assertThat(subject.wasClicked()).isFalse();
@@ -184,7 +188,7 @@ public class BaseHtmlWebViewTest {
     @Test
     public void onResetClicked_shouldonResetClicked() throws Exception {
         subject.initializeOnTouchListener(false);
-        View.OnTouchListener onTouchListener = shadowOf(subject).getOnTouchListener();
+        View.OnTouchListener onTouchListener = Shadows.shadowOf(subject).getOnTouchListener();
 
         onTouchListener.onTouch(subject, touchDown);
         onTouchListener.onTouch(subject, touchUp);
@@ -207,7 +211,7 @@ public class BaseHtmlWebViewTest {
     public void setWebViewScrollingEnabled_whenScrollableIsTrue_onTouchListenerShouldAlwaysReturnFalse() throws Exception {
         subject.initializeOnTouchListener(true);
 
-        View.OnTouchListener onTouchListener = shadowOf(subject).getOnTouchListener();
+        View.OnTouchListener onTouchListener = Shadows.shadowOf(subject).getOnTouchListener();
         // ACTION_DOWN is guaranteed to be run before ACTION_MOVE
         onTouchListener.onTouch(subject, createMotionEvent(MotionEvent.ACTION_DOWN));
         boolean shouldConsumeTouch = onTouchListener.onTouch(subject, createMotionEvent(MotionEvent.ACTION_MOVE));
@@ -219,7 +223,7 @@ public class BaseHtmlWebViewTest {
     public void setWebViewScrollingEnabled_whenScrollableIsFalse_whenActionMove_onTouchListenerShouldReturnTrue() throws Exception {
         subject.initializeOnTouchListener(false);
 
-        View.OnTouchListener onTouchListener = shadowOf(subject).getOnTouchListener();
+        View.OnTouchListener onTouchListener = Shadows.shadowOf(subject).getOnTouchListener();
         boolean shouldConsumeTouch = onTouchListener.onTouch(subject, createMotionEvent(MotionEvent.ACTION_MOVE));
 
         assertThat(shouldConsumeTouch).isTrue();
@@ -229,7 +233,7 @@ public class BaseHtmlWebViewTest {
     public void setWebViewScrollingEnabled_whenScrollableIsFalse_whenMotionEventIsNotActionMove_onTouchListenerShouldReturnFalse() throws Exception {
         subject.initializeOnTouchListener(false);
 
-        View.OnTouchListener onTouchListener = shadowOf(subject).getOnTouchListener();
+        View.OnTouchListener onTouchListener = Shadows.shadowOf(subject).getOnTouchListener();
 
         boolean shouldConsumeTouch = onTouchListener.onTouch(subject, touchUp);
         assertThat(shouldConsumeTouch).isFalse();
@@ -244,7 +248,7 @@ public class BaseHtmlWebViewTest {
     @Test
     public void destroy_shouldRemoveSelfFromParent() throws Exception {
         ViewGroup parentView = mock(ViewGroup.class);
-        ShadowWebView shadow = shadowOf(subject);
+        ShadowWebView shadow = Shadows.shadowOf(subject);
         shadow.setMyParent(parentView);
 
         subject.destroy();

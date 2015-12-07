@@ -1,6 +1,6 @@
 package com.mopub.nativeads;
 
-import android.content.Context;
+import android.app.Activity;
 import android.support.annotation.NonNull;
 
 import java.util.Map;
@@ -20,7 +20,7 @@ public abstract class CustomEventNative {
      * native ad from a third-party ad network, or execute any application code. It must also notify
      * the provided {@link CustomEventNativeListener} Object of certain lifecycle events.
      *
-     * @param context The activity context.
+     * @param activity The activity.
      * @param customEventNativeListener An Object that must be notified of certain lifecycle
      * events.
      * @param localExtras A Map containing additional custom data that is set within your
@@ -31,7 +31,7 @@ public abstract class CustomEventNative {
      * that you want to associate with a given custom event request. This data may be used to pass
      * dynamic information, such as publisher IDs, without changes in application code.
      */
-    protected abstract void loadNativeAd(@NonNull final Context context,
+    protected abstract void loadNativeAd(@NonNull final Activity activity,
             @NonNull final CustomEventNativeListener customEventNativeListener,
             @NonNull final Map<String, Object> localExtras,
             @NonNull final Map<String, String> serverExtras);

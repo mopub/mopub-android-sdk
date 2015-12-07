@@ -1,11 +1,11 @@
 package com.mopub.nativeads;
 
 import android.app.Activity;
-import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubClientPositioning;
 import com.mopub.nativeads.PositioningSource.PositioningListener;
 
@@ -16,6 +16,7 @@ import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,8 +33,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubStreamAdPlacerTest {
-    private Context context;
+    private Activity activity;
 
     MoPubClientPositioning positioning;
 
@@ -55,11 +57,11 @@ public class MoPubStreamAdPlacerTest {
 
     @Before
     public void setup() {
-        context = Robolectric.buildActivity(Activity.class).create().get();
+        activity = Robolectric.buildActivity(Activity.class).create().get();
         positioning = MoPubNativeAdPositioning.clientPositioning()
                 .enableRepeatingPositions(2);
 
-        subject = new MoPubStreamAdPlacer(context, mockAdSource, mockPositioningSource);
+        subject = new MoPubStreamAdPlacer(activity, mockAdSource, mockPositioningSource);
         subject.registerAdRenderer(mockAdRenderer);
         subject.setAdLoadedListener(mockAdLoadedListener);
     }
@@ -248,10 +250,10 @@ public class MoPubStreamAdPlacerTest {
         subject.handlePositioningLoad(positioning);
         subject.handleAdsAvailable();
 
-        Robolectric.getUiThreadScheduler().pause();
+        Robolectric.getForegroundThreadScheduler().pause();
         subject.setItemCount(100);
         subject.placeAdsInRange(50, 50);
-        Robolectric.getUiThreadScheduler().advanceToLastPostedRunnable();
+        Robolectric.getForegroundThreadScheduler().advanceToLastPostedRunnable();
 
         assertThat(subject.isAd(48)).isFalse();
         assertThat(subject.isAd(49)).isFalse();
@@ -270,10 +272,10 @@ public class MoPubStreamAdPlacerTest {
         subject.handlePositioningLoad(positioning);
         subject.handleAdsAvailable();
 
-        Robolectric.getUiThreadScheduler().pause();
+        Robolectric.getForegroundThreadScheduler().pause();
         subject.setItemCount(100);
         subject.placeAdsInRange(50, 54);
-        Robolectric.getUiThreadScheduler().advanceToLastPostedRunnable();
+        Robolectric.getForegroundThreadScheduler().advanceToLastPostedRunnable();
 
         verify(mockAdLoadedListener).onAdLoaded(50);
         verify(mockAdLoadedListener, never()).onAdLoaded(51);
@@ -292,10 +294,10 @@ public class MoPubStreamAdPlacerTest {
         subject.handlePositioningLoad(positioning);
         subject.handleAdsAvailable();
 
-        Robolectric.getUiThreadScheduler().pause();
+        Robolectric.getForegroundThreadScheduler().pause();
         subject.setItemCount(0);
         subject.placeAdsInRange(50, 54);
-        Robolectric.getUiThreadScheduler().advanceToLastPostedRunnable();
+        Robolectric.getForegroundThreadScheduler().advanceToLastPostedRunnable();
 
         verify(mockAdLoadedListener, never()).onAdLoaded(50);
     }
@@ -348,7 +350,7 @@ public class MoPubStreamAdPlacerTest {
     public void destroy_shouldClearAdSource_shouldDestroyImpressionTracker_shouldDestroyNativeAd() {
         when(mockAdSource.dequeueAd()).thenReturn(mStubNativeAd);
 
-        subject = new MoPubStreamAdPlacer(context, mockAdSource, mockPositioningSource);
+        subject = new MoPubStreamAdPlacer(activity, mockAdSource, mockPositioningSource);
         subject.registerAdRenderer(mockAdRenderer);
         subject.loadAds("test-ad-unit-id");
         subject.handlePositioningLoad(positioning);
@@ -363,8 +365,8 @@ public class MoPubStreamAdPlacerTest {
 
     @Test
     public void getAdView_withNullConvertView_callsRenderer_addsToImpressionTracker() {
-        View view = new View(context);
-        when(mStubNativeAd.createAdView(any(ViewGroup.class))).thenReturn(view);
+        View view = new View(activity);
+        when(mStubNativeAd.createAdView(any(Activity.class), any(ViewGroup.class))).thenReturn(view);
         when(mockAdSource.dequeueAd()).thenReturn(mStubNativeAd);
         subject.registerAdRenderer(mockAdRenderer);
         subject.loadAds("test-ad-unit-id");
@@ -374,13 +376,13 @@ public class MoPubStreamAdPlacerTest {
 
         assertThat(subject.getAdView(1, null, null)).isEqualTo(view);
 
-        verify(mStubNativeAd).createAdView(any(ViewGroup.class));
+        verify(mStubNativeAd).createAdView(eq(activity), any(ViewGroup.class));
         verify(mStubNativeAd).renderAdView(view);
     }
 
     @Test
     public void getAdView_withConvertView_shouldCallRenderer() {
-        View convertView = new View(context);
+        View convertView = new View(activity);
         when(mockAdSource.dequeueAd()).thenReturn(mStubNativeAd);
         subject.registerAdRenderer(mockAdRenderer);
         subject.loadAds("test-ad-unit-id");
@@ -389,7 +391,7 @@ public class MoPubStreamAdPlacerTest {
         subject.setItemCount(4);
 
         assertThat(subject.getAdView(1, convertView, null)).isEqualTo(convertView);
-        verify(mStubNativeAd, never()).createAdView(any(ViewGroup.class));
+        verify(mStubNativeAd, never()).createAdView(any(Activity.class), any(ViewGroup.class));
         verify(mStubNativeAd).renderAdView(convertView);
     }
 
@@ -434,7 +436,7 @@ public class MoPubStreamAdPlacerTest {
     public void destroy_shouldClearAdSource_shouldResetPlacementData() {
         when(mockAdSource.dequeueAd()).thenReturn(mStubNativeAd);
 
-        subject = new MoPubStreamAdPlacer(context, mockAdSource, mockPositioningSource);
+        subject = new MoPubStreamAdPlacer(activity, mockAdSource, mockPositioningSource);
         subject.registerAdRenderer(mockAdRenderer);
         subject.loadAds("test-ad-unit-id");
         subject.handlePositioningLoad(positioning);

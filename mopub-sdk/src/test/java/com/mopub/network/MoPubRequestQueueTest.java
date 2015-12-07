@@ -7,6 +7,7 @@ import com.mopub.common.ClientMetadata;
 import com.mopub.common.Constants;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.DeviceUtils;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.volley.Cache;
 import com.mopub.volley.Network;
 import com.mopub.volley.Request;
@@ -22,6 +23,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.io.File;
 
@@ -32,6 +34,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubRequestQueueTest {
 
     private MoPubRequestQueue subject;

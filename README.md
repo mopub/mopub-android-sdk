@@ -27,7 +27,7 @@ The MoPub SDK is available via:
     }
 
     dependencies {
-        compile('com.mopub:mopub-sdk:4.0.0@aar') {
+        compile('com.mopub:mopub-sdk:4.1.0@aar') {
             transitive = true
         }
     }
@@ -60,25 +60,11 @@ The MoPub SDK is available via:
     **For additional integration instructions, please see the [Getting Started guide](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started#requirements-and-dependencies).**
 
 ## New in this Version
-
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-Version 4.0.0 includes a number of improvements to our Native Ads systems under the hood. This means a few changes for publishers integrating the ads. The [Native Ads Integration Guide](https://github.com/mopub/mopub-android-sdk/wiki/Native-Ads-Integration) describes all the steps you'll need to integrate 4.0.0.
-
-**Native Ads Changes**
- - `MoPubNativeAdRenderer` has been replaced by `MoPubStaticNativeRenderer` 
- - When requesting ads using `MoPubNative`, you must instantiate and register a `MoPubStaticNativeAdRenderer`. See the [Integration Document](https://github.com/mopub/mopub-android-sdk/wiki/Legacy-Native-Ads-Integration) for more details.
- - `NativeResponse` has been replaced with `NativeAd`
- - `NativeAd` has a new API that supports creating and rendering `View`s for Native Ads.
-   - `#createAdView` returns a `View` that can hold data for the `NativeAd`
-   - `#renderAdView` will populate the `View` with ad data. 
-   - Other lifecycle methods from `NativeResponse` remain:
-     - `#prepare`, `#clear`, `#destroy`
- - The process of writing new `CustomEventNative` instances has changed. These changes will support more dynamic, flexible, and attractive Native Ad formats in the future. All bundled native Custom Event files have been updated to use the new API.
-
-**Removed Old Code**
- - Removed legacy banner/interestitial listeners, deprecated in 1.11
- - Removed legacy custom event implementation ("custom event methods") deprecated in 1.10
+- Support for mediating Facebook Native Video ads.
+- Mediated Facebook Native Ads now display the AdChoices icon.
+- Support for Facebook SDK 8.4.1
 
 ## Requirements
 
@@ -87,7 +73,7 @@ Version 4.0.0 includes a number of improvements to our Native Ads systems under 
 - android-support-annotations.jar, r22 (**Updated in 3.7.0**)
 - android-support-v7-recyclerview.jar, r22 (**Updated in 3.9.0**)
 - MoPub Volley Library (mopub-volley-1.1.0.jar - available on JCenter) (**Updated in 3.6.0**)
-- **Recommended** Google Play Services 7.0.0
+- **Recommended** Google Play Services 7.8.0
 
 ## Upgrading from 3.2.0 and Prior
 In 3.3.0 a dependency on android-support-annotations.jar was added. If you are using Maven or Gradle to include the MoPub SDK, this dependency is included in the build scripts. For instructions on adding dependencies for Eclipse projects, see our [Getting Started Guide](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started#adding-the-support-libraries-to-your-project)
