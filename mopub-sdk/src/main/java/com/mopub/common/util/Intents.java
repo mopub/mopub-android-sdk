@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.mopub.common.MoPubBrowser;
 import com.mopub.common.Preconditions;
@@ -19,6 +20,7 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.exceptions.IntentNotResolvableException;
 import com.mopub.exceptions.UrlParseException;
 
+import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -254,6 +256,32 @@ public class Intents {
             final String errorMessage = "Unable to open intent for: " + uri;
             Intents.launchActionViewIntent(context, uri, errorMessage);
         } else {
+            throw new IntentNotResolvableException("Could not handle application specific " +
+                    "action: " + uri + "\n\tYou may be running in the emulator or another " +
+                    "device which does not have the required application.");
+        }
+    }
+
+    public static void launchIntentUrl(@NonNull final Context context, @NonNull final Uri uri) throws IntentNotResolvableException {
+        boolean handled = false;
+        try {
+            Intent i =Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                context.startActivity(i);
+                handled = true;
+            } catch (ActivityNotFoundException e) {
+                if (i.getPackage() != null) {
+                    Intent fallback = new Intent(Intent.ACTION_VIEW);
+                    fallback.setData(Uri.parse("market://details?id=" + i.getPackage()));
+                    fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(fallback);
+                    handled = true;
+                }
+            }
+        } catch (URISyntaxException e) {
+            MoPubLog.e("Failed to parse intent url", e);
+        }
+        if (!handled) {
             throw new IntentNotResolvableException("Could not handle application specific " +
                     "action: " + uri + "\n\tYou may be running in the emulator or another " +
                     "device which does not have the required application.");

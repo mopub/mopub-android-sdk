@@ -275,6 +275,19 @@ public enum UrlAction {
         }
     },
 
+    /* 9 */ FOLLOW_INTENT_LINK(true) {
+        @Override
+        public boolean shouldTryHandlingUrl(@NonNull Uri uri) {
+            final String scheme = uri.getScheme();
+            return !TextUtils.isEmpty(scheme) && scheme.equals("intent");
+        }
+
+        @Override
+        protected void performAction(@NonNull Context context, @NonNull Uri uri, @NonNull UrlHandler urlHandler) throws IntentNotResolvableException {
+            Intents.launchIntentUrl(context, uri);
+        }
+    },
+
     /* This is essentially an "unspecified" value for UrlAction. */
     NOOP(false) {
         @Override
