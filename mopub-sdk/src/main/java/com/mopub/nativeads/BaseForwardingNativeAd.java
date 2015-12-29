@@ -314,6 +314,10 @@ abstract class BaseForwardingNativeAd implements NativeAdInterface {
     @Override
     public void prepare(@Nullable final View view,@Nullable ViewBinder viewBinder) { }
 
+    public void prepare(@Nullable final View view) {
+        prepare(view, null);
+    }
+
     /**
      * Your base native ad subclass should implement this method if the network requires the developer
      * to explicitly record an impression of a view rendered to screen.
