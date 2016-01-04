@@ -6,7 +6,7 @@
 
 - Support for mediating Facebook Native Video ads.
 - Mediated Facebook Native Ads now display the AdChoices icon.
-- Support for Facebook SDK 8.4.1
+- Support for Facebook SDK 4.8.1
 
 ## Version 4.1.0 (November 12, 2015)
 
