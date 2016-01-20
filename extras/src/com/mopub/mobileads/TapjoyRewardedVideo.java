@@ -14,7 +14,7 @@ import com.tapjoy.TJPlacementListener;
 
 import java.util.Map;
 
-// Tested with Tapjoy SDK 11.1.0
+// Tested with Tapjoy SDK 11.3.0
 public class TapjoyRewardedVideo extends CustomEventRewardedVideo {
     private static final String TAPJOY_AD_NETWORK_CONSTANT = "tapjoy_id";
     private TJPlacement tjPlacement;
@@ -60,6 +60,8 @@ public class TapjoyRewardedVideo extends CustomEventRewardedVideo {
             MoPubLog.d("Tapjoy interstitial loaded with empty 'name' field. Request will fail.");
         }
         tjPlacement = new TJPlacement(activity, name, sTapjoyListener);
+        tjPlacement.setMediationSource("mopub");
+        tjPlacement.setAdapterVersion("2.0");
         tjPlacement.requestContent();
     }
 
