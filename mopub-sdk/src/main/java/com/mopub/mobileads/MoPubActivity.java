@@ -9,7 +9,7 @@ import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.integralads.verification.app_verification_library.AvidManager;
+import com.integralads.avid.library.mopub.AvidManager;
 import com.mopub.common.AdReport;
 import com.mopub.common.CreativeOrientation;
 import com.mopub.common.DataKeys;

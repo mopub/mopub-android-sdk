@@ -3,7 +3,7 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.Context;
 
-import com.integralads.verification.app_verification_library.AvidManager;
+import com.integralads.avid.library.mopub.AvidManager;
 import com.mopub.common.AdReport;
 import com.mopub.common.DataKeys;
 import com.mopub.common.logging.MoPubLog;
