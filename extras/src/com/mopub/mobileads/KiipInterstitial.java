@@ -27,7 +27,7 @@ public class KiipInterstitial extends CustomEventInterstitial {
     private Modal.OnShowListener onPoptartShow = new Modal.OnShowListener() {
         @Override
         public void onShow(Modal modal) {
-            Log.d("MoPub", "onShow");
+            Log.d("MoPub", "Kiip Modal onShow");
             mInterstitialListener.onInterstitialShown();
         }
     };
@@ -36,7 +36,7 @@ public class KiipInterstitial extends CustomEventInterstitial {
     private Modal.OnDismissListener onPoptartDismiss = new Modal.OnDismissListener() {
         @Override
         public void onDismiss(Modal modal) {
-            Log.d("MoPub", "onDismiss");
+            Log.d("MoPub", "Kiip Modal onDismiss");
             mInterstitialListener.onInterstitialDismissed();
         }
     };
@@ -103,7 +103,7 @@ public class KiipInterstitial extends CustomEventInterstitial {
 
     @Override
     protected void showInterstitial() {
-        Log.d("MoPub", "Showing Chartboost interstitial ad.");
+        Log.d("MoPub", "Showing Kiip poptart");
         if (mPoptart != null && !mPoptart.isShowing()) {
             mPoptart.show(mAppContext);
             mPoptart = null;
