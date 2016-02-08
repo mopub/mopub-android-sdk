@@ -27,7 +27,7 @@ import android.webkit.JsResult;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
-import com.integralads.avid.library.AvidManager;
+import com.integralads.avid.library.mopub.AvidManager;
 import com.mopub.common.AdReport;
 import com.mopub.common.UrlHandler;
 import com.mopub.common.CloseableLayout;
