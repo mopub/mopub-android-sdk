@@ -107,7 +107,7 @@ dependencies {
     compile 'com.mopub.volley:mopub-volley:1.1.0'
     compile 'com.google.android.exoplayer:exoplayer:r1.4.2'
     // anchor: additional dependencies
-    compile files('libs/avid-library-mopub-1.0.0-BETA.jar')
+    compile files('libs/avid-library-mopub-1.1.0-SNAPSHOT.jar')
 
     javadocDeps 'com.google.android.exoplayer:exoplayer:r1.4.2:sources'
     javadocDeps 'com.mopub.volley:mopub-volley:1.1.0:sources'
