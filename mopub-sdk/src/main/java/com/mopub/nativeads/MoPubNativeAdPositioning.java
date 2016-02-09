@@ -134,49 +134,4 @@ public final class MoPubNativeAdPositioning {
     public static MoPubServerPositioning serverPositioning() {
         return new MoPubServerPositioning();
     }
-
-    /**
-     * Creates and returns a {@link MoPubNativeAdPositioning.Builder}.
-     *
-     * @return A new builder.
-     * @deprecated We recommend using {@link #serverPositioning()} and specifying positioning in
-     * the MoPub UI. If you still want to hard-code positioning information in your app,
-     * use {@link #clientPositioning} instead of this builder.
-     */
-    @NonNull
-    @Deprecated
-    public static Builder newBuilder() {
-        return new Builder();
-    }
-
-    /**
-     * A Builder class for the ad positioning.
-     */
-    @Deprecated
-    public static final class Builder extends MoPubClientPositioning {
-        @NonNull
-        @Override
-        public Builder addFixedPosition(final int position) {
-            super.addFixedPosition(position);
-            return this;
-        }
-
-        @NonNull
-        @Override
-        public Builder enableRepeatingPositions(final int interval) {
-            super.enableRepeatingPositions(interval);
-            return this;
-        }
-
-        /**
-         * Creates and returns a new immutable positioning object.
-         *
-         * @return A new positioning object.
-         */
-        @NonNull
-        @Deprecated
-        public MoPubClientPositioning build() {
-            return this;
-        }
-    }
 }

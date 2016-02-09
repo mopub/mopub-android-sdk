@@ -3,6 +3,7 @@
 package com.mopub.nativeads;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -18,9 +19,9 @@ import static com.mopub.nativeads.PlacementData.NOT_FOUND;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class PlacementDataTest {
     private PlacementData noAds;
     private PlacementData adAt0;
@@ -31,14 +32,10 @@ public class PlacementDataTest {
     private PlacementData adsRepeating;
     private PlacementData adsAt15repeating;
 
-    @Mock private NativeAdData mockNativeAdData;
-    @Mock private NativeAdData mockNativeAdData2;
-    @Mock private NativeAdData mockNativeAdData3;
-    @Mock private NativeAdData mockNativeAdData4;
-    @Mock private NativeResponse mockNativeResponse;
-    @Mock private NativeResponse mockNativeResponse2;
-    @Mock private NativeResponse mockNativeResponse3;
-    @Mock private NativeResponse mockNativeResponse4;
+    @Mock private NativeAd mMockNativeAd;
+    @Mock private NativeAd mMockNativeAd2;
+    @Mock private NativeAd mMockNativeAd3;
+    @Mock private NativeAd mMockNativeAd4;
 
     @Before
     public void setup() {
@@ -64,11 +61,6 @@ public class PlacementDataTest {
                 .addFixedPosition(2)
                 .addFixedPosition(3)
                 .addFixedPosition(4));
-
-        when(mockNativeAdData.getAd()).thenReturn(mockNativeResponse);
-        when(mockNativeAdData2.getAd()).thenReturn(mockNativeResponse2);
-        when(mockNativeAdData3.getAd()).thenReturn(mockNativeResponse3);
-        when(mockNativeAdData4.getAd()).thenReturn(mockNativeResponse4);
     }
 
     @Test
@@ -287,15 +279,15 @@ public class PlacementDataTest {
         checkInsertionPositions(10, adsAt15repeating, 1, 4, 6, 8, 10);
         checkPlacedPositions(20, adsAt15repeating);
 
-        adsAt15repeating.placeAd(1, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
         checkInsertionPositions(10, adsAt15repeating, 5, 7, 9);
         checkPlacedPositions(20, adsAt15repeating, 1);
 
-        adsAt15repeating.placeAd(5, mockNativeAdData);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
         checkInsertionPositions(10, adsAt15repeating, 8, 10);
         checkPlacedPositions(20, adsAt15repeating, 1, 5);
 
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
         checkInsertionPositions(10, adsAt15repeating);
         checkPlacedPositions(20, adsAt15repeating, 1, 5, 8);
     }
@@ -305,24 +297,24 @@ public class PlacementDataTest {
         checkInsertionPositions(10, adsAt15repeating, 1, 4, 6, 8, 10);
         checkPlacedPositions(20, adsAt15repeating);
 
-        adsAt15repeating.placeAd(6, mockNativeAdData);
+        adsAt15repeating.placeAd(6, mMockNativeAd);
         checkInsertionPositions(10, adsAt15repeating, 1, 4, 9);
         checkPlacedPositions(20, adsAt15repeating, 6);
 
-        adsAt15repeating.placeAd(4, mockNativeAdData);
+        adsAt15repeating.placeAd(4, mMockNativeAd);
         checkInsertionPositions(10, adsAt15repeating, 1, 10);
         checkPlacedPositions(20, adsAt15repeating, 4, 7);
 
-        adsAt15repeating.placeAd(1, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
         checkInsertionPositions(10, adsAt15repeating);
         checkPlacedPositions(20, adsAt15repeating, 1, 5, 8);
     }
 
     @Test
     public void placedAds_getOriginalPositionAndCount() {
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
 
         assertThat(adsAt15repeating.getOriginalPosition(0)).isEqualTo(0);
         assertThat(adsAt15repeating.getOriginalPosition(1)).isEqualTo(NOT_FOUND);
@@ -343,9 +335,9 @@ public class PlacementDataTest {
 
     @Test
     public void placedAds_getAdjustedPositionAndCount() {
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
 
         assertThat(adsAt15repeating.getAdjustedPosition(0)).isEqualTo(0);
         // Ad here
@@ -370,122 +362,122 @@ public class PlacementDataTest {
     @Test
     public void placeAdsClumped_shouldPlaceAdsInOrder() {
         int nextPosition = adsAt1234.nextInsertionPosition(0);
-        adsAt1234.placeAd(nextPosition, mockNativeAdData);
+        adsAt1234.placeAd(nextPosition, mMockNativeAd);
 
         nextPosition = adsAt1234.nextInsertionPosition(nextPosition);
-        adsAt1234.placeAd(nextPosition, mockNativeAdData2);
+        adsAt1234.placeAd(nextPosition, mMockNativeAd2);
 
         nextPosition = adsAt1234.nextInsertionPosition(nextPosition);
-        adsAt1234.placeAd(nextPosition, mockNativeAdData3);
+        adsAt1234.placeAd(nextPosition, mMockNativeAd3);
 
         nextPosition = adsAt1234.nextInsertionPosition(nextPosition);
-        adsAt1234.placeAd(nextPosition, mockNativeAdData4);
+        adsAt1234.placeAd(nextPosition, mMockNativeAd4);
 
         nextPosition = adsAt1234.nextInsertionPosition(nextPosition);
         assertThat(nextPosition).isEqualTo(NOT_FOUND);
 
         assertThat(adsAt1234.isPlacedAd(0)).isFalse();
-        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mockNativeAdData);
-        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mockNativeAdData2);
-        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mockNativeAdData3);
-        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mockNativeAdData4);
+        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mMockNativeAd);
+        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mMockNativeAd2);
+        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mMockNativeAd3);
+        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mMockNativeAd4);
         assertThat(adsAt1234.isPlacedAd(5)).isFalse();
     }
 
     @Test
     public void placeAdsClumped_thenRemoveContentBeforeClumpedAds_shouldShiftAds() {
-        adsAt1234.placeAd(1, mockNativeAdData);
-        adsAt1234.placeAd(2, mockNativeAdData2);
-        adsAt1234.placeAd(3, mockNativeAdData3);
-        adsAt1234.placeAd(4, mockNativeAdData4);
+        adsAt1234.placeAd(1, mMockNativeAd);
+        adsAt1234.placeAd(2, mMockNativeAd2);
+        adsAt1234.placeAd(3, mMockNativeAd3);
+        adsAt1234.placeAd(4, mMockNativeAd4);
 
         adsAt1234.removeItem(0);
-        assertThat(adsAt1234.getPlacedAd(0)).isEqualTo(mockNativeAdData);
-        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mockNativeAdData2);
-        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mockNativeAdData3);
-        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mockNativeAdData4);
+        assertThat(adsAt1234.getPlacedAd(0)).isEqualTo(mMockNativeAd);
+        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mMockNativeAd2);
+        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mMockNativeAd3);
+        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mMockNativeAd4);
         assertThat(adsAt1234.isPlacedAd(4)).isFalse();
 
         adsAt1234.removeItem(0);
-        assertThat(adsAt1234.getPlacedAd(0)).isEqualTo(mockNativeAdData);
-        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mockNativeAdData2);
-        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mockNativeAdData3);
-        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mockNativeAdData4);
+        assertThat(adsAt1234.getPlacedAd(0)).isEqualTo(mMockNativeAd);
+        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mMockNativeAd2);
+        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mMockNativeAd3);
+        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mMockNativeAd4);
         assertThat(adsAt1234.isPlacedAd(4)).isFalse();
     }
 
     @Test
     public void placeAdsClumped_thenRemoveContentAfterClumpedAds_shouldNotShiftAds() {
-        adsAt1234.placeAd(1, mockNativeAdData);
-        adsAt1234.placeAd(2, mockNativeAdData2);
-        adsAt1234.placeAd(3, mockNativeAdData3);
-        adsAt1234.placeAd(4, mockNativeAdData4);
+        adsAt1234.placeAd(1, mMockNativeAd);
+        adsAt1234.placeAd(2, mMockNativeAd2);
+        adsAt1234.placeAd(3, mMockNativeAd3);
+        adsAt1234.placeAd(4, mMockNativeAd4);
 
         adsAt1234.removeItem(1);
         assertThat(adsAt1234.isPlacedAd(0)).isFalse();
-        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mockNativeAdData);
-        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mockNativeAdData2);
-        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mockNativeAdData3);
-        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mockNativeAdData4);
+        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mMockNativeAd);
+        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mMockNativeAd2);
+        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mMockNativeAd3);
+        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mMockNativeAd4);
         assertThat(adsAt1234.isPlacedAd(5)).isFalse();
 
         adsAt1234.removeItem(2);
         assertThat(adsAt1234.isPlacedAd(0)).isFalse();
-        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mockNativeAdData);
-        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mockNativeAdData2);
-        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mockNativeAdData3);
-        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mockNativeAdData4);
+        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mMockNativeAd);
+        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mMockNativeAd2);
+        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mMockNativeAd3);
+        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mMockNativeAd4);
         assertThat(adsAt1234.isPlacedAd(5)).isFalse();
     }
 
     @Test
     public void placeAdsClumped_thenInsertContentBeforeClumpedAds_shouldShiftAds() {
-        adsAt1234.placeAd(1, mockNativeAdData);
-        adsAt1234.placeAd(2, mockNativeAdData2);
-        adsAt1234.placeAd(3, mockNativeAdData3);
-        adsAt1234.placeAd(4, mockNativeAdData4);
+        adsAt1234.placeAd(1, mMockNativeAd);
+        adsAt1234.placeAd(2, mMockNativeAd2);
+        adsAt1234.placeAd(3, mMockNativeAd3);
+        adsAt1234.placeAd(4, mMockNativeAd4);
 
         adsAt1234.insertItem(1);
         assertThat(adsAt1234.isPlacedAd(0)).isFalse();
         assertThat(adsAt1234.isPlacedAd(1)).isFalse();
-        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mockNativeAdData);
-        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mockNativeAdData2);
-        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mockNativeAdData3);
-        assertThat(adsAt1234.getPlacedAd(5)).isEqualTo(mockNativeAdData4);
+        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mMockNativeAd);
+        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mMockNativeAd2);
+        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mMockNativeAd3);
+        assertThat(adsAt1234.getPlacedAd(5)).isEqualTo(mMockNativeAd4);
         assertThat(adsAt1234.isPlacedAd(6)).isFalse();
 
         adsAt1234.insertItem(0);
         assertThat(adsAt1234.isPlacedAd(0)).isFalse();
         assertThat(adsAt1234.isPlacedAd(1)).isFalse();
         assertThat(adsAt1234.isPlacedAd(2)).isFalse();
-        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mockNativeAdData);
-        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mockNativeAdData2);
-        assertThat(adsAt1234.getPlacedAd(5)).isEqualTo(mockNativeAdData3);
-        assertThat(adsAt1234.getPlacedAd(6)).isEqualTo(mockNativeAdData4);
+        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mMockNativeAd);
+        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mMockNativeAd2);
+        assertThat(adsAt1234.getPlacedAd(5)).isEqualTo(mMockNativeAd3);
+        assertThat(adsAt1234.getPlacedAd(6)).isEqualTo(mMockNativeAd4);
         assertThat(adsAt1234.isPlacedAd(7)).isFalse();
     }
 
     @Test
     public void placeAdsClumped_thenInsertContentAfterClumpedAds_shouldNotShiftAds() {
-        adsAt1234.placeAd(1, mockNativeAdData);
-        adsAt1234.placeAd(2, mockNativeAdData2);
-        adsAt1234.placeAd(3, mockNativeAdData3);
-        adsAt1234.placeAd(4, mockNativeAdData4);
+        adsAt1234.placeAd(1, mMockNativeAd);
+        adsAt1234.placeAd(2, mMockNativeAd2);
+        adsAt1234.placeAd(3, mMockNativeAd3);
+        adsAt1234.placeAd(4, mMockNativeAd4);
 
         adsAt1234.insertItem(2);
         assertThat(adsAt1234.isPlacedAd(0)).isFalse();
-        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mockNativeAdData);
-        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mockNativeAdData2);
-        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mockNativeAdData3);
-        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mockNativeAdData4);
+        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mMockNativeAd);
+        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mMockNativeAd2);
+        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mMockNativeAd3);
+        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mMockNativeAd4);
         assertThat(adsAt1234.isPlacedAd(5)).isFalse();
 
         adsAt1234.removeItem(3);
         assertThat(adsAt1234.isPlacedAd(0)).isFalse();
-        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mockNativeAdData);
-        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mockNativeAdData2);
-        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mockNativeAdData3);
-        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mockNativeAdData4);
+        assertThat(adsAt1234.getPlacedAd(1)).isEqualTo(mMockNativeAd);
+        assertThat(adsAt1234.getPlacedAd(2)).isEqualTo(mMockNativeAd2);
+        assertThat(adsAt1234.getPlacedAd(3)).isEqualTo(mMockNativeAd3);
+        assertThat(adsAt1234.getPlacedAd(4)).isEqualTo(mMockNativeAd4);
         assertThat(adsAt1234.isPlacedAd(5)).isFalse();
     }
 
@@ -499,9 +491,9 @@ public class PlacementDataTest {
         checkPlacedPositions(15, adsAt15repeating);
         checkInsertionPositions(15, adsAt15repeating, 1, 4, 6, 8, 10, 12, 14);
 
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
         checkPlacedPositions(15, adsAt15repeating, 1, 5, 8);
         checkInsertionPositions(15, adsAt15repeating, 11, 13, 15);
 
@@ -515,9 +507,9 @@ public class PlacementDataTest {
         checkPlacedPositions(15, adsAt15repeating);
         checkInsertionPositions(15, adsAt15repeating, 1, 4, 6, 8, 10, 12, 14);
 
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
         checkPlacedPositions(15, adsAt15repeating, 1, 5, 8);
         checkInsertionPositions(15, adsAt15repeating, 11, 13, 15);
 
@@ -531,9 +523,9 @@ public class PlacementDataTest {
         checkPlacedPositions(15, adsAt15repeating);
         checkInsertionPositions(15, adsAt15repeating, 1, 4, 6, 8, 10, 12, 14);
 
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
         checkPlacedPositions(15, adsAt15repeating, 1, 5, 8);
         checkInsertionPositions(15, adsAt15repeating, 11, 13, 15);
 
@@ -555,9 +547,9 @@ public class PlacementDataTest {
         checkPlacedPositions(15, adsAt15repeating);
         checkInsertionPositions(15, adsAt15repeating, 1, 4, 6, 8, 10, 12, 14);
 
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
         checkPlacedPositions(15, adsAt15repeating, 1, 5, 8);
         checkInsertionPositions(15, adsAt15repeating, 11, 13, 15);
 
@@ -579,9 +571,9 @@ public class PlacementDataTest {
         checkPlacedPositions(15, adsAt15repeating);
         checkInsertionPositions(15, adsAt15repeating, 1, 4, 6, 8, 10, 12, 14);
 
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
         checkPlacedPositions(15, adsAt15repeating, 1, 5, 8);
         checkInsertionPositions(15, adsAt15repeating, 11, 13, 15);
 
@@ -599,9 +591,9 @@ public class PlacementDataTest {
         checkPlacedPositions(15, adsAt15repeating);
         checkInsertionPositions(15, adsAt15repeating, 1, 4, 6, 8, 10, 12, 14);
 
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
         checkPlacedPositions(15, adsAt15repeating, 1, 5, 8);
         checkInsertionPositions(15, adsAt15repeating, 11, 13, 15);
 
@@ -616,21 +608,21 @@ public class PlacementDataTest {
 
     @Test
     public void placeAds_thenClear_shouldCallDestroy() {
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData2);
-        adsAt15repeating.placeAd(8, mockNativeAdData3);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd2);
+        adsAt15repeating.placeAd(8, mMockNativeAd3);
 
         adsAt15repeating.clearAdsInRange(5, 10);
-        verify(mockNativeResponse, never()).destroy();
-        verify(mockNativeResponse2).destroy();
-        verify(mockNativeResponse3).destroy();
+        verify(mMockNativeAd, never()).destroy();
+        verify(mMockNativeAd2).destroy();
+        verify(mMockNativeAd3).destroy();
     }
 
     @Test
     public void insertItems_afterPlacing() {
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
 
         adsAt15repeating.insertItem(1);
         adsAt15repeating.insertItem(4);
@@ -651,9 +643,9 @@ public class PlacementDataTest {
 
     @Test
     public void removeThenInsertItem_atZero_shouldBeAtZero() {
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
 
         adsAt15repeating.removeItem(0);
         checkPlacedPositions(20, adsAt15repeating, 0, 4, 7);
@@ -666,18 +658,18 @@ public class PlacementDataTest {
 
     @Test
     public void placeThenInsertThenPlace() {
-        adsAt15repeating.placeAd(4, mockNativeAdData);
+        adsAt15repeating.placeAd(4, mMockNativeAd);
         adsAt15repeating.insertItem(4);
-        adsAt15repeating.placeAd(1, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
 
         checkPlacedPositions(20, adsAt15repeating, 1, 6);
     }
 
     @Test
     public void removeItems_afterPlacing() {
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
 
         checkPlacedPositions(20, adsAt15repeating, 1, 5, 8);
 
@@ -697,9 +689,9 @@ public class PlacementDataTest {
 
     @Test
     public void removeItemsBetweenAds_thenInsert_shouldClumpAds() {
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
 
         adsAt15repeating.removeItem(4);
         adsAt15repeating.removeItem(4);
@@ -727,9 +719,9 @@ public class PlacementDataTest {
 
     @Test
     public void removeItem_withClumpedAdsBeforeIt_shouldCorrectlyRemoveItem() throws Exception {
-        adsRepeating.placeAd(2, mockNativeAdData);
-        adsRepeating.placeAd(5, mockNativeAdData);
-        adsRepeating.placeAd(8, mockNativeAdData);
+        adsRepeating.placeAd(2, mMockNativeAd);
+        adsRepeating.placeAd(5, mMockNativeAd);
+        adsRepeating.placeAd(8, mMockNativeAd);
 
         checkPlacedPositions(20, adsRepeating, 2, 5, 8);
         assertThat(adsRepeating.getAdjustedCount(7)).isEqualTo(10);
@@ -751,9 +743,9 @@ public class PlacementDataTest {
 
     @Test
     public void removeItems_afterClumpedAds_shouldStayClumped() {
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
 
         adsAt15repeating.removeItem(4);
         adsAt15repeating.removeItem(4);
@@ -772,9 +764,9 @@ public class PlacementDataTest {
 
     @Test
     public void moveItems_afterPlacing() {
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData);
-        adsAt15repeating.placeAd(8, mockNativeAdData);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd);
+        adsAt15repeating.placeAd(8, mMockNativeAd);
 
         assertThat(adsAt15repeating.getAdjustedPosition(4)).isEqualTo(6);
         assertThat(adsAt15repeating.getAdjustedPosition(5)).isEqualTo(7);
@@ -789,19 +781,15 @@ public class PlacementDataTest {
 
     @Test
     public void clearAll_shouldCallDestroyOnAdData_shouldResetPositions() {
-        when(mockNativeAdData.getAd()).thenReturn(mockNativeResponse);
-        when(mockNativeAdData2.getAd()).thenReturn(mockNativeResponse2);
-        when(mockNativeAdData3.getAd()).thenReturn(mockNativeResponse3);
-
-        adsAt15repeating.placeAd(1, mockNativeAdData);
-        adsAt15repeating.placeAd(5, mockNativeAdData2);
-        adsAt15repeating.placeAd(8, mockNativeAdData3);
+        adsAt15repeating.placeAd(1, mMockNativeAd);
+        adsAt15repeating.placeAd(5, mMockNativeAd2);
+        adsAt15repeating.placeAd(8, mMockNativeAd3);
 
         adsAt15repeating.clearAds();
 
-        verify(mockNativeResponse).destroy();
-        verify(mockNativeResponse2).destroy();
-        verify(mockNativeResponse3).destroy();
+        verify(mMockNativeAd).destroy();
+        verify(mMockNativeAd2).destroy();
+        verify(mMockNativeAd3).destroy();
 
         // Should reset to original positions
         checkInsertionPositions(10, adsAt15repeating, 1, 4, 6, 8, 10);
@@ -826,7 +814,7 @@ public class PlacementDataTest {
         for (int i = 0; i < maxValue; i++) {
             if (placementData.isPlacedAd(i)) {
                 actual.add(i);
-                assertThat(placementData.getPlacedAd(i)).isEqualTo(mockNativeAdData);
+                assertThat(placementData.getPlacedAd(i)).isEqualTo(mMockNativeAd);
             } else {
                 assertThat(placementData.getPlacedAd(i)).isNull();
             }

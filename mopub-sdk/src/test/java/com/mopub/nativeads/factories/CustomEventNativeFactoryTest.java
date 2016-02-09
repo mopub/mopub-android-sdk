@@ -1,16 +1,27 @@
 package com.mopub.nativeads.factories;
 
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.CustomEventNative;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
-@RunWith(RobolectricTestRunner.class)
+
+@Config(constants = BuildConfig.class)
+@RunWith(RobolectricGradleTestRunner.class)
 public class CustomEventNativeFactoryTest {
+
+    @Before
+    public void setUp() {
+        CustomEventNativeFactory.setInstance(new CustomEventNativeFactory());
+    }
+
     @Test
     public void create_withValidClassName_shouldCreateClass() throws Exception {
         assertCustomEventClassCreated("com.mopub.nativeads.MoPubCustomEventNative");

@@ -5,6 +5,7 @@ import android.app.Activity;
 import com.mopub.common.event.BaseEvent;
 import com.mopub.common.event.EventSerializer;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.volley.DefaultRetryPolicy;
 import com.mopub.volley.NetworkResponse;
 import com.mopub.volley.Response;
@@ -15,6 +16,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -27,6 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class ScribeRequestTest {
 
     private ScribeRequest subject;

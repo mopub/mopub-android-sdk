@@ -3,15 +3,19 @@ package com.mopub.nativeads;
 import android.app.Activity;
 
 import com.mopub.common.AdType;
+import com.mopub.common.DataKeys;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.test.support.TestCustomEventNativeFactory;
 import com.mopub.network.AdResponse;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -20,6 +24,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class CustomEventNativeAdapterTest {
 
     private Activity context;
@@ -38,8 +43,9 @@ public class CustomEventNativeAdapterTest {
         serverExtras.put("key", "value");
 
         testAdResponse = new AdResponse.Builder()
-                .setAdType(AdType.NATIVE)
+                .setAdType(AdType.STATIC_NATIVE)
                 .setCustomEventClassName("com.mopub.nativeads.MoPubCustomEventNative")
+                .setClickTrackingUrl("clicktrackingurl")
                 .setResponseBody("body")
                 .setServerExtras(serverExtras)
                 .build();
@@ -51,10 +57,12 @@ public class CustomEventNativeAdapterTest {
 
     @Test
     public void loadNativeAd_withValidInput_shouldCallLoadNativeAdOnTheCustomEvent() throws Exception {
+        Map<String, Object> expectedLocalExtras = new HashMap<String, Object>();
+        expectedLocalExtras.put(DataKeys.CLICK_TRACKING_URL_KEY, "clicktrackingurl");
         CustomEventNativeAdapter.loadNativeAd(context, localExtras, testAdResponse, mCustomEventNativeListener);
-        verify(mCustomEventNative).loadNativeAd(context, mCustomEventNativeListener, localExtras, serverExtras);
+        verify(mCustomEventNative).loadNativeAd(context, mCustomEventNativeListener, expectedLocalExtras, serverExtras);
         verify(mCustomEventNativeListener, never()).onNativeAdFailed(any(NativeErrorCode.class));
-        verify(mCustomEventNativeListener, never()).onNativeAdLoaded(any(NativeAdInterface.class));
+        verify(mCustomEventNativeListener, never()).onNativeAdLoaded(any(BaseNativeAd.class));
     }
 
     @Test
@@ -65,7 +73,7 @@ public class CustomEventNativeAdapterTest {
 
         CustomEventNativeAdapter.loadNativeAd(context, localExtras, testAdResponse, mCustomEventNativeListener);
         verify(mCustomEventNativeListener).onNativeAdFailed(NativeErrorCode.NATIVE_ADAPTER_NOT_FOUND);
-        verify(mCustomEventNativeListener, never()).onNativeAdLoaded(any(NativeAdInterface.class));
+        verify(mCustomEventNativeListener, never()).onNativeAdLoaded(any(BaseNativeAd.class));
         verify(mCustomEventNative, never()).loadNativeAd(context, mCustomEventNativeListener, localExtras, serverExtras);
     }
 
@@ -78,6 +86,6 @@ public class CustomEventNativeAdapterTest {
         CustomEventNativeAdapter.loadNativeAd(context, localExtras, testAdResponse, mCustomEventNativeListener);
         verify(mCustomEventNative).loadNativeAd(eq(context), eq(mCustomEventNativeListener), eq(localExtras), eq(new HashMap<String, String>()));
         verify(mCustomEventNativeListener, never()).onNativeAdFailed(any(NativeErrorCode.class));
-        verify(mCustomEventNativeListener, never()).onNativeAdLoaded(any(NativeAdInterface.class));
+        verify(mCustomEventNativeListener, never()).onNativeAdLoaded(any(BaseNativeAd.class));
     }
 }

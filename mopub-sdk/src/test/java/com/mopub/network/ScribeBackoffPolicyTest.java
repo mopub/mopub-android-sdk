@@ -1,6 +1,7 @@
 package com.mopub.network;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.volley.NetworkResponse;
 import com.mopub.volley.NoConnectionError;
 import com.mopub.volley.VolleyError;
@@ -8,11 +9,13 @@ import com.mopub.volley.VolleyError;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.fest.assertions.api.Assertions.fail;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class ScribeBackoffPolicyTest {
 
     private ScribeBackoffPolicy subject;

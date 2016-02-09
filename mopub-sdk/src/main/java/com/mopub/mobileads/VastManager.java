@@ -39,8 +39,11 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
     private double mScreenAspectRatio;
     private int mScreenAreaDp;
 
-    public VastManager(@NonNull final Context context) {
+    private final boolean mShouldPreCacheVideo;
+
+    public VastManager(@NonNull final Context context, boolean shouldPreCacheVideo) {
         initializeScreenDimensions(context);
+        mShouldPreCacheVideo = shouldPreCacheVideo;
     }
 
     /**
@@ -55,6 +58,7 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
             @NonNull final Context context) {
         Preconditions.checkNotNull(vastManagerListener, "vastManagerListener cannot be null");
         Preconditions.checkNotNull(context, "context cannot be null");
+
         if (mVastXmlManagerAggregator == null) {
             mVastManagerListener = vastManagerListener;
             mVastXmlManagerAggregator = new VastXmlManagerAggregator(this, mScreenAspectRatio,
@@ -92,7 +96,8 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
             return;
         }
 
-        if (updateDiskMediaFileUrl(vastVideoConfig)) {
+        // Return immediately if we already have a cached video or if video precache is not required.
+        if (!mShouldPreCacheVideo || updateDiskMediaFileUrl(vastVideoConfig)) {
             mVastManagerListener.onVastVideoConfigurationPrepared(vastVideoConfig);
             return;
         }

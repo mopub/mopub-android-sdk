@@ -6,7 +6,6 @@ import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
 import com.mopub.network.TrackingRequest;
-import com.mopub.volley.RequestQueue;
 import com.mopub.volley.VolleyError;
 
 import org.junit.Before;
@@ -15,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.robolectric.annotation.Config;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
@@ -22,6 +22,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubConversionTrackerTest {
     private MoPubConversionTracker subject;
     private Activity context;

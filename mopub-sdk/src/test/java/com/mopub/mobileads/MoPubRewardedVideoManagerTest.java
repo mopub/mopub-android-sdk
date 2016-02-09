@@ -22,6 +22,8 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 
 import java.util.Map;
 
@@ -34,6 +36,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class
         MoPubRewardedVideoManagerTest {
 
@@ -67,7 +70,7 @@ public class
     @After
     public void tearDown() {
         // Unpause the main looper in case a test terminated while the looper was paused.
-        Robolectric.unPauseMainLooper();
+        ShadowLooper.unPauseMainLooper();
     }
 
     @Test
@@ -82,13 +85,13 @@ public class
 
         // Robolectric executes its handlers immediately, so if we want the async behavior we see
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
-        Robolectric.pauseMainLooper();
+        ShadowLooper.pauseMainLooper();
 
         MoPubRewardedVideoManager.loadVideo("testAdUnit");
         // Triggers a call to MoPubRewardedVideoManager.onRewardedVideoLoadSuccess
         requestListener.onSuccess(testResponse);
 
-        Robolectric.unPauseMainLooper();
+        ShadowLooper.unPauseMainLooper();
 
         MoPubRewardedVideoManager.onRewardedVideoClicked(TestCustomEvent.class, "id!");
         MoPubRewardedVideoManager.onRewardedVideoStarted(TestCustomEvent.class, "id!");
@@ -159,12 +162,12 @@ public class
 
         // Robolectric executes its handlers immediately, so if we want the async behavior we see
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
-        Robolectric.pauseMainLooper();
+        ShadowLooper.pauseMainLooper();
 
         MoPubRewardedVideoManager.loadVideo("testAdUnit");
         requestListener.onSuccess(testResponse);
 
-        Robolectric.unPauseMainLooper();
+        ShadowLooper.unPauseMainLooper();
 
         assertThat(MoPubRewardedVideoManager.hasVideo("testAdUnit")).isTrue();
         verify(mockVideoListener).onRewardedVideoLoadSuccess(eq("testAdUnit"));
@@ -180,12 +183,12 @@ public class
 
         // Robolectric executes its handlers immediately, so if we want the async behavior we see
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
-        Robolectric.pauseMainLooper();
+        ShadowLooper.pauseMainLooper();
 
         MoPubRewardedVideoManager.loadVideo("testAdUnit");
         requestListener.onSuccess(testResponse);
 
-        Robolectric.unPauseMainLooper();
+        ShadowLooper.unPauseMainLooper();
 
         assertThat(MoPubRewardedVideoManager.hasVideo("testAdUnit")).isTrue();
         MoPubRewardedVideoManager.showVideo("testAdUnit");
@@ -203,12 +206,12 @@ public class
 
         // Robolectric executes its handlers immediately, so if we want the async behavior we see
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
-        Robolectric.pauseMainLooper();
+        ShadowLooper.pauseMainLooper();
 
         MoPubRewardedVideoManager.loadVideo("testAdUnit");
         requestListener.onSuccess(testResponse);
 
-        Robolectric.unPauseMainLooper();
+        ShadowLooper.unPauseMainLooper();
 
         verify(mockVideoListener).onRewardedVideoLoadFailure(eq("testAdUnit"), eq(MoPubErrorCode.NETWORK_NO_FILL));
 

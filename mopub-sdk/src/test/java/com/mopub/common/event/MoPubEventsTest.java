@@ -1,10 +1,12 @@
 package com.mopub.common.event;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import java.util.ArrayList;
 
@@ -14,6 +16,7 @@ import static org.mockito.Mockito.verify;
 
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubEventsTest {
 
     @Before

@@ -4,12 +4,14 @@ import android.os.Build;
 
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.TestDateAndTime;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.network.AdResponse;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.robolectric.annotation.Config;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -19,6 +21,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.stub;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class AdReportTest {
 
     public AdReport subject;

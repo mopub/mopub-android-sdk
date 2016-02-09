@@ -62,7 +62,13 @@ public abstract class BaseEvent {
     public enum Name {
         AD_REQUEST("ad_request"),
         IMPRESSION_REQUEST("impression_request"),
-        CLICK_REQUEST("click_request");
+        CLICK_REQUEST("click_request"),
+        DOWNLOAD_START("download_start"),
+        DOWNLOAD_VIDEO_READY("download_video_ready"),
+        DOWNLOAD_BUFFERING("download_video_buffering"),
+        DOWNLOAD_FINISHED("download_finished"),
+        ERROR_DURING_PLAYBACK("error_during_playback"),
+        ERROR_FAILED_TO_PLAY("error_failed_to_play");
 
         @NonNull private final String mName;
         private Name(@NonNull String name) {
@@ -76,7 +82,8 @@ public abstract class BaseEvent {
     }
 
     public enum Category {
-        REQUESTS("requests");
+        REQUESTS("requests"),
+        NATIVE_VIDEO("native_video");
 
         @NonNull private final String mCategory;
         private Category(@NonNull String category) {
@@ -90,7 +97,8 @@ public abstract class BaseEvent {
     }
 
     public enum SamplingRate {
-        AD_REQUEST(0.1);
+        AD_REQUEST(0.1),
+        NATIVE_VIDEO(0.1);
 
         private final double mSamplingRate;
         private SamplingRate(double samplingRate) {

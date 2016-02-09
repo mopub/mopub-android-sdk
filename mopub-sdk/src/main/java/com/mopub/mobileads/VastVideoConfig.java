@@ -18,11 +18,14 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.Intents;
 import com.mopub.common.util.Strings;
+import com.mopub.exceptions.IntentNotResolvableException;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.mopub.network.TrackingRequest.makeVastTrackingHttpRequest;
 
@@ -45,6 +48,7 @@ public class VastVideoConfig implements Serializable {
     @Nullable private String mSkipOffset;
     @Nullable private VastCompanionAdConfig mLandscapeVastCompanionAdConfig;
     @Nullable private VastCompanionAdConfig mPortraitVastCompanionAdConfig;
+    @NonNull private Map<String, VastCompanionAdConfig> mSocialActionsCompanionAds;
     @Nullable private VastIconConfig mVastIconConfig;
 
     // Custom extensions
@@ -52,6 +56,7 @@ public class VastVideoConfig implements Serializable {
     @Nullable private String mCustomSkipText;
     @Nullable private String mCustomCloseIconUrl;
     @NonNull private DeviceUtils.ForceOrientation mCustomForceOrientation = DeviceUtils.ForceOrientation.FORCE_LANDSCAPE; // Default is forcing landscape
+    @Nullable private VideoViewabilityTracker mVideoViewabilityTracker;
 
     /**
      * Flag to indicate if the VAST xml document has explicitly set the orientation as opposed to
@@ -70,6 +75,7 @@ public class VastVideoConfig implements Serializable {
         mSkipTrackers = new ArrayList<VastTracker>();
         mClickTrackers = new ArrayList<VastTracker>();
         mErrorTrackers = new ArrayList<VastTracker>();
+        mSocialActionsCompanionAds = new HashMap<String, VastCompanionAdConfig>();
     }
 
     /**
@@ -168,6 +174,11 @@ public class VastVideoConfig implements Serializable {
         mPortraitVastCompanionAdConfig = portraitVastCompanionAdConfig;
     }
 
+    public void setSocialActionsCompanionAds(
+            @NonNull final Map<String, VastCompanionAdConfig> socialActionsCompanionAds) {
+        this.mSocialActionsCompanionAds = socialActionsCompanionAds;
+    }
+
     public void setVastIconConfig(@Nullable final VastIconConfig vastIconConfig) {
         mVastIconConfig = vastIconConfig;
     }
@@ -200,6 +211,12 @@ public class VastVideoConfig implements Serializable {
     public void setSkipOffset(@Nullable final String skipOffset) {
         if (skipOffset != null) {
             mSkipOffset = skipOffset;
+        }
+    }
+
+    public void setVideoViewabilityTracker(@Nullable final VideoViewabilityTracker videoViewabilityTracker) {
+        if (videoViewabilityTracker != null) {
+            mVideoViewabilityTracker = videoViewabilityTracker;
         }
     }
 
@@ -289,6 +306,11 @@ public class VastVideoConfig implements Serializable {
         }
     }
 
+    @NonNull
+    public Map<String, VastCompanionAdConfig> getSocialActionsCompanionAds() {
+        return mSocialActionsCompanionAds;
+    }
+
     @Nullable
     public VastIconConfig getVastIconConfig() {
         return mVastIconConfig;
@@ -307,6 +329,11 @@ public class VastVideoConfig implements Serializable {
     @Nullable
     public String getCustomCloseIconUrl() {
         return mCustomCloseIconUrl;
+    }
+
+    @Nullable
+    public VideoViewabilityTracker getVideoViewabilityTracker() {
+        return mVideoViewabilityTracker;
     }
 
     public boolean isCustomForceOrientationSet() {
@@ -362,23 +389,50 @@ public class VastVideoConfig implements Serializable {
 
     /**
      * Called when the video is clicked. Handles forwarding the user to the specified click through
+     * url, calling {@link Activity#onActivityResult(int, int, Intent)} when done.
+     *
+     * @param activity        Used to call startActivityForResult with provided requestCode.
+     * @param contentPlayHead Current video playback time when clicked.
+     * @param requestCode     Code that identifies what kind of activity request is going to be
+     *                        made.
+     */
+    public void handleClickForResult(@NonNull final Activity activity, final int contentPlayHead,
+            final int requestCode) {
+        handleClick(activity, contentPlayHead, requestCode);
+    }
+
+    /**
+     * Called when the video is clicked. Handles forwarding the user to the specified click through
+     * url. Does not provide any feedback when opened activity is finished.
+     *
+     * @param context         Used to call startActivity.
+     * @param contentPlayHead Current video playback time when clicked.
+     */
+    public void handleClickWithoutResult(@NonNull final Context context,
+            final int contentPlayHead) {
+        handleClick(context.getApplicationContext(), contentPlayHead, null);
+    }
+
+    /**
+     * Called when the video is clicked. Handles forwarding the user to the specified click through
      * url.
      *
-     * @param activity        This has to be an activity to call startActivityForResult.
+     * @param context         If an Activity context, used to call startActivityForResult with
+     *                        provided requestCode; otherwise, used to call startActivity.
      * @param contentPlayHead Current video playback time when clicked.
-     * @param requestCode     The code that identifies what kind of activity request is going to be
-     *                        made
+     * @param requestCode     Required when the context is an Activity; code that identifies what
+     *                        kind of activity request is going to be made.
      */
-    public void handleClick(@NonNull final Activity activity, final int contentPlayHead,
-            final int requestCode) {
-        Preconditions.checkNotNull(activity, "activity cannot be null");
+    private void handleClick(@NonNull final Context context, final int contentPlayHead,
+            @Nullable final Integer requestCode) {
+        Preconditions.checkNotNull(context, "context cannot be null");
 
         makeVastTrackingHttpRequest(
                 mClickTrackers,
                 null,
                 contentPlayHead,
                 mNetworkMediaFileUrl,
-                activity
+                context
         );
 
         if (TextUtils.isEmpty(mClickThroughUrl)) {
@@ -404,10 +458,21 @@ public class VastVideoConfig implements Serializable {
 
                             final Class clazz = MoPubBrowser.class;
                             final Intent intent = Intents.getStartActivityIntent(
-                                    activity, clazz, bundle);
+                                    context, clazz, bundle);
                             try {
-                                activity.startActivityForResult(intent, requestCode);
+                                if (context instanceof Activity) {
+                                    // Activity context requires a requestCode
+                                    Preconditions.checkNotNull(requestCode);
+
+                                    ((Activity) context)
+                                            .startActivityForResult(intent, requestCode);
+                                } else {
+                                    Intents.startActivity(context, intent);
+                                }
                             } catch (ActivityNotFoundException e) {
+                                MoPubLog.d("Activity " + clazz.getName() + " not found. Did you " +
+                                        "declare it in your AndroidManifest.xml?");
+                            } catch (IntentNotResolvableException e) {
                                 MoPubLog.d("Activity " + clazz.getName() + " not found. Did you " +
                                         "declare it in your AndroidManifest.xml?");
                             }
@@ -420,7 +485,7 @@ public class VastVideoConfig implements Serializable {
                     }
                 })
                 .withoutMoPubBrowser()
-                .build().handleUrl(activity, mClickThroughUrl);
+                .build().handleUrl(context, mClickThroughUrl);
     }
 
     /**
@@ -506,7 +571,7 @@ public class VastVideoConfig implements Serializable {
      * @param context         The context. Can be application or activity context.
      * @param contentPlayHead Current video playback time.
      */
-    public void handleError(@NonNull Context context, @NonNull VastErrorCode errorCode,
+    public void handleError(@NonNull Context context, @Nullable VastErrorCode errorCode,
             int contentPlayHead) {
         Preconditions.checkNotNull(context, "context cannot be null");
         makeVastTrackingHttpRequest(

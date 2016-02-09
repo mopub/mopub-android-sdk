@@ -25,8 +25,9 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowLocalBroadcastManager;
+import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
 import org.robolectric.util.ActivityController;
 
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
@@ -42,9 +43,10 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
-import static org.robolectric.Robolectric.shadowOf;
+
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MraidActivityTest {
     static final String EXPECTED_SOURCE = "expected source";
 
@@ -181,23 +183,23 @@ public class MraidActivityTest {
         assertThat(actualLayoutParams.height).isEqualTo(FrameLayout.LayoutParams.MATCH_PARENT);
     }
 
-    @Config(reportSdk = VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = VERSION_CODES.ICE_CREAM_SANDWICH)
     @Ignore("Mraid 2.0")
     @Test
     public void onCreate_atLeastIcs_shouldSetHardwareAcceleratedFlag() throws Exception {
         subject.onCreate(null);
 
-        boolean hardwareAccelerated = shadowOf(subject.getWindow()).getFlag(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+        boolean hardwareAccelerated = Shadows.shadowOf(subject.getWindow()).getFlag(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         assertThat(hardwareAccelerated).isTrue();
     }
 
-    @Config(reportSdk = VERSION_CODES.HONEYCOMB_MR2)
+    @Config(sdk = VERSION_CODES.HONEYCOMB_MR2)
     @Ignore("Mraid 2.0")
     @Test
     public void onCreate_beforeIcs_shouldNotSetHardwareAcceleratedFlag() throws Exception {
         subject.onCreate(null);
 
-        boolean hardwareAccelerated = shadowOf(subject.getWindow()).getFlag(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+        boolean hardwareAccelerated = Shadows.shadowOf(subject.getWindow()).getFlag(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         assertThat(hardwareAccelerated).isFalse();
     }
 
@@ -309,7 +311,7 @@ public class MraidActivityTest {
     @Test
     public void onResume_shouldResumeMraidView() throws Exception {
         subject.onCreate(null);
-        Robolectric.shadowOf(subject).pauseAndThenResume();
+        Shadows.shadowOf(subject).pauseAndThenResume();
 
         verify(mraidWebView).onResume();
     }

@@ -1,6 +1,6 @@
 package com.mopub.nativeads;
 
-import android.content.Context;
+import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
@@ -39,23 +39,23 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
     @NonNull private ContentChangeStrategy mStrategy = INSERT_AT_END;
     @Nullable private MoPubNativeAdLoadedListener mAdLoadedListener;
 
-    public MoPubRecyclerAdapter(@NonNull Context context,
+    public MoPubRecyclerAdapter(@NonNull Activity activity,
             @NonNull RecyclerView.Adapter originalAdapter) {
-        this(context, originalAdapter, MoPubNativeAdPositioning.serverPositioning());
+        this(activity, originalAdapter, MoPubNativeAdPositioning.serverPositioning());
     }
 
-    public MoPubRecyclerAdapter(@NonNull Context context,
+    public MoPubRecyclerAdapter(@NonNull Activity activity,
             @NonNull RecyclerView.Adapter originalAdapter,
             @NonNull MoPubServerPositioning adPositioning) {
-        this(new MoPubStreamAdPlacer(context, adPositioning), originalAdapter,
-                new VisibilityTracker(context));
+        this(new MoPubStreamAdPlacer(activity, adPositioning), originalAdapter,
+                new VisibilityTracker(activity));
     }
 
-    public MoPubRecyclerAdapter(@NonNull Context context,
+    public MoPubRecyclerAdapter(@NonNull Activity activity,
             @NonNull RecyclerView.Adapter originalAdapter,
             @NonNull MoPubClientPositioning adPositioning) {
-        this(new MoPubStreamAdPlacer(context, adPositioning), originalAdapter,
-                new VisibilityTracker(context));
+        this(new MoPubStreamAdPlacer(activity, adPositioning), originalAdapter,
+                new VisibilityTracker(activity));
     }
 
     @VisibleForTesting
@@ -196,10 +196,14 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
     }
 
     /**
-     * Registers a view binder for rendering "static" native ads with images.
+     * Registers an ad renderer for rendering a specific native ad format. Note that if multiple ad
+     * renderers support a specific native ad format, the first one registered will be used.
      */
-    public void registerViewBinder(@NonNull ViewBinder viewBinder) {
-        mStreamAdPlacer.registerAdRenderer(new MoPubNativeAdRenderer(viewBinder), NATIVE_AD_VIEW_TYPE_BASE + 1);
+    public void registerAdRenderer(@NonNull MoPubAdRenderer adRenderer) {
+        if (!Preconditions.NoThrow.checkNotNull(adRenderer, "Cannot register a null adRenderer")) {
+            return;
+        }
+        mStreamAdPlacer.registerAdRenderer(adRenderer);
     }
 
     /**
@@ -404,13 +408,14 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
     public RecyclerView.ViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
         if (viewType >= NATIVE_AD_VIEW_TYPE_BASE && viewType <= NATIVE_AD_VIEW_TYPE_BASE + mStreamAdPlacer.getAdViewTypeCount()) {
             // Create the view and a view holder.
-            final MoPubAdRenderer adRenderer = mStreamAdPlacer.getAdRendererForViewType(viewType);
+            final MoPubAdRenderer adRenderer = mStreamAdPlacer.getAdRendererForViewType(viewType - NATIVE_AD_VIEW_TYPE_BASE);
             if (adRenderer == null) {
                 MoPubLog.w("No view binder was registered for ads in MoPubRecyclerAdapter.");
                 // This will cause a null pointer exception.
                 return null;
             }
-            return new MoPubRecyclerViewHolder(adRenderer.createAdView(parent.getContext(), parent));
+            return new MoPubRecyclerViewHolder(
+                    adRenderer.createAdView((Activity) parent.getContext(), parent));
         }
 
         return mOriginalAdapter.onCreateViewHolder(parent, viewType);
@@ -418,9 +423,9 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
 
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
-        Object adData = mStreamAdPlacer.getAdData(position);
-        if (adData != null) {
-            mStreamAdPlacer.bindAdView((NativeAdData) adData, holder.itemView);
+        Object adResponse = mStreamAdPlacer.getAdData(position);
+        if (adResponse != null) {
+            mStreamAdPlacer.bindAdView((NativeAd) adResponse, holder.itemView);
             return;
         }
 

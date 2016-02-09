@@ -39,31 +39,28 @@ import com.mopub.nativeads.test.support.TestCustomEventNativeFactory;
 import org.junit.runners.model.InitializationError;
 import org.mockito.MockitoAnnotations;
 import org.robolectric.DefaultTestLifecycle;
-import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.TestLifecycle;
-import org.robolectric.bytecode.ClassInfo;
-import org.robolectric.bytecode.Setup;
-import org.robolectric.util.RobolectricBackgroundExecutorService;
+import org.robolectric.internal.bytecode.InstrumentationConfiguration;
+import org.robolectric.util.concurrent.RoboExecutorService;
 
 import static com.mopub.common.MoPub.LocationAwareness;
 import static org.mockito.Mockito.mock;
 
-public class SdkTestRunner extends RobolectricTestRunner {
+public class SdkTestRunner extends RobolectricGradleTestRunner {
 
     public SdkTestRunner(Class<?> testClass) throws InitializationError {
         super(testClass);
     }
 
     @Override
-    public Setup createSetup() {
-        return new Setup() {
-            @Override
-            public boolean shouldInstrument(ClassInfo classInfo) {
-                return classInfo.getName().equals(AsyncTasks.class.getName())
-                        || classInfo.getName().equals(MoPubHttpUrlConnection.class.getName())
-                        || super.shouldInstrument(classInfo);
-            }
-        };
+    public InstrumentationConfiguration createClassLoaderConfig() {
+        InstrumentationConfiguration.Builder builder = InstrumentationConfiguration.newBuilder();
+        builder.addInstrumentedClass(AsyncTasks.class.getName());
+        builder.addInstrumentedClass(MoPubHttpUrlConnection.class.getName());
+        // To mitigate: https://github.com/robolectric/robolectric/issues/2129
+        builder.addInstrumentedPackage("org.xyz.testMp");
+        return builder.build();
     }
 
     @Override
@@ -98,7 +95,7 @@ public class SdkTestRunner extends RobolectricTestRunner {
 
             MockitoAnnotations.initMocks(test);
 
-            AsyncTasks.setExecutor(new RobolectricBackgroundExecutorService());
+            AsyncTasks.setExecutor(new RoboExecutorService());
             CacheService.clearAndNullCaches();
         }
     }

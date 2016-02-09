@@ -27,7 +27,7 @@ The MoPub SDK is available via:
     }
 
     dependencies {
-        compile('com.mopub:mopub-sdk:3.13.0@aar') {
+        compile('com.mopub:mopub-sdk:4.1.0@aar') {
             transitive = true
         }
     }
@@ -60,10 +60,9 @@ The MoPub SDK is available via:
     **For additional integration instructions, please see the [Getting Started guide](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started#requirements-and-dependencies).**
 
 ## New in this Version
+Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the lastest release..
-
-- **Android M Support** - Replaced usage of the now-deprecated HttpClient with HttpURLConnection.
+- Enhancements and bug fixes for VAST video ads.
 
 ## Requirements
 
@@ -72,7 +71,7 @@ Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/mast
 - android-support-annotations.jar, r22 (**Updated in 3.7.0**)
 - android-support-v7-recyclerview.jar, r22 (**Updated in 3.9.0**)
 - MoPub Volley Library (mopub-volley-1.1.0.jar - available on JCenter) (**Updated in 3.6.0**)
-- **Recommended** Google Play Services 7.0.0
+- **Recommended** Google Play Services 7.8.0
 
 ## Upgrading from 3.2.0 and Prior
 In 3.3.0 a dependency on android-support-annotations.jar was added. If you are using Maven or Gradle to include the MoPub SDK, this dependency is included in the build scripts. For instructions on adding dependencies for Eclipse projects, see our [Getting Started Guide](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started#adding-the-support-libraries-to-your-project)

@@ -10,18 +10,21 @@ import android.view.MotionEvent;
 import com.mopub.common.CloseableLayout.ClosePosition;
 import com.mopub.common.CloseableLayout.OnCloseListener;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class CloseableLayoutTest {
     private CloseableLayout subject;
 
@@ -142,7 +145,7 @@ public class CloseableLayoutTest {
         subject.onTouchEvent(closeRegionUp);
         assertThat(subject.isClosePressed()).isTrue();
 
-        Robolectric.getUiThreadScheduler().advanceToLastPostedRunnable();
+        Robolectric.getForegroundThreadScheduler().advanceToLastPostedRunnable();
         assertThat(subject.isClosePressed()).isFalse();
     }
 

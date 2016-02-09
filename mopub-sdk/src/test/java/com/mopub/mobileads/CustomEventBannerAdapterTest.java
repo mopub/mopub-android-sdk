@@ -17,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class CustomEventBannerAdapterTest {
     private CustomEventBannerAdapter subject;
     @Mock
@@ -86,11 +89,11 @@ public class CustomEventBannerAdapterTest {
     public void timeout_shouldSignalFailureAndInvalidateWithDefaultDelay() throws Exception {
         subject.loadAd();
 
-        Robolectric.idleMainLooper(CustomEventBannerAdapter.DEFAULT_BANNER_TIMEOUT_DELAY - 1);
+        ShadowLooper.idleMainLooper(CustomEventBannerAdapter.DEFAULT_BANNER_TIMEOUT_DELAY - 1);
         verify(moPubView, never()).loadFailUrl(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isFalse();
 
-        Robolectric.idleMainLooper(1);
+        ShadowLooper.idleMainLooper(1);
         verify(moPubView).loadFailUrl(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isTrue();
     }
@@ -101,11 +104,11 @@ public class CustomEventBannerAdapterTest {
 
         subject.loadAd();
 
-        Robolectric.idleMainLooper(CustomEventBannerAdapter.DEFAULT_BANNER_TIMEOUT_DELAY - 1);
+        ShadowLooper.idleMainLooper(CustomEventBannerAdapter.DEFAULT_BANNER_TIMEOUT_DELAY - 1);
         verify(moPubView, never()).loadFailUrl(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isFalse();
 
-        Robolectric.idleMainLooper(1);
+        ShadowLooper.idleMainLooper(1);
         verify(moPubView).loadFailUrl(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isTrue();
     }
@@ -116,11 +119,11 @@ public class CustomEventBannerAdapterTest {
 
         subject.loadAd();
 
-        Robolectric.idleMainLooper(77000 - 1);
+        ShadowLooper.idleMainLooper(77000 - 1);
         verify(moPubView, never()).loadFailUrl(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isFalse();
 
-        Robolectric.idleMainLooper(1);
+        ShadowLooper.idleMainLooper(1);
         verify(moPubView).loadFailUrl(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isTrue();
     }
@@ -163,33 +166,33 @@ public class CustomEventBannerAdapterTest {
 
     @Test
     public void loadAd_shouldScheduleTimeout_bannerLoadedAndFailed_shouldCancelTimeout() throws Exception {
-        Robolectric.pauseMainLooper();
+        ShadowLooper.pauseMainLooper();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
 
         subject.loadAd();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
 
         subject.onBannerLoaded(null);
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
 
         subject.loadAd();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
 
         subject.onBannerFailed(null);
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
     }
 
     @Test
     public void loadAd_shouldScheduleTimeoutRunnableBeforeCallingLoadBanner() throws Exception {
-        Robolectric.pauseMainLooper();
+        ShadowLooper.pauseMainLooper();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
 
         Answer assertTimeoutRunnableHasStarted = new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+                assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
                 return null;
             }
         };
@@ -209,14 +212,14 @@ public class CustomEventBannerAdapterTest {
 
     @Test
     public void loadAd_whenCallingOnBannerFailed_shouldCancelExistingTimeoutRunnable() throws Exception {
-        Robolectric.pauseMainLooper();
+        ShadowLooper.pauseMainLooper();
 
         Answer justCallOnBannerFailed = new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+                assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
                 subject.onBannerFailed(null);
-                assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+                assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
                 return null;
             }
         };
@@ -230,9 +233,9 @@ public class CustomEventBannerAdapterTest {
                         any(Map.class)
                 );
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
         subject.loadAd();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
     }
 
     @Test

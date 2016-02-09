@@ -15,6 +15,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -23,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastIconConfigTest {
 
     private VastIconConfig subject;
@@ -92,8 +95,8 @@ public class VastIconConfigTest {
     public void handleClick_shouldOpenMoPubBrowser() throws Exception {
         subject.handleClick(context, null);
 
-        Robolectric.runBackgroundTasks();
-        Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo("com.mopub.common.MoPubBrowser");
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY))

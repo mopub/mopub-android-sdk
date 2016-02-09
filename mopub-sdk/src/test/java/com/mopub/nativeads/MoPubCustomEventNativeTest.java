@@ -4,37 +4,41 @@ import android.app.Activity;
 
 import com.mopub.common.DataKeys;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
+import com.mopub.nativeads.MoPubCustomEventNative.MoPubStaticNativeAd;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
 
 import static com.mopub.nativeads.CustomEventNative.CustomEventNativeListener;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubCustomEventNativeTest {
 
     private MoPubCustomEventNative subject;
     private Activity context;
     private HashMap<String, Object> localExtras;
-    private CustomEventNativeListener mCustomEventNativeListener;
     private HashMap<String, String> serverExtras;
     private JSONObject fakeJsonObject;
+
+    @Mock private CustomEventNativeListener mockCustomEventNativeListener;
 
     @Before
     public void setUp() throws Exception {
         subject = new MoPubCustomEventNative();
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
 
         localExtras = new HashMap<String, Object>();
         serverExtras = new HashMap<String, String>();
@@ -47,21 +51,15 @@ public class MoPubCustomEventNativeTest {
         fakeJsonObject.put("extraimage", "extraimageurl");
 
         localExtras.put(DataKeys.JSON_BODY_KEY, fakeJsonObject);
-
-        mCustomEventNativeListener = mock(CustomEventNativeListener.class);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        reset(mCustomEventNativeListener);
     }
 
     @Test
-    public void loadNativeAd_withNullResponseBody_shouldNotifyListenerOfOnNativeAdFailed() throws Exception {
+    public void loadNativeAd_withNullResponseBody_shouldNotifyListenerOfOnNativeAdFailed() {
         localExtras.remove(DataKeys.JSON_BODY_KEY);
 
-        subject.loadNativeAd(context, mCustomEventNativeListener, localExtras, serverExtras);
-        verify(mCustomEventNativeListener, never()).onNativeAdLoaded(any(MoPubCustomEventNative.MoPubForwardingNativeAd.class));
-        verify(mCustomEventNativeListener).onNativeAdFailed(NativeErrorCode.INVALID_JSON);
+        subject.loadNativeAd(context, mockCustomEventNativeListener, localExtras, serverExtras);
+        verify(mockCustomEventNativeListener, never())
+                .onNativeAdLoaded(any(MoPubStaticNativeAd.class));
+        verify(mockCustomEventNativeListener).onNativeAdFailed(NativeErrorCode.INVALID_RESPONSE);
     }
 }

@@ -3,6 +3,7 @@ package com.mopub.common.event;
 import android.os.Handler;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.network.ScribeBackoffPolicy;
 import com.mopub.network.ScribeRequest;
 import com.mopub.network.ScribeRequestManager;
@@ -13,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.robolectric.annotation.Config;
 
 import java.util.List;
 import java.util.Queue;
@@ -28,6 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class ScribeEventRecorderTest {
 
     private ScribeEventRecorder subject;

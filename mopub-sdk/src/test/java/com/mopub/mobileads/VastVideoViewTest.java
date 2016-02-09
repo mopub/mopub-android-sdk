@@ -9,6 +9,7 @@ import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Build;
 
+import com.mopub.TestSdkHelper;
 import com.mopub.common.test.support.SdkTestRunner;
 
 import org.junit.Before;
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastVideoViewTest {
 
     @Mock private MediaMetadataRetriever mockMediaMetadataRetriever;
@@ -84,10 +86,10 @@ public class VastVideoViewTest {
         verify(mockBlurLastVideoFrameTask, never()).cancel(anyBoolean());
     }
 
-
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
     @Test
+    @Config(shadows = {MoPubShadowMediaPlayer.class})
     public void retryMediaPlayer_withVideoFilePermissionErrorAndBelowJellyBean_shouldReturnTrue() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
         File file = new File("disk_video_path");
         file.createNewFile();
 
@@ -99,9 +101,10 @@ public class VastVideoViewTest {
         file.delete();
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
     @Test
+    @Config(shadows = {MoPubShadowMediaPlayer.class})
     public void retryMediaPlayer_shouldNotRunMoreThanOnce() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
         File file = new File("disk_video_path");
         file.createNewFile();
 
@@ -117,9 +120,10 @@ public class VastVideoViewTest {
         file.delete();
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.JELLY_BEAN)
+    @Config(sdk= Build.VERSION_CODES.JELLY_BEAN)
     @Test
     public void retryMediaPlayer_withAndroidVersionAboveJellyBean_shouldReturnFalse() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.JELLY_BEAN);
         File file = new File("disk_video_path");
         file.createNewFile();
 
@@ -131,9 +135,9 @@ public class VastVideoViewTest {
         file.delete();
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void retryMediaPlayer_withOtherVideoError_shouldReturnFalse() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
         File file = new File("disk_video_path");
         file.createNewFile();
 
@@ -145,9 +149,9 @@ public class VastVideoViewTest {
         file.delete();
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void retryMediaPlayer_withExceptionThrown_shouldReturnFalseAndIncrementRetryCount() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
         File file = new File("disk_video_path");
         if (file.exists()) {
             assertThat(file.delete()).isTrue();
@@ -159,9 +163,11 @@ public class VastVideoViewTest {
         assertThat(subject.getVideoRetries()).isEqualTo(1);
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
     @Test
+    @Config(shadows = {MoPubShadowMediaPlayer.class})
     public void onResume_shouldResetVideoRetryCountToZero() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
+
         File file = new File("disk_video_path");
         file.createNewFile();
 
@@ -175,17 +181,17 @@ public class VastVideoViewTest {
         file.delete();
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.GINGERBREAD)
     @Test
     public void createMediaMetadataRetriever_beforeGingerbreadMr1_shouldReturnNull() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.GINGERBREAD);
         MediaMetadataRetriever mediaMetadataRetriever = subject.createMediaMetadataRetriever();
 
         assertThat(mediaMetadataRetriever).isNull();
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.GINGERBREAD_MR1)
     @Test
     public void createMediaMetadataRetriever_atLeastGingerbreadMr1_shouldReturnNewMediaMetadataRetriever() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.GINGERBREAD_MR1);
         MediaMetadataRetriever mediaMetadataRetriever = subject.createMediaMetadataRetriever();
 
         assertThat(mediaMetadataRetriever).isNotNull();

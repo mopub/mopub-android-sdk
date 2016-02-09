@@ -2,8 +2,6 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 
-import com.mopub.common.LocationService;
-import com.mopub.common.MoPub;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestAdViewControllerFactory;
 import com.mopub.mobileads.test.support.TestCustomEventInterstitialAdapterFactory;
@@ -13,6 +11,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -31,6 +30,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubInterstitialTest {
 
     private static final String KEYWORDS_VALUE = "expected_keywords";
@@ -103,13 +103,6 @@ public class MoPubInterstitialTest {
         interstitialAdListener = mock(MoPubInterstitial.InterstitialAdListener.class);
         subject.setInterstitialAdListener(interstitialAdListener);
         assertThat(subject.getInterstitialAdListener()).isSameAs(interstitialAdListener);
-    }
-
-    @Test
-    public void setLocationAwarenss_shouldChangeGlobalSetting() {
-        assertThat(MoPub.getLocationAwareness()).isEqualTo(MoPub.LocationAwareness.NORMAL);
-        subject.setLocationAwareness(LocationService.LocationAwareness.DISABLED);
-        assertThat(MoPub.getLocationAwareness()).isEqualTo(MoPub.LocationAwareness.DISABLED);
     }
 
     @Test

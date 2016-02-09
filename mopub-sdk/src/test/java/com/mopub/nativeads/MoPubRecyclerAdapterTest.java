@@ -1,5 +1,6 @@
 package com.mopub.nativeads;
 
+import android.app.Activity;
 import android.content.Context;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -7,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -15,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.robolectric.annotation.Config;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,7 +28,6 @@ import static com.mopub.nativeads.MoPubRecyclerAdapter.ContentChangeStrategy.MOV
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -37,14 +39,17 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubRecyclerAdapterTest {
     private static final int AD_POSITION_1 = 1;
     private static final int AD_POSITION_7 = 7;
 
     @Mock MoPubStreamAdPlacer mockStreamAdPlacer;
     @Mock VisibilityTracker mockVisibilityTracker;
-    @Mock NativeAdData mockNativeAdData;
-    @Mock NativeAdData mockNativeAdData2;
+    @Mock
+    NativeAd mMockNativeAd;
+    @Mock
+    NativeAd mMockNativeAd2;
     @Mock MoPubAdRenderer mockAdRenderer;
     @Mock ViewGroup mockParent;
     @Mock View mockAdView;
@@ -73,11 +78,12 @@ public class MoPubRecyclerAdapterTest {
 
         // Mock some simple adjustment behavior for tests. This is creating an ad placer that
         // emulates a content item followed by an ad item, then another content item.
-        when(mockStreamAdPlacer.getAdData(AD_POSITION_1)).thenReturn(mockNativeAdData);
-        when(mockStreamAdPlacer.getAdData(AD_POSITION_7)).thenReturn(mockNativeAdData2);
+        when(mockStreamAdPlacer.getAdData(AD_POSITION_1)).thenReturn(mMockNativeAd);
+        when(mockStreamAdPlacer.getAdData(AD_POSITION_7)).thenReturn(mMockNativeAd2);
         when(mockStreamAdPlacer.getAdRendererForViewType(MoPubRecyclerAdapter.NATIVE_AD_VIEW_TYPE_BASE))
                 .thenReturn(mockAdRenderer);
-        when(mockAdRenderer.createAdView(any(Context.class), any(ViewGroup.class))).thenReturn(mockAdView);
+        when(mockAdRenderer.createAdView(any(Activity.class), any(ViewGroup.class)))
+                .thenReturn(mockAdView);
 
         when(mockStreamAdPlacer.isAd(anyInt())).thenAnswer(new Answer<Boolean>() {
             @Override
@@ -209,22 +215,23 @@ public class MoPubRecyclerAdapterTest {
     }
 
     @Test
-    public void registerViewBinder_shouldCallRegisterAdRendererOnStreamAdPlacer() {
-        subject.registerViewBinder(new ViewBinder.Builder(1).build());
+    public void registerAdRenderer_shouldCallRegisterAdRendererOnStreamAdPlacer() {
+        subject.registerAdRenderer(new MoPubStaticNativeAdRenderer(new ViewBinder.Builder(1).build()));
 
         final ArgumentCaptor<MoPubAdRenderer> rendererCaptor = ArgumentCaptor.forClass(MoPubAdRenderer.class);
-        verify(mockStreamAdPlacer).registerAdRenderer(rendererCaptor.capture(), eq(-55));
+        verify(mockStreamAdPlacer).registerAdRenderer(rendererCaptor.capture());
         MoPubAdRenderer renderer = rendererCaptor.getValue();
-        assertThat(renderer).isExactlyInstanceOf(MoPubNativeAdRenderer.class);
+        assertThat(renderer).isExactlyInstanceOf(MoPubStaticNativeAdRenderer.class);
     }
 
     @Test
     public void onCreateViewHolder_whenAdType_shouldInflateAdView() {
+        when(mockStreamAdPlacer.getAdRendererForViewType(0)).thenReturn(mockAdRenderer);
         final RecyclerView.ViewHolder result = subject.onCreateViewHolder(mockParent, MoPubRecyclerAdapter.NATIVE_AD_VIEW_TYPE_BASE);
 
         assertThat(result).isExactlyInstanceOf(MoPubRecyclerViewHolder.class);
 
-        verify(mockStreamAdPlacer).getAdRendererForViewType(MoPubRecyclerAdapter.NATIVE_AD_VIEW_TYPE_BASE);
+        verify(mockStreamAdPlacer).getAdRendererForViewType(0);
         verifyZeroInteractions(originalAdapter);
     }
 
@@ -242,7 +249,7 @@ public class MoPubRecyclerAdapterTest {
     public void onBindViewHolder_whenAdPosition_shouldGetAndBindAdData() {
         subject.onBindViewHolder(spyViewHolder, AD_POSITION_1);
 
-        verify(mockStreamAdPlacer).bindAdView(mockNativeAdData, mockAdView);
+        verify(mockStreamAdPlacer).bindAdView(mMockNativeAd, mockAdView);
     }
 
     @Test

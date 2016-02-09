@@ -17,17 +17,17 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
+import com.mopub.TestSdkHelper;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.ShadowAsyncTasks;
 import com.mopub.common.util.test.support.ShadowMoPubHttpUrlConnection;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.test.support.FileUtils;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
-import com.mopub.mobileads.test.support.ThreadUtils;
 import com.mopub.mraid.MraidNativeCommandHandler.DownloadImageAsyncTask;
 import com.mopub.mraid.MraidNativeCommandHandler.DownloadImageAsyncTask.DownloadImageAsyncTaskListener;
 import com.mopub.mraid.MraidNativeCommandHandler.MraidCommandFailureListener;
 
-import org.apache.http.HttpResponse;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.After;
@@ -39,8 +39,10 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowAlertDialog;
+import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowEnvironment;
 import org.robolectric.shadows.ShadowLog;
 import org.robolectric.shadows.ShadowToast;
@@ -67,10 +69,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.stub;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.robolectric.Robolectric.shadowOf;
 
-@Config(shadows = {ShadowAsyncTasks.class, ShadowMoPubHttpUrlConnection.class})
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class, shadows = {ShadowAsyncTasks.class, ShadowMoPubHttpUrlConnection.class})
 public class MraidNativeCommandHandlerTest {
     private static final String IMAGE_URI_VALUE = "file://tmp/expectedFile.jpg";
     private static final String REMOTE_IMAGE_URL = "http://www.mopub.com/expectedFile.jpg";
@@ -102,7 +103,7 @@ public class MraidNativeCommandHandlerTest {
 
         // Mount external storage and grant necessary permissions
         ShadowEnvironment.setExternalStorageState(MEDIA_MOUNTED);
-        Robolectric.getShadowApplication().grantPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        ShadowApplication.getInstance().grantPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
     }
 
     @After
@@ -115,7 +116,7 @@ public class MraidNativeCommandHandlerTest {
         subject.storePicture(context, IMAGE_URI_VALUE, mockMraidCommandFailureListener);
 
         AlertDialog alertDialog = ShadowAlertDialog.getLatestAlertDialog();
-        ShadowAlertDialog shadowAlertDialog = shadowOf(alertDialog);
+        ShadowAlertDialog shadowAlertDialog = Shadows.shadowOf(alertDialog);
 
         assertThat(alertDialog.isShowing());
 
@@ -145,7 +146,7 @@ public class MraidNativeCommandHandlerTest {
 
     @Test(expected = MraidCommandException.class)
     public void showUserDownloadImageAlert_whenStorePictureNotSupported_shouldThrowMraidCommandException() throws Exception {
-        Robolectric.getShadowApplication().denyPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        ShadowApplication.getInstance().denyPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         subject.storePicture(context, IMAGE_URI_VALUE, mockMraidCommandFailureListener);
     }
@@ -168,7 +169,7 @@ public class MraidNativeCommandHandlerTest {
         subject.storePicture(context, IMAGE_URI_VALUE, mockMraidCommandFailureListener);
 
         AlertDialog alertDialog = ShadowAlertDialog.getLatestAlertDialog();
-        ShadowAlertDialog shadowAlertDialog = shadowOf(alertDialog);
+        ShadowAlertDialog shadowAlertDialog = Shadows.shadowOf(alertDialog);
 
         alertDialog.getButton(BUTTON_NEGATIVE).performClick();
         assertThat(shadowAlertDialog.hasBeenDismissed()).isTrue();
@@ -320,7 +321,7 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withMinimumValidParams_atLeastICS_shouldCreateEventIntent() throws Exception {
         setupCalendarParams();
@@ -329,7 +330,7 @@ public class MraidNativeCommandHandlerTest {
 
         verify(mockMraidCommandFailureListener, never()).onFailure(any(MraidCommandException.class));
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
 
         assertThat(intent.getType()).isEqualTo(ANDROID_CALENDAR_CONTENT_TYPE);
         assertThat(intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0);
@@ -338,7 +339,7 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withoutSecondsOnStartDate_atLeastICS_shouldCreateEventIntent() throws Exception {
         setupCalendarParams();
@@ -348,7 +349,7 @@ public class MraidNativeCommandHandlerTest {
 
         verify(mockMraidCommandFailureListener, never()).onFailure(any(MraidCommandException.class));
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
 
         assertThat(intent.getType()).isEqualTo(ANDROID_CALENDAR_CONTENT_TYPE);
         assertThat(intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0);
@@ -357,7 +358,7 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withDailyRecurrence_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -365,14 +366,14 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getType()).isEqualTo(ANDROID_CALENDAR_CONTENT_TYPE);
         assertThat(intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0);
         assertThat(intent.getStringExtra(CalendarContract.Events.RRULE)).isEqualTo("FREQ=DAILY;");
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withDailyRecurrence_withInterval_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -381,12 +382,12 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(CalendarContract.Events.RRULE)).isEqualTo("FREQ=DAILY;INTERVAL=2;");
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withWeeklyRecurrence_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -394,12 +395,12 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(CalendarContract.Events.RRULE)).isEqualTo("FREQ=WEEKLY;");
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withWeeklyRecurrence_withInterval_withOutWeekday_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -408,12 +409,12 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(CalendarContract.Events.RRULE)).isEqualTo("FREQ=WEEKLY;INTERVAL=7;");
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withWeeklyRecurrence_onAllWeekDays_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -422,12 +423,12 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(CalendarContract.Events.RRULE)).isEqualTo("FREQ=WEEKLY;BYDAY=SU,MO,TU,WE,TH,FR,SA;");
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withWeeklyRecurrence_onDuplicateWeekDays_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -436,12 +437,12 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(CalendarContract.Events.RRULE)).isEqualTo("FREQ=WEEKLY;BYDAY=WE,TU,SU;");
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withWeeklyRecurrence_withInterval_withWeekDay_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -451,12 +452,12 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(CalendarContract.Events.RRULE)).isEqualTo("FREQ=WEEKLY;INTERVAL=1;BYDAY=MO;");
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withDailyRecurrence_withWeeklyRecurrence_withMonthlyOccurence_shouldCreateDailyCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -468,12 +469,12 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(CalendarContract.Events.RRULE)).isEqualTo("FREQ=DAILY;INTERVAL=2;");
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withMonthlyRecurrence_withOutInterval_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -481,12 +482,12 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(CalendarContract.Events.RRULE)).isEqualTo("FREQ=MONTHLY;");
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withMonthlyRecurrence_withInterval_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -495,12 +496,12 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(CalendarContract.Events.RRULE)).isEqualTo("FREQ=MONTHLY;INTERVAL=2;");
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withMonthlyRecurrence_withOutInterval_withDaysOfMonth_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -509,7 +510,7 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getStringExtra(CalendarContract.Events.RRULE)).isEqualTo("FREQ=MONTHLY;BYMONTHDAY=2,-15;");
     }
 
@@ -522,7 +523,7 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
 
         assertThat(intent).isNull();
         assertThat(ShadowLog.getLogs().size()).isEqualTo(1);
@@ -537,14 +538,14 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
 
         assertThat(intent).isNull();
         assertThat(ShadowLog.getLogs().size()).isEqualTo(1);
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.HONEYCOMB_MR2)
+    @Config(sdk = Build.VERSION_CODES.HONEYCOMB_MR2)
     @Test
     public void createCalendarEvent_beforeIcs_shouldFireErrorEvent() throws Exception {
         subject.createCalendarEvent(context, params);
@@ -586,7 +587,7 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void
     createCalendarEvent_withValidParamsAllExceptRecurrence_atLeastICS_shouldCreateEventIntent() throws Exception {
@@ -598,7 +599,7 @@ public class MraidNativeCommandHandlerTest {
 
         subject.createCalendarEvent(context, params);
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
 
         assertThat(intent.getType()).isEqualTo(ANDROID_CALENDAR_CONTENT_TYPE);
         assertThat(intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0);
@@ -640,7 +641,7 @@ public class MraidNativeCommandHandlerTest {
 
     @Test
     public void isStorePictureAvailable_whenPermissionDeclaredAndMediaMounted_shouldReturnTrue() throws Exception {
-        Robolectric.getShadowApplication().grantPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        ShadowApplication.getInstance().grantPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         ShadowEnvironment.setExternalStorageState(Environment.MEDIA_MOUNTED);
 
         assertThat(subject.isStorePictureSupported(context)).isTrue();
@@ -648,7 +649,7 @@ public class MraidNativeCommandHandlerTest {
 
     @Test
     public void isStorePictureAvailable_whenPermissionDenied_shouldReturnFalse() throws Exception {
-        Robolectric.getShadowApplication().denyPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        ShadowApplication.getInstance().denyPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         ShadowEnvironment.setExternalStorageState(Environment.MEDIA_MOUNTED);
 
         assertThat(subject.isStorePictureSupported(context)).isFalse();
@@ -656,30 +657,30 @@ public class MraidNativeCommandHandlerTest {
 
     @Test
     public void isStorePictureAvailable_whenMediaUnmounted_shouldReturnFalse() throws Exception {
-        Robolectric.getShadowApplication().grantPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        ShadowApplication.getInstance().grantPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         ShadowEnvironment.setExternalStorageState(Environment.MEDIA_UNMOUNTED);
 
         assertThat(subject.isStorePictureSupported(context)).isFalse();
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void isCalendarAvailable_atLeastIcs_shouldReturnTrue() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
         context = createMockContextWithSpecificIntentData(null, null, ANDROID_CALENDAR_CONTENT_TYPE, "android.intent.action.INSERT");
         assertThat(subject.isCalendarAvailable(context)).isTrue();
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.HONEYCOMB_MR2)
     @Test
     public void isCalendarAvailable_beforeIcs_shouldReturnFalse() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.HONEYCOMB_MR2);
         context = createMockContextWithSpecificIntentData(null, null, ANDROID_CALENDAR_CONTENT_TYPE, "android.intent.action.INSERT");
         assertThat(subject.isCalendarAvailable(context)).isFalse();
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void isCalendarAvailable_atLeastIcs_butCanNotAcceptIntent_shouldReturnFalse() throws
             Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
         context = createMockContextWithSpecificIntentData(null, null, "vnd.android.cursor.item/NOPE", "android.intent.action.INSERT");
         assertThat(subject.isCalendarAvailable(context)).isFalse();
     }
@@ -709,12 +710,13 @@ public class MraidNativeCommandHandlerTest {
         assertThat(subject.isInlineVideoAvailable(activity, mockView)).isFalse();
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.HONEYCOMB)
     @TargetApi(11)
     @Test
     public void isInlineVideoAvailable_whenViewsAreHardwareAccelerated_whenWindowIsHardwareAccelerated_whenApiLevelIsLessThanHoneycombMR1_shouldReturnFalse() throws Exception {
         Activity activity = Robolectric.buildActivity(Activity.class).create().get();
         activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.HONEYCOMB);
 
         View mockView = mock(View.class);
         when(mockView.isHardwareAccelerated()).thenReturn(true);
@@ -855,7 +857,7 @@ public class MraidNativeCommandHandlerTest {
                 if (!(invocation.getArguments()[0] instanceof Intent)) {
                     throw new ClassCastException("For some reason you are not passing the calendar intent properly");
                 }
-                Context shadowContext = Robolectric.getShadowApplication().getApplicationContext();
+                Context shadowContext = ShadowApplication.getInstance().getApplicationContext();
                 shadowContext.startActivity((Intent) invocation.getArguments()[0]);
                 return null;
             }

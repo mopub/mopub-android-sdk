@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.shadows.ShadowApplication;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class IntentsTest {
     public void startActivity_withActivityContext_shouldStartActivityWithNoNewFlags() throws IntentNotResolvableException {
         Intents.startActivity(activityContext, new Intent());
 
-        final Intent intent = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent intent = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(Utils.bitMaskContainsFlag(intent.getFlags(), FLAG_ACTIVITY_NEW_TASK)).isFalse();
     }
 
@@ -198,7 +199,7 @@ public class IntentsTest {
         Intent intent = mock(Intent.class);
 
         Intents.launchIntentForUserClick(context, intent, null);
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
 
         assertThat(startedActivity).isNotNull();
     }

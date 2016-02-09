@@ -12,6 +12,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -33,6 +35,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubAdAdapterTest {
     private static final int AD_POSITION = 1;
 
@@ -182,23 +185,6 @@ public class MoPubAdAdapterTest {
     @Test
     public void registerAdRenderer_withNull_shouldNotCallAdPlacer() {
         subject.registerAdRenderer(null);
-
-        verify(mockStreamAdPlacer, never()).registerAdRenderer(any(MoPubAdRenderer.class));
-    }
-
-    @Test
-    public void registerViewBinder_shouldCallAdPlacer() {
-        subject.registerViewBinder(mockViewBinder);
-
-        final ArgumentCaptor<MoPubAdRenderer> rendererCaptor = new ArgumentCaptor<MoPubAdRenderer>();
-        verify(mockStreamAdPlacer).registerAdRenderer(rendererCaptor.capture());
-        MoPubAdRenderer renderer = rendererCaptor.getValue();
-        assertThat(renderer).isExactlyInstanceOf(MoPubNativeAdRenderer.class);
-    }
-
-    @Test
-    public void registerViewBinder_withNull_shouldNotCallAdPlacer() {
-        subject.registerViewBinder(null);
 
         verify(mockStreamAdPlacer, never()).registerAdRenderer(any(MoPubAdRenderer.class));
     }

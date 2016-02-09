@@ -1,7 +1,8 @@
 package com.mopub.nativeads;
 
-import android.content.Context;
+import android.app.Activity;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.View;
@@ -16,18 +17,22 @@ import java.util.WeakHashMap;
 import static com.mopub.nativeads.VisibilityTracker.VisibilityChecker;
 import static com.mopub.nativeads.VisibilityTracker.VisibilityTrackerListener;
 
-class ImpressionTracker {
+/**
+ * Impression tracker used to call {@link ImpressionInterface#recordImpression(View)} when a
+ * percentage of a native ad has been on screen for a duration of time.
+ */
+public class ImpressionTracker {
 
     private static final int PERIOD = 250;
 
     // Object tracking visibility of added views
     @NonNull private final VisibilityTracker mVisibilityTracker;
 
-    // All views and responses being tracked for impressions
-    @NonNull private final Map<View, NativeResponse> mTrackedViews;
+    // All views and ads being tracked for impressions
+    @NonNull private final Map<View, ImpressionInterface> mTrackedViews;
 
     // Visible views being polled for time on screen before tracking impression
-    @NonNull private final Map<View, TimestampWrapper<NativeResponse>> mPollingViews;
+    @NonNull private final Map<View, TimestampWrapper<ImpressionInterface>> mPollingViews;
 
     // Handler for polling visible views
     @NonNull private final Handler mPollHandler;
@@ -41,17 +46,17 @@ class ImpressionTracker {
     // Listener for when a view becomes visible or non visible
     @Nullable private VisibilityTrackerListener mVisibilityTrackerListener;
 
-    ImpressionTracker(@NonNull final Context context) {
-        this(new WeakHashMap<View, NativeResponse>(),
-                new WeakHashMap<View, TimestampWrapper<NativeResponse>>(),
+    public ImpressionTracker(@NonNull final Activity activity) {
+        this(new WeakHashMap<View, ImpressionInterface>(),
+                new WeakHashMap<View, TimestampWrapper<ImpressionInterface>>(),
                 new VisibilityChecker(),
-                new VisibilityTracker(context),
-                new Handler());
+                new VisibilityTracker(activity),
+                new Handler(Looper.getMainLooper()));
     }
 
     @VisibleForTesting
-    ImpressionTracker(@NonNull final Map<View, NativeResponse> trackedViews,
-            @NonNull final Map<View, TimestampWrapper<NativeResponse>> pollingViews,
+    ImpressionTracker(@NonNull final Map<View, ImpressionInterface> trackedViews,
+            @NonNull final Map<View, TimestampWrapper<ImpressionInterface>> pollingViews,
             @NonNull final VisibilityChecker visibilityChecker,
             @NonNull final VisibilityTracker visibilityTracker,
             @NonNull final Handler handler) {
@@ -64,23 +69,23 @@ class ImpressionTracker {
             @Override
             public void onVisibilityChanged(@NonNull final List<View> visibleViews, @NonNull final List<View> invisibleViews) {
                 for (final View view : visibleViews) {
-                    // It's possible for native response to be null if the view was GC'd from this class
+                    // It's possible for native ad to be null if the view was GC'd from this class
                     // but not from VisibilityTracker
                     // If it's null then clean up the view from this class
-                    final NativeResponse nativeResponse = mTrackedViews.get(view);
-                    if (nativeResponse == null) {
+                    final ImpressionInterface impressionInterface = mTrackedViews.get(view);
+                    if (impressionInterface == null) {
                         removeView(view);
                         continue;
                     }
 
-                    // If the native response is already polling, don't recreate it
-                    final TimestampWrapper<NativeResponse> polling = mPollingViews.get(view);
-                    if (polling != null && nativeResponse.equals(polling.mInstance)) {
+                    // If the native ad is already polling, don't recreate it
+                    final TimestampWrapper<ImpressionInterface> polling = mPollingViews.get(view);
+                    if (polling != null && impressionInterface.equals(polling.mInstance)) {
                         continue;
                     }
 
                     // Add a new polling view
-                    mPollingViews.put(view, new TimestampWrapper<NativeResponse>(nativeResponse));
+                    mPollingViews.put(view, new TimestampWrapper<ImpressionInterface>(impressionInterface));
                 }
 
                 for (final View view : invisibleViews) {
@@ -98,24 +103,24 @@ class ImpressionTracker {
     /**
      * Tracks the given view for impressions.
      */
-    void addView(final View view, @NonNull final NativeResponse nativeResponse) {
-        // View is already associated with same native response
-        if (mTrackedViews.get(view) == nativeResponse) {
+    public void addView(final View view, @NonNull final ImpressionInterface impressionInterface) {
+        // View is already associated with the same native ad
+        if (mTrackedViews.get(view) == impressionInterface) {
             return;
         }
 
-        // Clean up state if view is being recycled and associated with a different response
+        // Clean up state if view is being recycled and associated with a different ad
         removeView(view);
 
-        if (nativeResponse.getRecordedImpression() || nativeResponse.isDestroyed()) {
+        if (impressionInterface.isImpressionRecorded()) {
             return;
         }
 
-        mTrackedViews.put(view, nativeResponse);
-        mVisibilityTracker.addView(view, nativeResponse.getImpressionMinPercentageViewed());
+        mTrackedViews.put(view, impressionInterface);
+        mVisibilityTracker.addView(view, impressionInterface.getImpressionMinPercentageViewed());
     }
 
-    void removeView(final View view) {
+    public void removeView(final View view) {
         mTrackedViews.remove(view);
         removePollingView(view);
         mVisibilityTracker.removeView(view);
@@ -124,14 +129,14 @@ class ImpressionTracker {
     /**
      * Immediately clear all views. Useful for when we re-request ads for an ad placer
      */
-    void clear() {
+    public void clear() {
         mTrackedViews.clear();
         mPollingViews.clear();
         mVisibilityTracker.clear();
         mPollHandler.removeMessages(0);
     }
 
-    void destroy() {
+    public void destroy() {
         clear();
         mVisibilityTracker.destroy();
         mVisibilityTrackerListener = null;
@@ -163,9 +168,9 @@ class ImpressionTracker {
 
         @Override
         public void run() {
-            for (final Map.Entry<View, TimestampWrapper<NativeResponse>> entry : mPollingViews.entrySet()) {
+            for (final Map.Entry<View, TimestampWrapper<ImpressionInterface>> entry : mPollingViews.entrySet()) {
                 final View view = entry.getKey();
-                final TimestampWrapper<NativeResponse> timestampWrapper = entry.getValue();
+                final TimestampWrapper<ImpressionInterface> timestampWrapper = entry.getValue();
 
                 // If it's been visible for the min impression time, trigger the callback
                 if (!mVisibilityChecker.hasRequiredTimeElapsed(
@@ -175,6 +180,7 @@ class ImpressionTracker {
                 }
 
                 timestampWrapper.mInstance.recordImpression(view);
+                timestampWrapper.mInstance.setImpressionRecorded();
 
                 // Removed in a separate loop to avoid a ConcurrentModification exception.
                 mRemovedViews.add(view);

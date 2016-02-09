@@ -5,6 +5,7 @@ import com.mopub.mobileads.test.support.VastUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 import org.w3c.dom.Node;
 
 import java.util.List;
@@ -13,8 +14,8 @@ import static com.mopub.mobileads.test.support.VastUtils.createNode;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastBaseInLineWrapperXmlManagerTest {
-
     private VastBaseInLineWrapperXmlManager subject;
 
     @Test
@@ -330,5 +331,64 @@ public class VastBaseInLineWrapperXmlManagerTest {
         subject = new VastInLineXmlManager(inLineNode);
 
         assertThat(subject.getLinearXmlManagers()).isEmpty();
+    }
+
+    @Test
+    public void getVastExtensionsXmlManager_shouldReturnExtensions() throws Exception {
+        String inLineXml = "<InLine>" +
+                "               <Extensions>" +
+                "                   <Extension>Extension 1</Extension>" +
+                "                   <Extension>Extension 2</Extension>" +
+                "               </Extensions>" +
+                "           </InLine>";
+
+        Node inLineNode = createNode(inLineXml);
+        subject = new VastInLineXmlManager(inLineNode);
+
+        assertThat(subject.getVastExtensionParentXmlManager()).isNotNull();
+        assertThat(subject.getVastExtensionParentXmlManager().getVastExtensionXmlManagers())
+                .hasSize(2);
+    }
+
+    @Test
+    public void getVastExtensionParentXmlManager_withMultipleParentExtensions_shouldReturnFirstParentExtensionOnly() throws Exception {
+        String inLineXml = "<InLine>" +
+                "               <Extensions>" +
+                "                   <Extension>Extension 1</Extension>" +
+                "               </Extensions>" +
+                "               <Extensions>" +
+                "                   <Extension>Extension 2</Extension>" +
+                "                   <Extension>Extension 3</Extension>" +
+                "               </Extensions>" +
+                "           </InLine>";
+
+        Node inLineNode = createNode(inLineXml);
+        subject = new VastInLineXmlManager(inLineNode);
+
+        assertThat(subject.getVastExtensionParentXmlManager()).isNotNull();
+        assertThat(subject.getVastExtensionParentXmlManager().getVastExtensionXmlManagers())
+                .hasSize(1);
+    }
+
+    @Test
+    public void getVastExtensionParentXmlManager_withoutExtensions_shouldReturnNull() throws Exception {
+        String inLineXml = "<InLine>" +
+                "                 <Creative>" +
+                "                     <CompanionAds>" +
+                "                         <Companion>" +
+                "                             <TrackingEvents>" +
+                "                                 <Tracking event=\"creativeView\">" +
+                "                                     <![CDATA[http://tracking/m/closeThree]]>" +
+                "                                 </Tracking>" +
+                "                             </TrackingEvents>" +
+                "                         </Companion>"+
+                "                     </CompanionAds>" +
+                "                 </Creative>" +
+                "           </InLine>";
+
+        Node inLineNode = createNode(inLineXml);
+        subject = new VastInLineXmlManager(inLineNode);
+
+        assertThat(subject.getVastExtensionParentXmlManager()).isNull();
     }
 }

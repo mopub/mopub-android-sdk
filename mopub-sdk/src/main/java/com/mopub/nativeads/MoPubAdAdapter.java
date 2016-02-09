@@ -1,5 +1,6 @@
 package com.mopub.nativeads;
 
+import android.app.Activity;
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.support.annotation.NonNull;
@@ -51,41 +52,41 @@ public class MoPubAdAdapter extends BaseAdapter {
      * wish to hard-code positions in your app, see {@link MoPubAdAdapter(Context,
      * MoPubClientPositioning)}.
      *
-     * @param context The activity context.
+     * @param activity The activity.
      * @param originalAdapter Your original adapter.
      */
-    public MoPubAdAdapter(@NonNull final Context context, @NonNull final Adapter originalAdapter) {
-        this(context, originalAdapter, MoPubNativeAdPositioning.serverPositioning());
+    public MoPubAdAdapter(@NonNull final Activity activity, @NonNull final Adapter originalAdapter) {
+        this(activity, originalAdapter, MoPubNativeAdPositioning.serverPositioning());
     }
 
     /**
      * Creates a new MoPubAdAdapter object, using server positioning.
      *
-     * @param context The activity context.
+     * @param activity The activity.
      * @param originalAdapter Your original adapter.
      * @param adPositioning A positioning object for specifying where ads will be placed in your
      * stream. See {@link MoPubNativeAdPositioning#serverPositioning()}.
      */
-    public MoPubAdAdapter(@NonNull final Context context,
+    public MoPubAdAdapter(@NonNull final Activity activity,
             @NonNull final Adapter originalAdapter,
             @NonNull final MoPubServerPositioning adPositioning) {
-        this(new MoPubStreamAdPlacer(context, adPositioning), originalAdapter,
-                new VisibilityTracker(context));
+        this(new MoPubStreamAdPlacer(activity, adPositioning), originalAdapter,
+                new VisibilityTracker(activity));
     }
 
     /**
      * Creates a new MoPubAdAdapter object, using client positioning.
      *
-     * @param context The activity context.
+     * @param activity The activity.
      * @param originalAdapter Your original adapter.
      * @param adPositioning A positioning object for specifying where ads will be placed in your
      * stream. See {@link MoPubNativeAdPositioning#clientPositioning()}.
      */
-    public MoPubAdAdapter(@NonNull final Context context,
+    public MoPubAdAdapter(@NonNull final Activity activity,
             @NonNull final Adapter originalAdapter,
             @NonNull final MoPubClientPositioning adPositioning) {
-        this(new MoPubStreamAdPlacer(context, adPositioning), originalAdapter,
-                new VisibilityTracker(context));
+        this(new MoPubStreamAdPlacer(activity, adPositioning), originalAdapter,
+                new VisibilityTracker(activity));
     }
 
     @VisibleForTesting
@@ -124,19 +125,10 @@ public class MoPubAdAdapter extends BaseAdapter {
             }
 
             @Override
-            public void onInitialAdLoaded() {
-
-            }
-
-            @Override
             public void onAdRemoved(final int position) {
                 handleAdRemoved(position);
             }
 
-            @Override
-            public void onPositionsLoaded() {
-
-            }
         });
 
         mStreamAdPlacer.setItemCount(mOriginalAdapter.getCount());
@@ -159,40 +151,20 @@ public class MoPubAdAdapter extends BaseAdapter {
     }
 
     /**
-     * Registers a {@link MoPubNativeAdRenderer} to use when displaying ads in your stream.
+     * Registers a {@link MoPubStaticNativeAdRenderer}, supporting a specific native ad format,
+     * to use when displaying ads in your stream. Note that if multiple ad renderers support
+     * a specific native ad format, the first one registered will be used.
      *
      * This renderer will automatically create and render your view when you call {@link #getView}.
-     * If you register a second renderer, it will replace the first, although this behavior is
-     * subject to change in a future SDK version.
      *
      * @param adRenderer The ad renderer.
-     *
-     * @deprecated in version 3.9.0, use {@link #registerViewBinder(ViewBinder)} instead.
      */
-    @Deprecated
-    public final void registerAdRenderer(@NonNull final MoPubNativeAdRenderer adRenderer) {
+    public final void registerAdRenderer(@NonNull final MoPubAdRenderer adRenderer) {
         if (!Preconditions.NoThrow.checkNotNull(
                 adRenderer, "Tried to set a null ad renderer on the placer.")) {
             return;
         }
         mStreamAdPlacer.registerAdRenderer(adRenderer);
-    }
-
-    /**
-     * Registers a {@link ViewBinder} to use when displaying ads in your stream.
-     *
-     * This binder will be used automatically to create and render your view when you call
-     * {@link #getView}. If you register a second {@link ViewBinder}, it will replace the first,
-     * although this behavior is subject to change in a future SDK version.
-     *
-     * @param viewBinder The view binder
-     */
-    public final void registerViewBinder(@NonNull final ViewBinder viewBinder) {
-        if (!Preconditions.NoThrow.checkNotNull(
-                viewBinder, "Tried to set a null view binder on the placer.")) {
-            return;
-        }
-        mStreamAdPlacer.registerAdRenderer(new MoPubNativeAdRenderer(viewBinder));
     }
 
     /**
@@ -239,7 +211,7 @@ public class MoPubAdAdapter extends BaseAdapter {
      */
     public void loadAds(@NonNull final String adUnitId,
             @Nullable final RequestParameters requestParameters) {
-        mStreamAdPlacer.loadAds(adUnitId, requestParameters,null);
+        mStreamAdPlacer.loadAds(adUnitId, requestParameters);
     }
 
     /**

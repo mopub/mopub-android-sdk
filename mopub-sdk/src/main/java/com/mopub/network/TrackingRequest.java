@@ -94,17 +94,6 @@ public class TrackingRequest extends Request<Void> {
     }
 
     public static void makeTrackingHttpRequest(@Nullable final Iterable<String> urls,
-            @Nullable final Context context) {
-        makeTrackingHttpRequest(urls, context, null, null);
-    }
-
-    public static void makeTrackingHttpRequest(@Nullable final Iterable<String> urls,
-            @Nullable final Context context,
-            final BaseEvent.Name name) {
-        makeTrackingHttpRequest(urls, context, null, name);
-    }
-
-    public static void makeTrackingHttpRequest(@Nullable final Iterable<String> urls,
             @Nullable final Context context,
             @Nullable final Listener listener,
             final BaseEvent.Name name) {
@@ -162,5 +151,16 @@ public class TrackingRequest extends Request<Void> {
         if (url != null) {
             makeTrackingHttpRequest(Arrays.asList(url), context, listener, name);
         }
+    }
+
+    public static void makeTrackingHttpRequest(@Nullable final Iterable<String> urls,
+            @Nullable final Context context) {
+        makeTrackingHttpRequest(urls, context, null, null);
+    }
+
+    public static void makeTrackingHttpRequest(@Nullable final Iterable<String> urls,
+            @Nullable final Context context,
+            final BaseEvent.Name name) {
+        makeTrackingHttpRequest(urls, context, null, name);
     }
 }

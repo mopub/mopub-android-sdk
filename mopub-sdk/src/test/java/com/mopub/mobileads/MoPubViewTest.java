@@ -5,8 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.view.View;
 
-import com.mopub.common.LocationService;
-import com.mopub.common.MoPub;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestAdViewControllerFactory;
 import com.mopub.mobileads.test.support.TestCustomEventBannerAdapterFactory;
@@ -15,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 
 import java.util.HashMap;
@@ -29,6 +28,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubViewTest {
     private MoPubView subject;
     private Map<String,String> paramsMap = new HashMap<String, String>();
@@ -191,15 +191,8 @@ public class MoPubViewTest {
         verify(customEventBannerAdapter, never()).loadAd();
     }
 
-    @Test
-    public void setLocationAwarenss_shouldChangeGlobalSetting() {
-        assertThat(MoPub.getLocationAwareness()).isEqualTo(MoPub.LocationAwareness.NORMAL);
-        subject.setLocationAwareness(LocationService.LocationAwareness.DISABLED);
-        assertThat(MoPub.getLocationAwareness()).isEqualTo(MoPub.LocationAwareness.DISABLED);
-    }
-
     private void broadcastIntent(final Intent intent) {
-        final List<ShadowApplication.Wrapper> wrappers = Robolectric.getShadowApplication().getRegisteredReceivers();
+        final List<ShadowApplication.Wrapper> wrappers = ShadowApplication.getInstance().getRegisteredReceivers();
 
         for (final ShadowApplication.Wrapper wrapper : wrappers) {
             wrapper.broadcastReceiver.onReceive(context, intent);

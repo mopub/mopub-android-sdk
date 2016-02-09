@@ -2,7 +2,7 @@ package com.mopub.mobileads.test.support;
 
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
-import org.robolectric.tester.org.apache.http.TestHttpResponse;
+import org.robolectric.shadows.httpclient.TestHttpResponse;
 
 import java.util.HashMap;
 import java.util.Map;
