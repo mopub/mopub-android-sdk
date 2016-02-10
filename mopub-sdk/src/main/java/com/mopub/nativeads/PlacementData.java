@@ -204,7 +204,7 @@ class PlacementData {
      */
     int previousInsertionPosition(final int position) {
         final int index = binarySearchFirstEquals(
-                mDesiredInsertionPositions,  mDesiredCount, position);
+                mDesiredInsertionPositions, mDesiredCount, position);
         if (index == 0) {
             return NOT_FOUND;
         }
@@ -312,6 +312,56 @@ class PlacementData {
         // This is an ad. Since binary search doesn't properly handle dups, find the first non-ad.
         int index = binarySearchGreaterThan(mOriginalAdPositions, mPlacedCount, originalPosition);
         return originalPosition + index;
+    }
+
+    NativeAd getPlacedAdByOriginalPosition(final int position) {
+        final int index = binarySearch(mOriginalAdPositions, 0, mPlacedCount, position);
+        return getPlacedAdByIndex(index);
+    }
+
+    @Nullable
+    NativeAd getPlacedAdByIndex(final int index) {
+        if (index < 0) {
+            return null;
+        }
+        return mNativeAds[index];
+    }
+
+    int getOriginalAdPosition(final int position) {
+        final int index = binarySearch(mAdjustedAdPositions, 0, mPlacedCount, position);
+
+        // No match, ~index is the number of ads before this pos.
+        if (index < 0) {
+            return NOT_FOUND;
+        }
+
+        return mOriginalAdPositions[index];
+    }
+
+    int getPlacedPosition(final int position) {
+        final int index = binarySearch(mAdjustedAdPositions, 0, mPlacedCount, position);
+
+        // No match, ~index is the number of ads before this pos.
+        if (index < 0) {
+            return position - ~index;
+        }
+
+        return position - index;
+    }
+
+    int getInsertPosition(final int position) {
+        final int index = binarySearchGreaterThan(mAdjustedAdPositions, mPlacedCount, position);
+
+        return position - index;
+    }
+
+    boolean isAdLoadedByOriginalPosition(final int position) {
+        final int index = binarySearch(mOriginalAdPositions, 0, mPlacedCount, position);
+        return index >= 0;
+    }
+
+    int getPlacedCount() {
+        return mPlacedCount;
     }
 
     /**

@@ -43,6 +43,16 @@ public class MoPubStreamAdPlacer {
     private final static MoPubNativeAdLoadedListener EMPTY_NATIVE_AD_LOADED_LISTENER =
             new MoPubNativeAdLoadedListener() {
                 @Override
+                public void onPositionsLoaded() {
+
+                }
+
+                @Override
+                public void onInitialAdLoaded() {
+
+                }
+
+                @Override
                 public void onAdLoaded(final int position) {
                 }
 
@@ -273,13 +283,14 @@ public class MoPubStreamAdPlacer {
             mPendingPlacementData = placementData;
         }
         mHasReceivedPositions = true;
+        mAdLoadedListener.onPositionsLoaded();
     }
 
     @VisibleForTesting
     void handleAdsAvailable() {
         // If we've already placed ads, just notify that we need placement.
         if (mHasPlacedAds) {
-            notifyNeedsPlacement();
+//            notifyNeedsPlacement();
             return;
         }
 
@@ -296,8 +307,12 @@ public class MoPubStreamAdPlacer {
         removeAdsInRange(0, mItemCount);
 
         mPlacementData = placementData;
-        placeAds();
+//        placeAds();
         mHasPlacedAds = true;
+
+        if (mAdLoadedListener != null) {
+            mAdLoadedListener.onInitialAdLoaded();
+        }
     }
 
     /**
@@ -397,8 +412,14 @@ public class MoPubStreamAdPlacer {
      */
     @Nullable
     public View getAdView(final int position, @Nullable final View convertView,
+                          @Nullable final ViewGroup parent) {
+        return getAdView(getAdDataByOriginalPosition(position), convertView, parent);
+    }
+
+
+    @Nullable
+    public View getAdView(NativeAd nativeAd, @Nullable final View convertView,
             @Nullable final ViewGroup parent) {
-        final NativeAd nativeAd = mPlacementData.getPlacedAd(position);
         if (nativeAd == null) {
             return null;
         }
@@ -518,6 +539,18 @@ public class MoPubStreamAdPlacer {
         return mPlacementData.getOriginalPosition(position);
     }
 
+    public int getOriginalAdPosition(final int position) {
+        return mPlacementData.getOriginalAdPosition(position);
+    }
+
+    public int getPlacedPosition(final int position) {
+        return mPlacementData.getPlacedPosition(position);
+    }
+
+    public int getInsertPosition(final int position) {
+        return mPlacementData.getInsertPosition(position);
+    }
+
     /**
      * Returns the position of an item considering ads in the stream.
      *
@@ -548,6 +581,19 @@ public class MoPubStreamAdPlacer {
         return mPlacementData.getAdjustedCount(originalCount);
     }
 
+    @Nullable
+    public NativeAd getAdDataByOriginalPosition(final int index) {
+        return mPlacementData.getPlacedAdByOriginalPosition(index);
+    }
+
+    public boolean isAdLoadedByOriginalPosition(int position) {
+        return mPlacementData.isAdLoadedByOriginalPosition(position);
+    }
+
+    public int getAdCount() {
+        return mPlacementData.getPlacedCount();
+    }
+
     /**
      * Sets the original number of items in your stream.
      *
@@ -561,9 +607,9 @@ public class MoPubStreamAdPlacer {
         mItemCount = mPlacementData.getAdjustedCount(originalCount);
 
         // If we haven't already placed ads, we'll let ads get placed by the normal loadAds call
-        if (mHasPlacedAds) {
-            notifyNeedsPlacement();
-        }
+//        if (mHasPlacedAds) {
+//            notifyNeedsPlacement();
+//        }
     }
 
     /**
@@ -631,14 +677,14 @@ public class MoPubStreamAdPlacer {
     }
 
     private void notifyNeedsPlacement() {
-        // Avoid posting if this method has already been called.
-        if (mNeedsPlacement) {
-            return;
-        }
-        mNeedsPlacement = true;
-
-        // Post the placement to happen on the next UI render loop.
-        mPlacementHandler.post(mPlacementRunnable);
+//        // Avoid posting if this method has already been called.
+//        if (mNeedsPlacement) {
+//            return;
+//        }
+//        mNeedsPlacement = true;
+//
+//        // Post the placement to happen on the next UI render loop.
+//        mPlacementHandler.post(mPlacementRunnable);
     }
 
     /**
@@ -682,6 +728,13 @@ public class MoPubStreamAdPlacer {
         return true;
     }
 
+    public boolean placeAd(int position) {
+        if (mPlacementData.shouldPlaceAd(position)) {
+            return tryPlaceAd(position);
+        }
+        return false;
+    }
+
     /**
      * Attempts to place an ad at the given position, returning false if there is no ad available to
      * be placed.
@@ -705,7 +758,7 @@ public class MoPubStreamAdPlacer {
     /**
      * Clears any {@link NativeAd} click trackers and impression tracking are set up for this view.
      */
-    private void clearNativeAd(@Nullable final View view) {
+    public void clearNativeAd(@Nullable final View view) {
         if (view == null) {
             return;
         }

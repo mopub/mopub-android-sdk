@@ -228,7 +228,7 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
      * @param requestParameters Targeting information to pass to the ad server.
      */
     public void loadAds(@NonNull String adUnitId, @Nullable RequestParameters requestParameters) {
-        mStreamAdPlacer.loadAds(adUnitId, requestParameters,null);
+        mStreamAdPlacer.loadAds(adUnitId, requestParameters);
     }
 
     public static int computeScrollOffset(@NonNull final LinearLayoutManager linearLayoutManager,

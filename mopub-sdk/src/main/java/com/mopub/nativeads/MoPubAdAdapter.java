@@ -120,6 +120,16 @@ public class MoPubAdAdapter extends BaseAdapter {
 
         mStreamAdPlacer.setAdLoadedListener(new MoPubNativeAdLoadedListener() {
             @Override
+            public void onPositionsLoaded() {
+
+            }
+
+            @Override
+            public void onInitialAdLoaded() {
+
+            }
+
+            @Override
             public void onAdLoaded(final int position) {
                 handleAdLoaded(position);
             }
