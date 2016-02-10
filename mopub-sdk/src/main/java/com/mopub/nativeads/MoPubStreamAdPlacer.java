@@ -78,6 +78,8 @@ public class MoPubStreamAdPlacer {
 
     @Nullable private String mAdUnitId;
 
+    private ArrayList<Integer> delayedStackRequests = new ArrayList<>();
+
     @NonNull private MoPubNativeAdLoadedListener mAdLoadedListener =
             EMPTY_NATIVE_AD_LOADED_LISTENER;
 
@@ -309,10 +311,17 @@ public class MoPubStreamAdPlacer {
         mPlacementData = placementData;
 //        placeAds();
         mHasPlacedAds = true;
-
+        for (Integer integer : delayedStackRequests) {
+            placeAd(integer);
+        }
+        delayedStackRequests.clear();
         if (mAdLoadedListener != null) {
             mAdLoadedListener.onInitialAdLoaded();
         }
+    }
+
+    public void stackPlace(int position) {
+        delayedStackRequests.add(position);
     }
 
     /**
