@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -183,6 +184,14 @@ public class MoPubView extends FrameLayout {
         if (Visibility.hasScreenVisibilityChanged(mScreenVisibility, visibility)) {
             mScreenVisibility = visibility;
             setAdVisibility(mScreenVisibility);
+        }
+    }
+
+    @Override
+    protected void onVisibilityChanged(@NonNull View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        if (changedView == this) {
+            setAdVisibility(visibility);
         }
     }
 
