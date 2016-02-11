@@ -346,7 +346,7 @@ public class MoPubView extends FrameLayout {
         if (mAdViewController != null) mAdViewController.forceRefresh();
     }
 
-    AdViewController getAdViewController() {
+    public AdViewController getAdViewController() {
         return mAdViewController;
     }
 
