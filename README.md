@@ -60,22 +60,9 @@ The MoPub SDK is available via:
     **For additional integration instructions, please see the [Getting Started guide](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started#requirements-and-dependencies).**
 
 ## New in this Version
-
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-- A number of Native Ad classes now require `Activity` instances instead of `Context`. Most users should be unaffected by this change, and it fixes a crash caused by handling themes incorrectly. The following classes are affected:
-
-  - `CustomEventNative` and its implementations including `MoPubCustomEventNative`.
-  - `MoPubAdAdapter` and `MoPubRecyclerAdapter`.
-  - `MoPubAdRenderer` and its implementations.
-  - `MoPubStreamAdPlacer`
-  - `MoPubNative`
-  - `NativeAd` and `NativeAdSource`
-  - `NativeAdViewHelper`
-
-- Vungle's ad adapters have been updated for their 3.3.0 SDK.
-- Tapjoy adapters for interstitials and rewarded video are included for their 11.2.2 SDK. 
-- The Play Services adapters have been tested with Play Services 7.8.0.
+- Enhancements and bug fixes for VAST video ads.
 
 ## Requirements
 

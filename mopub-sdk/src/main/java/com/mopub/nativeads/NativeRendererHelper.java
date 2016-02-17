@@ -35,9 +35,20 @@ public class NativeRendererHelper {
         }
     }
 
-    public static void addPrivacyInformationIcon(
-            @Nullable final ImageView privacyInformationIconImageView,
-            @Nullable final String privacyInformationClickthroughUrl) {
+    /**
+     * Fills in the Privacy Information Icon with the specified image url and attaches a click
+     * listener for the clickthrough url.
+     *
+     * @param privacyInformationIconImageView   The image view of where the icon is supposed to be
+     *                                          placed. If this is null, this method does nothing.
+     * @param privacyInformationImageUrl        The image url. If this is null, the default MoPub
+     *                                          icon is used.
+     * @param privacyInformationClickthroughUrl The clickthrough url for the privacy information
+     *                                          icon. If this is null, the icon will be cleared.
+     */
+    public static void addPrivacyInformationIcon(final ImageView privacyInformationIconImageView,
+            final String privacyInformationImageUrl,
+            final String privacyInformationClickthroughUrl) {
         if (privacyInformationIconImageView == null) {
             return;
         }
@@ -47,12 +58,20 @@ public class NativeRendererHelper {
             privacyInformationIconImageView.setVisibility(View.INVISIBLE);
             return;
         }
+
         final Context context = privacyInformationIconImageView.getContext();
         if (context == null) {
             return;
         }
-        privacyInformationIconImageView.setImageDrawable(
-                Drawables.NATIVE_PRIVACY_INFORMATION_ICON.createDrawable(context));
+
+        if (privacyInformationImageUrl == null) {
+            privacyInformationIconImageView.setImageDrawable(
+                    Drawables.NATIVE_PRIVACY_INFORMATION_ICON.createDrawable(context));
+        } else {
+            NativeImageHelper.loadImageView(privacyInformationImageUrl,
+                    privacyInformationIconImageView);
+        }
+
         privacyInformationIconImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {

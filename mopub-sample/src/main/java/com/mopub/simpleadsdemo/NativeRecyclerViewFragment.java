@@ -14,9 +14,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.mopub.nativeads.MediaViewBinder;
 import com.mopub.nativeads.MoPubNativeAdPositioning;
-import com.mopub.nativeads.MoPubRecyclerAdapter;
 import com.mopub.nativeads.MoPubStaticNativeAdRenderer;
+import com.mopub.nativeads.MoPubRecyclerAdapter;
+import com.mopub.nativeads.MoPubVideoNativeAdRenderer;
 import com.mopub.nativeads.RequestParameters;
 import com.mopub.nativeads.ViewBinder;
 
@@ -95,7 +97,19 @@ public class NativeRecyclerViewFragment extends Fragment {
                         .build()
         );
 
+        // Set up a renderer for a video native ad.
+        MoPubVideoNativeAdRenderer moPubVideoNativeAdRenderer = new MoPubVideoNativeAdRenderer(
+                new MediaViewBinder.Builder(R.layout.video_ad_list_item)
+                        .titleId(R.id.native_title)
+                        .textId(R.id.native_text)
+                        .mediaLayoutId(R.id.native_media_layout)
+                        .iconImageId(R.id.native_icon_image)
+                        .callToActionId(R.id.native_cta)
+                        .privacyInformationIconImageId(R.id.native_privacy_information_icon_image)
+                        .build());
+
         mRecyclerAdapter.registerAdRenderer(moPubStaticNativeAdRenderer);
+        mRecyclerAdapter.registerAdRenderer(moPubVideoNativeAdRenderer);
 
         mRecyclerView.setAdapter(mRecyclerAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));

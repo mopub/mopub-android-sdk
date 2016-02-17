@@ -31,7 +31,6 @@ import com.mopub.nativeads.NativeVideoController.NativeVideoProgressRunnable;
 import com.mopub.network.TrackingRequest;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
@@ -175,6 +174,8 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         private final long mId;
         private boolean mNeedsSeek;
         private boolean mNeedsPrepare;
+        private boolean mPauseCanBeTracked = false;
+        private boolean mResumeCanBeTracked = false;
 
         // These variables influence video state.
         private int mLatestVideoControllerState;
@@ -290,7 +291,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         @Override
         public void onVastVideoConfigurationPrepared(@Nullable VastVideoConfig vastVideoConfig) {
             if (vastVideoConfig == null) {
-                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.EMPTY_AD_RESPONSE);
+                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.INVALID_RESPONSE);
                 return;
             }
 
@@ -631,9 +632,14 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         @VisibleForTesting
         void applyState(@NonNull final VideoState videoState, boolean transitionToFullScreen) {
             Preconditions.checkNotNull(videoState);
+
+            // Check and set mVideoState so any changes we make to exo state don't
+            // trigger a duplicate run of this.
             if (mVideoState == videoState) {
                 return;
             }
+            VideoState previousState = mVideoState;
+            mVideoState = videoState;
 
             switch (videoState) {
                 case FAILED_LOAD:
@@ -641,7 +647,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                     mNativeVideoController.setAppAudioEnabled(false);
                     mMediaLayout.setMode(MediaLayout.Mode.IMAGE);
                     // Only log the failed to play event when the video has not started
-                    if (mVideoState != VideoState.PLAYING && mVideoState != VideoState.PLAYING_MUTED) {
+                    if (previousState != VideoState.PLAYING && previousState != VideoState.PLAYING_MUTED) {
                         MoPubEvents.log(Event.createEventFromDetails(
                                 BaseEvent.Name.ERROR_FAILED_TO_PLAY,
                                 BaseEvent.Category.NATIVE_VIDEO,
@@ -659,18 +665,30 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                     mMediaLayout.setMode(MediaLayout.Mode.BUFFERING);
                     break;
                 case PAUSED:
+                    if (transitionToFullScreen) {
+                        // Prevents firing resume trackers when we return from full-screen.
+                        mResumeCanBeTracked = false;
+                    }
+
                     if (!transitionToFullScreen) {
                         mNativeVideoController.setAppAudioEnabled(false);
+                        if (mPauseCanBeTracked) {
+                            TrackingRequest.makeVastTrackingHttpRequest(
+                                    mVastVideoConfig.getPauseTrackers(),
+                                    null, // VastErrorCode
+                                    (int) mNativeVideoController.getCurrentPosition(),
+                                    null, // Asset URI
+                                    mContext);
+                            mPauseCanBeTracked = false;
+                            mResumeCanBeTracked = true;
+                        }
                     }
                     mNativeVideoController.setPlayWhenReady(false);
                     mMediaLayout.setMode(MediaLayout.Mode.PAUSED);
                     break;
                 case PLAYING:
-                    // We force a seek here to get keyframe rendering in ExtractorSampleSource.
-                    if (mNeedsSeek) {
-                        mNeedsSeek = false;
-                        mNativeVideoController.seekTo(mNativeVideoController.getCurrentPosition());
-                    }
+                    handleResumeTrackersAndSeek(previousState);
+
                     mNativeVideoController.setPlayWhenReady(true);
                     mNativeVideoController.setAudioEnabled(true);
                     mNativeVideoController.setAppAudioEnabled(true);
@@ -678,11 +696,8 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                     mMediaLayout.setMuteState(MediaLayout.MuteState.UNMUTED);
                     break;
                 case PLAYING_MUTED:
-                    // We force a seek here to get keyframe rendering in ExtractorSampleSource.
-                    if (mNeedsSeek) {
-                        mNeedsSeek = false;
-                        mNativeVideoController.seekTo(mNativeVideoController.getCurrentPosition());
-                    }
+                    handleResumeTrackersAndSeek(previousState);
+
                     mNativeVideoController.setPlayWhenReady(true);
                     mNativeVideoController.setAudioEnabled(false);
                     mNativeVideoController.setAppAudioEnabled(false);
@@ -693,14 +708,37 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                     if (mNativeVideoController.hasFinalFrame()) {
                         mMediaLayout.setMainImageDrawable(mNativeVideoController.getFinalFrame());
                     }
+                    mPauseCanBeTracked = false;
+                    mResumeCanBeTracked = false;
                     mVastVideoConfig.handleComplete(mContext, 0);
                     mNativeVideoController.setAppAudioEnabled(false);
                     mMediaLayout.setMode(MediaLayout.Mode.FINISHED);
                     mMediaLayout.updateProgress(1000);
                     break;
             }
+        }
 
-            mVideoState = videoState;
+        private void handleResumeTrackersAndSeek(VideoState previousState) {
+            if (mResumeCanBeTracked
+                    && previousState != VideoState.PLAYING
+                    && previousState != VideoState.PLAYING_MUTED) {  // If we've played before, fire resume trackers.
+                TrackingRequest.makeVastTrackingHttpRequest(
+                        mVastVideoConfig.getResumeTrackers(),
+                        null, // VastErrorCode
+                        (int) mNativeVideoController.getCurrentPosition(),
+                        null, // Asset URI
+                        mContext
+                );
+                mResumeCanBeTracked = false;
+            }
+
+            mPauseCanBeTracked = true;
+
+            // We force a seek here to get keyframe rendering in ExtractorSampleSource.
+            if (mNeedsSeek) {
+                mNeedsSeek = false;
+                mNativeVideoController.seekTo(mNativeVideoController.getCurrentPosition());
+            }
         }
 
 

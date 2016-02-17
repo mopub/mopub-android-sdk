@@ -55,8 +55,11 @@ import org.robolectric.shadows.httpclient.TestHttpResponse;
 import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
@@ -72,6 +75,8 @@ import static com.mopub.mobileads.VastVideoViewController.DEFAULT_VIDEO_DURATION
 import static com.mopub.mobileads.VastVideoViewController.MAX_VIDEO_DURATION_FOR_CLOSE_BUTTON;
 import static com.mopub.mobileads.VastVideoViewController.RESUMED_VAST_CONFIG;
 import static com.mopub.mobileads.VastVideoViewController.VAST_VIDEO_CONFIG;
+import static com.mopub.mobileads.VastXmlManagerAggregator.ADS_BY_AD_SLOT_ID;
+import static com.mopub.mobileads.VastXmlManagerAggregator.SOCIAL_ACTIONS_AD_SLOT_ID;
 import static com.mopub.volley.toolbox.ImageLoader.ImageListener;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -202,6 +207,16 @@ public class VastVideoViewControllerTest {
         when(mMockVastIconConfig.getVastResource()).thenReturn(vastResource);
         vastVideoConfig.setVastIconConfig(mMockVastIconConfig);
 
+
+        final ArrayList<VastTracker> vastTrackers = new ArrayList<>();
+        VastCompanionAdConfig socialActionsCompanionAd =
+                new VastCompanionAdConfig(65, 20, vastResource, "", vastTrackers, vastTrackers);
+        Map<String, VastCompanionAdConfig> socialActionsCompanionAds =
+                new HashMap<String, VastCompanionAdConfig>();
+        socialActionsCompanionAds.put(ADS_BY_AD_SLOT_ID, socialActionsCompanionAd);
+        socialActionsCompanionAds.put(SOCIAL_ACTIONS_AD_SLOT_ID, socialActionsCompanionAd);
+        vastVideoConfig.setSocialActionsCompanionAds(socialActionsCompanionAds);
+
         when(mockMediaMetadataRetriever.getFrameAtTime(anyLong(), anyInt())).thenReturn(mockBitmap);
 
         bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
@@ -266,6 +281,38 @@ public class VastVideoViewControllerTest {
         assertThat(radialCountdownWidget.getVisibility()).isEqualTo(View.INVISIBLE);
         ShadowImageView radialCountdownWidgetShadow = Shadows.shadowOf(radialCountdownWidget);
         assertThat(radialCountdownWidgetShadow.getOnTouchListener()).isNull();
+    }
+
+    @Test
+    public void constructor_shouldAddIconViewToLayoutAndSetInvisibleWithWebViewClickListener() throws Exception {
+        initializeSubject();
+
+        View iconView = subject.getIconView();
+        assertThat(iconView.getParent()).isEqualTo(subject.getLayout());
+        assertThat(iconView.getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(((VastWebView)iconView).getVastWebViewClickListener()).isNotNull();
+    }
+
+    @Test
+    public void constructor_withAdsByCompanion_shouldAddAdsByViewToLayout() throws Exception {
+        initializeSubject();
+
+        View adsByView = subject.createAdsByView((Activity) context);
+        assertThat(adsByView.getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(subject.getHasSocialActions()).isTrue();
+        assertThat(subject.getCtaButtonWidget().getHasSocialActions()).isTrue();
+        assertThat(((VastWebView) adsByView).getVastWebViewClickListener()).isNotNull();
+    }
+
+    @Test
+    public void constructor_withSocialActionsCompanion_shouldAddSocialActionsViewToLayout() throws Exception {
+        initializeSubject();
+
+        View socialActionsView = subject.getSocialActionsView();
+        assertThat(socialActionsView.getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(subject.getHasSocialActions()).isTrue();
+        assertThat(subject.getCtaButtonWidget().getHasSocialActions()).isTrue();
+        assertThat(((VastWebView) socialActionsView).getVastWebViewClickListener()).isNotNull();
     }
 
     @Test
@@ -1265,6 +1312,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onCompletion_whenCompanionAdAvailable_shouldShowCompanionAdAndHideBlurredLastVideoFrame() throws Exception {
+        final VastVideoConfig vastVideoConfig =
+                (VastVideoConfig) bundle.getSerializable(VAST_VIDEO_CONFIG);
+        vastVideoConfig.setSocialActionsCompanionAds(new HashMap<String, VastCompanionAdConfig>());
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
         initializeSubject();
 
         final View companionView = subject.getLandscapeCompanionAdView();
@@ -1404,6 +1455,30 @@ public class VastVideoViewControllerTest {
 
         assertThat(topGradientStripWidget.getVisibility()).isEqualTo(View.GONE);
         assertThat(bottomGradientStripWidget.getVisibility()).isEqualTo(View.GONE);
+    }
+
+    @Test
+    public void onCompletion_withSocialActions_shouldShowCompanionAdAndShowBlurredLastVideoFrame() throws Exception {
+        initializeSubject();
+
+        final View companionView = subject.getLandscapeCompanionAdView();
+        final ImageView blurredLastVideoFrameImageView = subject.getBlurredLastVideoFrameImageView();
+
+        assertThat(subject.getVideoView().getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(companionView.getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.INVISIBLE);
+
+        getShadowVideoView().getOnPreparedListener().onPrepared(null);
+        Robolectric.getBackgroundThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
+        Thread.sleep(NETWORK_DELAY);
+
+        getShadowVideoView().getOnCompletionListener().onCompletion(null);
+
+        assertThat(subject.getVastVideoView().getBlurLastVideoFrameTask()).isNotNull();
+        assertThat(subject.getVideoView().getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(companionView.getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.VISIBLE);
     }
 
     @Test
@@ -2157,13 +2232,14 @@ public class VastVideoViewControllerTest {
     }
 
     @Test
-    public void makeInteractable_shouldHideCountdownWidgetAndShowCtaAndCloseButtonWidgets() throws Exception {
+    public void makeInteractable_shouldHideCountdownWidgetAndShowCtaAndCloseButtonWidgetsAndShowSocialActions() throws Exception {
         initializeSubject();
 
         subject.makeVideoInteractable();
 
         assertThat(subject.getRadialCountdownWidget().getVisibility()).isEqualTo(View.GONE);
         assertThat(subject.getCloseButtonWidget().getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(subject.getSocialActionsView().getVisibility()).isEqualTo(View.VISIBLE);
     }
 
     private void initializeSubject() throws IllegalAccessException {

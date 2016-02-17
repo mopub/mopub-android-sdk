@@ -28,6 +28,7 @@ public class StaticNativeAdTest {
         subject.setCallToAction("callToAction");
         subject.setStarRating(5.0);
         subject.setPrivacyInformationIconClickThroughUrl("privacyInformationIconClickThroughUrl");
+        subject.setPrivacyInformationIconImageUrl("privacyInformationIconImageUrl");
         subject.addExtra("extra", "extraValue");
         subject.addExtra("extraImage", "extraImageUrl");
         subject.addImpressionTracker("impressionUrl");
@@ -45,6 +46,8 @@ public class StaticNativeAdTest {
         assertThat(subject.getStarRating()).isEqualTo(5.0);
         assertThat(subject.getPrivacyInformationIconClickThroughUrl()).isEqualTo(
                 "privacyInformationIconClickThroughUrl");
+        assertThat(subject.getPrivacyInformationIconImageUrl()).isEqualTo
+                ("privacyInformationIconImageUrl");
         assertThat(subject.getExtra("extra")).isEqualTo("extraValue");
         assertThat(subject.getExtra("extraImage")).isEqualTo("extraImageUrl");
         assertThat(subject.getExtras()).hasSize(2);

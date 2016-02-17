@@ -291,7 +291,7 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
 
     @Override
     public void onPlayerStateChanged(final boolean playWhenReady, final int newState) {
-        startProgressRunnable(playWhenReady, newState);
+        updateProgressRunnable(playWhenReady, newState);
 
         if (newState == STATE_ENDED && mFinalFrame == null) {
             mFinalFrame = new BitmapDrawable(mContext.getResources(), mTextureView.getBitmap());
@@ -386,7 +386,7 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
         mNativeVideoProgressRunnable.checkImpressionTrackers(true);
     }
 
-    private void startProgressRunnable(final boolean playWhenReady, final int state) {
+    private void updateProgressRunnable(final boolean playWhenReady, final int state) {
         if (playWhenReady && state == STATE_READY) {
             mNativeVideoProgressRunnable.startRepeating(50);
         } else {
@@ -440,7 +440,7 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
         }
 
         mExoPlayer.setPlayWhenReady(mPlayWhenReady);
-        startProgressRunnable(mExoPlayer.getPlayWhenReady(), mExoPlayer.getPlaybackState());
+        updateProgressRunnable(mExoPlayer.getPlayWhenReady(), mExoPlayer.getPlaybackState());
     }
 
     private void setExoAudio() {

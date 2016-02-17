@@ -38,6 +38,7 @@ public class VideoNativeAdTest {
         subject.setVastVideo("vastVideo");
         subject.setCallToAction("callToAction");
         subject.setPrivacyInformationIconClickThroughUrl("privacyInformationIconClickThroughUrl");
+        subject.setPrivacyInformationIconImageUrl("privacyInformationIconImageUrl");
         subject.addExtra("extra", "extraValue");
         subject.addExtra("extraImage", "extraImageUrl");
         subject.addImpressionTracker("impressionUrl");
@@ -53,6 +54,8 @@ public class VideoNativeAdTest {
         assertThat(subject.getCallToAction()).isEqualTo("callToAction");
         assertThat(subject.getPrivacyInformationIconClickThroughUrl()).isEqualTo(
                 "privacyInformationIconClickThroughUrl");
+        assertThat(subject.getPrivacyInformationIconImageUrl()).isEqualTo
+                ("privacyInformationIconImageUrl");
         assertThat(subject.getExtra("extra")).isEqualTo("extraValue");
         assertThat(subject.getExtra("extraImage")).isEqualTo("extraImageUrl");
         assertThat(subject.getExtras()).hasSize(2);

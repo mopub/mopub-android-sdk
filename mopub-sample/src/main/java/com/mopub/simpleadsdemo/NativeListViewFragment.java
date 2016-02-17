@@ -9,8 +9,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.mopub.nativeads.MediaViewBinder;
 import com.mopub.nativeads.MoPubAdAdapter;
 import com.mopub.nativeads.MoPubStaticNativeAdRenderer;
+import com.mopub.nativeads.MoPubVideoNativeAdRenderer;
 import com.mopub.nativeads.RequestParameters;
 import com.mopub.nativeads.ViewBinder;
 
@@ -84,7 +86,20 @@ public class NativeListViewFragment extends Fragment {
                         .privacyInformationIconImageId(R.id.native_privacy_information_icon_image)
                         .build());
 
-        // Register the renderer and set the adapter on the ListView.
+        // Set up a renderer for a video native ad.
+        final MoPubVideoNativeAdRenderer videoAdRenderer = new MoPubVideoNativeAdRenderer(
+                new MediaViewBinder.Builder(R.layout.video_ad_list_item)
+                        .titleId(R.id.native_title)
+                        .textId(R.id.native_text)
+                        .mediaLayoutId(R.id.native_media_layout)
+                        .iconImageId(R.id.native_icon_image)
+                        .callToActionId(R.id.native_cta)
+                        .privacyInformationIconImageId(R.id.native_privacy_information_icon_image)
+                        .build());
+
+
+        // Register the renderers with the MoPubAdAdapter and then set the adapter on the ListView.
+        mAdAdapter.registerAdRenderer(videoAdRenderer);
         mAdAdapter.registerAdRenderer(staticAdRender);
         listView.setAdapter(mAdAdapter);
 

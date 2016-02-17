@@ -22,6 +22,7 @@ public abstract class VideoNativeAd extends BaseNativeAd implements NativeVideoC
     @Nullable private String mTitle;
     @Nullable private String mText;
     @Nullable private String mPrivacyInformationIconClickThroughUrl;
+    @Nullable private String mPrivacyInformationIconImageUrl;
     @Nullable private String mVastVideo;
 
     // Extras
@@ -74,6 +75,17 @@ public abstract class VideoNativeAd extends BaseNativeAd implements NativeVideoC
     }
 
     /**
+     * Returns the Privacy Information image url.
+     *
+     * @return String representing the Privacy Information Icon image url, or {@code null} if not
+     * set.
+     */
+    @Nullable
+    public String getPrivacyInformationIconImageUrl() {
+        return mPrivacyInformationIconImageUrl;
+    }
+
+    /**
      * Given a particular String key, return the associated Object value from the ad's extras
      * map. See {@link VideoNativeAd#getExtras()} for more information.
      */
@@ -121,6 +133,11 @@ public abstract class VideoNativeAd extends BaseNativeAd implements NativeVideoC
     public void setPrivacyInformationIconClickThroughUrl(
             @Nullable String privacyInformationIconClickThroughUrl) {
         mPrivacyInformationIconClickThroughUrl = privacyInformationIconClickThroughUrl;
+    }
+
+    public void setPrivacyInformationIconImageUrl(
+            @Nullable String privacyInformationIconImageUrl) {
+        mPrivacyInformationIconImageUrl = privacyInformationIconImageUrl;
     }
 
     final public void addExtra(@NonNull final String key, @Nullable final Object value) {

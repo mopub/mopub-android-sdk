@@ -28,6 +28,7 @@ public abstract class StaticNativeAd extends BaseNativeAd implements ImpressionI
     @Nullable private String mText;
     @Nullable private Double mStarRating;
     @Nullable private String mPrivacyInformationIconClickThroughUrl;
+    @Nullable private String mPrivacyInformationIconImageUrl;
 
     // Impression logistics
     private boolean mImpressionRecorded;
@@ -104,6 +105,17 @@ public abstract class StaticNativeAd extends BaseNativeAd implements ImpressionI
         return mPrivacyInformationIconClickThroughUrl;
     }
 
+    /**
+     * Returns the Privacy Information image url.
+     *
+     * @return String representing the Privacy Information Icon image url, or {@code null} if not
+     * set.
+     */
+    @Nullable
+    public String getPrivacyInformationIconImageUrl() {
+        return mPrivacyInformationIconImageUrl;
+    }
+
     // Extras Getters
     /**
      * Given a particular String key, return the associated Object value from the ad's extras map.
@@ -174,6 +186,11 @@ public abstract class StaticNativeAd extends BaseNativeAd implements ImpressionI
     final public void setPrivacyInformationIconClickThroughUrl(
             @Nullable final String privacyInformationIconClickThroughUrl) {
         mPrivacyInformationIconClickThroughUrl = privacyInformationIconClickThroughUrl;
+    }
+
+    final public void setPrivacyInformationIconImageUrl(
+            @Nullable String privacyInformationIconImageUrl) {
+        mPrivacyInformationIconImageUrl = privacyInformationIconImageUrl;
     }
 
     final public void addExtra(@NonNull final String key, @Nullable final Object value) {

@@ -23,7 +23,9 @@ import com.mopub.exceptions.IntentNotResolvableException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.mopub.network.TrackingRequest.makeVastTrackingHttpRequest;
 
@@ -46,6 +48,7 @@ public class VastVideoConfig implements Serializable {
     @Nullable private String mSkipOffset;
     @Nullable private VastCompanionAdConfig mLandscapeVastCompanionAdConfig;
     @Nullable private VastCompanionAdConfig mPortraitVastCompanionAdConfig;
+    @NonNull private Map<String, VastCompanionAdConfig> mSocialActionsCompanionAds;
     @Nullable private VastIconConfig mVastIconConfig;
 
     // Custom extensions
@@ -72,6 +75,7 @@ public class VastVideoConfig implements Serializable {
         mSkipTrackers = new ArrayList<VastTracker>();
         mClickTrackers = new ArrayList<VastTracker>();
         mErrorTrackers = new ArrayList<VastTracker>();
+        mSocialActionsCompanionAds = new HashMap<String, VastCompanionAdConfig>();
     }
 
     /**
@@ -168,6 +172,11 @@ public class VastVideoConfig implements Serializable {
             @Nullable final VastCompanionAdConfig portraitVastCompanionAdConfig) {
         mLandscapeVastCompanionAdConfig = landscapeVastCompanionAdConfig;
         mPortraitVastCompanionAdConfig = portraitVastCompanionAdConfig;
+    }
+
+    public void setSocialActionsCompanionAds(
+            @NonNull final Map<String, VastCompanionAdConfig> socialActionsCompanionAds) {
+        this.mSocialActionsCompanionAds = socialActionsCompanionAds;
     }
 
     public void setVastIconConfig(@Nullable final VastIconConfig vastIconConfig) {
@@ -295,6 +304,11 @@ public class VastVideoConfig implements Serializable {
             default:
                 return mLandscapeVastCompanionAdConfig;
         }
+    }
+
+    @NonNull
+    public Map<String, VastCompanionAdConfig> getSocialActionsCompanionAds() {
+        return mSocialActionsCompanionAds;
     }
 
     @Nullable

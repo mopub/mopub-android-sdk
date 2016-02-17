@@ -16,19 +16,21 @@ import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.VideoView;
 
-import com.mopub.common.MoPubBrowser;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.util.Dips;
 import com.mopub.common.util.Utils;
+import com.mopub.mobileads.resource.DrawableConstants;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
@@ -36,6 +38,8 @@ import static com.mopub.common.MoPubBrowser.MOPUB_BROWSER_REQUEST_CODE;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
+import static com.mopub.mobileads.VastXmlManagerAggregator.ADS_BY_AD_SLOT_ID;
+import static com.mopub.mobileads.VastXmlManagerAggregator.SOCIAL_ACTIONS_AD_SLOT_ID;
 import static com.mopub.network.TrackingRequest.makeVastTrackingHttpRequest;
 
 public class VastVideoViewController extends BaseVideoViewController {
@@ -71,9 +75,12 @@ public class VastVideoViewController extends BaseVideoViewController {
     @NonNull private VastVideoCloseButtonWidget mCloseButtonWidget;
 
     @Nullable private VastCompanionAdConfig mVastCompanionAdConfig;
+    @Nullable private final VastIconConfig mVastIconConfig;
     @NonNull private final View mLandscapeCompanionAdView;
     @NonNull private final View mPortraitCompanionAdView;
-    @Nullable private final VastIconConfig mVastIconConfig;
+    @NonNull private final Map<String, VastCompanionAdConfig> mSocialActionsCompanionAds;
+    @NonNull private View mAdsByView;
+    @NonNull private final View mSocialActionsView;
     @NonNull private final View mIconView;
 
     @NonNull private final VastVideoViewProgressRunnable mProgressCheckerRunnable;
@@ -87,6 +94,7 @@ public class VastVideoViewController extends BaseVideoViewController {
     private boolean mVideoError;
     private boolean mHasSkipOffset = false;
     private boolean mIsCalibrationDone = false;
+    private boolean mHasSocialActions = false;
     private int mDuration;
 
     /**
@@ -126,6 +134,7 @@ public class VastVideoViewController extends BaseVideoViewController {
 
         mVastCompanionAdConfig = mVastVideoConfig.getVastCompanionAd(
                 activity.getResources().getConfiguration().orientation);
+        mSocialActionsCompanionAds = mVastVideoConfig.getSocialActionsCompanionAds();
         mVastIconConfig = mVastVideoConfig.getVastIconConfig();
 
         mClickThroughListener = new View.OnTouchListener() {
@@ -147,6 +156,9 @@ public class VastVideoViewController extends BaseVideoViewController {
 
         // Solid black background
         getLayout().setBackgroundColor(Color.BLACK);
+
+        // Blurred last frame
+        addBlurredLastVideoFrameImageView(activity, View.INVISIBLE);
 
         // Video view
         mVideoView = createVideoView(activity, View.VISIBLE);
@@ -174,12 +186,27 @@ public class VastVideoViewController extends BaseVideoViewController {
 
         // Icon view
         mIconView = createIconView(activity, mVastIconConfig, View.INVISIBLE);
-
-        // Blurred last frame
-        addBlurredLastVideoFrameImageView(activity, View.INVISIBLE);
+        mIconView.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        // Wait until mIconView has been laid out to get accurate height
+                        mAdsByView = createAdsByView(activity);
+                        mIconView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                    }
+                }
+        );
 
         // CTA button
         addCtaButtonWidget(activity);
+
+        // Social Actions
+        final int ctaHeight = Dips.dipsToIntPixels(DrawableConstants.CtaButton.HEIGHT_DIPS,
+                activity);
+        mSocialActionsView = createSocialActionsView(activity,
+                mSocialActionsCompanionAds.get(SOCIAL_ACTIONS_AD_SLOT_ID),
+                ctaHeight, RelativeLayout.ALIGN_TOP, mCtaButtonWidget, View.INVISIBLE,
+                DrawableConstants.SocialActions.SOCIAL_ACTIONS_LEFT_MARGIN_DIPS);
 
         // Close button snapped to top-right corner of screen
         // Always add last to layout since it must be visible above all other views
@@ -189,6 +216,28 @@ public class VastVideoViewController extends BaseVideoViewController {
         mProgressCheckerRunnable = new VastVideoViewProgressRunnable(this, mVastVideoConfig,
                 mainHandler);
         mCountdownRunnable = new VastVideoViewCountdownRunnable(this, mainHandler);
+    }
+
+    @VisibleForTesting
+    View createAdsByView(Activity activity) {
+        return createSocialActionsView(activity,
+                mSocialActionsCompanionAds.get(ADS_BY_AD_SLOT_ID),
+                mIconView.getHeight(),
+                RelativeLayout.RIGHT_OF, mIconView, View.VISIBLE,
+                DrawableConstants.SocialActions.ADS_BY_LEFT_MARGIN_DIPS
+        );
+    }
+
+    @Deprecated // Just use for testing
+    @VisibleForTesting
+    boolean getHasSocialActions() {
+        return mHasSocialActions;
+    }
+
+    @Deprecated // Just use for testing
+    @VisibleForTesting
+    View getSocialActionsView() {
+        return mSocialActionsView;
     }
 
     @Override
@@ -325,7 +374,7 @@ public class VastVideoViewController extends BaseVideoViewController {
                 // Therefore set it here so that we have access to it at all times
                 mDuration = mVideoView.getDuration();
                 adjustSkipOffset();
-                if (mVastCompanionAdConfig == null) {
+                if (mVastCompanionAdConfig == null || mHasSocialActions) {
                     videoView.prepareBlurredLastVideoFrame(mBlurredLastVideoFrameImageView,
                             mVastVideoConfig.getDiskMediaFileUrl());
                 }
@@ -354,7 +403,18 @@ public class VastVideoViewController extends BaseVideoViewController {
                 videoView.setVisibility(View.INVISIBLE);
 
                 mProgressBarWidget.setVisibility(View.GONE);
-                mIconView.setVisibility(View.GONE);
+
+                if (mHasSocialActions) {
+                    // Social Actions need the blurred last frame to fill the screen regardless
+                    // of the companion ad.
+                    if (mBlurredLastVideoFrameImageView.getDrawable() != null) {
+                        mBlurredLastVideoFrameImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        mBlurredLastVideoFrameImageView.setVisibility(View.VISIBLE);
+                    }
+                    // Also, avoid removing DAA icon for social actions
+                } else {
+                    mIconView.setVisibility(View.GONE);
+                }
 
                 mTopGradientStripWidget.notifyVideoComplete();
                 mBottomGradientStripWidget.notifyVideoComplete();
@@ -539,35 +599,7 @@ public class VastVideoViewController extends BaseVideoViewController {
                         RelativeLayout.LayoutParams.MATCH_PARENT);
         getLayout().addView(relativeLayout, layoutParams);
 
-        VastWebView companionView = VastWebView.createView(context,
-                vastCompanionAdConfig.getVastResource());
-
-        // For javascript, HTML, and IFrames, ignore the traditional clickthrough url and open all
-        // new urls in the MoPub Browser. For static images, use the clickthrough url specified in
-        // the VAST document. These two handleClicks make it so that the correct behavior happens
-        // in these special cases. onVastWebViewClick is called in both circumstances to fire the
-        // click trackers.
-        companionView.setVastWebViewClickListener(new VastWebView.VastWebViewClickListener() {
-            @Override
-            public void onVastWebViewClick() {
-                broadcastAction(ACTION_INTERSTITIAL_CLICK);
-                makeVastTrackingHttpRequest(
-                        vastCompanionAdConfig.getClickTrackers(),
-                        null,
-                        mDuration,
-                        null,
-                        context
-                );
-                vastCompanionAdConfig.handleClick(context, MOPUB_BROWSER_REQUEST_CODE, null);
-            }
-        });
-        companionView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                vastCompanionAdConfig.handleClick(context, MOPUB_BROWSER_REQUEST_CODE, url);
-                return true;
-            }
-        });
+        VastWebView companionView = createCompanionVastWebView(context, vastCompanionAdConfig);
 
         companionView.setVisibility(initialVisibility);
 
@@ -578,6 +610,62 @@ public class VastVideoViewController extends BaseVideoViewController {
         companionAdLayout.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
 
         relativeLayout.addView(companionView, companionAdLayout);
+        return companionView;
+    }
+
+    /**
+     * Creates and lays out the webviews used to display the social actions.
+     *
+     * @param context The context.
+     * @param vastCompanionAdConfig The data used to populate the view.
+     * @param anchorHeight The height in pixels of the view to use as anchor for the view.
+     * @param layoutVerb The way to layout the view relative to the anchorView.
+     * @param anchorView The view to use as anchor when laying out the view.
+     * @param initialVisibility The visibility the view should have.
+     * @return the populated webview
+     */
+    @NonNull
+    @VisibleForTesting
+    View createSocialActionsView(@NonNull final Context context,
+            @Nullable final VastCompanionAdConfig vastCompanionAdConfig, final int anchorHeight,
+            final int layoutVerb, @NonNull final View anchorView, final int initialVisibility,
+            final int leftMarginDips) {
+        Preconditions.checkNotNull(context);
+        Preconditions.checkNotNull(anchorView);
+
+        if (vastCompanionAdConfig == null) {
+            final View emptyView = new View(context);
+            emptyView.setVisibility(View.INVISIBLE);
+            return emptyView;
+        }
+
+        mHasSocialActions = true;
+        mCtaButtonWidget.setHasSocialActions(mHasSocialActions);
+
+        VastWebView companionView = createCompanionVastWebView(context, vastCompanionAdConfig);
+
+        final int width = Dips.dipsToIntPixels(vastCompanionAdConfig.getWidth(), context);
+        final int height = Dips.dipsToIntPixels(vastCompanionAdConfig.getHeight(), context);
+        final int offset = (anchorHeight - height) / 2;
+        final int leftMargin = Dips.dipsToIntPixels(leftMarginDips, context);
+
+        final RelativeLayout.LayoutParams companionAdLayout =
+                new RelativeLayout.LayoutParams(width, height);
+        companionAdLayout.addRule(layoutVerb, anchorView.getId());
+        companionAdLayout.addRule(RelativeLayout.ALIGN_TOP, anchorView.getId());
+        companionAdLayout.setMargins(leftMargin, offset, 0, 0);
+
+        RelativeLayout relativeLayout = new RelativeLayout(context);
+        relativeLayout.setGravity(Gravity.CENTER_VERTICAL);
+        RelativeLayout.LayoutParams layoutParams =
+                new RelativeLayout.LayoutParams(
+                        RelativeLayout.LayoutParams.WRAP_CONTENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT);
+        relativeLayout.addView(companionView, layoutParams);
+
+        getLayout().addView(relativeLayout, companionAdLayout);
+
+        companionView.setVisibility(initialVisibility);
         return companionView;
     }
 
@@ -620,13 +708,15 @@ public class VastVideoViewController extends BaseVideoViewController {
         });
         iconView.setVisibility(initialVisibility);
 
-        // Add extra room for the WebView to account for the natural padding in Android WebViews.
         RelativeLayout.LayoutParams layoutParams =
                 new RelativeLayout.LayoutParams(
-                        Dips.asIntPixels(vastIconConfig.getWidth() + WEBVIEW_PADDING, context),
-                        Dips.asIntPixels(vastIconConfig.getHeight() + WEBVIEW_PADDING, context));
-        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+                        Dips.asIntPixels(vastIconConfig.getWidth(), context),
+                        Dips.asIntPixels(vastIconConfig.getHeight(), context));
+        final int leftMargin = Dips.dipsToIntPixels(
+                DrawableConstants.PrivacyInfoIcon.LEFT_MARGIN_DIPS, context);
+        final int topMargin = Dips.dipsToIntPixels(
+                DrawableConstants.PrivacyInfoIcon.TOP_MARGIN_DIPS, context);
+        layoutParams.setMargins(leftMargin, topMargin, 0, 0);
 
         getLayout().addView(iconView, layoutParams);
 
@@ -648,6 +738,7 @@ public class VastVideoViewController extends BaseVideoViewController {
         mCloseButtonWidget.setVisibility(View.VISIBLE);
 
         mCtaButtonWidget.notifyVideoSkippable();
+        mSocialActionsView.setVisibility(View.VISIBLE);
     }
 
     boolean shouldBeInteractable() {
@@ -707,6 +798,44 @@ public class VastVideoViewController extends BaseVideoViewController {
     private void stopRunnables() {
         mProgressCheckerRunnable.stop();
         mCountdownRunnable.stop();
+    }
+
+    @NonNull
+    private VastWebView createCompanionVastWebView(@NonNull final Context context,
+            @NonNull final VastCompanionAdConfig vastCompanionAdConfig) {
+        Preconditions.checkNotNull(context);
+        Preconditions.checkNotNull(vastCompanionAdConfig);
+
+        VastWebView companionView = VastWebView.createView(context,
+                vastCompanionAdConfig.getVastResource());
+
+        // For javascript, HTML, and IFrames, ignore the traditional clickthrough url and open all
+        // new urls in the MoPub Browser. For static images, use the clickthrough url specified in
+        // the VAST document. These two handleClicks make it so that the correct behavior happens
+        // in these special cases. onVastWebViewClick is called in both circumstances to fire the
+        // click trackers.
+        companionView.setVastWebViewClickListener(new VastWebView.VastWebViewClickListener() {
+            @Override
+            public void onVastWebViewClick() {
+                broadcastAction(ACTION_INTERSTITIAL_CLICK);
+                makeVastTrackingHttpRequest(
+                        vastCompanionAdConfig.getClickTrackers(),
+                        null,
+                        mDuration,
+                        null,
+                        context
+                );
+                vastCompanionAdConfig.handleClick(context, MOPUB_BROWSER_REQUEST_CODE, null);
+            }
+        });
+        companionView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                vastCompanionAdConfig.handleClick(context, MOPUB_BROWSER_REQUEST_CODE, url);
+                return true;
+            }
+        });
+        return companionView;
     }
 
     // for testing

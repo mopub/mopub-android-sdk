@@ -51,6 +51,7 @@ import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -213,7 +214,7 @@ public class MoPubVideoNativeAdTest {
     @Test
     public void onVastVideoConfigurationPrepared_withNullVastVideoConfig_shouldNotifyListenerFailed() {
         subject.onVastVideoConfigurationPrepared(null);
-        verify(mockCustomEventNativeListener).onNativeAdFailed(NativeErrorCode.EMPTY_AD_RESPONSE);
+        verify(mockCustomEventNativeListener).onNativeAdFailed(NativeErrorCode.INVALID_RESPONSE);
     }
 
     @Test
@@ -853,6 +854,46 @@ public class MoPubVideoNativeAdTest {
         subject.applyState(VideoState.ENDED);
 
         verify(mockMediaLayout).setMainImageDrawable(mockNativeVideoController.getFinalFrame());
+    }
+
+    @Test
+    public void applyState_withVideoStatePause_afterVideoStatePlayingMuted_shouldFirePauseTrackers() {
+        final ArrayList<VastTracker> testList = new ArrayList<VastTracker>();
+        testList.add(new VastTracker("testUrl", true));
+
+        when(mockVastVideoConfig.getPauseTrackers()).thenReturn(testList);
+
+        subject.loadAd();
+        subject.onVastVideoConfigurationPrepared(mockVastVideoConfig);
+        subject.prepare(mockRootView);
+        subject.render(mockMediaLayout);
+
+        subject.applyState(VideoState.PLAYING_MUTED);
+        subject.applyState(VideoState.PAUSED);
+
+        verify(mockVastVideoConfig).getPauseTrackers();
+        verify(mockRequestQueue).add(argThat(isUrl("testUrl")));
+    }
+
+    @Test
+    public void applyState_withVideoStatePlayingMuted_afterPaused_afterPlaying_shouldFireResumeTrackers() {
+        final ArrayList<VastTracker> testList = new ArrayList<VastTracker>();
+        testList.add(new VastTracker("testResumeUrl", true));
+
+        when(mockVastVideoConfig.getResumeTrackers()).thenReturn(testList);
+
+        subject.loadAd();
+        subject.onVastVideoConfigurationPrepared(mockVastVideoConfig);
+        subject.prepare(mockRootView);
+        subject.render(mockMediaLayout);
+
+        subject.applyState(VideoState.PLAYING_MUTED);
+        subject.applyState(VideoState.PAUSED);
+        subject.applyState(VideoState.BUFFERING);
+        subject.applyState(VideoState.PLAYING_MUTED);
+
+        verify(mockVastVideoConfig).getPauseTrackers();
+        verify(mockRequestQueue).add(argThat(isUrl("testResumeUrl")));
     }
 
     @Test

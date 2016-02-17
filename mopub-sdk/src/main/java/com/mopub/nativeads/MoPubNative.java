@@ -224,6 +224,7 @@ public class MoPubNative {
 
                     @Override
                     public void onNativeAdFailed(final NativeErrorCode errorCode) {
+                        MoPubLog.v(String.format("Native Ad failed to load with error: %s.", errorCode));
                         requestNativeAd(response.getFailoverUrl());
                     }
                 };
