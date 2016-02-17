@@ -146,6 +146,10 @@ public class AdViewController {
         if (adLoader != null) {
             adLoader.load();
         }
+        else  {
+            MoPubLog.d("Can't load an ad because adLoader is null");
+            adDidFail(MoPubErrorCode.INTERNAL_ERROR);
+        }
         scheduleRefreshTimerIfEnabled();
     }
 
