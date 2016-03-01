@@ -63,7 +63,7 @@ public abstract class AdUrlGenerator extends BaseUrlGenerator {
 
     /**
      * Density as represented by a float. See
-     * http://developer.android.com/guide/practices/screens_support.html
+     * https://developer.android.com/guide/practices/screens_support.html
      * for details on values this can be.
      */
     private static final String SCREEN_SCALE_KEY = "sc_a";

@@ -36,10 +36,13 @@ import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLooper;
 
 import java.util.Collections;
+import java.util.Map;
 
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -60,10 +63,8 @@ public class AdViewControllerTest {
             409, 410, 411, 412, 413, 414, 415, 416, 417, 500, 501, 502, 503, 504, 505};
 
     private AdViewController subject;
-    @Mock
-    private MoPubView mockMoPubView;
-    @Mock
-    private MoPubRequestQueue mockRequestQueue;
+    @Mock private MoPubView mockMoPubView;
+    @Mock private MoPubRequestQueue mockRequestQueue;
     private Reflection.MethodBuilder methodBuilder;
 
     private AdResponse response;
@@ -315,6 +316,7 @@ public class AdViewControllerTest {
     public void loadAd_shouldNotLoadWithoutConnectivity() throws Exception {
         ConnectivityManager connectivityManager = (ConnectivityManager) RuntimeEnvironment.application.getSystemService(Context.CONNECTIVITY_SERVICE);
         Shadows.shadowOf(connectivityManager.getActiveNetworkInfo()).setConnectionStatus(false);
+        subject.setAdUnitId("adunit");
 
         subject.loadAd();
         verifyZeroInteractions(mockRequestQueue);
@@ -329,7 +331,7 @@ public class AdViewControllerTest {
 
     @Test
     public void loadNonJavascript_shouldFetchAd() throws Exception {
-        String url = "http://www.guy.com";
+        String url = "https://www.guy.com";
         subject.loadNonJavascript(url);
 
         verify(mockRequestQueue).add(argThat(isUrl(url)));
@@ -337,7 +339,7 @@ public class AdViewControllerTest {
 
     @Test
     public void loadNonJavascript_whenAlreadyLoading_shouldNotFetchAd() throws Exception {
-        String url = "http://www.guy.com";
+        String url = "https://www.guy.com";
         subject.loadNonJavascript(url);
         reset(mockRequestQueue);
         subject.loadNonJavascript(url);
@@ -353,7 +355,7 @@ public class AdViewControllerTest {
 
     @Test
     public void reload_shouldReuseOldUrl() throws Exception {
-        String url = "http://www.guy.com";
+        String url = "https://www.guy.com";
         subject.loadNonJavascript(url);
         subject.setNotLoading();
         reset(mockRequestQueue);
@@ -569,6 +571,32 @@ public class AdViewControllerTest {
             assertThat(subject.mBackoffPower).isEqualTo(oldBackoffPower + 1);
         }
         verify(mockMoPubView, times(HTML_ERROR_CODES.length)).adFailed(MoPubErrorCode.SERVER_ERROR);
+    }
+
+    @Test
+    public void loadCustomEvent_shouldCallMoPubViewLoadCustomEvent() throws Exception {
+        Map serverExtras = mock(Map.class);
+        String customEventClassName = "customEventClassName";
+        subject.loadCustomEvent(mockMoPubView, customEventClassName, serverExtras);
+
+        verify(mockMoPubView).loadCustomEvent(customEventClassName, serverExtras);
+    }
+
+    @Test
+    public void loadCustomEvent_withNullMoPubView_shouldNotCallMoPubViewLoadCustomEvent() throws Exception {
+        Map serverExtras = mock(Map.class);
+        String customEventClassName = "customEventClassName";
+        subject.loadCustomEvent(null, customEventClassName, serverExtras);
+
+        verify(mockMoPubView, never()).loadCustomEvent(anyString(), anyMap());
+    }
+
+    @Test
+    public void loadCustomEvent_withNullCustomEventClassName_shouldCallMoPubViewLoadCustomEvent() throws Exception {
+        Map serverExtras = mock(Map.class);
+        subject.loadCustomEvent(mockMoPubView, null, serverExtras);
+
+        verify(mockMoPubView).loadCustomEvent(null, serverExtras);
     }
 
     @Test

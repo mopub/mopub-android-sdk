@@ -2,7 +2,7 @@ package com.mopub.mobileads;
 
 /**
  * Macros that MoPub supports. This is in the format of [name]. For example, an errorcode macro
- * would show up as "http://www.somesite.com/somemethod?error=[ERRORCODE]"
+ * would show up as "https://www.somesite.com/somemethod?error=[ERRORCODE]"
  */
 enum VastMacro {
     /**

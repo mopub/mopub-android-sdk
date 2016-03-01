@@ -36,7 +36,7 @@ public enum Drawables {
     // multiple views.
     private Bitmap cachedBitmap;
 
-    private Drawables(final String encodedString) {
+    Drawables(final String encodedString) {
         this.encodedString = encodedString;
     }
 

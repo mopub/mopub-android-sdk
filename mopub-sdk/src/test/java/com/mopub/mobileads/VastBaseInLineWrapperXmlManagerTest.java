@@ -22,17 +22,17 @@ public class VastBaseInLineWrapperXmlManagerTest {
     public void getImpressionTrackers_shouldReturnImpressionTrackers() throws Exception {
         String inLineXml = "<InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineOne]]>" +
+                "                 <![CDATA[https://impression/m/inlineOne]]>" +
                 "          </Impression>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineTwo]]>" +
+                "                 <![CDATA[https://impression/m/inlineTwo]]>" +
                 "          </Impression>" +
                 "          <Creatives>" +
                 "                 <Creative>" +
                 "                       <Linear>" +
                 "                           <TrackingEvents>" +
                 "                               <Tracking event=\"close\">" +
-                "                                   <![CDATA[http://tracking/m/close]]>" +
+                "                                   <![CDATA[https://tracking/m/close]]>" +
                 "                               </Tracking>" +
                 "                           </TrackingEvents>" +
                 "                       </Linear>" +
@@ -44,7 +44,7 @@ public class VastBaseInLineWrapperXmlManagerTest {
         subject = new VastInLineXmlManager(inLineNode);
 
         assertThat(VastUtils.vastTrackersToStrings(subject.getImpressionTrackers()))
-                .containsOnly("http://impression/m/inlineOne", "http://impression/m/inlineTwo");
+                .containsOnly("https://impression/m/inlineOne", "https://impression/m/inlineTwo");
     }
 
     @Test
@@ -62,17 +62,17 @@ public class VastBaseInLineWrapperXmlManagerTest {
     public void getLinearXmlManagers_shouldReturnLinearXmlManagers() throws Exception {
         String inLineXml = "<InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineOne]]>" +
+                "                 <![CDATA[https://impression/m/inlineOne]]>" +
                 "          </Impression>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineTwo]]>" +
+                "                 <![CDATA[https://impression/m/inlineTwo]]>" +
                 "          </Impression>" +
                 "          <Creatives>" +
                 "                 <Creative>" +
                 "                       <Linear>" +
                 "                           <TrackingEvents>" +
                 "                               <Tracking event=\"close\">" +
-                "                                   <![CDATA[http://tracking/m/closeOne]]>" +
+                "                                   <![CDATA[https://tracking/m/closeOne]]>" +
                 "                               </Tracking>" +
                 "                           </TrackingEvents>" +
                 "                       </Linear>" +
@@ -80,7 +80,7 @@ public class VastBaseInLineWrapperXmlManagerTest {
                 "                       <Linear>" +
                 "                           <TrackingEvents>" +
                 "                               <Tracking event=\"close\">" +
-                "                                   <![CDATA[http://tracking/m/ignored]]>" +
+                "                                   <![CDATA[https://tracking/m/ignored]]>" +
                 "                               </Tracking>" +
                 "                           </TrackingEvents>" +
                 "                       </Linear>" +
@@ -93,7 +93,7 @@ public class VastBaseInLineWrapperXmlManagerTest {
                 "                       <Linear>" +
                 "                           <TrackingEvents>" +
                 "                               <Tracking event=\"close\">" +
-                "                                   <![CDATA[http://tracking/m/closeTwo]]>" +
+                "                                   <![CDATA[https://tracking/m/closeTwo]]>" +
                 "                               </Tracking>" +
                 "                           </TrackingEvents>" +
                 "                       </Linear>" +
@@ -107,26 +107,26 @@ public class VastBaseInLineWrapperXmlManagerTest {
         List<VastLinearXmlManager> linearXmlManagers = subject.getLinearXmlManagers();
         assertThat(linearXmlManagers).hasSize(2);
         assertThat(VastUtils.vastTrackersToStrings(linearXmlManagers.get(0).getVideoCloseTrackers()))
-                .containsOnly("http://tracking/m/closeOne");
+                .containsOnly("https://tracking/m/closeOne");
         assertThat(VastUtils.vastTrackersToStrings(linearXmlManagers.get(1).getVideoCloseTrackers()))
-                .containsOnly("http://tracking/m/closeTwo");
+                .containsOnly("https://tracking/m/closeTwo");
     }
 
     @Test
     public void getLinearXmlManagers_withNoLinearNodes_shouldReturnEmptyList() throws Exception {
         String inLineXml = "<InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineOne]]>" +
+                "                 <![CDATA[https://impression/m/inlineOne]]>" +
                 "          </Impression>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineTwo]]>" +
+                "                 <![CDATA[https://impression/m/inlineTwo]]>" +
                 "          </Impression>" +
                 "          <Creatives>" +
                 "                 <Creative>" +
                 "                       <NonLinearAds>" +
                 "                           <TrackingEvents>" +
                 "                               <Tracking event=\"close\">" +
-                "                                   <![CDATA[http://tracking/m/close]]>" +
+                "                                   <![CDATA[https://tracking/m/close]]>" +
                 "                               </Tracking>" +
                 "                           </TrackingEvents>" +
                 "                       </NonLinearAds>" +
@@ -144,16 +144,16 @@ public class VastBaseInLineWrapperXmlManagerTest {
     public void getLinearXmlManagers_withNoCreativeNodes_shouldReturnEmptyList() throws Exception {
         String inLineXml = "<InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineOne]]>" +
+                "                 <![CDATA[https://impression/m/inlineOne]]>" +
                 "          </Impression>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineTwo]]>" +
+                "                 <![CDATA[https://impression/m/inlineTwo]]>" +
                 "          </Impression>" +
                 "          <Creatives>" +
                 "                       <Linear>" +
                 "                           <TrackingEvents>" +
                 "                               <Tracking event=\"close\">" +
-                "                                   <![CDATA[http://tracking/m/closeTwo]]>" +
+                "                                   <![CDATA[https://tracking/m/closeTwo]]>" +
                 "                               </Tracking>" +
                 "                           </TrackingEvents>" +
                 "                       </Linear>" +
@@ -170,16 +170,16 @@ public class VastBaseInLineWrapperXmlManagerTest {
     public void getLinearXmlManagers_withNoCreativesNodes_shouldReturnEmptyList() throws Exception {
         String inLineXml = "<InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineOne]]>" +
+                "                 <![CDATA[https://impression/m/inlineOne]]>" +
                 "          </Impression>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineTwo]]>" +
+                "                 <![CDATA[https://impression/m/inlineTwo]]>" +
                 "          </Impression>" +
                 "                 <Creative>" +
                 "                       <Linear>" +
                 "                           <TrackingEvents>" +
                 "                               <Tracking event=\"close\">" +
-                "                                   <![CDATA[http://tracking/m/closeTwo]]>" +
+                "                                   <![CDATA[https://tracking/m/closeTwo]]>" +
                 "                               </Tracking>" +
                 "                           </TrackingEvents>" +
                 "                       </Linear>" +
@@ -196,17 +196,17 @@ public class VastBaseInLineWrapperXmlManagerTest {
     public void getCompanionAdXmlManagers_shouldReturnCompanionAdXmlManagers() throws Exception {
         String inLineXml = "<InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineOne]]>" +
+                "                 <![CDATA[https://impression/m/inlineOne]]>" +
                 "          </Impression>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineTwo]]>" +
+                "                 <![CDATA[https://impression/m/inlineTwo]]>" +
                 "          </Impression>" +
                 "          <Creatives>" +
                 "                 <Creative>" +
                 "                       <NonLinearAds>" +
                 "                           <TrackingEvents>" +
                 "                               <Tracking event=\"close\">" +
-                "                                   <![CDATA[http://tracking/m/closeOne]]>" +
+                "                                   <![CDATA[https://tracking/m/closeOne]]>" +
                 "                               </Tracking>" +
                 "                           </TrackingEvents>" +
                 "                       </NonLinearAds>" +
@@ -216,20 +216,20 @@ public class VastBaseInLineWrapperXmlManagerTest {
                 "                         <Companion>" +
                 "                             <TrackingEvents>" +
                 "                                 <Tracking event=\"creativeView\">" +
-                "                                     <![CDATA[http://tracking/m/closeTwo]]>" +
+                "                                     <![CDATA[https://tracking/m/closeTwo]]>" +
                 "                                 </Tracking>" +
                 "                             </TrackingEvents>" +
                 "                             <CompanionClickTracking>" +
-                "                                 <![CDATA[http://clicktrackingOne]]>" +
+                "                                 <![CDATA[https://clicktrackingOne]]>" +
                 "                             </CompanionClickTracking>" +
                 "                         </Companion>"+
                 "                         <Companion>" +
                 "                             <CompanionClickTracking>" +
-                "                                 <![CDATA[http://clicktrackingTwo]]>" +
+                "                                 <![CDATA[https://clicktrackingTwo]]>" +
                 "                             </CompanionClickTracking>" +
                 "                             <TrackingEvents>" +
                 "                                 <Tracking event=\"creativeView\">" +
-                "                                     <![CDATA[http://tracking/m/closeThree]]>" +
+                "                                     <![CDATA[https://tracking/m/closeThree]]>" +
                 "                                 </Tracking>" +
                 "                             </TrackingEvents>" +
                 "                         </Companion>"+
@@ -243,9 +243,9 @@ public class VastBaseInLineWrapperXmlManagerTest {
 
         assertThat(subject.getCompanionAdXmlManagers()).hasSize(2);
         assertThat(VastUtils.vastTrackersToStrings(subject.getCompanionAdXmlManagers().get(0).getClickTrackers()))
-                .containsOnly("http://clicktrackingOne");
+                .containsOnly("https://clicktrackingOne");
         assertThat(VastUtils.vastTrackersToStrings(subject.getCompanionAdXmlManagers().get(1).getClickTrackers()))
-                .containsOnly("http://clicktrackingTwo");
+                .containsOnly("https://clicktrackingTwo");
     }
 
     @Test
@@ -275,7 +275,7 @@ public class VastBaseInLineWrapperXmlManagerTest {
                 "                         <Companion>" +
                 "                             <TrackingEvents>" +
                 "                                 <Tracking event=\"creativeView\">" +
-                "                                     <![CDATA[http://tracking/m/closeThree]]>" +
+                "                                     <![CDATA[https://tracking/m/closeThree]]>" +
                 "                                 </Tracking>" +
                 "                             </TrackingEvents>" +
                 "                         </Companion>"+
@@ -297,7 +297,7 @@ public class VastBaseInLineWrapperXmlManagerTest {
                 "                         <Companion>" +
                 "                             <TrackingEvents>" +
                 "                                 <Tracking event=\"creativeView\">" +
-                "                                     <![CDATA[http://tracking/m/closeThree]]>" +
+                "                                     <![CDATA[https://tracking/m/closeThree]]>" +
                 "                                 </Tracking>" +
                 "                             </TrackingEvents>" +
                 "                         </Companion>"+
@@ -319,7 +319,7 @@ public class VastBaseInLineWrapperXmlManagerTest {
                 "                         <Companion>" +
                 "                             <TrackingEvents>" +
                 "                                 <Tracking event=\"creativeView\">" +
-                "                                     <![CDATA[http://tracking/m/closeThree]]>" +
+                "                                     <![CDATA[https://tracking/m/closeThree]]>" +
                 "                                 </Tracking>" +
                 "                             </TrackingEvents>" +
                 "                         </Companion>"+
@@ -378,7 +378,7 @@ public class VastBaseInLineWrapperXmlManagerTest {
                 "                         <Companion>" +
                 "                             <TrackingEvents>" +
                 "                                 <Tracking event=\"creativeView\">" +
-                "                                     <![CDATA[http://tracking/m/closeThree]]>" +
+                "                                     <![CDATA[https://tracking/m/closeThree]]>" +
                 "                                 </Tracking>" +
                 "                             </TrackingEvents>" +
                 "                         </Companion>"+

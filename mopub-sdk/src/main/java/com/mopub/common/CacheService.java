@@ -21,7 +21,7 @@ import java.io.OutputStream;
 import static com.mopub.common.DiskLruCache.open;
 
 public class CacheService {
-    public static interface DiskLruCacheGetListener {
+    public interface DiskLruCacheGetListener {
         void onComplete(final String key, final byte[] content);
     }
 

@@ -696,13 +696,13 @@ public class VastVideoViewController extends BaseVideoViewController {
                         getNetworkMediaFileUrl(),
                         context
                 );
-                vastIconConfig.handleClick(getContext(), null);
+                vastIconConfig.handleClick(getContext(), null, mVastVideoConfig.getDspCreativeId());
             }
         });
         iconView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                vastIconConfig.handleClick(getContext(), url);
+                vastIconConfig.handleClick(getContext(), url, mVastVideoConfig.getDspCreativeId());
                 return true;
             }
         });
@@ -825,16 +825,17 @@ public class VastVideoViewController extends BaseVideoViewController {
                         null,
                         context
                 );
-                vastCompanionAdConfig.handleClick(context, MOPUB_BROWSER_REQUEST_CODE, null);
+                vastCompanionAdConfig.handleClick(context, MOPUB_BROWSER_REQUEST_CODE, null, mVastVideoConfig.getDspCreativeId());
             }
         });
         companionView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                vastCompanionAdConfig.handleClick(context, MOPUB_BROWSER_REQUEST_CODE, url);
+                vastCompanionAdConfig.handleClick(context, MOPUB_BROWSER_REQUEST_CODE, url, mVastVideoConfig.getDspCreativeId());
                 return true;
             }
         });
+
         return companionView;
     }
 

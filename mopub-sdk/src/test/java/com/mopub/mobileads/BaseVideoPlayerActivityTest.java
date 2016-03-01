@@ -30,7 +30,7 @@ import static org.mockito.Mockito.withSettings;
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class BaseVideoPlayerActivityTest {
-    private static final String MRAID_VIDEO_URL = "http://mraidVideo";
+    private static final String MRAID_VIDEO_URL = "https://mraidVideo";
 
     private long testBroadcastIdentifier;
     private VastVideoConfig mVastVideoConfig;

@@ -23,11 +23,11 @@ import java.util.Map;
 public class ScribeRequest extends Request<Void> {
 
     public interface Listener extends Response.ErrorListener {
-        public void onResponse();
+        void onResponse();
     }
 
     public interface ScribeRequestFactory extends RequestManager.RequestFactory {
-        public ScribeRequest createRequest(ScribeRequest.Listener listener);
+        ScribeRequest createRequest(ScribeRequest.Listener listener);
     }
 
     @NonNull private final List<BaseEvent> mEvents;

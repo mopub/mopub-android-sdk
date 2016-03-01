@@ -33,6 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 import org.robolectric.util.ReflectionHelpers;
@@ -72,6 +73,7 @@ public class NativeVideoControllerTest {
     private ArrayList<VisibilityTrackingEvent> visibilityTrackingEvents;
     private VastVideoConfig vastVideoConfig;
     private NativeVideoProgressRunnable nativeVideoProgressRunnable;
+    private NativeVideoProgressRunnable spyNativeVideoProgressRunnable;
     @Mock private ExoPlayer mockExoPlayer;
     @Mock private NativeVideoProgressRunnable mockNativeVideoProgressRunnable;
     @Mock private TextureView mockTextureView;
@@ -164,6 +166,7 @@ public class NativeVideoControllerTest {
         nativeVideoProgressRunnable.setTextureView(mockTextureView);
         nativeVideoProgressRunnable.setExoPlayer(mockExoPlayer);
         nativeVideoProgressRunnable.setProgressListener(mockProgressListener);
+        spyNativeVideoProgressRunnable = Mockito.spy(nativeVideoProgressRunnable);
 
         Networking.setRequestQueueForTesting(mockRequestQueue);
     }
@@ -193,7 +196,7 @@ public class NativeVideoControllerTest {
     }
 
     @Test
-    public void setPlayWhenReady_withPlayBackStateReady_withPlayWhenReadyTrue_shouldStartVideoProgressRunnable() {
+    public void setPlayWhenReady_withPlayBackStateReady_withPlayWhenReadyTrue_shouldSetPlayeWhenReadyOnExoPlayer() {
         subject.prepare(this);
         reset(mockNativeVideoProgressRunnable);
 
@@ -202,38 +205,6 @@ public class NativeVideoControllerTest {
         subject.setPlayWhenReady(true);
 
         verify(mockExoPlayer).setPlayWhenReady(true);
-        verify(mockNativeVideoProgressRunnable).startRepeating(50);
-    }
-
-    @Test
-    public void setPlayWhenReady_withPlayBackStateNotReady_withPlayWhenReadyTrue_shouldStopVideoProgressRunnable() {
-        subject.prepare(this);
-        reset(mockNativeVideoProgressRunnable);
-
-        when(mockExoPlayer.getPlaybackState()).thenReturn(STATE_PREPARING);
-        when(mockExoPlayer.getPlayWhenReady()).thenReturn(true);
-        subject.setPlayWhenReady(true);
-
-        verify(mockExoPlayer).setPlayWhenReady(true);
-        verify(mockNativeVideoProgressRunnable).stop();
-        verify(mockNativeVideoProgressRunnable, never()).startRepeating(anyInt());
-    }
-
-    @Test
-    public void setPlayWhenReady_withPlayBackStateReady_withPlayWhenReadyFalse_shouldStopVideoProgressRunnable() {
-        subject.prepare(this);
-        // initialize the subject to true so that the next call with false will run
-        subject.setPlayWhenReady(true);
-        reset(mockNativeVideoProgressRunnable);
-        reset(mockExoPlayer);
-
-        when(mockExoPlayer.getPlaybackState()).thenReturn(STATE_READY);
-        when(mockExoPlayer.getPlayWhenReady()).thenReturn(false);
-        subject.setPlayWhenReady(false);
-
-        verify(mockExoPlayer).setPlayWhenReady(false);
-        verify(mockNativeVideoProgressRunnable).stop();
-        verify(mockNativeVideoProgressRunnable, never()).startRepeating(anyInt());
     }
 
     @Test
@@ -346,6 +317,7 @@ public class NativeVideoControllerTest {
                 eq(MediaCodecVideoTrackRenderer.MSG_SET_SURFACE), eq(null));
         verify(mockExoPlayer).stop();
         verify(mockExoPlayer).release();
+        verify(mockNativeVideoProgressRunnable).stop();
         verify(mockNativeVideoProgressRunnable).setExoPlayer(null);
     }
 
@@ -364,6 +336,7 @@ public class NativeVideoControllerTest {
 
         verify(mockExoPlayerFactory).newInstance(2, 1000, 5000);
         verify(mockNativeVideoProgressRunnable).setExoPlayer(mockExoPlayer);
+        verify(mockNativeVideoProgressRunnable).startRepeating(50);
         verify(mockExoPlayer).addListener(subject);
         verify(mockExoPlayer).prepare(any(MediaCodecAudioTrackRenderer.class),
                 any(MediaCodecVideoTrackRenderer.class));
@@ -376,7 +349,6 @@ public class NativeVideoControllerTest {
 
         // play when ready
         verify(mockExoPlayer).setPlayWhenReady(false);
-        verify(mockNativeVideoProgressRunnable).stop();
 
         // set surface
         verify(mockExoPlayer).sendMessage(any(MediaCodecVideoTrackRenderer.class),
@@ -434,19 +406,7 @@ public class NativeVideoControllerTest {
     }
 
     @Test
-    public void onPlayerStateChanged_withPlayWhenReadyTrue_withStateReady_shouldStartProgressRunnable() {
-        subject.prepare(this);
-
-        reset(mockExoPlayer);
-        reset(mockNativeVideoProgressRunnable);
-        subject.onPlayerStateChanged(true, STATE_READY);
-
-        verify(mockNativeVideoProgressRunnable).startRepeating(50);
-    }
-
-
-    @Test
-    public void onPlayerStateChanged_withStateEnded_shouldSetFinalFrame() {
+    public void onPlayerStateChanged_withStateEnded_shouldSetFinalFrame_shouldRequestProgressRunnableToStop() {
         subject.setTextureView(mockTextureView);
         subject.prepare(this);
 
@@ -459,6 +419,7 @@ public class NativeVideoControllerTest {
         assertThat(subject.hasFinalFrame()).isTrue();
         assertThat(subject.getFinalFrame()).isNotNull();
         assertThat(((BitmapDrawable) subject.getFinalFrame()).getBitmap()).isEqualTo(mockBitmap);
+        verify(mockNativeVideoProgressRunnable).requestStop();
     }
 
     @Test
@@ -495,12 +456,13 @@ public class NativeVideoControllerTest {
     }
 
     @Test
-    public void onPlayerError_shouldNotifyListener() {
+    public void onPlayerError_shouldNotifyListener_shouldRequestProgressRunnableToStop() {
         ExoPlaybackException exoPlaybackException = new ExoPlaybackException("exception");
         subject.setListener(mockListener);
         subject.onPlayerError(exoPlaybackException);
 
         verify(mockListener).onError(exoPlaybackException);
+        verify(mockNativeVideoProgressRunnable).requestStop();
     }
 
     @Test
@@ -628,37 +590,14 @@ public class NativeVideoControllerTest {
     }
 
     @Test
-    public void NativeVideoProgressRunnable_doWork_withDurationLessThan0_shouldReturnFast() {
-        when(mockExoPlayer.getCurrentPosition()).thenReturn(10L);
-        when(mockExoPlayer.getDuration()).thenReturn(-1L);
-        when(mockExoPlayer.getPlayWhenReady()).thenReturn(true);
-
-        VastTracker vastTracker = new VastTracker("vastTrackingUrl");
-        List<VastTracker> vastTrackers = new ArrayList<VastTracker>();
-        vastTrackers.add(vastTracker);
-        when(mockVastVideoConfig.getUntriggeredTrackersBefore(10, 25)).thenReturn(vastTrackers);
-        nativeVideoProgressRunnable.setUpdateIntervalMillis(10);
-
-        nativeVideoProgressRunnable.doWork();
-
-        assertThat(visibilityTrackingEvents.get(0).isTracked).isFalse();
-        assertThat(visibilityTrackingEvents.get(1).isTracked).isFalse();
-        assertThat(vastTracker.isTracked()).isFalse();
-        verifyNoMoreInteractions(mockVisibilityChecker);
-        verifyNoMoreInteractions(mockVastVideoConfig);
-        verifyNoMoreInteractions(mockRequestQueue);
-        verifyNoMoreInteractions(mockProgressListener);
-    }
-
-    @Test
-    public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerFalse_shouldOnlyTriggerNotTrackedEvents() {
+    public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerFalse_shouldOnlyTriggerNotTrackedEvents_shouldNotStopRunnable() {
         when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
         when(mockExoPlayer.getDuration()).thenReturn(50L);
         when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt()))
                 .thenReturn(true);
-        nativeVideoProgressRunnable.setUpdateIntervalMillis(50);
+        spyNativeVideoProgressRunnable.setUpdateIntervalMillis(50);
 
-        nativeVideoProgressRunnable.checkImpressionTrackers(false);
+        spyNativeVideoProgressRunnable.checkImpressionTrackers(/* forceTrigger = */ false);
 
         assertThat(visibilityTrackingEvents.get(0).isTracked).isTrue();
         assertThat(visibilityTrackingEvents.get(1).isTracked).isTrue();
@@ -666,17 +605,20 @@ public class NativeVideoControllerTest {
         verify(mockRequestQueue).add(argThat(isUrl("trackingUrl1")));
         verify(mockRequestQueue).add(argThat(isUrl("trackingUrl2")));
         verify(mockRequestQueue, never()).add(argThat(isUrl("trackingUrl3")));
+        verify(spyNativeVideoProgressRunnable,never()).stop();
     }
 
     @Test
-    public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerTrue_shouldOnlyTriggerNotTrackedEvents() {
+    public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerFalse_withStopRequested_shouldOnlyTriggerNotTrackedEvents_shouldStopRunnable() {
+        // Enough time has passed for all impressions to trigger organically
         when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
         when(mockExoPlayer.getDuration()).thenReturn(50L);
         when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt()))
                 .thenReturn(true);
-        nativeVideoProgressRunnable.setUpdateIntervalMillis(50);
+        spyNativeVideoProgressRunnable.setUpdateIntervalMillis(50);
+        spyNativeVideoProgressRunnable.requestStop();
 
-        nativeVideoProgressRunnable.checkImpressionTrackers(true);
+        spyNativeVideoProgressRunnable.checkImpressionTrackers(/* forceTrigger = */ false);
 
         assertThat(visibilityTrackingEvents.get(0).isTracked).isTrue();
         assertThat(visibilityTrackingEvents.get(1).isTracked).isTrue();
@@ -684,12 +626,59 @@ public class NativeVideoControllerTest {
         verify(mockRequestQueue).add(argThat(isUrl("trackingUrl1")));
         verify(mockRequestQueue).add(argThat(isUrl("trackingUrl2")));
         verify(mockRequestQueue, never()).add(argThat(isUrl("trackingUrl3")));
+        verify(spyNativeVideoProgressRunnable).stop();
     }
 
     @Test
-    public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerFalse_shouldOnlyTriggerVisibleAndPlayedEvents() {
+    public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerTrue_shouldOnlyTriggerNotTrackedEvents_shouldNotStopRunnable() {
+        // Not enough time has passed for impressions to trigger organically, but all of them will
+        // be triggered because forceTrigger is true
+        when(mockExoPlayer.getCurrentPosition()).thenReturn(5L);
+        when(mockExoPlayer.getDuration()).thenReturn(50L);
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt()))
+                .thenReturn(true);
+        spyNativeVideoProgressRunnable.setUpdateIntervalMillis(50);
+
+        spyNativeVideoProgressRunnable.checkImpressionTrackers(/* forceTrigger = */ true);
+
+        assertThat(visibilityTrackingEvents.get(0).isTracked).isTrue();
+        assertThat(visibilityTrackingEvents.get(1).isTracked).isTrue();
+        assertThat(visibilityTrackingEvents.get(2).isTracked).isTrue();
+        verify(mockRequestQueue).add(argThat(isUrl("trackingUrl1")));
+        verify(mockRequestQueue).add(argThat(isUrl("trackingUrl2")));
+        verify(mockRequestQueue, never()).add(argThat(isUrl("trackingUrl3")));
+        verify(spyNativeVideoProgressRunnable, never()).stop();
+    }
+
+    @Test
+    public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerTrue_withStopRequested_shouldOnlyTriggerNotTrackedEvents_shouldStopRunnable() {
+        when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
+        when(mockExoPlayer.getDuration()).thenReturn(50L);
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt()))
+                .thenReturn(true);
+        spyNativeVideoProgressRunnable.setUpdateIntervalMillis(50);
+        spyNativeVideoProgressRunnable.requestStop();
+
+        spyNativeVideoProgressRunnable.checkImpressionTrackers(/* forceTrigger = */ true);
+
+        assertThat(visibilityTrackingEvents.get(0).isTracked).isTrue();
+        assertThat(visibilityTrackingEvents.get(1).isTracked).isTrue();
+        assertThat(visibilityTrackingEvents.get(2).isTracked).isTrue();
+        verify(mockRequestQueue).add(argThat(isUrl("trackingUrl1")));
+        verify(mockRequestQueue).add(argThat(isUrl("trackingUrl2")));
+        verify(mockRequestQueue, never()).add(argThat(isUrl("trackingUrl3")));
+        verify(spyNativeVideoProgressRunnable).stop();
+    }
+
+    @Test
+    public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerFalse_withStopRequested_shouldOnlyTriggerVisibleAndPlayedEvents_shouldNotStopRunnable() {
         when(mockExoPlayer.getCurrentPosition()).thenReturn(10L);
         when(mockExoPlayer.getDuration()).thenReturn(10L);
+
+        // visible: checks whether the minimum percentage visible is met
+        // played: checks whether the required playtime is met
+        // track: whether the impression should be organically triggered
+
         // trackingUrl1: visible & played = track
         when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(10)))
                 .thenReturn(true);
@@ -702,9 +691,10 @@ public class NativeVideoControllerTest {
         // trackingUrl4: !visible & played = !track
         when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(9)))
                 .thenReturn(false);
-        nativeVideoProgressRunnable.setUpdateIntervalMillis(10);
+        spyNativeVideoProgressRunnable.setUpdateIntervalMillis(10);
+        spyNativeVideoProgressRunnable.requestStop();
 
-        nativeVideoProgressRunnable.checkImpressionTrackers(false);
+        spyNativeVideoProgressRunnable.checkImpressionTrackers(/* forceTrigger = */ false);
 
         assertThat(visibilityTrackingEvents.get(0).isTracked).isTrue();
         assertThat(visibilityTrackingEvents.get(1).isTracked).isFalse();
@@ -714,12 +704,18 @@ public class NativeVideoControllerTest {
         verify(mockRequestQueue, never()).add(argThat(isUrl("trackingUrl2")));
         verify(mockRequestQueue, never()).add(argThat(isUrl("trackingUrl3")));
         verify(mockRequestQueue, never()).add(argThat(isUrl("trackingUrl4")));
+        verify(spyNativeVideoProgressRunnable, never()).stop();
     }
 
     @Test
-    public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerTrue_shouldTriggerAllUntrackedEvents() {
+    public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerTrue_shouldTriggerAllUntrackedEvents_shouldNotStopRunnable() {
         when(mockExoPlayer.getCurrentPosition()).thenReturn(10L);
         when(mockExoPlayer.getDuration()).thenReturn(10L);
+
+        // visible: checks whether the minimum percentage visible is met
+        // played: checks whether the required playtime is met
+        // track: whether the impression should be organically triggered
+
         // trackingUrl1: visible & played = track
         when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(10)))
                 .thenReturn(true);
@@ -732,10 +728,11 @@ public class NativeVideoControllerTest {
         // trackingUrl4: !visible & played = !track
         when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(9)))
                 .thenReturn(false);
-        nativeVideoProgressRunnable.setUpdateIntervalMillis(10);
+        spyNativeVideoProgressRunnable.setUpdateIntervalMillis(10);
 
-        nativeVideoProgressRunnable.checkImpressionTrackers(true);
+        spyNativeVideoProgressRunnable.checkImpressionTrackers(/* forceTrigger = */ true);
 
+        // Because forceTrigger was true, tracking of all impressions is forced
         assertThat(visibilityTrackingEvents.get(0).isTracked).isTrue();
         assertThat(visibilityTrackingEvents.get(1).isTracked).isTrue();
         assertThat(visibilityTrackingEvents.get(2).isTracked).isTrue();
@@ -744,5 +741,44 @@ public class NativeVideoControllerTest {
         verify(mockRequestQueue).add(argThat(isUrl("trackingUrl2")));
         verify(mockRequestQueue, never()).add(argThat(isUrl("trackingUrl3")));
         verify(mockRequestQueue).add(argThat(isUrl("trackingUrl4")));
+        verify(spyNativeVideoProgressRunnable, never()).stop();
+    }
+
+    @Test
+    public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerTrue_withStopRequested_shouldTriggerAllUntrackedEvents_shouldStopRunnable() {
+        when(mockExoPlayer.getCurrentPosition()).thenReturn(10L);
+        when(mockExoPlayer.getDuration()).thenReturn(10L);
+
+        // visible: checks whether the minimum percentage visible is met
+        // played: checks whether the required playtime is met
+        // track: whether the impression should be organically triggered
+
+        // trackingUrl1: visible & played = track
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(10)))
+                .thenReturn(true);
+        // trackingUrl2: visible & !played = !track
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(20)))
+                .thenReturn(true);
+        // trackingUrl3: already tracked = !track
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(30)))
+                .thenReturn(true);
+        // trackingUrl4: !visible & played = !track
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(9)))
+                .thenReturn(false);
+        spyNativeVideoProgressRunnable.setUpdateIntervalMillis(10);
+        spyNativeVideoProgressRunnable.requestStop();
+
+        spyNativeVideoProgressRunnable.checkImpressionTrackers(/* forceTrigger = */ true);
+
+        // Because forceTrigger was true, tracking of all impressions is forced
+        assertThat(visibilityTrackingEvents.get(0).isTracked).isTrue();
+        assertThat(visibilityTrackingEvents.get(1).isTracked).isTrue();
+        assertThat(visibilityTrackingEvents.get(2).isTracked).isTrue();
+        assertThat(visibilityTrackingEvents.get(3).isTracked).isTrue();
+        verify(mockRequestQueue).add(argThat(isUrl("trackingUrl1")));
+        verify(mockRequestQueue).add(argThat(isUrl("trackingUrl2")));
+        verify(mockRequestQueue, never()).add(argThat(isUrl("trackingUrl3")));
+        verify(mockRequestQueue).add(argThat(isUrl("trackingUrl4")));
+        verify(spyNativeVideoProgressRunnable).stop();
     }
 }

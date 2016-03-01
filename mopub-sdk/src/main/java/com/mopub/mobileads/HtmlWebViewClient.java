@@ -33,22 +33,27 @@ class HtmlWebViewClient extends WebViewClient {
             UrlAction.FOLLOW_DEEP_LINK);
 
     private final Context mContext;
+    private final String mDspCreativeId;
     private HtmlWebViewListener mHtmlWebViewListener;
     private BaseHtmlWebView mHtmlWebView;
     private final String mClickthroughUrl;
     private final String mRedirectUrl;
 
-    HtmlWebViewClient(HtmlWebViewListener htmlWebViewListener, BaseHtmlWebView htmlWebView, String clickthrough, String redirect) {
+    HtmlWebViewClient(HtmlWebViewListener htmlWebViewListener,
+            BaseHtmlWebView htmlWebView, String clickthrough,
+            String redirect, String dspCreativeId) {
         mHtmlWebViewListener = htmlWebViewListener;
         mHtmlWebView = htmlWebView;
         mClickthroughUrl = clickthrough;
         mRedirectUrl = redirect;
+        mDspCreativeId = dspCreativeId;
         mContext = htmlWebView.getContext();
     }
 
     @Override
     public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
         new UrlHandler.Builder()
+                .withDspCreativeId(mDspCreativeId)
                 .withSupportedUrlActions(SUPPORTED_URL_ACTIONS)
                 .withResultActions(new UrlHandler.ResultActions() {
                     @Override
@@ -92,7 +97,7 @@ class HtmlWebViewClient extends WebViewClient {
             view.stopLoading();
             if (mHtmlWebView.wasClicked()) {
                 try {
-                    Intents.showMoPubBrowserForUrl(mContext, Uri.parse(url));
+                    Intents.showMoPubBrowserForUrl(mContext, Uri.parse(url), mDspCreativeId);
                 } catch (IntentNotResolvableException e) {
                     MoPubLog.d(e.getMessage());
                 }

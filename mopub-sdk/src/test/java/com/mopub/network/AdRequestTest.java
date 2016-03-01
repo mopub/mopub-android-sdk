@@ -350,7 +350,7 @@ public class AdRequestTest {
 
     @Test
     public void getRequestId_shouldParseAndReturnRequestIdFromFailUrl() throws Exception {
-        String requestId = subject.getRequestId("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca&exclude=043fde1fe2f9470c9aa67fec262a0596&request_id=7fd6dd3bf1c84f87876b4740c1dd7baa&fail=1");
+        String requestId = subject.getRequestId("https://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca&exclude=043fde1fe2f9470c9aa67fec262a0596&request_id=7fd6dd3bf1c84f87876b4740c1dd7baa&fail=1");
 
         assertThat(requestId).isEqualTo("7fd6dd3bf1c84f87876b4740c1dd7baa");
     }
@@ -362,7 +362,7 @@ public class AdRequestTest {
 
     @Test
     public void getRequestId_withUrlWithNoRequestIdParam_shouldReturnNull() throws Exception {
-        assertThat(subject.getRequestId("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca")).isNull();
+        assertThat(subject.getRequestId("https://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca")).isNull();
     }
 
     @Test
@@ -447,7 +447,7 @@ public class AdRequestTest {
                 assertThat(baseEvent.getCategory()).isEqualTo(BaseEvent.Category.REQUESTS);
                 assertThat(baseEvent.getSamplingRate()).isEqualTo(0.1);
                 assertThat(baseEvent.getAdUnitId()).isEqualTo(adUnitId);
-                assertThat(baseEvent.getAdCreativeId()).isEqualTo("dsp_creative_id");
+                assertThat(baseEvent.getDspCreativeId()).isEqualTo("dsp_creative_id");
                 assertThat(baseEvent.getAdType()).isEqualTo("html");
                 assertThat(baseEvent.getAdNetworkType()).isEqualTo("network_type");
                 assertThat(baseEvent.getAdWidthPx()).isEqualTo(320);

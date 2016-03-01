@@ -50,7 +50,7 @@ public class AdRequest extends Request<AdResponse> {
     @NonNull private final Context mContext;
 
     public interface Listener extends Response.ErrorListener {
-        public void onSuccess(AdResponse response);
+        void onSuccess(AdResponse response);
     }
 
     public AdRequest(@NonNull final String url,
@@ -144,6 +144,9 @@ public class AdRequest extends Request<AdResponse> {
                     )
             );
         }
+
+        String dspCreativeId = extractHeader(headers, ResponseHeader.DSP_CREATIVE_ID);
+        builder.setDspCreativeId(dspCreativeId);
 
         String networkType = extractHeader(headers, ResponseHeader.NETWORK_TYPE);
         builder.setNetworkType(networkType);
@@ -251,6 +254,7 @@ public class AdRequest extends Request<AdResponse> {
                             .adNetworkType(networkType)
                             .adWidthPx(width)
                             .adHeightPx(height)
+                            .dspCreativeId(dspCreativeId)
                             .geoLatitude(location == null ? null : location.getLatitude())
                             .geoLongitude(location == null ? null : location.getLongitude())
                             .geoAccuracy(location == null ? null : location.getAccuracy())
@@ -320,7 +324,7 @@ public class AdRequest extends Request<AdResponse> {
                 new Event.Builder(BaseEvent.Name.AD_REQUEST, BaseEvent.Category.REQUESTS,
                         BaseEvent.SamplingRate.AD_REQUEST.getSamplingRate())
                         .withAdUnitId(mAdUnitId)
-                        .withAdCreativeId(adResponse.getDspCreativeId())
+                        .withDspCreativeId(adResponse.getDspCreativeId())
                         .withAdType(adResponse.getAdType())
                         .withAdNetworkType(adResponse.getNetworkType())
                         .withAdWidthPx(adResponse.getWidth() != null

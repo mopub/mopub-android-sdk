@@ -8,6 +8,7 @@ import android.view.View;
 import com.mopub.common.AdReport;
 import com.mopub.common.Constants;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.network.Networking;
 
 import static com.mopub.common.util.VersionCode.ICE_CREAM_SANDWICH;
 import static com.mopub.common.util.VersionCode.currentApiLevel;
@@ -55,8 +56,8 @@ public class BaseHtmlWebView extends BaseWebView implements UserClickListener {
     }
 
     void loadHtmlResponse(String htmlResponse) {
-        loadDataWithBaseURL("http://" + Constants.HOST + "/", htmlResponse, "text/html", "utf-8",
-                null);
+        loadDataWithBaseURL(Networking.getBaseUrlScheme() + "://" + Constants.HOST + "/", htmlResponse,
+                "text/html", "utf-8", null);
     }
 
     void initializeOnTouchListener(final boolean isScrollable) {

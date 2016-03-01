@@ -12,6 +12,7 @@ import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.util.Utils;
 import com.mopub.common.util.VersionCode;
+import com.mopub.network.Networking;
 
 import static com.mopub.common.util.VersionCode.currentApiLevel;
 
@@ -41,7 +42,7 @@ class VastWebView extends BaseWebView {
     }
 
     void loadData(String data) {
-        loadDataWithBaseURL("http://" + Constants.HOST + "/",
+        loadDataWithBaseURL(Networking.getBaseUrlScheme() + "://" + Constants.HOST + "/",
                 data, "text/html", "utf-8", null);
     }
 

@@ -19,8 +19,8 @@ public abstract class BaseUrlGenerator {
     public abstract String generateUrlString(String serverHostname);
 
     protected void initUrlString(String serverHostname, String handlerType) {
-        String scheme = Networking.useHttps() ? Constants.HTTPS : Constants.HTTP;
-        mStringBuilder = new StringBuilder(scheme).append("://").append(serverHostname).append(handlerType);
+        mStringBuilder = new StringBuilder(Networking.getScheme()).append("://")
+                .append(serverHostname).append(handlerType);
         mFirstParam = true;
     }
 

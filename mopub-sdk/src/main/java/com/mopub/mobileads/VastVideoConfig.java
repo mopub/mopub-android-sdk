@@ -58,11 +58,15 @@ public class VastVideoConfig implements Serializable {
     @NonNull private DeviceUtils.ForceOrientation mCustomForceOrientation = DeviceUtils.ForceOrientation.FORCE_LANDSCAPE; // Default is forcing landscape
     @Nullable private VideoViewabilityTracker mVideoViewabilityTracker;
 
+    // MoPub-specific metadata
+    private String mDspCreativeId;
+
     /**
      * Flag to indicate if the VAST xml document has explicitly set the orientation as opposed to
      * using the default.
      */
     private boolean mIsForceOrientationSet;
+
 
     public VastVideoConfig() {
         mImpressionTrackers = new ArrayList<VastTracker>();
@@ -81,6 +85,14 @@ public class VastVideoConfig implements Serializable {
     /**
      * Setters
      */
+
+    public void setDspCreativeId(@NonNull final String dspCreativeId) {
+        mDspCreativeId = dspCreativeId;
+    }
+
+    public String getDspCreativeId() {
+        return mDspCreativeId;
+    }
 
     public void addImpressionTrackers(@NonNull final List<VastTracker> impressionTrackers) {
         Preconditions.checkNotNull(impressionTrackers, "impressionTrackers cannot be null");
@@ -440,6 +452,7 @@ public class VastVideoConfig implements Serializable {
         }
 
         new UrlHandler.Builder()
+                .withDspCreativeId(mDspCreativeId)
                 .withSupportedUrlActions(
                         UrlAction.IGNORE_ABOUT_SCHEME,
                         UrlAction.OPEN_APP_MARKET,
@@ -455,6 +468,7 @@ public class VastVideoConfig implements Serializable {
                         if (urlAction == UrlAction.OPEN_IN_APP_BROWSER) {
                             Bundle bundle = new Bundle();
                             bundle.putString(MoPubBrowser.DESTINATION_URL_KEY, url);
+                            bundle.putString(MoPubBrowser.DSP_CREATIVE_ID, mDspCreativeId);
 
                             final Class clazz = MoPubBrowser.class;
                             final Intent intent = Intents.getStartActivityIntent(
@@ -636,7 +650,7 @@ public class VastVideoConfig implements Serializable {
 
     /**
      * Gets the skip offset in milliseconds. If the skip offset would be past the video duration,
-     * this returns null. If an error occurs, this returns null.
+     * this returns the video duration. Returns null when the skip offset is not set or cannot be parsed.
      *
      * @param videoDuration Used to calculate percentage based offsets.
      * @return The skip offset in milliseconds. Can return null.
@@ -645,20 +659,24 @@ public class VastVideoConfig implements Serializable {
     public Integer getSkipOffsetMillis(final int videoDuration) {
         if (mSkipOffset != null) {
             try {
+                final Integer skipOffsetMilliseconds;
                 if (Strings.isAbsoluteTracker(mSkipOffset)) {
-                    Integer skipOffsetMilliseconds = Strings.parseAbsoluteOffset(mSkipOffset);
-                    if (skipOffsetMilliseconds != null && skipOffsetMilliseconds < videoDuration) {
-                        return skipOffsetMilliseconds;
-                    }
+                    skipOffsetMilliseconds = Strings.parseAbsoluteOffset(mSkipOffset);
                 } else if (Strings.isPercentageTracker(mSkipOffset)) {
                     float percentage = Float.parseFloat(mSkipOffset.replace("%", "")) / 100f;
-                    int skipOffsetMillisecondsRounded = Math.round(videoDuration * percentage);
-                    if (skipOffsetMillisecondsRounded < videoDuration) {
-                        return skipOffsetMillisecondsRounded;
-                    }
+                    skipOffsetMilliseconds = Math.round(videoDuration * percentage);
                 } else {
                     MoPubLog.d(
                             String.format("Invalid VAST skipoffset format: %s", mSkipOffset));
+                    return null;
+                }
+
+                if (skipOffsetMilliseconds != null) {
+                    if (skipOffsetMilliseconds < videoDuration) {
+                        return skipOffsetMilliseconds;
+                    } else {
+                        return videoDuration;
+                    }
                 }
             } catch (NumberFormatException e) {
                 MoPubLog.d(String.format("Failed to parse skipoffset %s", mSkipOffset));

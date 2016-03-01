@@ -1,7 +1,6 @@
 package com.mopub.mobileads;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -17,6 +16,7 @@ import android.widget.FrameLayout;
 import com.mopub.common.AdReport;
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.Constants;
+import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.event.BaseEvent;
 import com.mopub.common.logging.MoPubLog;
@@ -53,18 +53,13 @@ public class AdViewController {
 
     private final long mBroadcastIdentifier;
 
-    @Nullable
-    private Context mContext;
-    @Nullable
-    private MoPubView mMoPubView;
-    @Nullable
-    private WebViewAdUrlGenerator mUrlGenerator;
+    @Nullable private Context mContext;
+    @Nullable private MoPubView mMoPubView;
+    @Nullable private WebViewAdUrlGenerator mUrlGenerator;
 
-    @Nullable
-    private AdResponse mAdResponse;
+    @Nullable private AdResponse mAdResponse;
     private final Runnable mRefreshRunnable;
-    @NonNull
-    private final AdRequest.Listener mAdListener;
+    @NonNull private final AdRequest.Listener mAdListener;
 
     private boolean mIsDestroyed;
     private Handler mHandler;
@@ -82,13 +77,10 @@ public class AdViewController {
     private Location mLocation;
     private boolean mIsTesting;
     private boolean mAdWasLoaded;
-    @Nullable
-    private String mAdUnitId;
+    @Nullable private String mAdUnitId;
     private int mTimeoutMilliseconds;
-    @Nullable
-    private AdRequest mActiveRequest;
-    @Nullable
-    private Integer mRefreshTimeMillis;
+    @Nullable private AdRequest mActiveRequest;
+    @Nullable private Integer mRefreshTimeMillis;
 
     public static void setShouldHonorServerDimensions(View view) {
         sViewShouldHonorServerDimensions.put(view, true);
@@ -102,7 +94,7 @@ public class AdViewController {
         mContext = context;
         mMoPubView = view;
 
-        // Default timeout means "never refresh"
+        // Timeout value of less than 0 means use the ad format's default timeout
         mTimeoutMilliseconds = -1;
         mBroadcastIdentifier = Utils.generateUniqueId();
 
@@ -141,11 +133,9 @@ public class AdViewController {
         mRefreshTimeMillis = mAdResponse.getRefreshTimeMillis();
         setNotLoading();
 
-        // Get our custom event from the ad response and load into the view.
-        AdLoader adLoader = AdLoader.fromAdResponse(mAdResponse, this);
-        if (adLoader != null) {
-            adLoader.load();
-        }
+        loadCustomEvent(mMoPubView, adResponse.getCustomEventClassName(),
+                adResponse.getServerExtras());
+
         scheduleRefreshTimerIfEnabled();
     }
 
@@ -171,6 +161,20 @@ public class AdViewController {
 
         setNotLoading();
         adDidFail(errorCode);
+    }
+
+    @VisibleForTesting
+    void loadCustomEvent(@Nullable final MoPubView moPubView,
+            @Nullable final String customEventClassName,
+            @NonNull final Map<String, String> serverExtras) {
+        Preconditions.checkNotNull(serverExtras);
+
+        if (moPubView == null) {
+            MoPubLog.d("Can't load an ad in this ad view because it was destroyed.");
+            return;
+        }
+
+        moPubView.loadCustomEvent(customEventClassName, serverExtras);
     }
 
     @VisibleForTesting
@@ -308,10 +312,6 @@ public class AdViewController {
         return mBroadcastIdentifier;
     }
 
-    public void setTimeout(int milliseconds) {
-       mTimeoutMilliseconds = milliseconds;
-    }
-
     public int getAdWidth() {
         if (mAdResponse != null && mAdResponse.getWidth() != null) {
             return mAdResponse.getWidth();
@@ -409,7 +409,7 @@ public class AdViewController {
     }
 
     Integer getAdTimeoutDelay() {
-        return mAdResponse == null ? null : mAdResponse.getAdTimeoutMillis();
+        return mTimeoutMilliseconds;
     }
 
     void trackImpression() {
@@ -507,8 +507,9 @@ public class AdViewController {
             return false;
         }
         // If we don't have network state access, just assume the network is up.
-        int result = mContext.checkCallingPermission(ACCESS_NETWORK_STATE);
-        if (result == PackageManager.PERMISSION_DENIED) return true;
+        if (!DeviceUtils.isPermissionGranted(mContext, ACCESS_NETWORK_STATE)) {
+            return true;
+        }
 
         // Otherwise, perform the connectivity check.
         ConnectivityManager cm
@@ -520,7 +521,7 @@ public class AdViewController {
     void setAdContentView(final View view) {
         // XXX: This method is called from the WebViewClient's callbacks, which has caused an error on a small portion of devices
         // We suspect that the code below may somehow be running on the wrong UI Thread in the rare case.
-        // see: http://stackoverflow.com/questions/10426120/android-got-calledfromwrongthreadexception-in-onpostexecute-how-could-it-be
+        // see: https://stackoverflow.com/questions/10426120/android-got-calledfromwrongthreadexception-in-onpostexecute-how-could-it-be
         mHandler.post(new Runnable() {
             @Override
             public void run() {

@@ -63,6 +63,10 @@ public class AdReport implements Serializable {
         return mAdResponse.getStringBody();
     }
 
+    public String getDspCreativeId() {
+        return mAdResponse.getDspCreativeId();
+    }
+
     private void appendKeyValue(StringBuilder parameters, String key, String value) {
         parameters.append(key);
         parameters.append(" : ");

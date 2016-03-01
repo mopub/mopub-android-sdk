@@ -57,7 +57,7 @@ public class MoPubActivityTest {
     private static final boolean EXPECTED_IS_SCROLLABLE = true;
     @Mock private AdReport mockAdReport;
     private static final String EXPECTED_REDIRECT_URL = "redirectUrl";
-    private static final String EXPECTED_CLICKTHROUGH_URL = "http://expected_url";
+    private static final String EXPECTED_CLICKTHROUGH_URL = "https://expected_url";
     private static final CreativeOrientation EXPECTED_ORIENTATION = CreativeOrientation.PORTRAIT;
 
     @Mock private BroadcastReceiver broadcastReceiver;

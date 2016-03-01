@@ -278,7 +278,9 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                 @Override
                 public void onImagesCached() {
                     mVastManager.prepareVastVideoConfiguration(getVastVideo(),
-                            MoPubVideoNativeAd.this, mContext);
+                            MoPubVideoNativeAd.this,
+                            mEventDetails == null ? null : mEventDetails.getDspCreativeId(),
+                            mContext);
                 }
 
                 @Override
@@ -632,6 +634,11 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         @VisibleForTesting
         void applyState(@NonNull final VideoState videoState, boolean transitionToFullScreen) {
             Preconditions.checkNotNull(videoState);
+
+            // Ignore the state change if video player is not ready to take state changes.
+            if (mVastVideoConfig == null || mNativeVideoController == null || mMediaLayout == null) {
+                return;
+            }
 
             // Check and set mVideoState so any changes we make to exo state don't
             // trigger a duplicate run of this.

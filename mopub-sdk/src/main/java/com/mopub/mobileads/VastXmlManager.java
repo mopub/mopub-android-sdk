@@ -24,7 +24,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Parses the VAST XML to spec. See www.iab.net for details.
- * Currently using the VAST 3.0 spec found here: http://www.iab.net/media/file/VASTv3.0.pdf.
+ * Currently using the VAST 3.0 spec found here: https://www.iab.net/media/file/VASTv3.0.pdf.
  */
 class VastXmlManager {
     private static final String ROOT_TAG = "MPMoVideoXMLDocRoot";

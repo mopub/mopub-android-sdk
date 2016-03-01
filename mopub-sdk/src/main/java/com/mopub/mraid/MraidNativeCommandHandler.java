@@ -16,6 +16,7 @@ import android.os.Environment;
 import android.provider.CalendarContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
@@ -27,6 +28,7 @@ import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
+import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.Intents;
 import com.mopub.common.util.Streams;
 import com.mopub.common.util.Utils;
@@ -139,7 +141,7 @@ public class MraidNativeCommandHandler {
 
     public static boolean isStorePictureSupported(Context context) {
         return MEDIA_MOUNTED.equals(Environment.getExternalStorageState())
-                && context.checkCallingOrSelfPermission(WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+                && DeviceUtils.isPermissionGranted(context, WRITE_EXTERNAL_STORAGE);
     }
 
     static boolean isCalendarAvailable(Context context) {
@@ -168,11 +170,11 @@ public class MraidNativeCommandHandler {
         // Hardware Acceleration
         // Hardware acceleration for the application and activity is enabled by default
         // in API >= 14 (Ice Cream Sandwich)
-        // http://developer.android.com/reference/android/R.attr.html#hardwareAccelerated
-        // http://developer.android.com/guide/topics/graphics/hardware-accel.html
+        // https://developer.android.com/reference/android/R.attr.html#hardwareAccelerated
+        // https://developer.android.com/guide/topics/graphics/hardware-accel.html
 
         // HTML5 Inline Video
-        // http://developer.android.com/about/versions/android-3.1.html
+        // https://developer.android.com/about/versions/android-3.1.html
 
         // Traverse up the View tree to determine if any views are being software rendered
         // You can only disable hardware acceleration at the view level by setting the layer type
@@ -197,7 +199,7 @@ public class MraidNativeCommandHandler {
         // Hardware acceleration can only be enabled for a window, not disabled
         // This flag is automatically set by the system if the android:hardwareAccelerated
         // XML attribute is set to true on an activity or on the application.
-        // http://developer.android.com/reference/android/view/WindowManager.LayoutParams.html#FLAG_HARDWARE_ACCELERATED
+        // https://developer.android.com/reference/android/view/WindowManager.LayoutParams.html#FLAG_HARDWARE_ACCELERATED
         Window window = activity.getWindow();
         if (window != null) {
             if (Utils.bitMaskContainsFlag(window.getAttributes().flags,

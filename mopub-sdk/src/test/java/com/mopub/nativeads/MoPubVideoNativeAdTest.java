@@ -131,6 +131,7 @@ public class MoPubVideoNativeAdTest {
                 mockVisibilityTracker, mockNativeVideoControllerFactory, null,
                 "header click tracker", mockVastManager);
         subject.setNativeEventListener(mockNativeEventListener);
+        // noinspection unchecked
         when(mockNativeVideoControllerFactory
                 .createForId(anyInt(), any(Context.class), any(List.class), eq(mockVastVideoConfig),
                         any(EventDetails.class)))
@@ -208,7 +209,7 @@ public class MoPubVideoNativeAdTest {
         verify(mockImageLoader).get(eq("iconimageurl"), any(ImageListener.class));
         verify(mockImageLoader).get(eq("extraimageurl"), any(ImageListener.class));
         verify(mockVastManager).prepareVastVideoConfiguration(eq("video"),
-                any(VastManager.VastManagerListener.class), any(Context.class));
+                any(VastManager.VastManagerListener.class), anyString(), any(Context.class));
     }
 
     @Test
@@ -217,6 +218,7 @@ public class MoPubVideoNativeAdTest {
         verify(mockCustomEventNativeListener).onNativeAdFailed(NativeErrorCode.INVALID_RESPONSE);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void onVastVideoConfigurationPrepared_shouldConstructNativeVideoController_shouldNotifyListenerOfAdLoaded() {
         subject.loadAd();
@@ -243,6 +245,7 @@ public class MoPubVideoNativeAdTest {
         verify(mockCustomEventNativeListener).onNativeAdLoaded(subject);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void onVastVideoConfigurationPrepared_shouldMergeHeaderAndJsonClickTrackers() {
         final ArgumentCaptor<List> argumentCaptor = ArgumentCaptor.forClass(List.class);
@@ -261,6 +264,7 @@ public class MoPubVideoNativeAdTest {
         assertThat(jsonClickTracker.isRepeatable()).isFalse();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void onVastVideoConfigurationPrepared_shouldDedupeHeaderAndJsonClickTrackers() throws Exception {
         jsonObject.remove("clktracker");
@@ -278,6 +282,7 @@ public class MoPubVideoNativeAdTest {
         assertThat(clickTracker.isRepeatable()).isFalse();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void onVastVideoConfigurationPrepared_shouldAcceptJsonArrayClickTrackers() throws Exception {
         jsonObject.remove("clktracker");
@@ -302,6 +307,7 @@ public class MoPubVideoNativeAdTest {
         assertThat(headerClickTracker.isRepeatable()).isFalse();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void onVastVideoConfigurationPrepared_shouldDedupeJsonArrayClickTrackers() throws Exception {
         jsonObject.remove("clktracker");

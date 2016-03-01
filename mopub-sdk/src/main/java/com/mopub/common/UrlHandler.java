@@ -68,6 +68,7 @@ public class UrlHandler {
         @NonNull
         private MoPubSchemeListener moPubSchemeListener = EMPTY_MOPUB_SCHEME_LISTENER;
         private boolean skipShowMoPubBrowser = false;
+        @Nullable private String creativeId;
 
         /**
          * Sets the {@link UrlAction}s to support in the {@code UrlHandler} to build.
@@ -122,12 +123,22 @@ public class UrlHandler {
 
         /**
          * If called, will avoid starting a {@link MoPubBrowser} activity where applicable.
-         * (see {@link Intents#showMoPubBrowserForUrl(Context, Uri)})
+         * (see {@link Intents#showMoPubBrowserForUrl(Context, Uri, String)})
          *
          * @return A {@link Builder} that will skip starting a {@code MoPubBrowser}.
          */
         public Builder withoutMoPubBrowser() {
             this.skipShowMoPubBrowser = true;
+            return this;
+        }
+
+        /**
+         * Sets the creativeId for the ad associated with this URL
+         *
+         * @return A {@link Builder} that knows the creativeID for the ad.
+         */
+        public Builder withDspCreativeId(@Nullable final String creativeId) {
+            this.creativeId = creativeId;
             return this;
         }
 
@@ -139,7 +150,7 @@ public class UrlHandler {
          */
         public UrlHandler build() {
             return new UrlHandler(supportedUrlActions, resultActions, moPubSchemeListener,
-                    skipShowMoPubBrowser);
+                    skipShowMoPubBrowser, creativeId);
         }
     }
 
@@ -165,6 +176,7 @@ public class UrlHandler {
     private ResultActions mResultActions;
     @NonNull
     private MoPubSchemeListener mMoPubSchemeListener;
+    @Nullable private String mDspCreativeId;
     private boolean mSkipShowMoPubBrowser;
     private boolean mAlreadySucceeded;
     private boolean mTaskPending;
@@ -176,11 +188,13 @@ public class UrlHandler {
             @NonNull final EnumSet<UrlAction> supportedUrlActions,
             @NonNull final ResultActions resultActions,
             @NonNull final MoPubSchemeListener moPubSchemeListener,
-            final boolean skipShowMoPubBrowser) {
+            final boolean skipShowMoPubBrowser,
+            @Nullable final String dspCreativeId) {
         mSupportedUrlActions = EnumSet.copyOf(supportedUrlActions);
         mResultActions = resultActions;
         mMoPubSchemeListener = moPubSchemeListener;
         mSkipShowMoPubBrowser = skipShowMoPubBrowser;
+        mDspCreativeId = dspCreativeId;
         mAlreadySucceeded = false;
         mTaskPending = false;
     }
@@ -295,7 +309,7 @@ public class UrlHandler {
             if (urlAction.shouldTryHandlingUrl(destinationUri)) {
                 try {
                     urlAction.handleUrl(UrlHandler.this, context, destinationUri,
-                            fromUserInteraction);
+                            fromUserInteraction, mDspCreativeId);
                     if (!mAlreadySucceeded && !mTaskPending
                             && !UrlAction.IGNORE_ABOUT_SCHEME.equals(urlAction)
                             && !UrlAction.HANDLE_MOPUB_SCHEME.equals(urlAction)) {

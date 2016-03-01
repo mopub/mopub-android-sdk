@@ -48,7 +48,7 @@ public class MraidVideoViewControllerTest {
         bundle = new Bundle();
         baseVideoViewControllerListener = mock(BaseVideoViewControllerListener.class);
 
-        bundle.putString(VIDEO_URL, "http://video_url");
+        bundle.putString(VIDEO_URL, "https://video_url");
 
         Robolectric.getForegroundThreadScheduler().pause();
         Robolectric.getBackgroundThreadScheduler().pause();
@@ -80,7 +80,7 @@ public class MraidVideoViewControllerTest {
         assertThat(shadowSubject.getOnCompletionListener()).isNotNull();
         assertThat(shadowSubject.getOnErrorListener()).isNotNull();
 
-        assertThat(shadowSubject.getVideoPath()).isEqualTo("http://video_url");
+        assertThat(shadowSubject.getVideoPath()).isEqualTo("https://video_url");
         assertThat(subject.getVideoView().hasFocus()).isTrue();
     }
     

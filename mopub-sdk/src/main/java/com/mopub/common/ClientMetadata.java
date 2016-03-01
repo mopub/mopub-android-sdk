@@ -21,7 +21,6 @@ import java.util.Locale;
 
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
 import static android.content.pm.PackageManager.NameNotFoundException;
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 /**
  * Singleton that caches Client objects so they will be available to background threads.
@@ -49,14 +48,14 @@ public class ClientMetadata {
     private boolean mDoNotTrack = false;
     private boolean mAdvertisingInfoSet = false;
 
-    public static enum MoPubNetworkType {
+    public enum MoPubNetworkType {
         UNKNOWN(0),
         ETHERNET(1),
         WIFI(2),
         MOBILE(3);
 
         private final int mId;
-        private MoPubNetworkType(int id) {
+        MoPubNetworkType(int id) {
             mId = id;
         }
 
@@ -227,7 +226,7 @@ public class ClientMetadata {
 
     public MoPubNetworkType getActiveNetworkType() {
         int networkType = UNKNOWN_NETWORK;
-        if (mContext.checkCallingOrSelfPermission(ACCESS_NETWORK_STATE) == PERMISSION_GRANTED) {
+        if (DeviceUtils.isPermissionGranted(mContext, ACCESS_NETWORK_STATE)) {
             NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
             networkType = activeNetworkInfo != null
                     ? activeNetworkInfo.getType() : UNKNOWN_NETWORK;

@@ -46,10 +46,10 @@ public class CloseableLayout extends FrameLayout {
     /**
      * Defines a subset of supported gravity combinations for the CloseableLayout. These values
      * include the possible values for customClosePosition as defined in the
-     * <a href="http://www.iab.net/media/file/IAB_MRAID_v2_FINAL.pdf">MRAID 2.0
+     * <a href="https://www.iab.net/media/file/IAB_MRAID_v2_FINAL.pdf">MRAID 2.0
      * specification</a>.
      */
-    public static enum ClosePosition {
+    public enum ClosePosition {
         TOP_LEFT(Gravity.TOP | Gravity.LEFT),
         TOP_CENTER(Gravity.TOP | Gravity.CENTER_HORIZONTAL),
         TOP_RIGHT(Gravity.TOP | Gravity.RIGHT),
@@ -185,7 +185,7 @@ public class CloseableLayout extends FrameLayout {
 
     @Override
     public boolean onInterceptTouchEvent(@NonNull final MotionEvent event) {
-        // See http://developer.android.com/training/gestures/viewgroup.html for details on
+        // See https://developer.android.com/training/gestures/viewgroup.html for details on
         // capturing motion events
 
         // Start intercepting touch events only when we see a down event

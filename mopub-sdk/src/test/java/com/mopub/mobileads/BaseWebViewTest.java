@@ -44,6 +44,33 @@ public class BaseWebViewTest {
         assertThat(webSettings.getPluginState()).isEqualTo(WebSettings.PluginState.ON);
     }
 
+    @Test
+    public void allPlatforms_shouldDisableFileAccess() {
+        subject = new BaseWebView(context);
+
+        final WebSettings webSettings = subject.getSettings();
+        assertThat(webSettings.getAllowFileAccess()).isEqualTo(false);
+    }
+
+    @Config(sdk = VERSION_CODES.JELLY_BEAN) // Robo doesn't go earlier than this.
+    @Test
+    public void atLeastHoneyComb_shouldDisableContentAccess() {
+        subject = new BaseWebView(context);
+
+        final WebSettings webSettings = subject.getSettings();
+        assertThat(webSettings.getAllowContentAccess()).isEqualTo(false);
+    }
+
+    @Config(sdk = VERSION_CODES.JELLY_BEAN)
+    @Test
+    public void atLeastJellybean_shouldDisableAccessFromFileUrls() {
+        subject = new BaseWebView(context);
+
+        final WebSettings webSettings = subject.getSettings();
+        assertThat(webSettings.getAllowFileAccessFromFileURLs()).isEqualTo(false);
+        assertThat(webSettings.getAllowUniversalAccessFromFileURLs()).isEqualTo(false);
+    }
+
     @Config(sdk = VERSION_CODES.JELLY_BEAN_MR2)
     @Test
     public void atLeastJellybeanMr2_shouldPass() throws Exception {

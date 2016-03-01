@@ -105,11 +105,11 @@ public class VastVideoViewControllerTest {
     private static final String COMPANION_CLICK_TRACKING_URL_1 = "companion_click_tracking_url_1";
     private static final String COMPANION_CLICK_TRACKING_URL_2 = "companion_click_tracking_url_2";
     private static final String COMPANION_CLICK_TRACKING_URL_3 = "companion_click_tracking_url_3";
-    private static final String COMPANION_CLICK_DESTINATION_URL = "http://companion_click_destination_url";
+    private static final String COMPANION_CLICK_DESTINATION_URL = "https://companion_click_destination_url";
     private static final String COMPANION_CREATIVE_VIEW_URL_1 = "companion_creative_view_url_1";
     private static final String COMPANION_CREATIVE_VIEW_URL_2 = "companion_creative_view_url_2";
     private static final String COMPANION_CREATIVE_VIEW_URL_3 = "companion_creative_view_url_3";
-    private static final String RESOLVED_CLICKTHROUGH_URL = "http://www.mopub.com/";
+    private static final String RESOLVED_CLICKTHROUGH_URL = "https://www.mopub.com/";
     private static final String CLICKTHROUGH_URL = "deeplink+://navigate?" +
             "&primaryUrl=bogus%3A%2F%2Furl" +
             "&fallbackUrl=" + Uri.encode(RESOLVED_CLICKTHROUGH_URL);
@@ -152,6 +152,7 @@ public class VastVideoViewControllerTest {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setNetworkMediaFileUrl("video_url");
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setDspCreativeId("dsp_creative_id");
         vastVideoConfig.addAbsoluteTrackers(
                 Arrays.asList(new VastAbsoluteProgressTracker("start" + MACRO_TAGS, 2000)));
         vastVideoConfig.addFractionalTrackers(
@@ -488,13 +489,13 @@ public class VastVideoViewControllerTest {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         vastVideoConfig.setCustomCloseIconUrl(
-                "http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png");
+                "https://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png");
         bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
         verify(mockImageLoader).get(
-                eq("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png"),
+                eq("https://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png"),
                 any(ImageListener.class));
     }
 
@@ -628,7 +629,7 @@ public class VastVideoViewControllerTest {
                 vastCompanionAdConfig, View.INVISIBLE);
 
         view.getVastWebViewClickListener().onVastWebViewClick();
-        verify(vastCompanionAdConfig).handleClick(any(Context.class), eq(1), anyString());
+        verify(vastCompanionAdConfig).handleClick(any(Context.class), eq(1), anyString(), eq("dsp_creative_id"));
     }
 
     @Test
@@ -676,7 +677,8 @@ public class VastVideoViewControllerTest {
     public void onDestroy_withBlurLastVideoFrameTaskStillRunning_shouldCancelTask() throws Exception {
         initializeSubject();
 
-        VastVideoBlurLastVideoFrameTask mockBlurLastVideoFrameTask = mock(VastVideoBlurLastVideoFrameTask.class);
+        VastVideoBlurLastVideoFrameTask mockBlurLastVideoFrameTask = mock(
+                VastVideoBlurLastVideoFrameTask.class);
         when(mockBlurLastVideoFrameTask.getStatus()).thenReturn(AsyncTask.Status.RUNNING);
         subject.getVastVideoView().setBlurLastVideoFrameTask(mockBlurLastVideoFrameTask);
 
@@ -1082,7 +1084,7 @@ public class VastVideoViewControllerTest {
     }
 
     @Test
-    public void onPrepared_whenSkipOffsetIsLongerThanDurationForShortVideo_shouldNotSetShowCloseButtonDelay() throws Exception {
+    public void onPrepared_whenSkipOffsetIsLongerThanDurationForShortVideo_shouldSetShowCloseButtonDelay() throws Exception {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         vastVideoConfig.setSkipOffset("00:00:11");   // 11s
@@ -1095,11 +1097,11 @@ public class VastVideoViewControllerTest {
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
         assertThat(subject.getShowCloseButtonDelay()).isEqualTo(10 * 1000);
-        assertThat(subject.getHasSkipOffset()).isFalse();
+        assertThat(subject.getHasSkipOffset()).isTrue();
     }
 
     @Test
-    public void onPrepared_whenSkipOffsetIsLongerThanDurationForLongVideo_shouldNotSetShowCloseButtonDelay() throws Exception {
+    public void onPrepared_whenSkipOffsetIsLongerThanDurationForLongVideo_shouldSetShowCloseButtonDelay() throws Exception {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         vastVideoConfig.setSkipOffset("00:00:21");   // 21s
@@ -1111,8 +1113,41 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(
-                DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(20 * 1000);
+        assertThat(subject.getHasSkipOffset()).isTrue();
+    }
+
+    @Test
+    public void onPrepared_whenSkipOffset100Percent_shouldSetShowCloseButtonDelayToVideoDuration() throws Exception {
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("100%");   // 20000 ms
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
+
+        initializeSubject();
+        spyOnVideoView();
+        setVideoViewParams(0, 20000);    // 20s: long video
+
+        getShadowVideoView().getOnPreparedListener().onPrepared(null);
+
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(20000);
+        assertThat(subject.getHasSkipOffset()).isTrue();
+    }
+
+    @Test
+    public void onPrepared_whenSkipOffsetGreaterThan100Percent_shouldSetShowCloseButtonDelayToDefault() throws Exception {
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("101%");   // 20200 ms
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
+
+        initializeSubject();
+        spyOnVideoView();
+        setVideoViewParams(0, 20000);    // 20s: long video
+
+        getShadowVideoView().getOnPreparedListener().onPrepared(null);
+
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
         assertThat(subject.getHasSkipOffset()).isFalse();
     }
 
@@ -2190,7 +2225,7 @@ public class VastVideoViewControllerTest {
         VastWebView view = (VastWebView) subject.createIconView(context, vastIconConfig, View.INVISIBLE);
 
         view.getVastWebViewClickListener().onVastWebViewClick();
-        verify(vastIconConfig).handleClick(any(Context.class), anyString());
+        verify(vastIconConfig).handleClick(any(Context.class), anyString(), eq("dsp_creative_id"));
     }
 
     @Test

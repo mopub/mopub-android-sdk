@@ -1,6 +1,7 @@
 package com.mopub.mobileads;
 
 import android.app.Activity;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -12,12 +13,14 @@ import com.mopub.network.AdRequest;
 import com.mopub.network.AdResponse;
 import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
+import com.mopub.volley.Request;
 import com.mopub.volley.VolleyError;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -30,6 +33,7 @@ import java.util.Map;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -74,6 +78,20 @@ public class
     }
 
     @Test
+    public void loadVideo_withRequestParameters_shouldGenerateUrlWithKeywords() {
+        // Robolectric executes its handlers immediately, so if we want the async behavior we see
+        // in an actual app we have to pause the main looper until we're done successfully loading the ad.
+        ShadowLooper.pauseMainLooper();
+
+        MoPubRewardedVideoManager.loadVideo("testAdUnit", new MoPubRewardedVideoManager.RequestParameters("nonsense;garbage;keywords"));
+
+        verify(mockRequestQueue).add(argThat(new RequestUrlContains(Uri.encode("nonsense;garbage;keywords"))));
+
+        // Finish the request
+        requestListener.onErrorResponse(new VolleyError("end test"));
+    }
+
+    @Test
     public void callbackMethods_withNullListener_shouldNotError() {
         // Clients can set RVM null.
         MoPubRewardedVideoManager.setVideoListener(null);
@@ -87,7 +105,7 @@ public class
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
         ShadowLooper.pauseMainLooper();
 
-        MoPubRewardedVideoManager.loadVideo("testAdUnit");
+        MoPubRewardedVideoManager.loadVideo("testAdUnit", null);
         // Triggers a call to MoPubRewardedVideoManager.onRewardedVideoLoadSuccess
         requestListener.onSuccess(testResponse);
 
@@ -111,7 +129,7 @@ public class
                 .build();
 
         MoPubRewardedVideoManager.updateActivity(null);
-        MoPubRewardedVideoManager.loadVideo("testAdUnit");
+        MoPubRewardedVideoManager.loadVideo("testAdUnit", null);
         requestListener.onSuccess(testResponse);
 
         verify(mockRequestQueue).add(any(AdRequest.class));
@@ -128,7 +146,7 @@ public class
                 .setCustomEventClassName("doesn't_Exist")
                 .build();
 
-        MoPubRewardedVideoManager.loadVideo("testAdUnit");
+        MoPubRewardedVideoManager.loadVideo("testAdUnit", null);
 
         requestListener.onSuccess(testResponse);
 
@@ -144,7 +162,7 @@ public class
                 .setFailoverUrl("fail.url")
                 .build();
 
-        MoPubRewardedVideoManager.loadVideo("testAdUnit");
+        MoPubRewardedVideoManager.loadVideo("testAdUnit", null);
 
         assertThat(request.getUrl()).contains("testAdUnit");
         requestListener.onSuccess(testResponse);
@@ -164,7 +182,7 @@ public class
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
         ShadowLooper.pauseMainLooper();
 
-        MoPubRewardedVideoManager.loadVideo("testAdUnit");
+        MoPubRewardedVideoManager.loadVideo("testAdUnit", null);
         requestListener.onSuccess(testResponse);
 
         ShadowLooper.unPauseMainLooper();
@@ -185,7 +203,7 @@ public class
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
         ShadowLooper.pauseMainLooper();
 
-        MoPubRewardedVideoManager.loadVideo("testAdUnit");
+        MoPubRewardedVideoManager.loadVideo("testAdUnit", null);
         requestListener.onSuccess(testResponse);
 
         ShadowLooper.unPauseMainLooper();
@@ -208,7 +226,7 @@ public class
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
         ShadowLooper.pauseMainLooper();
 
-        MoPubRewardedVideoManager.loadVideo("testAdUnit");
+        MoPubRewardedVideoManager.loadVideo("testAdUnit", null);
         requestListener.onSuccess(testResponse);
 
         ShadowLooper.unPauseMainLooper();
@@ -224,7 +242,7 @@ public class
     public void onAdFailure_shouldCallFailCallback() {
         VolleyError e = new VolleyError("testError!");
 
-        MoPubRewardedVideoManager.loadVideo("testAdUnit");
+        MoPubRewardedVideoManager.loadVideo("testAdUnit", null);
 
         assertThat(request.getUrl()).contains("testAdUnit");
         requestListener.onErrorResponse(e);
@@ -292,6 +310,21 @@ public class
                 @NonNull final Map<String, String> serverExtras) throws Exception {
             mPlayable = false;
             MoPubRewardedVideoManager.onRewardedVideoLoadFailure(NoVideoCustomEvent.class, "id!", MoPubErrorCode.NETWORK_NO_FILL);
+        }
+    }
+
+    private static class RequestUrlContains extends ArgumentMatcher<Request> {
+
+        private final String mMustContain;
+
+        RequestUrlContains(String stringToFind) {
+            mMustContain = stringToFind;
+        }
+
+        @Override
+        public boolean matches(final Object argument) {
+            return argument instanceof Request
+                    && ((Request) argument).getUrl().contains(mMustContain);
         }
     }
 }

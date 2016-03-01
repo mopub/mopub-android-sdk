@@ -12,6 +12,7 @@ import com.mopub.common.MoPub;
 import com.mopub.common.MoPubReward;
 import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.mobileads.MoPubRewardedVideoListener;
+import com.mopub.mobileads.MoPubRewardedVideoManager.RequestParameters;
 
 import java.util.Locale;
 import java.util.Set;
@@ -44,7 +45,8 @@ public class RewardedVideoDetailFragment extends Fragment implements MoPubReward
         views.mLoadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MoPub.loadRewardedVideo(adUnitId);
+                MoPub.loadRewardedVideo(adUnitId,
+                        new RequestParameters(views.mKeywordsField.getText().toString()));
                 mShowButton.setEnabled(false);
             }
         });
