@@ -60,6 +60,10 @@ public abstract class BaseNativeAd {
      */
     public abstract void destroy();
 
+    public void truncate(){
+
+    }
+
     public void setNativeEventListener(
             @Nullable final NativeEventListener nativeEventListener) {
         mNativeEventListener = nativeEventListener;

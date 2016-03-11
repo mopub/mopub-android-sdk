@@ -189,6 +189,14 @@ public class NativeAd {
         mIsDestroyed = true;
     }
 
+    public void truncate() {
+        if (mIsDestroyed) {
+            return;
+        }
+
+        mBaseNativeAd.truncate();
+    }
+
     // Event Handlers
     @VisibleForTesting
     void recordImpression(@Nullable final View view) {

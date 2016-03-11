@@ -779,6 +779,13 @@ public class MoPubStreamAdPlacer {
         }
     }
 
+    public void truncateAd(int position){
+        NativeAd nativeAd = mPlacementData.getPlacedAd(position);
+        if (nativeAd != null) {
+            nativeAd.truncate();
+        }
+    }
+
     /**
      * Prepares a view and {@link NativeAd} for display by attaching click handlers
      * and setting up impression tracking.
