@@ -9,7 +9,9 @@ public enum BannerAdType {
 	Facebook("Facebook"),
 	Millennial("Millenial"),
 	Inneractive("Inneractive"),
-	Amazon("Amazon");
+	Amazon("Amazon"),
+	Flurry("Flurry");
+
 	private String name;
 
 	BannerAdType(String name) {
@@ -45,6 +47,9 @@ public enum BannerAdType {
 			}
 			case "com.mopub.mobileads.MillennialBanner": {
 				return Millennial;
+			}
+			case "com.mopub.mobileads.FlurryCustomEventBanner": {
+				return Flurry;
 			}
 			default: {
 				return Mopub;
