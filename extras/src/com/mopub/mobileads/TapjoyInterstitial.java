@@ -11,7 +11,7 @@ import com.tapjoy.TJPlacementListener;
 
 import java.util.Map;
 
-// Tested with Tapjoy SDK 11.1.0
+// Tested with Tapjoy SDK 11.3.0
 public class TapjoyInterstitial extends CustomEventInterstitial implements TJPlacementListener {
     private TJPlacement tjPlacement;
     private CustomEventInterstitialListener mInterstitialListener;
@@ -30,6 +30,8 @@ public class TapjoyInterstitial extends CustomEventInterstitial implements TJPla
             MoPubLog.d("Tapjoy interstitial loaded with empty 'name' field. Request will fail.");
         }
         tjPlacement = new TJPlacement(context, name, this);
+        tjPlacement.setMediationSource("mopub");
+        tjPlacement.setAdapterVersion("2.0");
         tjPlacement.requestContent();
     }
 
