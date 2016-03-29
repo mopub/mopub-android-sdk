@@ -8,19 +8,29 @@ import com.tapjoy.TJActionRequest;
 import com.tapjoy.TJError;
 import com.tapjoy.TJPlacement;
 import com.tapjoy.TJPlacementListener;
+import com.tapjoy.TapjoyConstants;
+import com.tapjoy.TapjoyLog;
 
 import java.util.Map;
 
-// Tested with Tapjoy SDK 11.1.0
+// Tested with Tapjoy SDK 11.5.0
 public class TapjoyInterstitial extends CustomEventInterstitial implements TJPlacementListener {
+    private static final String TAG = TapjoyInterstitial.class.getSimpleName();
+    private static final String TJC_MOPUB_NETWORK_CONSTANT = "mopub";
+    private static final String TJC_MOPUB_ADAPTER_VERSION_NUMBER = "3.0.0";
+
     private TJPlacement tjPlacement;
     private CustomEventInterstitialListener mInterstitialListener;
 
+    static {
+        TapjoyLog.i(TAG, "Class initialized with network adapter version " + TJC_MOPUB_ADAPTER_VERSION_NUMBER);
+    }
+
     @Override
     protected void loadInterstitial(Context context,
-            CustomEventInterstitialListener customEventInterstitialListener,
-            Map<String, Object> localExtras,
-            Map<String, String> serverExtras) {
+                                    CustomEventInterstitialListener customEventInterstitialListener,
+                                    Map<String, Object> localExtras,
+                                    Map<String, String> serverExtras) {
         MoPubLog.d("Requesting Tapjoy interstitial");
 
         mInterstitialListener = customEventInterstitialListener;
@@ -30,6 +40,8 @@ public class TapjoyInterstitial extends CustomEventInterstitial implements TJPla
             MoPubLog.d("Tapjoy interstitial loaded with empty 'name' field. Request will fail.");
         }
         tjPlacement = new TJPlacement(context, name, this);
+        tjPlacement.setMediationName(TJC_MOPUB_NETWORK_CONSTANT);
+        tjPlacement.setAdapterVersion(TJC_MOPUB_ADAPTER_VERSION_NUMBER);
         tjPlacement.requestContent();
     }
 
@@ -81,12 +93,12 @@ public class TapjoyInterstitial extends CustomEventInterstitial implements TJPla
 
     @Override
     public void onPurchaseRequest(TJPlacement placement, TJActionRequest request,
-            String productId) {
+                                  String productId) {
     }
 
     @Override
     public void onRewardRequest(TJPlacement placement, TJActionRequest request, String itemId,
-            int quantity) {
+                                int quantity) {
     }
 
 }
