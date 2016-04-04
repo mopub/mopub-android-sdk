@@ -19,7 +19,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '2.5'
+	gradleVersion = '2.6'
 }
 
 group = 'com.mopub'
@@ -75,15 +75,15 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard.txt')
         }
-      
+
         debug {
             minifyEnabled false
         }
     }
 
-    // Note: You will also need a local.properties file to set the location of the SDK in the same 
+    // Note: You will also need a local.properties file to set the location of the SDK in the same
     // way that the existing SDK requires, using the sdk.dir property.
-    // Alternatively, you can set an environment variable called ANDROID_HOME. There is no 
+    // Alternatively, you can set an environment variable called ANDROID_HOME. There is no
     // difference between the two methods, you can use the one you prefer.
 }
 
