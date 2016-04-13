@@ -16,6 +16,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -24,9 +26,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastCompanionAdConfigTest {
 
-    private static final String RESOLVED_CLICKTHROUGH_URL = "http://www.mopub.com/";
+    private static final String RESOLVED_CLICKTHROUGH_URL = "https://www.mopub.com/";
     private static final String CLICKTHROUGH_URL = "deeplink+://navigate?" +
             "&primaryUrl=bogus%3A%2F%2Furl" +
             "&fallbackUrl=" + Uri.encode(RESOLVED_CLICKTHROUGH_URL);
@@ -73,7 +76,7 @@ public class VastCompanionAdConfigTest {
 
     @Test
     public void handleClick_shouldNotTrackClick() throws Exception {
-        subject.handleClick(context, 1, null);
+        subject.handleClick(context, 1, null, "dsp_creative_id");
 
         verifyNoMoreInteractions(mockRequestQueue);
     }
@@ -81,14 +84,16 @@ public class VastCompanionAdConfigTest {
 
     @Test
     public void handleClick_shouldOpenMoPubBrowser() throws Exception {
-        subject.handleClick(context, 1, null);
+        subject.handleClick(context, 1, null, "dsp_creative_id");
 
-        Robolectric.runBackgroundTasks();
-        Intent startedActivity = Robolectric.getShadowApplication().getNextStartedActivity();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo("com.mopub.common.MoPubBrowser");
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY))
                 .isEqualTo(RESOLVED_CLICKTHROUGH_URL);
+        assertThat(startedActivity.getStringExtra(MoPubBrowser.DSP_CREATIVE_ID))
+                .isEqualTo("dsp_creative_id");
         assertThat(startedActivity.getData()).isNull();
     }
 }

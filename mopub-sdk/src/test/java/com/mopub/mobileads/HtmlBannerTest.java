@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +32,7 @@ import static org.mockito.Mockito.stub;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class HtmlBannerTest {
 
     private HtmlBanner subject;

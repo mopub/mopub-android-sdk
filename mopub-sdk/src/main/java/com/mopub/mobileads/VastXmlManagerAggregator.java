@@ -27,8 +27,10 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static com.mopub.network.TrackingRequest.makeVastTrackingHttpRequest;
 
@@ -39,6 +41,11 @@ import static com.mopub.network.TrackingRequest.makeVastTrackingHttpRequest;
  * displayed with the settings and trackers set in the configuration.
  */
 public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoConfig> {
+
+    private static final String MOPUB = "MoPub";
+
+    public static final String ADS_BY_AD_SLOT_ID = "adsBy";
+    public static final String SOCIAL_ACTIONS_AD_SLOT_ID = "socialActions";
 
     /**
      * Listener for when the xml parsing is done.
@@ -226,14 +233,17 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
                 for (VastLinearXmlManager linearXmlManager : linearXmlManagers) {
                     populateLinearTrackersAndIcon(linearXmlManager, vastVideoConfig);
                 }
+                populateVideoViewabilityTracker(vastWrapperXmlManager, vastVideoConfig);
 
+                final List<VastCompanionAdXmlManager> companionAdXmlManagers =
+                        vastWrapperXmlManager.getCompanionAdXmlManagers();
                 // Only populate a companion ad if we don't already have one from one of the
                 // redirects
                 if (!vastVideoConfig.hasCompanionAd()) {
                     vastVideoConfig.setVastCompanionAd(
-                            getBestCompanionAd(vastWrapperXmlManager.getCompanionAdXmlManagers(),
+                            getBestCompanionAd(companionAdXmlManagers,
                                     CompanionOrientation.LANDSCAPE),
-                            getBestCompanionAd(vastWrapperXmlManager.getCompanionAdXmlManagers(),
+                            getBestCompanionAd(companionAdXmlManagers,
                                     CompanionOrientation.PORTRAIT));
                 } else {
                     // Otherwise append the companion trackers if it doesn't have resources
@@ -242,7 +252,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
                     final VastCompanionAdConfig portraitCompanionAd = vastVideoConfig.getVastCompanionAd(
                             Configuration.ORIENTATION_PORTRAIT);
                     if (landscapeCompanionAd != null && portraitCompanionAd != null) {
-                        for (final VastCompanionAdXmlManager companionAdXmlManager : vastWrapperXmlManager.getCompanionAdXmlManagers()) {
+                        for (final VastCompanionAdXmlManager companionAdXmlManager : companionAdXmlManagers) {
                             if (!companionAdXmlManager.hasResources()) {
                                 landscapeCompanionAd.addClickTrackers(
                                         companionAdXmlManager.getClickTrackers());
@@ -255,6 +265,11 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
                             }
                         }
                     }
+                }
+
+                if (vastVideoConfig.getSocialActionsCompanionAds().isEmpty()) {
+                    vastVideoConfig.setSocialActionsCompanionAds(
+                            getSocialActionsCompanionAds(companionAdXmlManagers));
                 }
 
                 populateMoPubCustomElements(xmlManager, vastVideoConfig);
@@ -301,18 +316,49 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
                 vastVideoConfig.setClickThroughUrl(linearXmlManager.getClickThroughUrl());
                 vastVideoConfig.setNetworkMediaFileUrl(bestMediaFileUrl);
 
+                final List<VastCompanionAdXmlManager> companionAdXmlManagers =
+                        vastInLineXmlManager.getCompanionAdXmlManagers();
                 vastVideoConfig.setVastCompanionAd(
-                        getBestCompanionAd(vastInLineXmlManager.getCompanionAdXmlManagers(),
+                        getBestCompanionAd(companionAdXmlManagers,
                                 CompanionOrientation.LANDSCAPE),
-                        getBestCompanionAd(vastInLineXmlManager.getCompanionAdXmlManagers(),
+                        getBestCompanionAd(companionAdXmlManagers,
                                 CompanionOrientation.PORTRAIT));
+                vastVideoConfig.setSocialActionsCompanionAds(
+                        getSocialActionsCompanionAds(companionAdXmlManagers));
                 errorTrackers.addAll(vastInLineXmlManager.getErrorTrackers());
                 vastVideoConfig.addErrorTrackers(errorTrackers);
+                populateVideoViewabilityTracker(vastInLineXmlManager, vastVideoConfig);
+
                 return vastVideoConfig;
             }
         }
 
         return null;
+    }
+
+    private void populateVideoViewabilityTracker(
+            @NonNull final VastBaseInLineWrapperXmlManager vastInLineXmlManager,
+            @NonNull VastVideoConfig vastVideoConfig) {
+        Preconditions.checkNotNull(vastInLineXmlManager);
+        Preconditions.checkNotNull(vastVideoConfig);
+
+        if (vastVideoConfig.getVideoViewabilityTracker() != null) {
+            return;
+        }
+
+        final VastExtensionParentXmlManager vastExtensionParentXmlManager =
+                vastInLineXmlManager.getVastExtensionParentXmlManager();
+        if (vastExtensionParentXmlManager != null) {
+            final List<VastExtensionXmlManager> vastExtensionXmlManagers =
+                    vastExtensionParentXmlManager.getVastExtensionXmlManagers();
+            for (VastExtensionXmlManager vastExtensionXmlManager : vastExtensionXmlManagers) {
+                if (MOPUB.equals(vastExtensionXmlManager.getType())) {
+                    vastVideoConfig.setVideoViewabilityTracker(vastExtensionXmlManager
+                            .getVideoViewabilityTracker());
+                    break;
+                }
+            }
+        }
     }
 
     /**
@@ -502,7 +548,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
                     continue;
                 }
 
-                Point vastScaledDimensions = getScaledDimensions(width, height);
+                Point vastScaledDimensions = getScaledDimensions(width, height, type, orientation);
                 VastResource vastResource = VastResource.fromVastResourceXmlManager(
                         companionXmlManager.getResourceXmlManager(), type,
                         vastScaledDimensions.x, vastScaledDimensions.y);
@@ -541,46 +587,118 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
         return null;
     }
 
+    @VisibleForTesting
+    @NonNull
+    Map<String, VastCompanionAdConfig> getSocialActionsCompanionAds(
+            @NonNull final List<VastCompanionAdXmlManager> managers) {
+        Preconditions.checkNotNull(managers, "managers cannot be null");
+
+        final Map<String, VastCompanionAdConfig> socialActionsCompanionAds =
+                new HashMap<String, VastCompanionAdConfig>();
+
+        for (VastCompanionAdXmlManager companionXmlManager : managers) {
+            final Integer width = companionXmlManager.getWidth();
+            final Integer height = companionXmlManager.getHeight();
+            if (width == null || height == null) {
+                continue;
+            }
+
+            final String adSlotId = companionXmlManager.getAdSlotId();
+            if (ADS_BY_AD_SLOT_ID.equals(adSlotId)) {
+                // adsBy companion ads must be 25-75dips wide and 10-50dips tall
+                if (width < 25 || width > 75 || height < 10 || height > 50) {
+                    continue;
+                }
+            } else if (SOCIAL_ACTIONS_AD_SLOT_ID.equals(adSlotId)) {
+                // socialActions companion ads must be 50-150dips wide and 10-50dips tall
+                if (width < 50 || width > 150 || height < 10 || height > 50) {
+                    continue;
+                }
+            } else {
+                // Social Actions companion ads must have adsBy or socialActions as adSlotId
+                continue;
+            }
+
+            VastResource vastResource = VastResource.fromVastResourceXmlManager(
+                    companionXmlManager.getResourceXmlManager(), VastResource.Type.HTML_RESOURCE,
+                    width, height);
+            if (vastResource == null) {
+                continue;
+            }
+
+            socialActionsCompanionAds.put(adSlotId,
+                    new VastCompanionAdConfig(
+                        width,
+                        height,
+                        vastResource,
+                        companionXmlManager.getClickThroughUrl(),
+                        companionXmlManager.getClickTrackers(),
+                        companionXmlManager.getCompanionCreativeViewTrackers()));
+        }
+
+        return socialActionsCompanionAds;
+    }
+
     /**
      * Given a width and height for a resource, if the dimensions are larger than the screen size
-     * then scale them down to fit in the screen while maintaining the aspect ratio. Scaling
-     * takes into account the default Android WebView padding.
+     * then scale them down to fit in the screen. This maintains the aspect ratio if the resource is
+     * not an HTMLResource. Since HTML can freely fill any space, the maximum size of an
+     * HTMLResource is the screen size. Scaling takes into account the default Android WebView
+     * padding.
      *
-     * @param widthDp width of the resource in dips
-     * @param heightDp height of the resource in dips
+     * @param widthDp     width of the resource in dips
+     * @param heightDp    height of the resource in dips
+     * @param type        The type of the resource. HTMLResource uses special scaling.
+     * @param orientation Expected orientation of the resource
      * @return the new scaled dimensions that honor the aspect ratio
      */
     @VisibleForTesting
     @NonNull
-    Point getScaledDimensions(int widthDp, int heightDp) {
-        Point defaultPoint = new Point(widthDp, heightDp);
-        final Display display = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+    Point getScaledDimensions(int widthDp, int heightDp, final VastResource.Type type,
+            final CompanionOrientation orientation) {
+        final Point defaultPoint = new Point(widthDp, heightDp);
+        final Display display = ((WindowManager) mContext.getSystemService(
+                Context.WINDOW_SERVICE)).getDefaultDisplay();
         int x = display.getWidth();
         int y = display.getHeight();
-
-        // For landscape, width is always greater than height
-        int screenWidth = Math.max(x, y);
-        int screenHeight = Math.min(x, y);
 
         int widthPx = Dips.dipsToIntPixels(widthDp, mContext);
         int heightPx = Dips.dipsToIntPixels(heightDp, mContext);
 
+        final int screenWidthPx, screenHeightPx;
+        if (CompanionOrientation.LANDSCAPE == orientation) {
+            screenWidthPx = Math.max(x, y);
+            screenHeightPx = Math.min(x, y);
+        } else {
+            screenWidthPx = Math.min(x, y);
+            screenHeightPx = Math.max(x, y);
+        }
+
         // Return if the width and height already fit in the screen
-        if (widthPx <= screenWidth && heightPx <= screenHeight) {
+        if (widthPx <= (screenWidthPx - VastVideoViewController.WEBVIEW_PADDING) &&
+                heightPx <= (screenHeightPx - VastVideoViewController.WEBVIEW_PADDING)) {
             return defaultPoint;
         }
 
-        float widthRatio = (float) widthPx / screenWidth;
-        float heightRatio = (float) heightPx / screenHeight;
-
-        Point point = new Point();
-        if (widthRatio >= heightRatio) {
-            point.x = screenWidth - VastVideoViewController.WEBVIEW_PADDING;
-            point.y = (int) (heightPx / widthRatio) - VastVideoViewController.WEBVIEW_PADDING;
+        final Point point = new Point();
+        if (VastResource.Type.HTML_RESOURCE == type) {
+            point.x = Math.min(screenWidthPx, widthPx);
+            point.y = Math.min(screenHeightPx, heightPx);
         } else {
-            point.x = (int) (widthPx / heightRatio) - VastVideoViewController.WEBVIEW_PADDING;
-            point.y = screenHeight - VastVideoViewController.WEBVIEW_PADDING;
+            float widthRatio = (float) widthPx / screenWidthPx;
+            float heightRatio = (float) heightPx / screenHeightPx;
+
+            if (widthRatio >= heightRatio) {
+                point.x = screenWidthPx;
+                point.y = (int) (heightPx / widthRatio);
+            } else {
+                point.x = (int) (widthPx / heightRatio);
+                point.y = screenHeightPx;
+            }
         }
+
+        point.x -= VastVideoViewController.WEBVIEW_PADDING;
+        point.y -= VastVideoViewController.WEBVIEW_PADDING;
 
         if (point.x < 0 || point.y < 0) {
             return defaultPoint;

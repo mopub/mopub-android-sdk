@@ -2,17 +2,20 @@ package com.mopub.common.event;
 
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class BaseEventTest {
 
     private BaseEvent subject;
@@ -55,7 +58,7 @@ public class BaseEventTest {
                 .withPerformanceDurationMs(100.0)
                 .withRequestId("b550796074da4559a27c5072dcba2b27")
                 .withRequestStatusCode(200)
-                .withRequestUri("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca")
+                .withRequestUri("https://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca")
                 .withRequestRetries(0)
                 .build();
     }
@@ -137,7 +140,7 @@ public class BaseEventTest {
         assertThat(subject.getPerformanceDurationMs()).isEqualTo(100.0);
         assertThat(subject.getRequestId()).isEqualTo("b550796074da4559a27c5072dcba2b27");
         assertThat(subject.getRequestStatusCode()).isEqualTo(200);
-        assertThat(subject.getRequestUri()).isEqualTo("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca");
+        assertThat(subject.getRequestUri()).isEqualTo("https://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca");
         assertThat(subject.getRequestRetries()).isEqualTo(0);
         assertThat(subject.getSamplingRate()).isEqualTo(0.10000123);
     }

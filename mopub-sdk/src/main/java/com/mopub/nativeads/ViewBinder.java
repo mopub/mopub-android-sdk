@@ -14,7 +14,7 @@ public class ViewBinder {
         private int callToActionId;
         private int mainImageId;
         private int iconImageId;
-        private int daaIconImageId;
+        private int privacyInformationIconImageId;
         @NonNull private Map<String, Integer> extras = Collections.emptyMap();
 
         public Builder(final int layoutId) {
@@ -41,8 +41,8 @@ public class ViewBinder {
         }
 
         @NonNull
-        public final Builder mainImageId(final int mainImageId) {
-            this.mainImageId = mainImageId;
+        public final Builder mainImageId(final int mediaLayoutId) {
+            this.mainImageId = mediaLayoutId;
             return this;
         }
 
@@ -53,8 +53,8 @@ public class ViewBinder {
         }
 
         @NonNull
-        public final Builder daaIconImageId(final int daaIconImageId) {
-            this.daaIconImageId = daaIconImageId;
+        public final Builder privacyInformationIconImageId(final int privacyInformationIconImageId) {
+            this.privacyInformationIconImageId = privacyInformationIconImageId;
             return this;
         }
 
@@ -82,7 +82,7 @@ public class ViewBinder {
     final int callToActionId;
     final int mainImageId;
     final int iconImageId;
-    final int daaIconImageId;
+    final int privacyInformationIconImageId;
     @NonNull final Map<String, Integer> extras;
 
     private ViewBinder(@NonNull final Builder builder) {
@@ -92,7 +92,7 @@ public class ViewBinder {
         this.callToActionId = builder.callToActionId;
         this.mainImageId = builder.mainImageId;
         this.iconImageId = builder.iconImageId;
-        this.daaIconImageId = builder.daaIconImageId;
+        this.privacyInformationIconImageId = builder.privacyInformationIconImageId;
         this.extras = builder.extras;
     }
 }

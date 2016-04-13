@@ -15,6 +15,8 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +37,7 @@ import static org.mockito.Mockito.stub;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class CustomEventInterstitialAdapterTest {
     private static long BROADCAST_IDENTIFER = 123;
     private CustomEventInterstitialAdapter subject;
@@ -87,11 +90,11 @@ public class CustomEventInterstitialAdapterTest {
     @Test
     public void timeout_shouldSignalFailureAndInvalidateWithDefaultDelay() throws Exception {
         subject.loadInterstitial();
-        Robolectric.idleMainLooper(CustomEventInterstitialAdapter.DEFAULT_INTERSTITIAL_TIMEOUT_DELAY - 1);
+        ShadowLooper.idleMainLooper(CustomEventInterstitialAdapter.DEFAULT_INTERSTITIAL_TIMEOUT_DELAY - 1);
         verify(interstitialAdapterListener, never()).onCustomEventInterstitialFailed(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isFalse();
 
-        Robolectric.idleMainLooper(1);
+        ShadowLooper.idleMainLooper(1);
         verify(interstitialAdapterListener).onCustomEventInterstitialFailed(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isTrue();
     }
@@ -101,11 +104,11 @@ public class CustomEventInterstitialAdapterTest {
         stub(mockMoPubInterstitial.getAdTimeoutDelay()).toReturn(-1);
 
         subject.loadInterstitial();
-        Robolectric.idleMainLooper(CustomEventInterstitialAdapter.DEFAULT_INTERSTITIAL_TIMEOUT_DELAY - 1);
+        ShadowLooper.idleMainLooper(CustomEventInterstitialAdapter.DEFAULT_INTERSTITIAL_TIMEOUT_DELAY - 1);
         verify(interstitialAdapterListener, never()).onCustomEventInterstitialFailed(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isFalse();
 
-        Robolectric.idleMainLooper(1);
+        ShadowLooper.idleMainLooper(1);
         verify(interstitialAdapterListener).onCustomEventInterstitialFailed(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isTrue();
     }
@@ -115,11 +118,11 @@ public class CustomEventInterstitialAdapterTest {
         stub(mockMoPubInterstitial.getAdTimeoutDelay()).toReturn(77);
 
         subject.loadInterstitial();
-        Robolectric.idleMainLooper(77000 - 1);
+        ShadowLooper.idleMainLooper(77000 - 1);
         verify(interstitialAdapterListener, never()).onCustomEventInterstitialFailed(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isFalse();
 
-        Robolectric.idleMainLooper(1);
+        ShadowLooper.idleMainLooper(1);
         verify(interstitialAdapterListener).onCustomEventInterstitialFailed(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isTrue();
     }
@@ -162,37 +165,38 @@ public class CustomEventInterstitialAdapterTest {
 
     @Test
     public void loadInterstitial_shouldScheduleTimeout_interstitialLoadedAndFailed_shouldCancelTimeout() throws Exception {
-        Robolectric.pauseMainLooper();
+        ShadowLooper.pauseMainLooper();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
 
         subject.loadInterstitial();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
 
         subject.onInterstitialLoaded();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
 
         subject.loadInterstitial();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
 
         subject.onInterstitialFailed(null);
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
     }
 
     @Test
     public void loadInterstitial_shouldScheduleTimeoutRunnableBeforeCallingLoadInterstitial() throws Exception {
-        Robolectric.pauseMainLooper();
+        ShadowLooper.pauseMainLooper();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
 
         Answer assertTimeoutRunnableHasStarted = new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+                assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
                 return null;
             }
         };
 
+        // noinspection unchecked
         doAnswer(assertTimeoutRunnableHasStarted)
                 .when(interstitial)
                 .loadInterstitial(
@@ -207,18 +211,19 @@ public class CustomEventInterstitialAdapterTest {
 
     @Test
     public void loadInterstitial_whenCallingOnInterstitialFailed_shouldCancelExistingTimeoutRunnable() throws Exception {
-        Robolectric.pauseMainLooper();
+        ShadowLooper.pauseMainLooper();
 
         Answer justCallOnInterstitialFailed = new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+                assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
                 subject.onInterstitialFailed(null);
-                assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+                assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
                 return null;
             }
         };
 
+        // noinspection unchecked
         doAnswer(justCallOnInterstitialFailed)
                 .when(interstitial)
                 .loadInterstitial(
@@ -228,9 +233,9 @@ public class CustomEventInterstitialAdapterTest {
                         any(Map.class)
                 );
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
         subject.loadInterstitial();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
     }
 
     @Test
@@ -295,6 +300,7 @@ public class CustomEventInterstitialAdapterTest {
 
         subject.loadInterstitial();
 
+        // noinspection unchecked
         verify(interstitial, never()).loadInterstitial(
                 any(Context.class),
                 any(CustomEventInterstitialListener.class),

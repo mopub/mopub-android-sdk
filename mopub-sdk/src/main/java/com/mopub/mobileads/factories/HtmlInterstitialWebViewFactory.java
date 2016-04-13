@@ -28,7 +28,7 @@ public class HtmlInterstitialWebViewFactory {
             String redirectUrl,
             String clickthroughUrl) {
         HtmlInterstitialWebView htmlInterstitialWebView = new HtmlInterstitialWebView(context, adReport);
-        htmlInterstitialWebView.init(customEventInterstitialListener, isScrollable, redirectUrl, clickthroughUrl);
+        htmlInterstitialWebView.init(customEventInterstitialListener, isScrollable, redirectUrl, clickthroughUrl, adReport.getDspCreativeId());
         return htmlInterstitialWebView;
     }
 

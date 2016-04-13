@@ -11,6 +11,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
+import org.robolectric.annotation.Config;
 
 import static com.mopub.mobileads.CustomEventBanner.CustomEventBannerListener;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_INVALID_STATE;
@@ -18,9 +20,9 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class HtmlBannerWebViewTest {
     private HtmlBannerWebView subject;
     @Mock
@@ -28,6 +30,7 @@ public class HtmlBannerWebViewTest {
     private CustomEventBannerListener customEventBannerListener;
     private String clickthroughUrl;
     private String redirectUrl;
+    private String dspCreativeId;
 
     @Before
     public void setup() throws Exception {
@@ -36,12 +39,13 @@ public class HtmlBannerWebViewTest {
         customEventBannerListener = mock(CustomEventBannerListener.class);
         clickthroughUrl = "clickthroughUrl";
         redirectUrl = "redirectUrl";
+        dspCreativeId = "dspCreativeId";
     }
 
     @Test
     public void init_shouldSetupWebViewClient() throws Exception {
-        subject.init(customEventBannerListener, false, clickthroughUrl, redirectUrl);
-        WebViewClient webViewClient = shadowOf(subject).getWebViewClient();
+        subject.init(customEventBannerListener, false, clickthroughUrl, redirectUrl, dspCreativeId);
+        WebViewClient webViewClient = Shadows.shadowOf(subject).getWebViewClient();
         assertThat(webViewClient).isNotNull();
         assertThat(webViewClient).isInstanceOf(HtmlWebViewClient.class);
     }

@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.shadows.ShadowApplication;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class IntentsTest {
     public void startActivity_withActivityContext_shouldStartActivityWithNoNewFlags() throws IntentNotResolvableException {
         Intents.startActivity(activityContext, new Intent());
 
-        final Intent intent = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent intent = ShadowApplication.getInstance().peekNextStartedActivity();
         assertThat(Utils.bitMaskContainsFlag(intent.getFlags(), FLAG_ACTIVITY_NEW_TASK)).isFalse();
     }
 
@@ -121,27 +122,27 @@ public class IntentsTest {
     public void intentForNativeBrowserScheme_shouldProperlyHandleEncodedUrls() throws UrlParseException {
         Intent intent;
 
-        intent = Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.example.com"));
+        intent = Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://navigate?url=https%3A%2F%2Fwww.example.com"));
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
-        assertThat(intent.getDataString()).isEqualTo("http://www.example.com");
+        assertThat(intent.getDataString()).isEqualTo("https://www.example.com");
 
-        intent = Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://navigate?url=http://www.example.com/?query=1&two=2"));
+        intent = Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://navigate?url=https://www.example.com/?query=1&two=2"));
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
-        assertThat(intent.getDataString()).isEqualTo("http://www.example.com/?query=1");
+        assertThat(intent.getDataString()).isEqualTo("https://www.example.com/?query=1");
 
-        intent = Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.example.com%2F%3Fquery%3D1%26two%3D2"));
+        intent = Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://navigate?url=https%3A%2F%2Fwww.example.com%2F%3Fquery%3D1%26two%3D2"));
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
-        assertThat(intent.getDataString()).isEqualTo("http://www.example.com/?query=1&two=2");
+        assertThat(intent.getDataString()).isEqualTo("https://www.example.com/?query=1&two=2");
     }
 
     @Test(expected = UrlParseException.class)
     public void intentForNativeBrowserScheme_whenNotMoPubNativeBrowser_shouldThrowException() throws UrlParseException {
-        Intents.intentForNativeBrowserScheme(Uri.parse("mailto://navigate?url=http://www.example.com"));
+        Intents.intentForNativeBrowserScheme(Uri.parse("mailto://navigate?url=https://www.example.com"));
     }
 
     @Test(expected = UrlParseException.class)
     public void intentForNativeBrowserScheme_whenNotNavigate_shouldThrowException() throws UrlParseException {
-        Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://getout?url=http://www.example.com"));
+        Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://getout?url=https://www.example.com"));
     }
 
     @Test(expected = UrlParseException.class)
@@ -198,7 +199,7 @@ public class IntentsTest {
         Intent intent = mock(Intent.class);
 
         Intents.launchIntentForUserClick(context, intent, null);
-        final Intent startedActivity = Robolectric.getShadowApplication().peekNextStartedActivity();
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
 
         assertThat(startedActivity).isNotNull();
     }

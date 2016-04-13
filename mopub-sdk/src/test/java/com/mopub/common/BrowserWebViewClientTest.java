@@ -8,11 +8,14 @@ import android.net.Uri;
 import android.webkit.WebView;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.RuntimeEnvironment;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyString;
@@ -24,6 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class BrowserWebViewClientTest {
 
     private final WebView MOOT_WEB_VIEW = null;
@@ -49,7 +53,7 @@ public class BrowserWebViewClientTest {
 
     @Test
     public void shouldOverrideUrlLoading_withHTTPUrl_shouldReturnTrue_shouldLoadUrl() {
-        final String url = "http://twitter.com";
+        final String url = "https://twitter.com";
 
         assertThat(subject.shouldOverrideUrlLoading(MOOT_WEB_VIEW, url)).isTrue();
         verify(mockWebView).loadUrl(url);
@@ -128,8 +132,8 @@ public class BrowserWebViewClientTest {
 
     @Test
     public void shouldOverrideUrlLoading_withDeeplinkPlusUrl_withEncodedQueryString_shouldReturnTrue_shouldFinish() {
-        final String primaryUrl = "ebay://launch?nav=home&referrer=http%3A%2F%2Frover.ebay.com%2Frover%2F1%2F711-212056-53654-1%2F4%3Fmpt%3Dcache_buster%26ff6%3Dclick_id%26ff7%3Difa%26ff9%3Dsegment_name%26ff18%3Dcreative_name%26siteid%3D0%26ipn%3Dadmain2%26placement%3D418737%26ck%3D23932_main%26mpvc%3D";
-        final String fallbackUrl = "http://ebay.com";
+        final String primaryUrl = "ebay://launch?nav=home&referrer=https%3A%2F%2Frover.ebay.com%2Frover%2F1%2F711-212056-53654-1%2F4%3Fmpt%3Dcache_buster%26ff6%3Dclick_id%26ff7%3Difa%26ff9%3Dsegment_name%26ff18%3Dcreative_name%26siteid%3D0%26ipn%3Dadmain2%26placement%3D418737%26ck%3D23932_main%26mpvc%3D";
+        final String fallbackUrl = "https://ebay.com";
         final String url = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
                 + "&fallbackUrl=" + Uri.encode(fallbackUrl);
 
@@ -165,7 +169,7 @@ public class BrowserWebViewClientTest {
     }
 
     private void makeDeeplinkResolvable(String deeplink) {
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW,
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW,
                 Uri.parse(deeplink)), new ResolveInfo());
     }
 }

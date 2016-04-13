@@ -12,9 +12,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.mopub.nativeads.MediaViewBinder;
 import com.mopub.nativeads.MoPubNativeAdLoadedListener;
-import com.mopub.nativeads.MoPubNativeAdRenderer;
+import com.mopub.nativeads.MoPubStaticNativeAdRenderer;
 import com.mopub.nativeads.MoPubStreamAdPlacer;
+import com.mopub.nativeads.MoPubVideoNativeAdRenderer;
 import com.mopub.nativeads.RequestParameters;
 import com.mopub.nativeads.ViewBinder;
 
@@ -69,21 +71,36 @@ public class NativeGalleryFragment extends Fragment implements MoPubNativeAdLoad
         views.mAdUnitIdView.setText(adUnitId);
         mViewPager = (ViewPager) view.findViewById(R.id.gallery_pager);
 
-        // This ad placer is used to automatically insert ads into the ViewPager.
-        mStreamAdPlacer = new MoPubStreamAdPlacer(getActivity());
-        final MoPubNativeAdRenderer adRenderer = new MoPubNativeAdRenderer(
+        // Set up a renderer for a static native ad.
+        final MoPubStaticNativeAdRenderer moPubStaticNativeAdRenderer = new MoPubStaticNativeAdRenderer(
                 new ViewBinder.Builder(R.layout.native_ad_list_item)
                         .titleId(R.id.native_title)
                         .textId(R.id.native_text)
                         .mainImageId(R.id.native_main_image)
                         .iconImageId(R.id.native_icon_image)
                         .callToActionId(R.id.native_cta)
-                        .daaIconImageId(R.id.native_daa_icon_image)
+                        .privacyInformationIconImageId(R.id.native_privacy_information_icon_image)
                         .build()
         );
-        mPagerAdapter = new CustomPagerAdapter(getChildFragmentManager(), mStreamAdPlacer);
-        mStreamAdPlacer.registerAdRenderer(adRenderer);
+
+        // Set up a renderer for a video native ad.
+        final MoPubVideoNativeAdRenderer moPubVideoNativeAdRenderer = new MoPubVideoNativeAdRenderer(
+                new MediaViewBinder.Builder(R.layout.video_ad_list_item)
+                        .titleId(R.id.native_title)
+                        .textId(R.id.native_text)
+                        .mediaLayoutId(R.id.native_media_layout)
+                        .iconImageId(R.id.native_icon_image)
+                        .callToActionId(R.id.native_cta)
+                        .privacyInformationIconImageId(R.id.native_privacy_information_icon_image)
+                        .build());
+
+        // This ad placer is used to automatically insert ads into the ViewPager.
+        mStreamAdPlacer = new MoPubStreamAdPlacer(getActivity());
+        mStreamAdPlacer.registerAdRenderer(moPubStaticNativeAdRenderer);
+        mStreamAdPlacer.registerAdRenderer(moPubVideoNativeAdRenderer);
         mStreamAdPlacer.setAdLoadedListener(this);
+
+        mPagerAdapter = new CustomPagerAdapter(getChildFragmentManager(), mStreamAdPlacer);
         mViewPager.setAdapter(mPagerAdapter);
 
         return view;

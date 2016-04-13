@@ -3,6 +3,7 @@ package com.mopub.mobileads;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.view.Display;
 import android.view.WindowManager;
 
@@ -19,6 +20,8 @@ import com.mopub.mobileads.VideoDownloader.VideoDownloaderListener;
  * {@link VastVideoConfig}.
  */
 public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggregatorListener {
+
+
     /**
      * Users of this class should subscribe to this listener to get updates
      * when a video is found or when no video is available.
@@ -36,11 +39,15 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
 
     @Nullable private VastManagerListener mVastManagerListener;
     @Nullable private VastXmlManagerAggregator mVastXmlManagerAggregator;
+    @Nullable private String mDspCreativeId;
     private double mScreenAspectRatio;
     private int mScreenAreaDp;
 
-    public VastManager(@NonNull final Context context) {
+    private final boolean mShouldPreCacheVideo;
+
+    public VastManager(@NonNull final Context context, boolean shouldPreCacheVideo) {
         initializeScreenDimensions(context);
+        mShouldPreCacheVideo = shouldPreCacheVideo;
     }
 
     /**
@@ -52,13 +59,16 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
      */
     public void prepareVastVideoConfiguration(@Nullable final String vastXml,
             @NonNull final VastManagerListener vastManagerListener,
+            @Nullable String dspCreativeId,
             @NonNull final Context context) {
         Preconditions.checkNotNull(vastManagerListener, "vastManagerListener cannot be null");
         Preconditions.checkNotNull(context, "context cannot be null");
+
         if (mVastXmlManagerAggregator == null) {
             mVastManagerListener = vastManagerListener;
             mVastXmlManagerAggregator = new VastXmlManagerAggregator(this, mScreenAspectRatio,
                     mScreenAreaDp, context.getApplicationContext());
+            mDspCreativeId = dspCreativeId;
 
             try {
                 AsyncTasks.safeExecuteOnExecutor(mVastXmlManagerAggregator, vastXml);
@@ -92,7 +102,12 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
             return;
         }
 
-        if (updateDiskMediaFileUrl(vastVideoConfig)) {
+        if (!TextUtils.isEmpty(mDspCreativeId)) {
+            vastVideoConfig.setDspCreativeId(mDspCreativeId);
+        }
+
+        // Return immediately if we already have a cached video or if video precache is not required.
+        if (!mShouldPreCacheVideo || updateDiskMediaFileUrl(vastVideoConfig)) {
             mVastManagerListener.onVastVideoConfigurationPrepared(vastVideoConfig);
             return;
         }

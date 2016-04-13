@@ -1,9 +1,11 @@
 package com.mopub.common.event;
 
 import android.app.Activity;
+import android.content.Context;
 
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -12,6 +14,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.util.ArrayList;
 
@@ -19,10 +22,10 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class EventSerializerTest {
 
     private EventSerializer subject;
-    private Activity context;
 
     @Mock private Event mockEvent;
     @Mock private ErrorEvent mockErrorEvent;
@@ -32,7 +35,7 @@ public class EventSerializerTest {
         subject = new EventSerializer();
 
         // initialize client meta data with context
-        context = Robolectric.buildActivity(Activity.class).create().get();
+        Context context = Robolectric.buildActivity(Activity.class).create().get();
         ClientMetadata.getInstance(context);
 
         populateBaseEventFields(mockEvent);
@@ -112,6 +115,7 @@ public class EventSerializerTest {
         when(mockBaseEvent.getAdNetworkType()).thenReturn("admob");
         when(mockBaseEvent.getAdWidthPx()).thenReturn(320.0);
         when(mockBaseEvent.getAdHeightPx()).thenReturn(50.0);
+        when(mockBaseEvent.getDspCreativeId()).thenReturn("jack!fake234");
         when(mockBaseEvent.getAppPlatform()).thenReturn(BaseEvent.AppPlatform.ANDROID);
         when(mockBaseEvent.getAppName()).thenReturn("MoPub Sample App");
         when(mockBaseEvent.getAppPackageName()).thenReturn("com.mopub.simpleadsdemo");
@@ -138,7 +142,7 @@ public class EventSerializerTest {
         when(mockBaseEvent.getNetworkSimIsoCountryCode()).thenReturn("US");
         when(mockBaseEvent.getRequestId()).thenReturn("b550796074da4559a27c5072dcba2b27");
         when(mockBaseEvent.getRequestStatusCode()).thenReturn(200);
-        when(mockBaseEvent.getRequestUri()).thenReturn("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca");
+        when(mockBaseEvent.getRequestUri()).thenReturn("https://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca");
         when(mockBaseEvent.getRequestRetries()).thenReturn(0);
         when(mockBaseEvent.getTimestampUtcMs()).thenReturn(1416447053472L);
     }
@@ -162,6 +166,7 @@ public class EventSerializerTest {
         assertThat(jsonObject.getString("ad_network_type")).isEqualTo("admob");
         assertThat(jsonObject.getDouble("ad_width_px")).isEqualTo(320.0);
         assertThat(jsonObject.getDouble("ad_height_px")).isEqualTo(50.0);
+        assertThat(jsonObject.getString("dsp_creative_id")).isEqualTo("jack!fake234");
 
         // App Details
         assertThat(jsonObject.getInt("app_platform")).isEqualTo(2);
@@ -201,7 +206,7 @@ public class EventSerializerTest {
         // Request Details
         assertThat(jsonObject.getString("req_id")).isEqualTo("b550796074da4559a27c5072dcba2b27");
         assertThat(jsonObject.getInt("req_status_code")).isEqualTo(200);
-        assertThat(jsonObject.getString("req_uri")).isEqualTo("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca");
+        assertThat(jsonObject.getString("req_uri")).isEqualTo("https://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca");
         assertThat(jsonObject.getInt("req_retries")).isEqualTo(0);
 
         // Timestamp Details

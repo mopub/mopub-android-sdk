@@ -61,8 +61,8 @@ public abstract class CustomEventRewardedVideo {
      * be loaded.
      *
      * @param launcherActivity the "main activity" of the app. Useful for initializing sdks.
-     * @param localExtras
-     * @param serverExtras
+     * @param localExtras a map containing additional custom data set in app
+     * @param serverExtras a map containing additional custom data configurable on the mopub website
      */
     final void loadCustomEvent(@NonNull Activity launcherActivity,
             @NonNull Map<String, Object> localExtras,
@@ -101,8 +101,8 @@ public abstract class CustomEventRewardedVideo {
      * (onAdLoadSuccess, etc). Instead the SDK delegate/listener should call these methods.
      *
      * @param activity the "main activity" of the app. Useful for initializing sdks.
-     * @param localExtras
-     * @param serverExtras
+     * @param localExtras a map containing additional custom data set in app
+     * @param serverExtras a map containing additional custom data configurable on the mopub website
      */
     protected abstract void loadWithSdkInitialized(@NonNull Activity activity,
             @NonNull Map<String, Object> localExtras,

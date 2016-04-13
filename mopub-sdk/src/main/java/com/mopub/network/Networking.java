@@ -32,12 +32,12 @@ public class Networking {
     private static final String DEFAULT_USER_AGENT = System.getProperty("http.agent");
 
     // These are volatile so that double-checked locking works.
-    // See http://en.wikipedia.org/wiki/Double-checked_locking#Usage_in_Java
+    // See https://en.wikipedia.org/wiki/Double-checked_locking#Usage_in_Java
     // for more information.
     private volatile static MoPubRequestQueue sRequestQueue;
     private volatile static String sUserAgent;
     private volatile static MaxWidthImageLoader sMaxWidthImageLoader;
-    public static boolean sUseHttps = false;
+    private static boolean sUseHttps = false;
 
     @Nullable
     public static MoPubRequestQueue getRequestQueue() {
@@ -129,7 +129,11 @@ public class Networking {
                 if (userAgent == null) {
                     // As of Android 4.4, WebViews may only be instantiated on the UI thread
                     if (Looper.myLooper() == Looper.getMainLooper()) {
-                        userAgent = new WebView(context).getSettings().getUserAgentString();
+                        try {
+                            userAgent = new WebView(context).getSettings().getUserAgentString();
+                        } catch (Exception e) {
+                            userAgent = DEFAULT_USER_AGENT;
+                        }
                     } else {
                         // In the exceptional case where we can't access the WebView user agent,
                         // fall back to the System-specific user agent.
@@ -189,5 +193,24 @@ public class Networking {
 
     public static boolean useHttps() {
         return sUseHttps;
+    }
+
+    /**
+     * Retrieve the scheme that should be used based on {@link #useHttps()}.
+     *
+     * @return "https" if {@link #useHttps()} is true; "http" otherwise.
+     */
+    public static String getScheme() {
+        return useHttps() ? Constants.HTTPS : Constants.HTTP;
+    }
+
+    /**
+     * DSPs are currently not ready for full https creatives. When we flip the switch to go full
+     * https, this should just return {@link #getScheme()}.
+     *
+     * @return "http"
+     */
+    public static String getBaseUrlScheme() {
+        return Constants.HTTP;
     }
 }

@@ -31,7 +31,7 @@ public class GpsHelper {
     }
 
     public interface GpsHelperListener {
-        public void onFetchAdInfoCompleted();
+        void onFetchAdInfoCompleted();
     }
 
     public static boolean isPlayServicesAvailable(final Context context) {

@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastVideoProgressBarWidgetTest {
     private Context context;
     private VastVideoProgressBarWidget subject;
@@ -27,7 +29,8 @@ public class VastVideoProgressBarWidgetTest {
     @Before
     public void setUp() throws Exception {
         context = Robolectric.buildActivity(Activity.class).create().get();
-        subject = new VastVideoProgressBarWidget(context, 0);
+        subject = new VastVideoProgressBarWidget(context);
+        subject.setAnchorId(0);
         progressBarDrawableSpy = spy(subject.getImageViewDrawable());
         subject.setImageViewDrawable(progressBarDrawableSpy);
     }

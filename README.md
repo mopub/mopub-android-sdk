@@ -27,7 +27,7 @@ The MoPub SDK is available via:
     }
 
     dependencies {
-        compile('com.mopub:mopub-sdk:3.13.0@aar') {
+        compile('com.mopub:mopub-sdk:4.4.1@aar') {
             transitive = true
         }
     }
@@ -60,22 +60,40 @@ The MoPub SDK is available via:
     **For additional integration instructions, please see the [Getting Started guide](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started#requirements-and-dependencies).**
 
 ## New in this Version
+Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the lastest release..
-
-- **Android M Support** - Replaced usage of the now-deprecated HttpClient with HttpURLConnection.
+- Enhancements and bug fixes for VAST video ads.
 
 ## Requirements
 
 - Android 2.3.1 (API Version 9) and up
-- android-support-v4.jar, r22 (**Updated in 3.7.0**)
-- android-support-annotations.jar, r22 (**Updated in 3.7.0**)
-- android-support-v7-recyclerview.jar, r22 (**Updated in 3.9.0**)
+- android-support-v4.jar, r23 (**Updated in 4.4.0**)
+- android-support-annotations.jar, r23 (**Updated in 4.4.0**)
+- android-support-v7-recyclerview.jar, r23 (**Updated in 4.4.0**)
 - MoPub Volley Library (mopub-volley-1.1.0.jar - available on JCenter) (**Updated in 3.6.0**)
-- **Recommended** Google Play Services 7.0.0
+- **Recommended** Google Play Services 7.8.0
 
 ## Upgrading from 3.2.0 and Prior
 In 3.3.0 a dependency on android-support-annotations.jar was added. If you are using Maven or Gradle to include the MoPub SDK, this dependency is included in the build scripts. For instructions on adding dependencies for Eclipse projects, see our [Getting Started Guide](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started#adding-the-support-libraries-to-your-project)
+
+## Working with Android 6.0 Runtime Permissions
+If your app's target SDK is 23 or higher _**and**_ the user's device is running Android 6.0 or higher, you are responsible for supporting [runtime permissions](http://developer.android.com/training/permissions/requesting.html), one of the [changes](http://developer.android.com/about/versions/marshmallow/android-6.0-changes.html) introduced in Android 6.0 (API level 23). In addition to listing any dangerous permissions your app needs in the manifest, your app also has to explicitly request the dangerous permission(s) during runtime by calling method `requestPermissions()` in the [`ActivityCompat`](http://developer.android.com/reference/android/support/v4/app/ActivityCompat.html) class.
+
+### Specifically for the MoPub SDK:
+- Dangerous permission [`ACCESS_COARSE_LOCATION`](http://developer.android.com/reference/android/Manifest.permission.html#ACCESS_COARSE_LOCATION) is needed to pass network location data to MoPub.
+- Dangerous permission [`ACCESS_FINE_LOCATION`](http://developer.android.com/reference/android/Manifest.permission.html#ACCESS_FINE_LOCATION) is needed to pass GPS location data to MoPub.
+    - Granting `ACCESS_FINE_LOCATION` also allows network location data to be passed to MoPub without the need to also grant `ACCESS_COARSE_LOCATION`.
+- Dangerous permission [`READ_EXTERNAL_STORAGE`](http://developer.android.com/reference/android/Manifest.permission.html#READ_EXTERNAL_STORAGE) is needed for exoplayer to play native video.
+- Dangerous permission [`WRITE_EXTERNAL_STORAGE`](http://developer.android.com/reference/android/Manifest.permission.html#WRITE_EXTERNAL_STORAGE) is needed for MRAID 2.
+- _**Note:** The user can deny granting any dangerous permissions during runtime, so please make sure your app can handle this properly._
+- _**Note:** The user can revoke any permissions granted previously by going to your app's Settings screen, so please make sure your app can handle this properly._
+
+### Additional resources:
+- [Android 6.0 Changes](http://developer.android.com/about/versions/marshmallow/android-6.0-changes.html)
+- [Requesting Permissions at Run Time](http://developer.android.com/training/permissions/requesting.html)
+- [Permissions Best Practices](http://developer.android.com/training/permissions/best-practices.html)
+- [Normal vs Dangerous Permissions](http://developer.android.com/guide/topics/security/permissions.html#normal-dangerous)
+- [Permission Groups](http://developer.android.com/guide/topics/security/permissions.html#perm-groups)
 
 ## License
 

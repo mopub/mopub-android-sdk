@@ -6,11 +6,12 @@ import android.support.annotation.Nullable;
 
 import com.mopub.mobileads.MoPubRewardedVideoListener;
 import com.mopub.mobileads.MoPubRewardedVideoManager;
+import com.mopub.mobileads.MoPubRewardedVideoManager.RequestParameters;
 
 public class MoPub {
-    public static final String SDK_VERSION = "3.13.0";
+    public static final String SDK_VERSION = "4.4.1";
 
-    public static enum LocationAwareness { NORMAL, TRUNCATED, DISABLED }
+    public enum LocationAwareness { NORMAL, TRUNCATED, DISABLED }
 
     private static final int DEFAULT_LOCATION_PRECISION = 6;
     private static volatile LocationAwareness sLocationLocationAwareness = LocationAwareness.NORMAL;
@@ -88,8 +89,15 @@ public class MoPub {
         MoPubRewardedVideoManager.setVideoListener(listener);
     }
 
-    public static void loadRewardedVideo(@NonNull String adUnitId, @Nullable MediationSettings... mediationSettings) {
-        MoPubRewardedVideoManager.loadVideo(adUnitId, mediationSettings);
+    public static void loadRewardedVideo(@NonNull String adUnitId,
+            @Nullable MediationSettings... mediationSettings) {
+        MoPubRewardedVideoManager.loadVideo(adUnitId, null, mediationSettings);
+    }
+
+    public static void loadRewardedVideo(@NonNull String adUnitId,
+            @Nullable RequestParameters requestParameters,
+            @Nullable MediationSettings... mediationSettings) {
+        MoPubRewardedVideoManager.loadVideo(adUnitId, requestParameters, mediationSettings);
     }
 
     public static boolean hasRewardedVideo(@NonNull String adUnitId) {

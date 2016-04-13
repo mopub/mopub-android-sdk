@@ -1,8 +1,6 @@
 package com.mopub.common;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -19,14 +17,14 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
-import com.mopub.common.logging.MoPubLog;
+import com.mopub.common.event.Event;
+import com.mopub.common.event.MoPubEvents;
 import com.mopub.mobileads.BaseWebView;
 import com.mopub.mobileads.util.WebViews;
 
-import java.util.EnumSet;
-
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.mopub.common.event.BaseEvent.*;
 import static com.mopub.common.util.Drawables.BACKGROUND;
 import static com.mopub.common.util.Drawables.CLOSE;
 import static com.mopub.common.util.Drawables.LEFT_ARROW;
@@ -35,6 +33,8 @@ import static com.mopub.common.util.Drawables.RIGHT_ARROW;
 
 public class MoPubBrowser extends Activity {
     public static final String DESTINATION_URL_KEY = "URL";
+    public static final String DSP_CREATIVE_ID = "mopub-dsp-creative-id";
+    public static final int MOPUB_BROWSER_REQUEST_CODE = 1;
     private static final int INNER_LAYOUT_ID = 1;
 
     private WebView mWebView;
@@ -42,6 +42,9 @@ public class MoPubBrowser extends Activity {
     private ImageButton mForwardButton;
     private ImageButton mRefreshButton;
     private ImageButton mCloseButton;
+
+    private DoubleTimeTracker dwellTimeTracker;
+    private String mDspCreativeId;
 
     @NonNull
     public ImageButton getBackButton() {
@@ -68,14 +71,6 @@ public class MoPubBrowser extends Activity {
         return mWebView;
     }
 
-    public static void open(final Context context, final String url) {
-        MoPubLog.d("Opening url in MoPubBrowser: " + url);
-        final Intent intent = new Intent(context, MoPubBrowser.class);
-        intent.putExtra(DESTINATION_URL_KEY, url);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,6 +81,8 @@ public class MoPubBrowser extends Activity {
         getWindow().setFeatureInt(Window.FEATURE_PROGRESS, Window.PROGRESS_VISIBILITY_ON);
 
         setContentView(getMoPubBrowserView());
+
+        dwellTimeTracker = new DoubleTimeTracker();
 
         initializeWebView();
         initializeButtons();
@@ -100,11 +97,13 @@ public class MoPubBrowser extends Activity {
         /**
          * Pinch to zoom is apparently not enabled by default on all devices, so
          * declare zoom support explicitly.
-         * http://stackoverflow.com/questions/5125851/enable-disable-zoom-in-android-webview
+         * https://stackoverflow.com/questions/5125851/enable-disable-zoom-in-android-webview
          */
         webSettings.setSupportZoom(true);
         webSettings.setBuiltInZoomControls(true);
         webSettings.setUseWideViewPort(true);
+
+        mDspCreativeId = getIntent().getStringExtra(DSP_CREATIVE_ID);
 
         mWebView.loadUrl(getIntent().getStringExtra(DESTINATION_URL_KEY));
 
@@ -165,6 +164,8 @@ public class MoPubBrowser extends Activity {
         super.onPause();
         CookieSyncManager.getInstance().stopSync();
         WebViews.onPause(mWebView, isFinishing());
+        // Pause dwell time counting.
+        dwellTimeTracker.pause();
     }
 
     @Override
@@ -172,6 +173,8 @@ public class MoPubBrowser extends Activity {
         super.onResume();
         CookieSyncManager.getInstance().startSync();
         WebViews.onResume(mWebView);
+
+        dwellTimeTracker.start();
     }
 
     @Override
@@ -188,6 +191,13 @@ public class MoPubBrowser extends Activity {
         super.onDestroy();
         mWebView.destroy();
         mWebView = null;
+        // Log dwell time value.
+        MoPubEvents.log(new Event.Builder(Name.AD_DWELL_TIME,
+                Category.AD_INTERACTIONS,
+                SamplingRate.AD_INTERACTIONS.getSamplingRate())
+                .withDspCreativeId(mDspCreativeId)
+                .withPerformanceDurationMs(dwellTimeTracker.getInterval())
+                .build());
     }
 
     private View getMoPubBrowserView() {

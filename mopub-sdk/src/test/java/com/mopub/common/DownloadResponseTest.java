@@ -2,12 +2,14 @@ package com.mopub.common;
 
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.ResponseHeader;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 
 import org.apache.http.HttpResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import java.util.Locale;
 
@@ -19,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class DownloadResponseTest {
 
     DownloadResponse subject;
@@ -28,8 +31,8 @@ public class DownloadResponseTest {
     public void setup() throws Exception {
         testHttpResponse = new TestHttpResponseWithHeaders(200, "abcde".getBytes());
         testHttpResponse.addHeader(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "testCustomEvent");
-        testHttpResponse.addHeader(ResponseHeader.CLICK_TRACKING_URL.getKey().toLowerCase(Locale.US), "http://example.com/");
-        testHttpResponse.addHeader(ResponseHeader.FAIL_URL.getKey().toUpperCase(Locale.US), "http://mopub.com/");
+        testHttpResponse.addHeader(ResponseHeader.CLICK_TRACKING_URL.getKey().toLowerCase(Locale.US), "https://example.com/");
+        testHttpResponse.addHeader(ResponseHeader.FAIL_URL.getKey().toUpperCase(Locale.US), "https://mopub.com/");
         subject = new DownloadResponse(testHttpResponse);
     }
 
@@ -62,8 +65,8 @@ public class DownloadResponseTest {
     @Test
     public void testGetFirstHeader_caseInsensitive() throws Exception {
         assertEquals("testCustomEvent", subject.getFirstHeader(ResponseHeader.CUSTOM_EVENT_NAME));
-        assertEquals("http://example.com/", subject.getFirstHeader(ResponseHeader.CLICK_TRACKING_URL));
-        assertEquals("http://mopub.com/", subject.getFirstHeader(ResponseHeader.FAIL_URL));
+        assertEquals("https://example.com/", subject.getFirstHeader(ResponseHeader.CLICK_TRACKING_URL));
+        assertEquals("https://mopub.com/", subject.getFirstHeader(ResponseHeader.FAIL_URL));
         assertNull(subject.getFirstHeader(ResponseHeader.CUSTOM_EVENT_DATA));
     }
 }

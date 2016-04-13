@@ -1,7 +1,5 @@
 package com.mopub.common.util;
 
-import com.mopub.common.VisibleForTesting;
-
 import java.security.MessageDigest;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;

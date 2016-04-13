@@ -5,12 +5,14 @@ import com.mopub.mobileads.test.support.VastUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 import org.w3c.dom.Node;
 
 import static com.mopub.mobileads.test.support.VastUtils.createNode;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastAdXmlManagerTest {
 
     private VastAdXmlManager subject;
@@ -20,12 +22,12 @@ public class VastAdXmlManagerTest {
         String adXml = "<Ad id=\"223626102\">" +
                 "    <InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inline]]>" +
+                "                 <![CDATA[https://impression/m/inline]]>" +
                 "          </Impression>" +
                 "    </InLine>" +
                 "    <Wrapper>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/wrapper]]>" +
+                "                 <![CDATA[https://impression/m/wrapper]]>" +
                 "          </Impression>" +
                 "    </Wrapper>" +
                 "</Ad>";
@@ -35,7 +37,7 @@ public class VastAdXmlManagerTest {
 
         VastInLineXmlManager vastInLineXmlManager = subject.getInLineXmlManager();
         assertThat(VastUtils.vastTrackersToStrings(vastInLineXmlManager.getImpressionTrackers()))
-                .containsOnly("http://impression/m/inline");
+                .containsOnly("https://impression/m/inline");
     }
 
     @Test
@@ -43,17 +45,17 @@ public class VastAdXmlManagerTest {
         String adXml = "<Ad id=\"223626102\">" +
                 "    <InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineOne]]>" +
+                "                 <![CDATA[https://impression/m/inlineOne]]>" +
                 "          </Impression>" +
                 "    </InLine>" +
                 "    <InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineTwo]]>" +
+                "                 <![CDATA[https://impression/m/inlineTwo]]>" +
                 "          </Impression>" +
                 "    </InLine>" +
                 "    <Wrapper>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/wrapper]]>" +
+                "                 <![CDATA[https://impression/m/wrapper]]>" +
                 "          </Impression>" +
                 "    </Wrapper>" +
                 "</Ad>";
@@ -63,7 +65,7 @@ public class VastAdXmlManagerTest {
 
         VastInLineXmlManager vastInLineXmlManager = subject.getInLineXmlManager();
         assertThat(VastUtils.vastTrackersToStrings(vastInLineXmlManager.getImpressionTrackers()))
-                .containsOnly("http://impression/m/inlineOne");
+                .containsOnly("https://impression/m/inlineOne");
     }
 
     @Test
@@ -71,7 +73,7 @@ public class VastAdXmlManagerTest {
         String adXml = "<Ad id=\"223626102\">" +
                 "    <Wrapper>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/wrapper]]>" +
+                "                 <![CDATA[https://impression/m/wrapper]]>" +
                 "          </Impression>" +
                 "    </Wrapper>" +
                 "</Ad>";
@@ -87,12 +89,12 @@ public class VastAdXmlManagerTest {
         String adXml = "<Ad id=\"223626102\">" +
                 "    <InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inline]]>" +
+                "                 <![CDATA[https://impression/m/inline]]>" +
                 "          </Impression>" +
                 "    </InLine>" +
                 "    <Wrapper>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/wrapper]]>" +
+                "                 <![CDATA[https://impression/m/wrapper]]>" +
                 "          </Impression>" +
                 "    </Wrapper>" +
                 "</Ad>";
@@ -102,7 +104,7 @@ public class VastAdXmlManagerTest {
 
         VastWrapperXmlManager vastWrapperXmlManager = subject.getWrapperXmlManager();
         assertThat(VastUtils.vastTrackersToStrings(vastWrapperXmlManager.getImpressionTrackers()))
-                .containsOnly("http://impression/m/wrapper");
+                .containsOnly("https://impression/m/wrapper");
     }
 
     @Test
@@ -110,17 +112,17 @@ public class VastAdXmlManagerTest {
         String adXml = "<Ad id=\"223626102\">" +
                 "    <InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inlineOne]]>" +
+                "                 <![CDATA[https://impression/m/inlineOne]]>" +
                 "          </Impression>" +
                 "    </InLine>" +
                 "    <Wrapper>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/wrapperOne]]>" +
+                "                 <![CDATA[https://impression/m/wrapperOne]]>" +
                 "          </Impression>" +
                 "    </Wrapper>" +
                 "    <Wrapper>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/wrapperTwo]]>" +
+                "                 <![CDATA[https://impression/m/wrapperTwo]]>" +
                 "          </Impression>" +
                 "    </Wrapper>" +
                 "</Ad>";
@@ -130,7 +132,7 @@ public class VastAdXmlManagerTest {
 
         VastWrapperXmlManager vastWrapperXmlManager = subject.getWrapperXmlManager();
         assertThat(VastUtils.vastTrackersToStrings(vastWrapperXmlManager.getImpressionTrackers()))
-                .containsOnly("http://impression/m/wrapperOne");
+                .containsOnly("https://impression/m/wrapperOne");
     }
 
     @Test
@@ -138,7 +140,7 @@ public class VastAdXmlManagerTest {
         String adXml = "<Ad id=\"223626102\">" +
                 "    <InLine>" +
                 "          <Impression id=\"DART\">" +
-                "                 <![CDATA[http://impression/m/inline]]>" +
+                "                 <![CDATA[https://impression/m/inline]]>" +
                 "          </Impression>" +
                 "    </InLine>" +
                 "</Ad>";
@@ -154,12 +156,12 @@ public class VastAdXmlManagerTest {
         String adXml = "<Ad id=\"223626102\" sequence=\"42\">" +
                 "    <InLine>" +
                 "        <Impression id=\"DART\">" +
-                "            <![CDATA[http://impression/m/inline]]>" +
+                "            <![CDATA[https://impression/m/inline]]>" +
                 "        </Impression>" +
                 "    </InLine>" +
                 "    <Wrapper>" +
                 "        <Impression id=\"DART\">" +
-                "            <![CDATA[http://impression/m/wrapper]]>" +
+                "            <![CDATA[https://impression/m/wrapper]]>" +
                 "        </Impression>" +
                 "    </Wrapper>" +
                 "</Ad>";

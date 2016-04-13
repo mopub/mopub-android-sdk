@@ -6,8 +6,8 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.ShadowAsyncTasks;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.MoPubErrorCode;
-import com.mopub.nativeads.MoPubNative.MoPubNativeEventListener;
 import com.mopub.nativeads.MoPubNative.MoPubNativeNetworkListener;
 import com.mopub.network.MoPubNetworkError;
 import com.mopub.network.MoPubRequestQueue;
@@ -24,19 +24,18 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
 import java.net.MalformedURLException;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
 import static android.Manifest.permission.INTERNET;
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static com.mopub.common.util.Reflection.MethodBuilder;
-import static com.mopub.nativeads.MoPubNative.EMPTY_EVENT_LISTENER;
 import static com.mopub.nativeads.MoPubNative.EMPTY_NETWORK_LISTENER;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -46,32 +45,28 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.robolectric.Robolectric.shadowOf;
 
 @RunWith(SdkTestRunner.class)
-@Config(shadows = {ShadowAsyncTasks.class})
+@Config(constants = BuildConfig.class, shadows = {ShadowAsyncTasks.class})
 public class MoPubNativeTest {
     private MoPubNative subject;
     private MethodBuilder methodBuilder;
     private Activity context;
-    private Semaphore semaphore;
     private static final String adUnitId = "test_adunit_id";
-
-    @Mock private MoPubNativeEventListener mockEventListener;
 
     @Mock private MoPubNativeNetworkListener mockNetworkListener;
     @Mock private MoPubRequestQueue mockRequestQueue;
-
+    @Mock private AdRendererRegistry mockAdRendererRegistry;
+    @Mock private MoPubStaticNativeAdRenderer mockRenderer;
 
     @Before
     public void setup() {
         context = Robolectric.buildActivity(Activity.class).create().get();
-        shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
-        shadowOf(context).grantPermissions(INTERNET);
-        subject = new MoPubNative(context, adUnitId, mockNetworkListener);
+        Shadows.shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
+        Shadows.shadowOf(context).grantPermissions(INTERNET);
+        subject = new MoPubNative(context, adUnitId, mockAdRendererRegistry, mockNetworkListener);
         methodBuilder = TestMethodBuilderFactory.getSingletonMock();
         Networking.setRequestQueueForTesting(mockRequestQueue);
-        semaphore = new Semaphore(0);
     }
 
     @After
@@ -80,46 +75,39 @@ public class MoPubNativeTest {
     }
 
     @Test
-    public void destroy_shouldSetListenersToEmptyAndClearContext() {
-        assertThat(subject.getContextOrDestroy()).isSameAs(context);
-        assertThat(subject.getMoPubNativeNetworkListener()).isSameAs(mockNetworkListener);
-        subject.setNativeEventListener(mockEventListener);
-        assertThat(subject.getMoPubNativeEventListener()).isSameAs(mockEventListener);
+    public void registerAdRenderer_shouldCallAdRednererRegistryRegisterAdRenderer() throws Exception {
+        subject.registerAdRenderer(mockRenderer);
 
-        subject.destroy();
-
-        assertThat(subject.getContextOrDestroy()).isNull();
-        assertThat(subject.getMoPubNativeNetworkListener()).isSameAs(EMPTY_NETWORK_LISTENER);
-        assertThat(subject.getMoPubNativeEventListener()).isSameAs(EMPTY_EVENT_LISTENER);
+        verify(mockAdRendererRegistry).registerAdRenderer(mockRenderer);
     }
 
     @Test
-    public void setNativeEventListener_shouldSetListener() {
+    public void destroy_shouldSetListenersToEmptyAndClearContext() {
+        assertThat(subject.getActivityOrDestroy()).isSameAs(context);
         assertThat(subject.getMoPubNativeNetworkListener()).isSameAs(mockNetworkListener);
-        subject.setNativeEventListener(mockEventListener);
-        assertThat(subject.getMoPubNativeEventListener()).isSameAs(mockEventListener);
 
-        subject.setNativeEventListener(null);
-        assertThat(subject.getMoPubNativeEventListener()).isSameAs(EMPTY_EVENT_LISTENER);
+        subject.destroy();
+
+        assertThat(subject.getActivityOrDestroy()).isNull();
+        assertThat(subject.getMoPubNativeNetworkListener()).isSameAs(EMPTY_NETWORK_LISTENER);
     }
 
     @Test
     public void loadNativeAd_shouldReturnFast() {
-        Robolectric.getUiThreadScheduler().pause();
+        Robolectric.getForegroundThreadScheduler().pause();
 
         subject.destroy();
         subject.makeRequest();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
     }
 
     @Test
     public void requestNativeAd_shouldFireNetworkRequest() {
-
-        subject.requestNativeAd("http://www.mopub.com");
+        subject.requestNativeAd("https://www.mopub.com");
 
         verify(mockNetworkListener, never()).onNativeFail(any(NativeErrorCode.class));
-        verify(mockRequestQueue).add(argThat(isUrl("http://www.mopub.com")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://www.mopub.com")));
     }
 
     @Test
@@ -140,7 +128,7 @@ public class MoPubNativeTest {
 
     @Test
     public void requestNativeAd_withNullUrl_shouldFireNativeFail() {
-        Robolectric.getUiThreadScheduler().pause();
+        Robolectric.getForegroundThreadScheduler().pause();
 
         subject.requestNativeAd(null);
 
@@ -152,7 +140,7 @@ public class MoPubNativeTest {
     public void onAdError_shouldNotifyListener() {
         subject.onAdError(new MoPubNetworkError(MoPubNetworkError.Reason.BAD_BODY));
 
-        verify(mockNetworkListener).onNativeFail(eq(NativeErrorCode.INVALID_JSON));
+        verify(mockNetworkListener).onNativeFail(eq(NativeErrorCode.INVALID_RESPONSE));
     }
 
     @Test
@@ -179,7 +167,7 @@ public class MoPubNativeTest {
     @Test
     public void onAdError_withNoConnection_shouldLogMoPubErrorCodeNoConnection_shouldNotifyListener() {
         MoPubLog.setSdkHandlerLevel(Level.ALL);
-        shadowOf(context).denyPermissions(INTERNET);
+        Shadows.shadowOf(context).denyPermissions(INTERNET);
 
         subject.onAdError(new NoConnectionError());
 

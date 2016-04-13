@@ -4,11 +4,13 @@ import android.os.Handler;
 import android.os.SystemClock;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowSystemClock;
 
 import java.util.ArrayList;
@@ -21,40 +23,87 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class NativeAdSourceTest {
     private NativeAdSource subject;
-    private ArrayList<TimestampWrapper<NativeResponse>> nativeAdCache;
+    private ArrayList<TimestampWrapper<NativeAd>> nativeAdCache;
     private RequestParameters requestParameters;
     private int defaultRetryTime;
     private int maxRetryTime;
+    private int maxRetries;
 
     @Mock private AdSourceListener mockAdSourceListener;
     @Mock private MoPubNative mockMoPubNative;
-    @Mock private NativeResponse mockNativeResponse;
+    @Mock private NativeAd mMockNativeAd;
     @Mock private Handler mockReplenishCacheHandler;
+    @Mock private AdRendererRegistry mockAdRendererRegistry;
+    @Mock private MoPubStaticNativeAdRenderer mockRenderer;
 
     @Before
     public void setUp() {
-        nativeAdCache = new ArrayList<TimestampWrapper<NativeResponse>>(2);
-        subject = new NativeAdSource(nativeAdCache, mockReplenishCacheHandler);
+        nativeAdCache = new ArrayList<TimestampWrapper<NativeAd>>(2);
+        subject = new NativeAdSource(nativeAdCache, mockReplenishCacheHandler, mockAdRendererRegistry);
         subject.setAdSourceListener(mockAdSourceListener);
 
         requestParameters = new RequestParameters.Builder().build();
 
         defaultRetryTime = 1000;
         maxRetryTime = 5*60*1000;
+        maxRetries = 5;
 
         // XXX We need this to ensure that our SystemClock starts
         ShadowSystemClock.uptimeMillis();
+
+        ArrayList<MoPubAdRenderer> moPubAdRenderers = new ArrayList<MoPubAdRenderer>();
+        moPubAdRenderers.add(mockRenderer);
+        when(mockAdRendererRegistry.getRendererIterable()).thenReturn(moPubAdRenderers);
     }
 
     @Test
     public void constructor_shouldInitializeCorrectly() {
         assertThat(subject.mRequestInFlight).isFalse();
         assertThat(subject.mSequenceNumber).isEqualTo(0);
-        assertThat(subject.mRetryTimeMilliseconds).isEqualTo(defaultRetryTime);
+        assertThat(subject.getRetryTime()).isEqualTo(defaultRetryTime);
+    }
+
+    @Test
+    public void getAdRendererCount_shouldCallAdRendererRegistryGetAdRendererCount() throws Exception {
+        when(mockAdRendererRegistry.getAdRendererCount()).thenReturn(123);
+
+        assertThat(subject.getAdRendererCount()).isEqualTo(123);
+
+        verify(mockAdRendererRegistry).getAdRendererCount();
+    }
+
+    @Test
+    public void getViewTypeForAd_shouldCallAdRendererRegistryGetViewTypeForAd() throws Exception {
+        NativeAd nativeAd = mock(NativeAd.class);
+        when(mockAdRendererRegistry.getViewTypeForAd(nativeAd)).thenReturn(123);
+
+        assertThat(subject.getViewTypeForAd(nativeAd)).isEqualTo(123);
+
+        verify(mockAdRendererRegistry).getViewTypeForAd(nativeAd);
+    }
+
+    @Test
+    public void registerAdRenderer_shouldRegisterAdRendererWithRegistryAndMoPubNative() throws Exception {
+        subject.setMoPubNative(mockMoPubNative);
+        subject.registerAdRenderer(mockRenderer);
+
+        verify(mockAdRendererRegistry).registerAdRenderer(mockRenderer);
+        verify(mockMoPubNative).registerAdRenderer(mockRenderer);
+    }
+
+    @Test
+    public void getAdRendererForViewType_shouldCallAdRendererRegistryGetRendererForViewType() throws Exception {
+        when(mockAdRendererRegistry.getRendererForViewType(123)).thenReturn(mockRenderer);
+
+        assertThat(subject.getAdRendererForViewType(123)).isEqualTo(mockRenderer);
+
+        verify(mockAdRendererRegistry).getRendererForViewType(123);
     }
 
     @Test
@@ -65,14 +114,21 @@ public class NativeAdSourceTest {
     }
 
     @Test
+    public void loadAds_shouldReregisterAdRenderersWithNewMoPubNative() throws Exception {
+        subject.loadAds(mock(RequestParameters.class), mockMoPubNative);
+
+        verify(mockMoPubNative).registerAdRenderer(mockRenderer);
+    }
+
+    @Test
     public void loadAds_shouldClearNativeAdSource() {
         subject.setMoPubNative(mockMoPubNative);
-        TimestampWrapper<NativeResponse> timestampWrapper =
-                new TimestampWrapper<NativeResponse>(mock(NativeResponse.class));
+        TimestampWrapper<NativeAd> timestampWrapper =
+                new TimestampWrapper<NativeAd>(mock(NativeAd.class));
         nativeAdCache.add(timestampWrapper);
         subject.mRequestInFlight = true;
         subject.mSequenceNumber = 5;
-        subject.mRetryTimeMilliseconds = maxRetryTime;
+        subject.mCurrentRetries = maxRetries;
 
         subject.loadAds(requestParameters, mockMoPubNative);
 
@@ -81,7 +137,8 @@ public class NativeAdSourceTest {
         verify(mockMoPubNative).destroy();
         verify(mockReplenishCacheHandler).removeMessages(0);
         assertThat(subject.mSequenceNumber).isEqualTo(0);
-        assertThat(subject.mRetryTimeMilliseconds).isEqualTo(defaultRetryTime);
+        assertThat(subject.mCurrentRetries).isEqualTo(0);
+        assertThat(subject.getRetryTime()).isEqualTo(defaultRetryTime);
 
         // new request has been kicked off
         assertThat(subject.mRequestInFlight).isTrue();
@@ -99,11 +156,11 @@ public class NativeAdSourceTest {
     @Test
     public void clear_shouldDestroyMoPubNative_shouldClearNativeAdCache_shouldRemovePollHandlerMessages_shouldResetSequenceNumber_shouldResetRequestInFlight_shouldResetRetryTime() {
         subject.setMoPubNative(mockMoPubNative);
-        TimestampWrapper<NativeResponse> timestampWrapper = new TimestampWrapper<NativeResponse>(mock(NativeResponse.class));
+        TimestampWrapper<NativeAd> timestampWrapper = new TimestampWrapper<NativeAd>(mock(NativeAd.class));
         nativeAdCache.add(timestampWrapper);
         subject.mRequestInFlight = true;
         subject.mSequenceNumber = 5;
-        subject.mRetryTimeMilliseconds = maxRetryTime;
+        subject.mCurrentRetries = maxRetries;
 
         subject.clear();
 
@@ -113,24 +170,24 @@ public class NativeAdSourceTest {
         verify(mockReplenishCacheHandler).removeMessages(0);
         assertThat(subject.mRequestInFlight).isFalse();
         assertThat(subject.mSequenceNumber).isEqualTo(0);
-        assertThat(subject.mRetryTimeMilliseconds).isEqualTo(defaultRetryTime);
+        assertThat(subject.getRetryTime()).isEqualTo(defaultRetryTime);
     }
 
     @Test
-    public void dequeueAd_withNonStaleResponse_shouldReturnNativeResponse() {
+    public void dequeueAd_withNonStaleAd_shouldReturnNativeAd() {
         subject.setMoPubNative(mockMoPubNative);
-        nativeAdCache.add(new TimestampWrapper<NativeResponse>(mockNativeResponse));
+        nativeAdCache.add(new TimestampWrapper<NativeAd>(mMockNativeAd));
 
-        assertThat(subject.dequeueAd()).isEqualTo(mockNativeResponse);
+        assertThat(subject.dequeueAd()).isEqualTo(mMockNativeAd);
         assertThat(nativeAdCache).isEmpty();
     }
 
     @Test
-    public void dequeueAd_withStaleResponse_shouldReturnNativeResponse() {
+    public void dequeueAd_withStaleAd_shouldReturnNativeAd() {
         subject.setMoPubNative(mockMoPubNative);
 
-        TimestampWrapper<NativeResponse> timestampWrapper = new TimestampWrapper<NativeResponse>(
-                mockNativeResponse);
+        TimestampWrapper<NativeAd> timestampWrapper = new TimestampWrapper<NativeAd>(
+                mMockNativeAd);
         timestampWrapper.mCreatedTimestamp = SystemClock.uptimeMillis() - (15*60*1000+1);
         nativeAdCache.add(timestampWrapper);
 
@@ -142,9 +199,9 @@ public class NativeAdSourceTest {
     public void dequeueAd_noRequestInFlight_shouldReplenishCache() {
         subject.setMoPubNative(mockMoPubNative);
 
-        nativeAdCache.add(new TimestampWrapper<NativeResponse>(mockNativeResponse));
+        nativeAdCache.add(new TimestampWrapper<NativeAd>(mMockNativeAd));
 
-        assertThat(subject.dequeueAd()).isEqualTo(mockNativeResponse);
+        assertThat(subject.dequeueAd()).isEqualTo(mMockNativeAd);
 
         assertThat(nativeAdCache).isEmpty();
         verify(mockReplenishCacheHandler).post(any(Runnable.class));
@@ -154,10 +211,10 @@ public class NativeAdSourceTest {
     public void dequeueAd_requestInFlight_shouldNotReplenishCache() {
         subject.setMoPubNative(mockMoPubNative);
 
-        nativeAdCache.add(new TimestampWrapper<NativeResponse>(mockNativeResponse));
+        nativeAdCache.add(new TimestampWrapper<NativeAd>(mMockNativeAd));
 
         subject.mRequestInFlight = true;
-        assertThat(subject.dequeueAd()).isEqualTo(mockNativeResponse);
+        assertThat(subject.dequeueAd()).isEqualTo(mMockNativeAd);
 
         assertThat(nativeAdCache).isEmpty();
         verify(mockReplenishCacheHandler, never()).post(any(Runnable.class));
@@ -166,27 +223,27 @@ public class NativeAdSourceTest {
     @Test
     public void updateRetryTime_shouldUpdateRetryTimeUntilAt10Minutes() {
         int retryTime = 0;
-        while (subject.mRetryTimeMilliseconds < maxRetryTime) {
+        while (subject.mCurrentRetries < maxRetries) {
             subject.updateRetryTime();
-            retryTime = subject.mRetryTimeMilliseconds;
+            retryTime = subject.getRetryTime();
         }
 
         assertThat(retryTime).isEqualTo(maxRetryTime);
 
         // assert it won't change anymore
         subject.updateRetryTime();
-        assertThat(retryTime).isEqualTo(subject.mRetryTimeMilliseconds);
+        assertThat(retryTime).isEqualTo(subject.getRetryTime());
     }
 
     @Test
     public void resetRetryTime_shouldSetRetryTimeTo1Second() {
-        assertThat(subject.mRetryTimeMilliseconds).isEqualTo(defaultRetryTime);
+        assertThat(subject.getRetryTime()).isEqualTo(defaultRetryTime);
 
         subject.updateRetryTime();
-        assertThat(subject.mRetryTimeMilliseconds).isGreaterThan(defaultRetryTime);
+        assertThat(subject.getRetryTime()).isGreaterThan(defaultRetryTime);
 
         subject.resetRetryTime();
-        assertThat(subject.mRetryTimeMilliseconds).isEqualTo(defaultRetryTime);
+        assertThat(subject.getRetryTime()).isEqualTo(defaultRetryTime);
     }
 
     @Test
@@ -210,6 +267,7 @@ public class NativeAdSourceTest {
         assertThat(subject.mRequestInFlight).isTrue();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void replenishCache_withCacheSizeAtLimit_shouldNotLoadNativeAd() {
         // Default cache size may change in the future and this test will have to be updated
@@ -228,10 +286,10 @@ public class NativeAdSourceTest {
     @Test
     public void moPubNativeNetworkListener_onNativeLoad_shouldAddToCache() {
         subject.setMoPubNative(mockMoPubNative);
-        subject.getMoPubNativeNetworkListener().onNativeLoad(mockNativeResponse);
+        subject.getMoPubNativeNetworkListener().onNativeLoad(mMockNativeAd);
 
         assertThat(nativeAdCache).hasSize(1);
-        assertThat(nativeAdCache.get(0).mInstance).isEqualTo(mockNativeResponse);
+        assertThat(nativeAdCache.get(0).mInstance).isEqualTo(mMockNativeAd);
     }
 
     @Test
@@ -239,7 +297,7 @@ public class NativeAdSourceTest {
         subject.setMoPubNative(mockMoPubNative);
 
         assertThat(nativeAdCache).isEmpty();
-        subject.getMoPubNativeNetworkListener().onNativeLoad(mockNativeResponse);
+        subject.getMoPubNativeNetworkListener().onNativeLoad(mMockNativeAd);
 
         assertThat(nativeAdCache).hasSize(1);
         verify(mockAdSourceListener).onAdsAvailable();
@@ -250,7 +308,7 @@ public class NativeAdSourceTest {
         subject.setMoPubNative(mockMoPubNative);
 
         nativeAdCache.add(mock(TimestampWrapper.class));
-        subject.getMoPubNativeNetworkListener().onNativeLoad(mockNativeResponse);
+        subject.getMoPubNativeNetworkListener().onNativeLoad(mMockNativeAd);
 
         assertThat(nativeAdCache).hasSize(2);
         verify(mockAdSourceListener, never()).onAdsAvailable();
@@ -260,15 +318,16 @@ public class NativeAdSourceTest {
     public void moPubNativeNetworkListener_onNativeLoad_shouldIncrementSequenceNumber_shouldResetRetryTime() {
         subject.setMoPubNative(mockMoPubNative);
 
-        subject.mRetryTimeMilliseconds = maxRetryTime;
+        subject.mCurrentRetries = maxRetries;
         subject.mSequenceNumber = 5;
 
-        subject.getMoPubNativeNetworkListener().onNativeLoad(mockNativeResponse);
+        subject.getMoPubNativeNetworkListener().onNativeLoad(mMockNativeAd);
 
-        assertThat(subject.mRetryTimeMilliseconds).isEqualTo(defaultRetryTime);
+        assertThat(subject.getRetryTime()).isEqualTo(defaultRetryTime);
         assertThat(subject.mSequenceNumber).isEqualTo(6);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void moPubNativeNetworkListener_onNativeLoad_withFullCache_shouldResetRequestInFlight() {
         subject.setMoPubNative(mockMoPubNative);
@@ -280,48 +339,46 @@ public class NativeAdSourceTest {
         nativeAdCache.add(mock(TimestampWrapper.class));
         nativeAdCache.add(mock(TimestampWrapper.class));
 
-        subject.getMoPubNativeNetworkListener().onNativeLoad(mockNativeResponse);
+        subject.getMoPubNativeNetworkListener().onNativeLoad(mMockNativeAd);
 
         assertThat(subject.mRequestInFlight).isEqualTo(false);
     }
 
     @Test
-    public void moPubNativeNetworkListener_onNativeLoad_withNonFullCache_shouldReplenishCache() {
+    public void moPubNativeNetworkListener_onNativeLoad_withCacheFilled_shouldNotReplenishCache() {
         subject.setMoPubNative(mockMoPubNative);
 
         subject.mRequestInFlight = true;
 
-        subject.getMoPubNativeNetworkListener().onNativeLoad(mockNativeResponse);
+        subject.getMoPubNativeNetworkListener().onNativeLoad(mMockNativeAd);
 
-        assertThat(subject.mRequestInFlight).isEqualTo(true);
-        verify(mockMoPubNative).makeRequest(any(RequestParameters.class), eq(1));
+        assertThat(subject.mRequestInFlight).isEqualTo(false);
     }
 
     @Test
     public void
     moPubNativeNetworkListener_onNativeFail_shouldResetInFlight_shouldUpdateRetryTime_shouldPostDelayedRunnable() {
         subject.mRequestInFlight = true;
-        subject.mRetryTimeMilliseconds = defaultRetryTime;
 
         subject.getMoPubNativeNetworkListener().onNativeFail(NativeErrorCode.UNSPECIFIED);
 
         assertThat(subject.mRequestInFlight).isEqualTo(false);
         assertThat(subject.mRetryInFlight).isEqualTo(true);
-        assertThat(subject.mRetryTimeMilliseconds).isGreaterThan(defaultRetryTime);
-        verify(mockReplenishCacheHandler).postDelayed(any(Runnable.class), eq((long)subject.mRetryTimeMilliseconds));
+        assertThat(subject.getRetryTime()).isGreaterThan(defaultRetryTime);
+        verify(mockReplenishCacheHandler).postDelayed(any(Runnable.class), eq((long)subject.getRetryTime()));
     }
 
     @Test
     public void
     moPubNativeNetworkListener_onNativeFail_maxRetryTime_shouldResetInflight_shouldResetRetryTime_shouldNotPostDelayedRunnable() {
         subject.mRequestInFlight = true;
-        subject.mRetryTimeMilliseconds = maxRetryTime;
+        subject.mCurrentRetries = maxRetries;
 
         subject.getMoPubNativeNetworkListener().onNativeFail(NativeErrorCode.UNSPECIFIED);
 
         assertThat(subject.mRequestInFlight).isEqualTo(false);
         assertThat(subject.mRetryInFlight).isEqualTo(false);
-        assertThat(subject.mRetryTimeMilliseconds).isEqualTo(defaultRetryTime);
+        assertThat(subject.getRetryTime()).isEqualTo(defaultRetryTime);
         verify(mockReplenishCacheHandler, never()).postDelayed(any(Runnable.class), anyLong());
     }
 }

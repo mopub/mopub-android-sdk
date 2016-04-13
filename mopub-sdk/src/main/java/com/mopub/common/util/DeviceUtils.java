@@ -13,9 +13,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.StatFs;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Surface;
@@ -25,20 +25,14 @@ import com.mopub.common.CreativeOrientation;
 import com.mopub.common.Preconditions;
 import com.mopub.common.logging.MoPubLog;
 
-import org.apache.http.conn.util.InetAddressUtils;
-
 import java.io.File;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.util.Locale;
 
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
 import static android.Manifest.permission.INTERNET;
 import static com.mopub.common.util.Reflection.MethodBuilder;
 import static com.mopub.common.util.VersionCode.HONEYCOMB;
 import static com.mopub.common.util.VersionCode.currentApiLevel;
-import static java.util.Collections.list;
 
 public class DeviceUtils {
     private static final int MAX_MEMORY_CACHE_SIZE = 30 * 1024 * 1024; // 30 MB
@@ -47,7 +41,7 @@ public class DeviceUtils {
 
     private DeviceUtils() {}
 
-    public static enum ForceOrientation {
+    public enum ForceOrientation {
         FORCE_PORTRAIT("portrait"),
         FORCE_LANDSCAPE("landscape"),
         DEVICE_ORIENTATION("device"),
@@ -55,7 +49,7 @@ public class DeviceUtils {
 
         @NonNull private final String mKey;
 
-        private ForceOrientation(@NonNull final String key) {
+        ForceOrientation(@NonNull final String key) {
             mKey = key;
         }
 
@@ -71,64 +65,12 @@ public class DeviceUtils {
         }
     }
 
-    public static enum IP {
-        IPv4,
-        IPv6;
-
-        private boolean matches(final String address) {
-            switch (this) {
-                case IPv4:
-                    return InetAddressUtils.isIPv4Address(address);
-                case IPv6:
-                    return InetAddressUtils.isIPv6Address(address);
-                default:
-                    return false;
-            }
-        }
-
-        private String toString(final String address) {
-            switch (this) {
-                case IPv4:
-                    return address;
-                case IPv6:
-                    return address.split("%")[0];
-                default:
-                    return null;
-            }
-        }
-    }
-
-    public static String getIpAddress(IP ip) throws SocketException {
-        for (final NetworkInterface networkInterface : list(NetworkInterface.getNetworkInterfaces())) {
-            for (final InetAddress address : list(networkInterface.getInetAddresses())) {
-                if (!address.isLoopbackAddress()) {
-                    String hostAddress = address.getHostAddress().toUpperCase(Locale.US);
-                    if (ip.matches(hostAddress)) {
-                        return ip.toString(hostAddress);
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public static String getHashedUdid(final Context context) {
-        if (context == null) {
-            return null;
-        }
-
-        String udid = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
-        return Utils.sha1(udid);
-    }
-
     public static boolean isNetworkAvailable(@Nullable final Context context) {
         if (context == null) {
             return false;
         }
 
-        final int internetPermission = context.checkCallingOrSelfPermission(INTERNET);
-        if (internetPermission == PackageManager.PERMISSION_DENIED) {
+        if (!DeviceUtils.isPermissionGranted(context, INTERNET)) {
             return false;
         }
 
@@ -137,8 +79,7 @@ public class DeviceUtils {
          * It's possible to not have permission to check network state but still be able
          * to access the network itself.
          */
-        final int networkAccessPermission = context.checkCallingOrSelfPermission(ACCESS_NETWORK_STATE);
-        if (networkAccessPermission == PackageManager.PERMISSION_DENIED) {
+        if (!DeviceUtils.isPermissionGranted(context, ACCESS_NETWORK_STATE)) {
             return true;
         }
 
@@ -306,5 +247,38 @@ public class DeviceUtils {
         }
 
         return new Point(bestWidthPixels, bestHeightPixels);
+    }
+
+    public static boolean isPermissionGranted(@NonNull final Context context,
+            @NonNull final String permission) {
+        Preconditions.checkNotNull(context);
+        Preconditions.checkNotNull(permission);
+
+        return ContextCompat.checkSelfPermission(context, permission) ==
+                PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * @deprecated As of release 4.4.0
+     */
+    @Deprecated
+    public enum IP { IPv4, IPv6 }
+
+    /**
+     * @deprecated As of release 4.4.0
+     */
+    @Deprecated
+    @Nullable
+    public static String getIpAddress(IP ip) throws SocketException {
+        return null;
+    }
+
+    /**
+     * @deprecated As of release 4.4.0
+     */
+    @Deprecated
+    @Nullable
+    public static String getHashedUdid(final Context context) {
+        return null;
     }
 }

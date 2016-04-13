@@ -1,6 +1,7 @@
 package com.mopub.nativeads;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.network.MoPubNetworkError;
 import com.mopub.volley.NetworkResponse;
 import com.mopub.volley.Response;
@@ -11,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.robolectric.annotation.Config;
 
 import java.util.TreeMap;
 
@@ -18,9 +20,10 @@ import static junit.framework.Assert.fail;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class PositioningRequestTest {
 
-    String url = "http://example.com";
+    String url = "https://example.com";
     @Mock
     Response.Listener<MoPubNativeAdPositioning.MoPubClientPositioning> mockListener;
     @Mock

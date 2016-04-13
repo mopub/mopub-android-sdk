@@ -2,7 +2,9 @@ package com.mopub.network;
 
 import android.app.Activity;
 import android.location.Location;
+import android.os.Build;
 
+import com.mopub.TestSdkHelper;
 import com.mopub.common.AdFormat;
 import com.mopub.common.AdType;
 import com.mopub.common.DataKeys;
@@ -11,6 +13,7 @@ import com.mopub.common.event.EventDispatcher;
 import com.mopub.common.event.MoPubEvents;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.ResponseHeader;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.volley.NetworkResponse;
 import com.mopub.volley.Response;
 
@@ -23,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.nio.charset.Charset;
 import java.util.Collections;
@@ -40,6 +44,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class AdRequestTest {
 
     @Mock private AdRequest.Listener mockListener;
@@ -63,6 +68,11 @@ public class AdRequestTest {
         defaultHeaders.put(ResponseHeader.IMPRESSION_URL.getKey(), "impression");
         defaultHeaders.put(ResponseHeader.FAIL_URL.getKey(), "fail_url");
         defaultHeaders.put(ResponseHeader.REFRESH_TIME.getKey(), "30");
+        defaultHeaders.put(ResponseHeader.PLAY_VISIBLE_PERCENT.getKey(), "50%");
+        defaultHeaders.put(ResponseHeader.PAUSE_VISIBLE_PERCENT.getKey(), "25");
+        defaultHeaders.put(ResponseHeader.IMPRESSION_MIN_VISIBLE_PERCENT.getKey(), "33%");
+        defaultHeaders.put(ResponseHeader.IMPRESSION_VISIBLE_MS.getKey(), "2000");
+        defaultHeaders.put(ResponseHeader.MAX_BUFFER_MS.getKey(), "1000");
 
         MoPubEvents.setEventDispatcher(mockEventDispatcher);
     }
@@ -97,9 +107,13 @@ public class AdRequestTest {
     }
 
     @Test
-    public void parseNetworkResponse_withServerExtrasInResponseBody_shouldSucceed() throws Exception {
+    public void parseNetworkResponse_withServerExtrasInResponseBody_shouldSucceed_shouldCombineServerExtras() throws Exception {
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.HTML);
         defaultHeaders.put(ResponseHeader.FULL_AD_TYPE.getKey(), "anything");
+        defaultHeaders.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "class name");
+        defaultHeaders.put(ResponseHeader.CUSTOM_EVENT_DATA.getKey(),
+                "{customEventKey1: value1, customEventKey2: value2}");
+
         NetworkResponse testResponse =
                 new NetworkResponse(200, "abc".getBytes(Charset.defaultCharset()), defaultHeaders, false);
         final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
@@ -111,11 +125,14 @@ public class AdRequestTest {
         assertThat(serverExtras.get(DataKeys.SCROLLABLE_KEY)).isEqualToIgnoringCase("false");
         assertThat(serverExtras.get(DataKeys.REDIRECT_URL_KEY)).isEqualToIgnoringCase("redirect");
         assertThat(serverExtras.get(DataKeys.CLICKTHROUGH_URL_KEY)).isEqualToIgnoringCase("click_tracking");
+
+        assertThat(serverExtras.get("customEventKey1")).isEqualTo("value1");
+        assertThat(serverExtras.get("customEventKey2")).isEqualTo("value2");
     }
 
     @Test
     public void parseNetworkResponse_nonJsonStringBodyForNative_jsonParseShouldFail() {
-        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.NATIVE);
+        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.STATIC_NATIVE);
         NetworkResponse testResponse =
                 new NetworkResponse(200, "abc".getBytes(Charset.defaultCharset()), defaultHeaders, false);
 
@@ -128,7 +145,7 @@ public class AdRequestTest {
 
     @Test
     public void parseNetworkResponse_nonJsonStringBodyForNative_shouldNotLogScribeEvent() {
-        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.NATIVE);
+        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.STATIC_NATIVE);
         NetworkResponse testResponse =
                 new NetworkResponse(200, "abc".getBytes(Charset.defaultCharset()), defaultHeaders, false);
 
@@ -138,8 +155,95 @@ public class AdRequestTest {
     }
 
     @Test
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
+    public void parseNetworkResponse_forNativeVideo_shouldSucceed() throws Exception {
+        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
+        NetworkResponse testResponse = new NetworkResponse(200,
+                "{\"abc\": \"def\"}".getBytes(Charset.defaultCharset()), defaultHeaders, false);
+
+        final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
+
+        // Check the server extras
+        final Map<String, String> serverExtras = response.result.getServerExtras();
+        assertThat(serverExtras).isNotNull();
+        assertThat(serverExtras).isNotEmpty();
+        assertThat(serverExtras.get(DataKeys.PLAY_VISIBLE_PERCENT)).isEqualTo("50");
+        assertThat(serverExtras.get(DataKeys.PAUSE_VISIBLE_PERCENT)).isEqualTo("25");
+        assertThat(serverExtras.get(DataKeys.IMPRESSION_MIN_VISIBLE_PERCENT)).isEqualTo("33");
+        assertThat(serverExtras.get(DataKeys.IMPRESSION_VISIBLE_MS)).isEqualTo("2000");
+        assertThat(serverExtras.get(DataKeys.MAX_BUFFER_MS)).isEqualTo("1000");
+    }
+
+    @Test
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
+    public void parseNetworkResponse_forNativeVideo_shouldCombineServerExtrasAndEventData() throws Exception {
+        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
+        defaultHeaders.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "class name");
+        defaultHeaders.put(ResponseHeader.CUSTOM_EVENT_DATA.getKey(),
+                "{customEventKey1: value1, customEventKey2: value2}");
+        NetworkResponse testResponse = new NetworkResponse(200,
+                "{\"abc\": \"def\"}".getBytes(Charset.defaultCharset()), defaultHeaders, false);
+
+        final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
+
+        // Check the server extras
+        final Map<String, String> serverExtras = response.result.getServerExtras();
+        assertThat(serverExtras).isNotNull();
+        assertThat(serverExtras).isNotEmpty();
+
+        assertThat(serverExtras.get(DataKeys.PLAY_VISIBLE_PERCENT)).isEqualTo("50");
+        assertThat(serverExtras.get(DataKeys.PAUSE_VISIBLE_PERCENT)).isEqualTo("25");
+        assertThat(serverExtras.get(DataKeys.IMPRESSION_MIN_VISIBLE_PERCENT)).isEqualTo("33");
+        assertThat(serverExtras.get(DataKeys.IMPRESSION_VISIBLE_MS)).isEqualTo("2000");
+        assertThat(serverExtras.get(DataKeys.MAX_BUFFER_MS)).isEqualTo("1000");
+
+        assertThat(serverExtras.get("customEventKey1")).isEqualTo("value1");
+        assertThat(serverExtras.get("customEventKey2")).isEqualTo("value2");
+    }
+
+    @Test
+    public void parseNetworkResponse_forNativeVideo_onAPILevelBefore16_shouldError() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
+
+        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
+        NetworkResponse testResponse = new NetworkResponse(200,
+                "{\"abc\": \"def\"}".getBytes(Charset.defaultCharset()), defaultHeaders, false);
+
+        final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
+
+        assertThat(response.error).isNotNull();
+        assertThat(response.error).isInstanceOf(MoPubNetworkError.class);
+        assertThat(((MoPubNetworkError) response.error).getReason())
+                .isEqualTo(MoPubNetworkError.Reason.UNSPECIFIED);
+    }
+
+    @Test
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
+    public void parseNetworkResponse_forNativeVideo_withInvalidValues_shouldSucceed_shouldParseNull() throws Exception {
+        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
+        defaultHeaders.put(ResponseHeader.PLAY_VISIBLE_PERCENT.getKey(), "-1");
+        defaultHeaders.put(ResponseHeader.PAUSE_VISIBLE_PERCENT.getKey(), "101%");
+        defaultHeaders.put(ResponseHeader.IMPRESSION_MIN_VISIBLE_PERCENT.getKey(), "XX%");
+        NetworkResponse testResponse = new NetworkResponse(200,
+                "{\"abc\": \"def\"}".getBytes(Charset.defaultCharset()), defaultHeaders, false);
+
+        final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
+
+        // Check the server extras
+        final Map<String, String> serverExtras = response.result.getServerExtras();
+        assertThat(serverExtras).isNotNull();
+        assertThat(serverExtras).isNotEmpty();
+        assertThat(serverExtras.get(DataKeys.PLAY_VISIBLE_PERCENT)).isNull();
+        assertThat(serverExtras.get(DataKeys.PAUSE_VISIBLE_PERCENT)).isNull();
+        assertThat(serverExtras.get(DataKeys.IMPRESSION_MIN_VISIBLE_PERCENT)).isNull();
+        assertThat(serverExtras.get(DataKeys.IMPRESSION_VISIBLE_MS)).isEqualTo("2000");
+        assertThat(serverExtras.get(DataKeys.MAX_BUFFER_MS)).isEqualTo("1000");
+    }
+
+
+    @Test
     public void parseNetworkResponse_withWarmupHeaderTrue_shouldError() {
-        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.NATIVE);
+        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.STATIC_NATIVE);
         defaultHeaders.put(ResponseHeader.WARMUP.getKey(), "1");
         NetworkResponse testResponse =
                 new NetworkResponse(200, "abc".getBytes(Charset.defaultCharset()), defaultHeaders, false);
@@ -152,7 +256,7 @@ public class AdRequestTest {
 
     @Test
     public void parseNetworkResponse_withWarmupHeaderTrue_shouldNotLogScribeEvent() {
-        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.NATIVE);
+        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.STATIC_NATIVE);
         defaultHeaders.put(ResponseHeader.WARMUP.getKey(), "1");
         NetworkResponse testResponse =
                 new NetworkResponse(200, "abc".getBytes(Charset.defaultCharset()), defaultHeaders, false);
@@ -226,7 +330,7 @@ public class AdRequestTest {
 
     @Test
     public void parseNetworkResponse_withBadJSON_shouldReturnError() {
-        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.NATIVE);
+        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.STATIC_NATIVE);
         NetworkResponse badNativeNetworkResponse = new NetworkResponse(200,
                 "{[abc}".getBytes(Charset.defaultCharset()),
                 defaultHeaders, false);
@@ -246,7 +350,7 @@ public class AdRequestTest {
 
     @Test
     public void getRequestId_shouldParseAndReturnRequestIdFromFailUrl() throws Exception {
-        String requestId = subject.getRequestId("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca&exclude=043fde1fe2f9470c9aa67fec262a0596&request_id=7fd6dd3bf1c84f87876b4740c1dd7baa&fail=1");
+        String requestId = subject.getRequestId("https://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca&exclude=043fde1fe2f9470c9aa67fec262a0596&request_id=7fd6dd3bf1c84f87876b4740c1dd7baa&fail=1");
 
         assertThat(requestId).isEqualTo("7fd6dd3bf1c84f87876b4740c1dd7baa");
     }
@@ -258,7 +362,7 @@ public class AdRequestTest {
 
     @Test
     public void getRequestId_withUrlWithNoRequestIdParam_shouldReturnNull() throws Exception {
-        assertThat(subject.getRequestId("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca")).isNull();
+        assertThat(subject.getRequestId("https://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca")).isNull();
     }
 
     @Test
@@ -343,7 +447,7 @@ public class AdRequestTest {
                 assertThat(baseEvent.getCategory()).isEqualTo(BaseEvent.Category.REQUESTS);
                 assertThat(baseEvent.getSamplingRate()).isEqualTo(0.1);
                 assertThat(baseEvent.getAdUnitId()).isEqualTo(adUnitId);
-                assertThat(baseEvent.getAdCreativeId()).isEqualTo("dsp_creative_id");
+                assertThat(baseEvent.getDspCreativeId()).isEqualTo("dsp_creative_id");
                 assertThat(baseEvent.getAdType()).isEqualTo("html");
                 assertThat(baseEvent.getAdNetworkType()).isEqualTo("network_type");
                 assertThat(baseEvent.getAdWidthPx()).isEqualTo(320);

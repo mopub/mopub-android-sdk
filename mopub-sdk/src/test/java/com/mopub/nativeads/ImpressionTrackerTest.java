@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.view.View;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.fest.util.Lists;
 import org.junit.Before;
@@ -11,11 +12,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowSystemClock;
 
 import java.util.HashMap;
 
-import static com.mopub.nativeads.MoPubNative.MoPubNativeListener;
 import static com.mopub.nativeads.VisibilityTracker.VisibilityChecker;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -26,15 +27,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class ImpressionTrackerTest {
     private ImpressionTracker subject;
-    private TimestampWrapper<NativeResponse> timeStampWrapper;
-    private HashMap<View, NativeResponse> trackedViews;
-    private HashMap<View, TimestampWrapper<NativeResponse>> pollingViews;
+    private TimestampWrapper<ImpressionInterface> timeStampWrapper;
+    private HashMap<View, ImpressionInterface> trackedViews;
+    private HashMap<View, TimestampWrapper<ImpressionInterface>> pollingViews;
 
-    @Mock private NativeResponse nativeResponse;
-    @Mock private NativeResponse nativeResponse2;
-    @Mock private MoPubNativeListener moPubNativeListener;
+    @Mock private ImpressionInterface impressionInterface;
+    @Mock private ImpressionInterface impressionInterface2;
     @Mock private VisibilityTracker visibilityTracker;
     @Mock private Handler handler;
     @Mock private View view;
@@ -45,18 +46,18 @@ public class ImpressionTrackerTest {
         view = VisibilityTrackerTest.createViewMock(View.VISIBLE, 100, 100, 100, 100, true, true);
         view2 = VisibilityTrackerTest.createViewMock(View.VISIBLE, 100, 100, 100, 100, true, true);
 
-        pollingViews = new HashMap<View, TimestampWrapper<NativeResponse>>(10);
-        trackedViews = new HashMap<View, NativeResponse>(10);
+        pollingViews = new HashMap<View, TimestampWrapper<ImpressionInterface>>(10);
+        trackedViews = new HashMap<View, ImpressionInterface>(10);
         final VisibilityChecker visibilityChecker = new VisibilityChecker();
         subject = new ImpressionTracker(trackedViews, pollingViews, visibilityChecker,
                 visibilityTracker, handler);
 
-        timeStampWrapper = new TimestampWrapper<NativeResponse>(nativeResponse);
+        timeStampWrapper = new TimestampWrapper<ImpressionInterface>(impressionInterface);
 
-        when(nativeResponse.getImpressionMinPercentageViewed()).thenReturn(50);
-        when(nativeResponse.getImpressionMinTimeViewed()).thenReturn(1000);
-        when(nativeResponse2.getImpressionMinPercentageViewed()).thenReturn(50);
-        when(nativeResponse2.getImpressionMinTimeViewed()).thenReturn(1000);
+        when(impressionInterface.getImpressionMinPercentageViewed()).thenReturn(50);
+        when(impressionInterface.getImpressionMinTimeViewed()).thenReturn(1000);
+        when(impressionInterface2.getImpressionMinPercentageViewed()).thenReturn(50);
+        when(impressionInterface2.getImpressionMinTimeViewed()).thenReturn(1000);
 
         // XXX We need this to ensure that our SystemClock starts
         ShadowSystemClock.uptimeMillis();
@@ -64,99 +65,89 @@ public class ImpressionTrackerTest {
 
     @Test
     public void addView_shouldAddViewToTrackedViews_shouldAddViewToVisibilityTracker() {
-        subject.addView(view, nativeResponse);
+        subject.addView(view, impressionInterface);
 
         assertThat(trackedViews).hasSize(1);
-        assertThat(trackedViews.get(view)).isEqualTo(nativeResponse);
-        verify(visibilityTracker).addView(view, nativeResponse.getImpressionMinPercentageViewed());
+        assertThat(trackedViews.get(view)).isEqualTo(impressionInterface);
+        verify(visibilityTracker).addView(view, impressionInterface
+                .getImpressionMinPercentageViewed());
     }
 
     @Test
     public void addView_withRecordedImpression_shouldNotAddView() {
-        when(nativeResponse.getRecordedImpression()).thenReturn(true);
+        when(impressionInterface.isImpressionRecorded()).thenReturn(true);
 
-        subject.addView(view, nativeResponse);
+        subject.addView(view, impressionInterface);
 
         assertThat(trackedViews).hasSize(0);
         verify(visibilityTracker, never())
-                .addView(view, nativeResponse.getImpressionMinPercentageViewed());
+                .addView(view, impressionInterface.getImpressionMinPercentageViewed());
     }
 
     @Test
-    public void addView_withDestroyedNativeResponse_shouldNotAddView() {
-        when(nativeResponse.isDestroyed()).thenReturn(true);
-
-        subject.addView(view, nativeResponse);
-
-        assertThat(trackedViews).isEmpty();
-        verify(visibilityTracker, never())
-                .addView(view, nativeResponse.getImpressionMinPercentageViewed());
-    }
-
-    @Test
-    public void addView_withDifferentNativeResponse_shouldRemoveFromPollingViews() {
-        subject.addView(view, nativeResponse);
+    public void addView_withDifferentImpressionInterface_shouldRemoveFromPollingViews() {
+        subject.addView(view, impressionInterface);
 
         assertThat(trackedViews).hasSize(1);
-        assertThat(trackedViews.get(view)).isEqualTo(nativeResponse);
-        verify(visibilityTracker).addView(view, nativeResponse.getImpressionMinPercentageViewed());
+        assertThat(trackedViews.get(view)).isEqualTo(impressionInterface);
+        verify(visibilityTracker).addView(view, impressionInterface.getImpressionMinPercentageViewed());
 
         pollingViews.put(view, timeStampWrapper);
 
-        subject.addView(view, nativeResponse2);
+        subject.addView(view, impressionInterface2);
 
         assertThat(trackedViews).hasSize(1);
-        assertThat(trackedViews.get(view)).isEqualTo(nativeResponse2);
+        assertThat(trackedViews.get(view)).isEqualTo(impressionInterface2);
         assertThat(pollingViews).isEmpty();
         verify(visibilityTracker, times(2))
-                .addView(view, nativeResponse.getImpressionMinPercentageViewed());
+                .addView(view, impressionInterface.getImpressionMinPercentageViewed());
     }
 
     @Test
-    public void addView_withDifferentAlreadyImpressedNativeResponse_shouldRemoveFromPollingViews_shouldNotTrack() {
-        when(nativeResponse2.getRecordedImpression()).thenReturn(true);
+    public void addView_withDifferentAlreadyImpressedImpressionInterface_shouldRemoveFromPollingViews_shouldNotTrack() {
+        when(impressionInterface2.isImpressionRecorded()).thenReturn(true);
 
-        subject.addView(view, nativeResponse);
+        subject.addView(view, impressionInterface);
 
         assertThat(trackedViews).hasSize(1);
-        assertThat(trackedViews.get(view)).isEqualTo(nativeResponse);
-        verify(visibilityTracker).addView(view, nativeResponse.getImpressionMinPercentageViewed());
+        assertThat(trackedViews.get(view)).isEqualTo(impressionInterface);
+        verify(visibilityTracker).addView(view, impressionInterface.getImpressionMinPercentageViewed());
 
         pollingViews.put(view, timeStampWrapper);
 
-        subject.addView(view, nativeResponse2);
+        subject.addView(view, impressionInterface2);
 
         assertThat(trackedViews).hasSize(0);
         assertThat(trackedViews.get(view)).isNull();
         assertThat(pollingViews).isEmpty();
-        verify(visibilityTracker).addView(view, nativeResponse.getImpressionMinPercentageViewed());
+        verify(visibilityTracker).addView(view, impressionInterface.getImpressionMinPercentageViewed());
     }
 
     @Test
-    public void addView_withSameNativeResponse_shouldNotAddView() {
-        subject.addView(view, nativeResponse);
+    public void addView_withSameImpressionInterface_shouldNotAddView() {
+        subject.addView(view, impressionInterface);
 
         assertThat(trackedViews).hasSize(1);
-        assertThat(trackedViews.get(view)).isEqualTo(nativeResponse);
-        verify(visibilityTracker).addView(view, nativeResponse.getImpressionMinPercentageViewed());
+        assertThat(trackedViews.get(view)).isEqualTo(impressionInterface);
+        verify(visibilityTracker).addView(view, impressionInterface.getImpressionMinPercentageViewed());
 
         pollingViews.put(view, timeStampWrapper);
 
-        subject.addView(view, nativeResponse);
+        subject.addView(view, impressionInterface);
 
         assertThat(trackedViews).hasSize(1);
-        assertThat(trackedViews.get(view)).isEqualTo(nativeResponse);
+        assertThat(trackedViews.get(view)).isEqualTo(impressionInterface);
         assertThat(pollingViews.keySet()).containsOnly(view);
 
         // Still only one call
-        verify(visibilityTracker).addView(view, nativeResponse.getImpressionMinPercentageViewed());
+        verify(visibilityTracker).addView(view, impressionInterface.getImpressionMinPercentageViewed());
     }
 
     @Test
     public void removeView_shouldRemoveViewFromViewTrackedViews_shouldRemoveViewFromPollingMap_shouldRemoveViewFromVisibilityTracker() {
-        trackedViews.put(view, nativeResponse);
-        pollingViews.put(view, new TimestampWrapper<NativeResponse>(nativeResponse));
-        visibilityTracker.addView(view, nativeResponse.getImpressionMinPercentageViewed());
+        trackedViews.put(view, impressionInterface);
+        pollingViews.put(view, new TimestampWrapper<ImpressionInterface>(impressionInterface));
+        visibilityTracker.addView(view, impressionInterface.getImpressionMinPercentageViewed());
 
         subject.removeView(view);
 
@@ -167,12 +158,12 @@ public class ImpressionTrackerTest {
 
     @Test
     public void clear_shouldClearViewTrackedViews_shouldClearPollingViews_shouldClearVisibilityTracker_shouldClearPollHandler() {
-        trackedViews.put(view, nativeResponse);
-        trackedViews.put(view2, nativeResponse);
+        trackedViews.put(view, impressionInterface);
+        trackedViews.put(view2, impressionInterface);
         pollingViews.put(view, timeStampWrapper);
         pollingViews.put(view2, timeStampWrapper);
-        visibilityTracker.addView(view, nativeResponse.getImpressionMinPercentageViewed());
-        visibilityTracker.addView(view2, nativeResponse.getImpressionMinPercentageViewed());
+        visibilityTracker.addView(view, impressionInterface.getImpressionMinPercentageViewed());
+        visibilityTracker.addView(view2, impressionInterface.getImpressionMinPercentageViewed());
 
         subject.clear();
 
@@ -184,12 +175,12 @@ public class ImpressionTrackerTest {
     
     @Test
     public void destroy_shouldCallClear_shouldDestroyVisibilityTracker_shouldSetVisibilityTrackerListenerToNull() throws Exception {
-        trackedViews.put(view, nativeResponse);
-        trackedViews.put(view2, nativeResponse);
+        trackedViews.put(view, impressionInterface);
+        trackedViews.put(view2, impressionInterface);
         pollingViews.put(view, timeStampWrapper);
         pollingViews.put(view2, timeStampWrapper);
-        visibilityTracker.addView(view, nativeResponse.getImpressionMinPercentageViewed());
-        visibilityTracker.addView(view2, nativeResponse.getImpressionMinPercentageViewed());
+        visibilityTracker.addView(view, impressionInterface.getImpressionMinPercentageViewed());
+        visibilityTracker.addView(view2, impressionInterface.getImpressionMinPercentageViewed());
         assertThat(subject.getVisibilityTrackerListener()).isNotNull();
 
         subject.destroy();
@@ -224,7 +215,7 @@ public class ImpressionTrackerTest {
 
     @Test
     public void visibilityTrackerListener_onVisibilityChanged_withVisibleViews_shouldAddViewToPollingViews_shouldScheduleNextPoll() {
-        subject.addView(view, nativeResponse);
+        subject.addView(view, impressionInterface);
 
         assertThat(pollingViews).isEmpty();
 
@@ -237,7 +228,7 @@ public class ImpressionTrackerTest {
 
     @Test
     public void visibilityTrackerListener_onVisibilityChanged_withVisibleViews_shouldRemoveViewFromPollingViews() {
-        subject.addView(view, nativeResponse);
+        subject.addView(view, impressionInterface);
         subject.getVisibilityTrackerListener()
                 .onVisibilityChanged(Lists.newArrayList(view), Lists.<View>newArrayList());
 
@@ -259,10 +250,10 @@ public class ImpressionTrackerTest {
         pollingViews.put(view, timeStampWrapper);
 
         // We progress 999 milliseconds
-        Robolectric.getUiThreadScheduler().advanceBy(5555 + 999);
+        Robolectric.getForegroundThreadScheduler().advanceTo(5555 + 999);
         subject.new PollingRunnable().run();
 
-        verify(nativeResponse, never()).recordImpression(view);
+        verify(impressionInterface, never()).recordImpression(view);
 
         assertThat(pollingViews.keySet()).containsOnly(view);
         verify(handler).postDelayed(any(ImpressionTracker.PollingRunnable.class), eq((long) 250));
@@ -275,10 +266,10 @@ public class ImpressionTrackerTest {
         pollingViews.put(view, timeStampWrapper);
 
         // We progress 1000 milliseconds
-        Robolectric.getUiThreadScheduler().advanceBy(5555 + 1000);
+        Robolectric.getForegroundThreadScheduler().advanceTo(5555 + 1000);
         subject.new PollingRunnable().run();
 
-        verify(nativeResponse).recordImpression(view);
+        verify(impressionInterface).recordImpression(view);
 
         assertThat(pollingViews).isEmpty();
         verify(handler, never())
@@ -290,16 +281,16 @@ public class ImpressionTrackerTest {
         pollingViews.put(view, null);
         subject.new PollingRunnable().run();
 
-        verify(nativeResponse, never()).recordImpression(view);
+        verify(impressionInterface, never()).recordImpression(view);
     }
 
     @Test(expected = NullPointerException.class)
-    public void pollingRunnableRun_whenNativeResponseIsNull_shouldThrowNPE() {
+    public void pollingRunnableRun_whenImpressionInterfaceIsNull_shouldThrowNPE() {
         // This doesn't normally happen; perhaps we're being overly defensive
-        pollingViews.put(view, new TimestampWrapper<NativeResponse>(null));
+        pollingViews.put(view, new TimestampWrapper<ImpressionInterface>(null));
 
         subject.new PollingRunnable().run();
 
-        verify(nativeResponse, never()).recordImpression(view);
+        verify(impressionInterface, never()).recordImpression(view);
     }
 }

@@ -10,6 +10,7 @@ import android.view.ViewTreeObserver;
 import android.view.Window;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.VisibilityTracker.TrackingInfo;
 
 import org.fest.util.Lists;
@@ -21,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowSystemClock;
 
 import java.util.ArrayList;
@@ -40,6 +42,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VisibilityTrackerTest {
     private static final int MIN_PERCENTAGE_VIEWED = 50;
 
@@ -196,6 +199,7 @@ public class VisibilityTrackerTest {
 
         ArgumentCaptor<List> visibleCaptor = ArgumentCaptor.forClass(List.class);
         ArgumentCaptor<List> invisibleCaptor = ArgumentCaptor.forClass(List.class);
+        // noinspection unchecked
         verify(visibilityTrackerListener).onVisibilityChanged(visibleCaptor.capture(),
                 invisibleCaptor.capture());
         assertThat(visibleCaptor.getValue().size()).isEqualTo(0);
@@ -217,63 +221,63 @@ public class VisibilityTrackerTest {
     @Test
     public void isMostlyVisible_whenParentIsNull_shouldReturnFalse() throws Exception {
         view = createViewMock(View.VISIBLE, 100, 100, 100, 100, false, true);
-        assertThat(visibilityChecker.isVisible(view, MIN_PERCENTAGE_VIEWED)).isFalse();
+        assertThat(visibilityChecker.isVisible(view, view, MIN_PERCENTAGE_VIEWED)).isFalse();
     }
 
     @Test
     public void isMostlyVisible_whenViewIsOffScreen_shouldReturnFalse() throws Exception {
         view = createViewMock(View.VISIBLE, 100, 100, 100, 100, true, false);
-        assertThat(visibilityChecker.isVisible(view, MIN_PERCENTAGE_VIEWED)).isFalse();
+        assertThat(visibilityChecker.isVisible(view, view, MIN_PERCENTAGE_VIEWED)).isFalse();
     }
 
     @Test
     public void isMostlyVisible_whenViewIsEntirelyOnScreen_shouldReturnTrue() throws Exception {
         view = createViewMock(View.VISIBLE, 100, 100, 100, 100, true, true);
 
-        assertThat(visibilityChecker.isVisible(view, MIN_PERCENTAGE_VIEWED)).isTrue();
+        assertThat(visibilityChecker.isVisible(view, view, MIN_PERCENTAGE_VIEWED)).isTrue();
     }
 
     @Test
     public void isMostlyVisible_whenViewIs50PercentVisible_shouldReturnTrue() throws Exception {
         view = createViewMock(View.VISIBLE, 50, 100, 100, 100, true, true);
 
-        assertThat(visibilityChecker.isVisible(view, MIN_PERCENTAGE_VIEWED)).isTrue();
+        assertThat(visibilityChecker.isVisible(view, view, MIN_PERCENTAGE_VIEWED)).isTrue();
     }
 
     @Test
     public void isMostlyVisible_whenViewIs49PercentVisible_shouldReturnFalse() throws Exception {
         view = createViewMock(View.VISIBLE, 49, 100, 100, 100, true, true);
 
-        assertThat(visibilityChecker.isVisible(view, MIN_PERCENTAGE_VIEWED)).isFalse();
+        assertThat(visibilityChecker.isVisible(view, view, MIN_PERCENTAGE_VIEWED)).isFalse();
     }
 
     @Test
     public void isMostlyVisible_whenVisibleAreaIsZero_shouldReturnFalse() throws Exception {
         view = createViewMock(View.VISIBLE, 0, 0, 100, 100, true, true);
 
-        assertThat(visibilityChecker.isVisible(view, MIN_PERCENTAGE_VIEWED)).isFalse();
+        assertThat(visibilityChecker.isVisible(view, view, MIN_PERCENTAGE_VIEWED)).isFalse();
     }
 
     @Test
     public void isMostlyVisible_whenViewIsInvisibleOrGone_shouldReturnFalse() throws Exception {
         View view = createViewMock(View.INVISIBLE, 100, 100, 100, 100, true, true);
-        assertThat(visibilityChecker.isVisible(view, MIN_PERCENTAGE_VIEWED)).isFalse();
+        assertThat(visibilityChecker.isVisible(view, view, MIN_PERCENTAGE_VIEWED)).isFalse();
 
         reset(view);
         view = createViewMock(View.GONE, 100, 100, 100, 100, true, true);
-        assertThat(visibilityChecker.isVisible(view, MIN_PERCENTAGE_VIEWED)).isFalse();
+        assertThat(visibilityChecker.isVisible(view, view, MIN_PERCENTAGE_VIEWED)).isFalse();
     }
 
     @Test
     public void isMostlyVisible_whenViewHasZeroWidthAndHeight_shouldReturnFalse() throws Exception {
         view = createViewMock(View.VISIBLE, 100, 100, 0, 0, true, true);
 
-        assertThat(visibilityChecker.isVisible(view, MIN_PERCENTAGE_VIEWED)).isFalse();
+        assertThat(visibilityChecker.isVisible(view, view, MIN_PERCENTAGE_VIEWED)).isFalse();
     }
 
     @Test
     public void isMostlyVisible_whenViewIsNull_shouldReturnFalse() throws Exception {
-        assertThat(visibilityChecker.isVisible(null, MIN_PERCENTAGE_VIEWED)).isFalse();
+        assertThat(visibilityChecker.isVisible(null, null, MIN_PERCENTAGE_VIEWED)).isFalse();
     }
 
     @Test

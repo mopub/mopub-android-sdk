@@ -2,17 +2,20 @@ package com.mopub.nativeads;
 
 import com.mopub.common.Preconditions.NoThrow;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubClientPositioning;
 
 import org.fest.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import static com.mopub.nativeads.MoPubNativeAdPositioning.MoPubClientPositioning.NO_REPEAT;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MoPubClientPositioningTest {
 
     private MoPubClientPositioning subject;

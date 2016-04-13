@@ -74,6 +74,7 @@ public class EventSerializer {
         jsonObject.put("ad_network_type", event.getAdNetworkType());
         jsonObject.put("ad_width_px", event.getAdWidthPx());
         jsonObject.put("ad_height_px", event.getAdHeightPx());
+        jsonObject.put("dsp_creative_id", event.getDspCreativeId());
 
         // App Details
         BaseEvent.AppPlatform appPlatform = event.getAppPlatform();

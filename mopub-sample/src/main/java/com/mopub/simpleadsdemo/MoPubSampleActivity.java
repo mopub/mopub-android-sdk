@@ -3,14 +3,27 @@ package com.mopub.simpleadsdemo;
 import android.annotation.TargetApi;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.webkit.WebView;
 
 import com.mopub.common.MoPub;
+import com.mopub.common.util.DeviceUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static com.mopub.common.Constants.UNUSED_REQUEST_CODE;
 
 public class MoPubSampleActivity extends FragmentActivity {
+    private static final List<String> REQUIRED_DANGEROUS_PERMISSIONS = new ArrayList<String>();
+    static {
+        REQUIRED_DANGEROUS_PERMISSIONS.add(ACCESS_COARSE_LOCATION);
+        REQUIRED_DANGEROUS_PERMISSIONS.add(WRITE_EXTERNAL_STORAGE);
+    }
 
     // Sample app web views are debuggable.
     static {
@@ -31,6 +44,19 @@ public class MoPubSampleActivity extends FragmentActivity {
 
         if (savedInstanceState != null) {
             return;
+        }
+
+        List<String> permissionsToBeRequested = new ArrayList<String>();
+        for (String permission : REQUIRED_DANGEROUS_PERMISSIONS) {
+            if (!DeviceUtils.isPermissionGranted(this, permission)) {
+                permissionsToBeRequested.add(permission);
+            }
+        }
+
+        // Request dangerous permissions
+        if (!permissionsToBeRequested.isEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsToBeRequested.toArray(
+                    new String[permissionsToBeRequested.size()]), UNUSED_REQUEST_CODE);
         }
 
         // Set location awareness and precision globally for your app:

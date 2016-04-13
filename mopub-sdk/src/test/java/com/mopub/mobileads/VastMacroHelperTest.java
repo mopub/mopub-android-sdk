@@ -7,6 +7,7 @@ import com.mopub.common.test.support.SdkTestRunner;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,6 +15,7 @@ import java.util.Collections;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastMacroHelperTest {
 
     private static final String ERROR_CODE = "errorcode";
@@ -27,7 +29,7 @@ public class VastMacroHelperTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setup() {
-        defaultUri = "http://www.derp.com/herp?errorcode=[ERRORCODE]&contentplayhead=[CONTENTPLAYHEAD]&asseturi=[ASSETURI]&cachebusting=[CACHEBUSTING]";
+        defaultUri = "https://www.derp.com/herp?errorcode=[ERRORCODE]&contentplayhead=[CONTENTPLAYHEAD]&asseturi=[ASSETURI]&cachebusting=[CACHEBUSTING]";
         // Suppressing unchecked cast to List<String> with Collections#singletonList(Object)
         subject = new VastMacroHelper(Collections.singletonList(defaultUri));
     }
@@ -35,7 +37,7 @@ public class VastMacroHelperTest {
     @Test
     public void constructor_shouldSetCacheBusting() throws Exception {
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=&contentplayhead=&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=&contentplayhead=&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
     }
 
@@ -60,32 +62,32 @@ public class VastMacroHelperTest {
     public void withErrorCode_shouldSetErrorCode() throws Exception {
         subject.withErrorCode(VastErrorCode.XML_PARSING_ERROR);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=100&contentplayhead=&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=100&contentplayhead=&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
 
         subject.withErrorCode(VastErrorCode.WRAPPER_TIMEOUT);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=301&contentplayhead=&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=301&contentplayhead=&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
 
         subject.withErrorCode(VastErrorCode.NO_ADS_VAST_RESPONSE);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=303&contentplayhead=&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=303&contentplayhead=&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
 
         subject.withErrorCode(VastErrorCode.GENERAL_LINEAR_AD_ERROR);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=400&contentplayhead=&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=400&contentplayhead=&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
 
         subject.withErrorCode(VastErrorCode.GENERAL_COMPANION_AD_ERROR);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=600&contentplayhead=&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=600&contentplayhead=&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
 
         subject.withErrorCode(VastErrorCode.UNDEFINED_ERROR);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=900&contentplayhead=&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=900&contentplayhead=&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
     }
 
@@ -93,70 +95,70 @@ public class VastMacroHelperTest {
     public void withContentPlayHead_shouldFormatTime_shouldSetContentPlayHead() throws Exception {
         subject.withContentPlayHead(3600000);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=&contentplayhead=01:00:00.000&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=&contentplayhead=01:00:00.000&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
 
         subject.withContentPlayHead(360000000);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=&contentplayhead=100:00:00.000&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=&contentplayhead=100:00:00.000&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
 
         subject.withContentPlayHead(3599999);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=&contentplayhead=00:59:59.999&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=&contentplayhead=00:59:59.999&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
 
         subject.withContentPlayHead(59999);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=&contentplayhead=00:00:59.999&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=&contentplayhead=00:00:59.999&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
 
         subject.withContentPlayHead(999);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=&contentplayhead=00:00:00.999&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=&contentplayhead=00:00:00.999&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
 
         subject.withContentPlayHead(45296789);
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=&contentplayhead=12:34:56.789&asseturi=&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=&contentplayhead=12:34:56.789&asseturi=&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
     }
 
     @Test
     public void withAssetUri_shouldSetAssetUri() throws Exception {
-        final String expectedAssetUri = "http://thisIsAnAsset.Uri";
+        final String expectedAssetUri = "https://thisIsAnAsset.Uri";
         subject.withAssetUri(expectedAssetUri);
 
         assertThat(subject.getUris()).containsOnly(
-                "http://www.derp.com/herp?errorcode=&contentplayhead=&asseturi=http%3A%2F%2FthisIsAnAsset.Uri&cachebusting=" +
+                "https://www.derp.com/herp?errorcode=&contentplayhead=&asseturi=https%3A%2F%2FthisIsAnAsset.Uri&cachebusting=" +
                         getAndCheckCachebusting(subject.getUris().get(0)));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void withManyMacros_shouldReplaceAllOfThem() throws Exception {
-        final String multiUrl = "http://www.someurl.com/dosomething?[ERRORCODE][ERRORCODE][CONTENTPLAYHEAD][ERRORCODE][ASSETURI][CONTENTPLAYHEAD][ERRORCODE]";
+        final String multiUrl = "https://www.someurl.com/dosomething?[ERRORCODE][ERRORCODE][CONTENTPLAYHEAD][ERRORCODE][ASSETURI][CONTENTPLAYHEAD][ERRORCODE]";
         subject = new VastMacroHelper(Collections.singletonList(multiUrl))
                 .withAssetUri("asset")
                 .withContentPlayHead(100000)
                 .withErrorCode(VastErrorCode.UNDEFINED_ERROR);
 
         assertThat(subject.getUris()).containsOnly(
-                "http://www.someurl.com/dosomething?90090000:01:40.000900asset00:01:40.000900");
+                "https://www.someurl.com/dosomething?90090000:01:40.000900asset00:01:40.000900");
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void withSpecialCharactersInAsseturi_shouldUrlEncode() {
-        final String specialUrl = "http://www.someurl.com/somedirectory/somemethod?errorcode=[ERRORCODE]&asseturi=[ASSETURI]";
+        final String specialUrl = "https://www.someurl.com/somedirectory/somemethod?errorcode=[ERRORCODE]&asseturi=[ASSETURI]";
         subject = new VastMacroHelper(Collections.singletonList(specialUrl))
                 .withErrorCode(VastErrorCode.UNDEFINED_ERROR)
                 .withAssetUri(
-                        "http://aaddss.mmooppuubb.ccoomm:123/method?args=one~`!@#$%^&*()_+-[]{}|:,.<>/");
+                        "https://aaddss.mmooppuubb.ccoomm:123/method?args=one~`!@#$%^&*()_+-[]{}|:,.<>/");
 
         assertThat(subject.getUris()).containsOnly(
-                "http://www.someurl.com/somedirectory/somemethod?errorcode=900&asseturi=" +
-                        "http%3A%2F%2Faaddss.mmooppuubb.ccoomm%3A123%2Fmethod%3Fargs%3Done" +
+                "https://www.someurl.com/somedirectory/somemethod?errorcode=900&asseturi=" +
+                        "https%3A%2F%2Faaddss.mmooppuubb.ccoomm%3A123%2Fmethod%3Fargs%3Done" +
                         "%7E%60%21%40%23%24%25%5E%26*%28%29_%2B-%5B%5D%7B%7D%7C%3A%2C.%3C%3E%2F");
     }
 
@@ -174,11 +176,11 @@ public class VastMacroHelperTest {
 
         assertThat(subject.getUris().size()).isEqualTo(3);
         assertThat(subject.getUris().get(0)).isEqualTo(
-                "http://www.derp.com/herp?errorcode=900&contentplayhead=00:00:00.500&asseturi=https%3A%2F%2Fa.ss.et");
+                "https://www.derp.com/herp?errorcode=900&contentplayhead=00:00:00.500&asseturi=https%3A%2F%2Fa.ss.et");
         assertThat(subject.getUris().get(1)).isEqualTo(
-                "http://www.derp.com/herp?errorcode=900&contentplayhead=00:00:00.500&asseturi=https%3A%2F%2Fa.ss.et&asset2=https%3A%2F%2Fa.ss.et");
+                "https://www.derp.com/herp?errorcode=900&contentplayhead=00:00:00.500&asseturi=https%3A%2F%2Fa.ss.et&asset2=https%3A%2F%2Fa.ss.et");
         assertThat(subject.getUris().get(2)).isEqualTo(
-                "http://www.derp.com/herp?errorcode=900&contentplayhead=00:00:00.500&asseturi=https%3A%2F%2Fa.ss.et&cph2=00:00:00.500");
+                "https://www.derp.com/herp?errorcode=900&contentplayhead=00:00:00.500&asseturi=https%3A%2F%2Fa.ss.et&cph2=00:00:00.500");
     }
 
     @Test
@@ -205,7 +207,7 @@ public class VastMacroHelperTest {
     @Test
     @SuppressWarnings("unchecked")
     public void withNormalUri_shouldReturnUnchangedUri() {
-        final String normalUri = "http://www.thisisanormal.uri/with?some=query";
+        final String normalUri = "https://www.thisisanormal.uri/with?some=query";
         subject = new VastMacroHelper(Collections.singletonList(normalUri));
 
         assertThat(subject.getUris()).containsOnly(normalUri);

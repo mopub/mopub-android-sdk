@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
 
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.stub;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class AdTypeTranslatorTest {
     private String customEventName;
     private MoPubView moPubView;
@@ -118,7 +120,7 @@ public class AdTypeTranslatorTest {
 
     @Test
     public void getCustomEventName_withNativeFormat_shouldBeMoPubNative() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.NATIVE, AdType.NATIVE, null, headers);
+        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.NATIVE, AdType.STATIC_NATIVE, null, headers);
 
         assertThat(customEventName).isEqualTo("com.mopub.nativeads.MoPubCustomEventNative");
     }

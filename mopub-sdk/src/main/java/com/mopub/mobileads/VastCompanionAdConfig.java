@@ -129,7 +129,7 @@ public class VastCompanionAdConfig implements Serializable {
      *                               HTML, or an IFrame.
      */
     void handleClick(@NonNull final Context context, final int requestCode,
-            @Nullable final String webViewClickThroughUrl) {
+            @Nullable final String webViewClickThroughUrl, @Nullable final String dspCreativeId) {
         Preconditions.checkNotNull(context);
         Preconditions.checkArgument(context instanceof Activity, "context must be an activity");
 
@@ -157,6 +157,9 @@ public class VastCompanionAdConfig implements Serializable {
                             Bundle bundle = new Bundle();
                             bundle.putString(MoPubBrowser.DESTINATION_URL_KEY,
                                     url);
+                            if (!TextUtils.isEmpty(dspCreativeId)) {
+                                bundle.putString(MoPubBrowser.DSP_CREATIVE_ID, dspCreativeId);
+                            }
 
                             final Class clazz = MoPubBrowser.class;
                             final Intent intent = Intents.getStartActivityIntent(
@@ -175,6 +178,7 @@ public class VastCompanionAdConfig implements Serializable {
                             @NonNull UrlAction lastFailedUrlAction) {
                     }
                 })
+                .withDspCreativeId(dspCreativeId)
                 .withoutMoPubBrowser()
                 .build().handleUrl(context, correctClickThroughUrl);
     }

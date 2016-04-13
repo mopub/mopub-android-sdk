@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -11,9 +12,7 @@ import com.mopub.common.AdFormat;
 import com.mopub.common.AdUrlGenerator;
 import com.mopub.common.Constants;
 import com.mopub.common.DataKeys;
-import com.mopub.common.LocationService;
 import com.mopub.common.MediationSettings;
-import com.mopub.common.MoPub;
 import com.mopub.common.MoPubReward;
 import com.mopub.common.Preconditions;
 import com.mopub.common.logging.MoPubLog;
@@ -36,6 +35,8 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
+ * Handles requesting Rewarded Video ads and mapping Rewarded Video SDK settings to the CustomEvent
+ * that is being loaded.
  */
 public class MoPubRewardedVideoManager {
     private static MoPubRewardedVideoManager sInstance;
@@ -73,6 +74,21 @@ public class MoPubRewardedVideoManager {
             mVideoManager.onAdError(volleyError, adUnitId);
         }
     }
+
+    public static final class RequestParameters {
+        public final String mKeywords;
+        public final Location mLocation;
+
+        public RequestParameters(final String keywords) {
+            this(keywords, null);
+        }
+
+        public RequestParameters(final String keywords, final Location location) {
+            mKeywords = keywords;
+            mLocation = location;
+        }
+    }
+
 
     private MoPubRewardedVideoManager(@NonNull Activity mainActivity, MediationSettings... mediationSettings) {
         mMainActivity = new WeakReference<Activity>(mainActivity);
@@ -180,10 +196,13 @@ public class MoPubRewardedVideoManager {
      * method will not make a new request if there is already a video loading for this adUnitId.
      *
      * @param adUnitId MoPub adUnitId String
+     * @param requestParameters Optional RequestParameters object containing keywords and optional location value.
      * @param mediationSettings Optional instance-level MediationSettings to associate with the
      *                          above adUnitId.
      */
-    public static void loadVideo(@NonNull String adUnitId, @Nullable final MediationSettings... mediationSettings) {
+    public static void loadVideo(@NonNull final String adUnitId,
+            @Nullable final RequestParameters requestParameters,
+            @Nullable final MediationSettings... mediationSettings) {
         if (sInstance == null) {
             logErrorNotInitialized();
             return;
@@ -198,13 +217,8 @@ public class MoPubRewardedVideoManager {
 
         final AdUrlGenerator urlGenerator = new WebViewAdUrlGenerator(sInstance.mContext, false);
         final String adUrlString = urlGenerator.withAdUnitId(adUnitId)
-                .withLocation(
-                        LocationService.getLastKnownLocation(
-                                sInstance.mContext,
-                                MoPub.getLocationPrecision(),
-                                MoPub.getLocationAwareness()
-                        )
-                )
+                .withKeywords(requestParameters == null ? null : requestParameters.mKeywords)
+                .withLocation(requestParameters == null ? null : requestParameters.mLocation)
                 .generateUrlString(Constants.HOST);
 
         loadVideo(adUnitId, adUrlString);

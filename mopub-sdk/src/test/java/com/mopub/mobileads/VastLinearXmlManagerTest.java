@@ -6,6 +6,7 @@ import com.mopub.mobileads.test.support.VastUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 import org.w3c.dom.Node;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import static com.mopub.mobileads.test.support.VastUtils.createNode;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastLinearXmlManagerTest {
 
     private VastLinearXmlManager subject;
@@ -26,167 +28,167 @@ public class VastLinearXmlManagerTest {
                 "<TrackingEvents>" +
                 "    <Tracking event=\"creativeView\">" +
                 "        <![CDATA[" +
-                "        http://creativeView/one" +
+                "        https://creativeView/one" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"creativeView\">" +
                 "        <![CDATA[" +
-                "        http://creativeView/two" +
+                "        https://creativeView/two" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"start\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"progress\" offset=\"13%\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"progress\" offset=\"01:01:10.300\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 // Invalid tracking due to ambiguous offset.
                 "    <Tracking event=\"progress\" offset=\"01:01\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 // Invalid tracking due to a too-high percentage offset.
                 "    <Tracking event=\"progress\" offset=\"113%\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 // Invalid tracking due to a negative percentage offset.
                 "    <Tracking event=\"progress\" offset=\"-113%\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 // Invalid tracking due to a non-number offset
                 "    <Tracking event=\"progress\" offset=\"ten seconds\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"midpoint\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"midpoint\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.3;sz=1x1;ord=2922389?" +
+                "        https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.3;sz=1x1;ord=2922389?" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"firstQuartile\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=26;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=26;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"firstQuartile\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.2;sz=1x1;ord=2922389?" +
+                "        https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.2;sz=1x1;ord=2922389?" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"thirdQuartile\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=27;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=27;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"thirdQuartile\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.4;sz=1x1;ord=2922389?" +
+                "        https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.4;sz=1x1;ord=2922389?" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"complete\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=13;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=13;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"complete\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.5;sz=1x1;ord=2922389?" +
+                "        https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.5;sz=1x1;ord=2922389?" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"close\">" +
                 "        <![CDATA[" +
-                "        http://www.mopub.com/close?q=ignatius" +
+                "        https://www.mopub.com/close?q=ignatius" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"close\">" +
                 "        <![CDATA[" +
-                "        http://www.mopub.com/close?q=j3" +
+                "        https://www.mopub.com/close?q=j3" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"closeLinear\">" +
                 "        <![CDATA[" +
-                "        http://www.mopub.com/closeLinear" +
+                "        https://www.mopub.com/closeLinear" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"skip\">" +
                 "        <![CDATA[" +
-                "        http://www.mopub.com/skip?q=ignatius" +
+                "        https://www.mopub.com/skip?q=ignatius" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"skip\">" +
                 "        <![CDATA[" +
-                "        http://www.mopub.com/skip?q=j3" +
+                "        https://www.mopub.com/skip?q=j3" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"mute\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=16;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=16;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"pause\">" +
                 "        <![CDATA[" +
-                "        http://www.mopub.com/pause?num=1" +
+                "        https://www.mopub.com/pause?num=1" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"pause\">" +
                 "        <![CDATA[" +
-                "        http://www.mopub.com/pause?num=2" +
+                "        https://www.mopub.com/pause?num=2" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"resume\">" +
                 "        <![CDATA[" +
-                "        http://www.mopub.com/resume?num=1" +
+                "        https://www.mopub.com/resume?num=1" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"resume\">" +
                 "        <![CDATA[" +
-                "        http://www.mopub.com/resume?num=2" +
+                "        https://www.mopub.com/resume?num=2" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"fullscreen\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=19;ecn1=1;etm1=0;" +
+                "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=19;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "    <Tracking event=\"fullscreen\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.6;sz=1x1;ord=2922389?" +
+                "        https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.6;sz=1x1;ord=2922389?" +
                 "        ]]>" +
                 "    </Tracking>" +
                 "</TrackingEvents>" +
                 "<AdParameters/>" +
                 "<VideoClicks>" +
                 "    <ClickThrough>" +
-                "        <![CDATA[ http://www.google.com/support/richmedia ]]>" +
+                "        <![CDATA[ https://www.google.com/support/richmedia ]]>" +
                 "    </ClickThrough>" +
                 "    <ClickTracking id=\"DART\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/click%3Bh%3Dv8/3e1b/3/0/%2a/z%3B223626102%3B0-0%3B0%3B47414672%3B255-0/0%3B30477563/30495440/1%3B%3B%7Eaopt%3D0/0/ff/0%3B%7Esscs%3D%3fhttp://s0.2mdn.net/dot.gif" +
+                "        https://ad.doubleclick.net/click%3Bh%3Dv8/3e1b/3/0/%2a/z%3B223626102%3B0-0%3B0%3B47414672%3B255-0/0%3B30477563/30495440/1%3B%3B%7Eaopt%3D0/0/ff/0%3B%7Esscs%3D%3fhttp://s0.2mdn.net/dot.gif" +
                 "        ]]>" +
                 "    </ClickTracking>" +
                 "    <ClickTracking id=\"ThirdParty\">" +
                 "        <![CDATA[" +
-                "        http://ad.doubleclick.net/clk;212442087;33815766;i?http://www.google.com/support/richmedia" +
+                "        https://ad.doubleclick.net/clk;212442087;33815766;i?https://www.google.com/support/richmedia" +
                 "        ]]>" +
                 "    </ClickTracking>" +
                 "</VideoClicks>" +
@@ -194,13 +196,13 @@ public class VastLinearXmlManagerTest {
                 "    <MediaFile id=\"1\" delivery=\"progressive\" type=\"video/quicktime\" bitrate=\"457\"" +
                 "               width=\"300\" height=\"225\">" +
                 "        <![CDATA[" +
-                "        http://s3.amazonaws.com/uploads.hipchat.com/10627/429509/t8hqeqf98nvtir7/big_buck_bunny.mp4" +
+                "        https://s3.amazonaws.com/uploads.hipchat.com/10627/429509/t8hqeqf98nvtir7/big_buck_bunny.mp4" +
                 "        ]]>" +
                 "    </MediaFile>" +
                 "    <MediaFile id=\"2\" delivery=\"progressive\" type=\"video/quicktime\" bitrate=\"457\"" +
                 "               width=\"300\" height=\"225\">" +
                 "        <![CDATA[" +
-                "        http://s3.amazonaws.com/uploads.hipchat.com/10627/429509/t8hqeqf98nvtir7/big_buck_bunny_2.mp4" +
+                "        https://s3.amazonaws.com/uploads.hipchat.com/10627/429509/t8hqeqf98nvtir7/big_buck_bunny_2.mp4" +
                 "        ]]>" +
                 "    </MediaFile>" +
                 "</MediaFiles>" +
@@ -234,31 +236,31 @@ public class VastLinearXmlManagerTest {
 
         VastFractionalProgressTracker tracker0 = trackers.get(0);
         assertThat(tracker0.trackingFraction()).isEqualTo(0.13f);
-        assertThat(tracker0.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
+        assertThat(tracker0.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker1 = trackers.get(1);
         assertThat(tracker1.trackingFraction()).isEqualTo(0.25f);
-        assertThat(tracker1.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=26;ecn1=1;etm1=0;");
+        assertThat(tracker1.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=26;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker2 = trackers.get(2);
         assertThat(tracker2.trackingFraction()).isEqualTo(0.25f);
-        assertThat(tracker2.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.2;sz=1x1;ord=2922389?");
+        assertThat(tracker2.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.2;sz=1x1;ord=2922389?");
 
         VastFractionalProgressTracker tracker3 = trackers.get(3);
         assertThat(tracker3.trackingFraction()).isEqualTo(0.5f);
-        assertThat(tracker3.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;");
+        assertThat(tracker3.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker4 = trackers.get(4);
         assertThat(tracker4.trackingFraction()).isEqualTo(0.5f);
-        assertThat(tracker4.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.3;sz=1x1;ord=2922389?");
+        assertThat(tracker4.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.3;sz=1x1;ord=2922389?");
 
         VastFractionalProgressTracker tracker5 = trackers.get(5);
         assertThat(tracker5.trackingFraction()).isEqualTo(0.75f);
-        assertThat(tracker5.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=27;ecn1=1;etm1=0;");
+        assertThat(tracker5.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=27;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker6 = trackers.get(6);
         assertThat(tracker6.trackingFraction()).isEqualTo(0.75f);
-        assertThat(tracker6.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.4;sz=1x1;ord=2922389?");
+        assertThat(tracker6.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.4;sz=1x1;ord=2922389?");
     }
 
     @Test
@@ -270,19 +272,19 @@ public class VastLinearXmlManagerTest {
 
         VastAbsoluteProgressTracker tracker0 = trackers.get(0);
         assertThat(tracker0.getTrackingMilliseconds()).isEqualTo(0);
-        assertThat(tracker0.getTrackingUrl()).isEqualTo("http://creativeView/one");
+        assertThat(tracker0.getTrackingUrl()).isEqualTo("https://creativeView/one");
 
         VastAbsoluteProgressTracker tracker1 = trackers.get(1);
         assertThat(tracker1.getTrackingMilliseconds()).isEqualTo(0);
-        assertThat(tracker1.getTrackingUrl()).isEqualTo("http://creativeView/two");
+        assertThat(tracker1.getTrackingUrl()).isEqualTo("https://creativeView/two");
 
         VastAbsoluteProgressTracker tracker2 = trackers.get(2);
         assertThat(tracker2.getTrackingMilliseconds()).isEqualTo(2000);
-        assertThat(tracker2.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
+        assertThat(tracker2.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
 
         VastAbsoluteProgressTracker tracker3 = trackers.get(3);
         assertThat(tracker3.getTrackingMilliseconds()).isEqualTo(3670300);
-        assertThat(tracker3.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;" +
+        assertThat(tracker3.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;" +
                 "src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;" +
                 "rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
     }
@@ -291,17 +293,17 @@ public class VastLinearXmlManagerTest {
     public void getVideoCompleteTrackers_shouldReturnTheCorrectValue() {
         subject = new VastLinearXmlManager(linearNode);
         assertThat(VastUtils.vastTrackersToStrings(subject.getVideoCompleteTrackers()))
-                .containsOnly("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=13;ecn1=1;etm1=0;",
-                        "http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.5;sz=1x1;ord=2922389?");
+                .containsOnly("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=13;ecn1=1;etm1=0;",
+                        "https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.5;sz=1x1;ord=2922389?");
     }
 
     @Test
     public void getVideoCloseTrackers_shouldReturnTheCorrectValue() {
         subject = new VastLinearXmlManager(linearNode);
         assertThat(VastUtils.vastTrackersToStrings(subject.getVideoCloseTrackers()))
-                .containsOnly("http://www.mopub.com/close?q=ignatius",
-                        "http://www.mopub.com/close?q=j3",
-                        "http://www.mopub.com/closeLinear");
+                .containsOnly("https://www.mopub.com/close?q=ignatius",
+                        "https://www.mopub.com/close?q=j3",
+                        "https://www.mopub.com/closeLinear");
     }
 
     @Test
@@ -311,8 +313,8 @@ public class VastLinearXmlManagerTest {
             assertThat(vastTracker.isRepeatable());
         }
         assertThat(VastUtils.vastTrackersToStrings(subject.getPauseTrackers()))
-                .containsOnly("http://www.mopub.com/pause?num=1",
-                        "http://www.mopub.com/pause?num=2");
+                .containsOnly("https://www.mopub.com/pause?num=1",
+                        "https://www.mopub.com/pause?num=2");
     }
 
     @Test
@@ -322,16 +324,16 @@ public class VastLinearXmlManagerTest {
             assertThat(vastTracker.isRepeatable());
         }
         assertThat(VastUtils.vastTrackersToStrings(subject.getResumeTrackers()))
-                .containsOnly("http://www.mopub.com/resume?num=1",
-                        "http://www.mopub.com/resume?num=2");
+                .containsOnly("https://www.mopub.com/resume?num=1",
+                        "https://www.mopub.com/resume?num=2");
     }
 
     @Test
     public void getVideoSkipTrackers_shouldReturnTheCorrectValue() {
         subject = new VastLinearXmlManager(linearNode);
         assertThat(VastUtils.vastTrackersToStrings(subject.getVideoSkipTrackers()))
-                .containsOnly("http://www.mopub.com/skip?q=ignatius",
-                        "http://www.mopub.com/skip?q=j3");
+                .containsOnly("https://www.mopub.com/skip?q=ignatius",
+                        "https://www.mopub.com/skip?q=j3");
     }
 
     @Test
@@ -339,18 +341,18 @@ public class VastLinearXmlManagerTest {
         subject = new VastLinearXmlManager(linearNode);
         String url = subject.getClickThroughUrl();
 
-        assertThat(url).isEqualTo("http://www.google.com/support/richmedia");
+        assertThat(url).isEqualTo("https://www.google.com/support/richmedia");
     }
 
     @Test
     public void getClickTrackers_shouldReturnTheCorrectValue() {
         subject = new VastLinearXmlManager(linearNode);
         assertThat(VastUtils.vastTrackersToStrings(subject.getClickTrackers()))
-                .containsOnly("http://ad.doubleclick" +
+                .containsOnly("https://ad.doubleclick" +
                                 ".net/click%3Bh%3Dv8/3e1b/3/0/%2a/z%3B223626102%3B0-0%3B0" +
                                 "%3B47414672%3B255-0/0%3B30477563/30495440/1%3B%3B%7Eaopt%3D0/0" +
                                 "/ff/0%3B%7Esscs%3D%3fhttp://s0.2mdn.net/dot.gif",
-                        "http://ad.doubleclick.net/clk;212442087;33815766;i?http://www.google" +
+                        "https://ad.doubleclick.net/clk;212442087;33815766;i?https://www.google" +
                                 ".com/support/richmedia");
     }
 
@@ -391,9 +393,9 @@ public class VastLinearXmlManagerTest {
 
         assertThat(mediaXmlManagers.size()).isEqualTo(2);
 
-        assertThat(mediaXmlManagers.get(0).getMediaUrl()).isEqualTo("http://s3.amazonaws" +
+        assertThat(mediaXmlManagers.get(0).getMediaUrl()).isEqualTo("https://s3.amazonaws" +
                 ".com/uploads.hipchat.com/10627/429509/t8hqeqf98nvtir7/big_buck_bunny.mp4");
-        assertThat(mediaXmlManagers.get(1).getMediaUrl()).isEqualTo("http://s3.amazonaws" +
+        assertThat(mediaXmlManagers.get(1).getMediaUrl()).isEqualTo("https://s3.amazonaws" +
                 ".com/uploads.hipchat.com/10627/429509/t8hqeqf98nvtir7/big_buck_bunny_2.mp4");
     }
 
@@ -417,7 +419,7 @@ public class VastLinearXmlManagerTest {
                 "    <MediaFile id=\"1\" delivery=\"progressive\" type=\"video/quicktime\" bitrate=\"457\"" +
                 "               width=\"300\" height=\"225\">" +
                 "        <![CDATA[" +
-                "        http://s3.amazonaws.com/uploads.hipchat.com/10627/429509/t8hqeqf98nvtir7/big_buck_bunny.mp4" +
+                "        https://s3.amazonaws.com/uploads.hipchat.com/10627/429509/t8hqeqf98nvtir7/big_buck_bunny.mp4" +
                 "        ]]>" +
                 "    </MediaFile>" +
                 "</Linear>";

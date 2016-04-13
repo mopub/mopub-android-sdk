@@ -6,6 +6,8 @@ import android.graphics.Typeface;
 
 public class DrawableConstants {
 
+    public static final int TRANSPARENT_GRAY = 0x88000000;
+
     public static class ProgressBar {
         public static final int HEIGHT_DIPS = 4;
         public static final int NUGGET_WIDTH_DIPS = 4;
@@ -42,12 +44,12 @@ public class DrawableConstants {
     }
 
     public static class CtaButton {
-        public static final int WIDTH_DIPS = 200;
-        public static final int HEIGHT_DIPS = 42;
+        public static final int WIDTH_DIPS = 150;
+        public static final int HEIGHT_DIPS = 38;
         public static final int MARGIN_DIPS = 16;
         public static final int CORNER_RADIUS_DIPS = 6;
         public static final int OUTLINE_STROKE_WIDTH_DIPS = 2;
-        public static final float TEXT_SIZE_SP = 20f;
+        public static final float TEXT_SIZE_SP = 15f;
 
         public static final int BACKGROUND_COLOR = Color.BLACK;
         public static final int BACKGROUND_ALPHA = 51;
@@ -58,7 +60,7 @@ public class DrawableConstants {
         public static final Paint.Style OUTLINE_STYLE = Paint.Style.STROKE;
 
         public static final String DEFAULT_CTA_TEXT = "Learn More";
-        public static final Typeface TEXT_TYPEFACE = Typeface.create("Helvetica", Typeface.BOLD);
+        public static final Typeface TEXT_TYPEFACE = Typeface.create("Helvetica", Typeface.NORMAL);
         public static final int TEXT_COLOR = Color.WHITE;
         public static final Paint.Align TEXT_ALIGN = Paint.Align.CENTER;
     }
@@ -82,10 +84,20 @@ public class DrawableConstants {
     public static class GradientStrip {
         public static final int GRADIENT_STRIP_HEIGHT_DIPS = 72;
         public static final int START_COLOR = Color.argb(102, 0, 0, 0);
-        public static final int END_COLOR = Color.argb(0, 255, 255, 255);
+        public static final int END_COLOR = Color.argb(0, 0, 0, 0);
     }
 
     public static class BlurredLastVideoFrame {
-        public static final int ALPHA = 128;
+        public static final int ALPHA = 100;
+    }
+
+    public static class PrivacyInfoIcon {
+        public static final int LEFT_MARGIN_DIPS = 12;
+        public static final int TOP_MARGIN_DIPS = 12;
+    }
+
+    public static class SocialActions {
+        public static final int ADS_BY_LEFT_MARGIN_DIPS = 6;
+        public static final int SOCIAL_ACTIONS_LEFT_MARGIN_DIPS = 16;
     }
 }

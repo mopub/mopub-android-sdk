@@ -6,7 +6,7 @@ import com.mopub.common.Preconditions;
 
 /**
  * The various possible error codes for VAST that MoPub supports. See
- * http://www.iab.net/media/file/VASTv3.0.pdf for more information about the error codes.
+ * https://www.iab.net/media/file/VASTv3.0.pdf for more information about the error codes.
  */
 public enum VastErrorCode {
     /**

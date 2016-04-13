@@ -8,11 +8,15 @@ public class VastManagerFactory {
     protected static VastManagerFactory instance = new VastManagerFactory();
 
     public static VastManager create(final Context context) {
-        return instance.internalCreate(context);
+        return instance.internalCreate(context, true);
     }
 
-    public VastManager internalCreate(final Context context) {
-        return new VastManager(context);
+    public static VastManager create(final Context context, boolean preCacheVideo) {
+        return instance.internalCreate(context, preCacheVideo);
+    }
+
+    public VastManager internalCreate(final Context context, boolean preCacheVideo) {
+        return new VastManager(context, preCacheVideo);
     }
 
     @Deprecated // for testing

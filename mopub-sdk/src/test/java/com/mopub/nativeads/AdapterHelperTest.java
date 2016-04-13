@@ -4,16 +4,19 @@ import android.app.Activity;
 import android.content.Context;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class AdapterHelperTest {
     private AdapterHelper subject;
     private Activity context;
@@ -37,9 +40,8 @@ public class AdapterHelperTest {
     @Test
     public void getAdView_withNullActivityContext_shouldReturnEmptyViewWithApplicationContext() {
         subject.clearActivityContext();
-        Context viewContext = subject.getAdView(null, null, mock(NativeResponse.class),
-                mock(ViewBinder.class),
-                null).getContext();
+        Context viewContext = subject.getAdView(null, null, mock(NativeAd.class),
+                mock(ViewBinder.class)).getContext();
         assertThat(viewContext).isEqualTo(context.getApplication());
     }
 

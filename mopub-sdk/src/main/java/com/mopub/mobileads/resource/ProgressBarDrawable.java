@@ -63,6 +63,10 @@ public class ProgressBarDrawable extends BaseWidgetDrawable {
         }
     }
 
+    public void reset() {
+        mLastProgress = 0;
+    }
+
     public void setDurationAndSkipOffset(final int duration, final int skipOffset) {
         mDuration = duration;
         mSkipOffset = skipOffset;

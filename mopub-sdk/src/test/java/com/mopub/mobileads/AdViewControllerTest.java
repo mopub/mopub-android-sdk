@@ -30,12 +30,19 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.RuntimeEnvironment;
+import org.robolectric.Shadows;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 
 import java.util.Collections;
+import java.util.Map;
 
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -46,19 +53,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.robolectric.Robolectric.shadowOf;
+
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class AdViewControllerTest {
 
     private static final int[] HTML_ERROR_CODES = new int[]{400, 401, 402, 403, 404, 405, 407, 408,
             409, 410, 411, 412, 413, 414, 415, 416, 417, 500, 501, 502, 503, 504, 505};
 
     private AdViewController subject;
-    @Mock
-    private MoPubView mockMoPubView;
-    @Mock
-    private MoPubRequestQueue mockRequestQueue;
+    @Mock private MoPubView mockMoPubView;
+    @Mock private MoPubRequestQueue mockRequestQueue;
     private Reflection.MethodBuilder methodBuilder;
 
     private AdResponse response;
@@ -67,7 +73,7 @@ public class AdViewControllerTest {
     @Before
     public void setup() {
         activity = Robolectric.buildActivity(Activity.class).create().get();
-        shadowOf(activity).grantPermissions(android.Manifest.permission.ACCESS_NETWORK_STATE);
+        Shadows.shadowOf(activity).grantPermissions(android.Manifest.permission.ACCESS_NETWORK_STATE);
 
         when(mockMoPubView.getAdFormat()).thenReturn(AdFormat.BANNER);
         when(mockMoPubView.getContext()).thenReturn(activity);
@@ -106,25 +112,25 @@ public class AdViewControllerTest {
 
     @Test
     public void adDidFail_shouldScheduleRefreshTimer_shouldCallMoPubViewAdFailed() throws Exception {
-        Robolectric.pauseMainLooper();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        ShadowLooper.pauseMainLooper();
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
 
         subject.adDidFail(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
         verify(mockMoPubView).adFailed(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
     }
 
     @Test
     public void adDidFail_withNullMoPubView_shouldNotScheduleRefreshTimer_shouldNotCallMoPubViewAdFailed() throws Exception {
-        Robolectric.pauseMainLooper();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        ShadowLooper.pauseMainLooper();
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
 
         // This sets the MoPubView to null
         subject.cleanup();
         subject.adDidFail(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
         verify(mockMoPubView, never()).adFailed(any(MoPubErrorCode.class));
     }
 
@@ -133,40 +139,40 @@ public class AdViewControllerTest {
     public void scheduleRefreshTimer_shouldNotScheduleIfRefreshTimeIsNull() throws Exception {
         response = response.toBuilder().setRefreshTimeMilliseconds(null).build();
         subject.onAdLoadSuccess(response);
-        Robolectric.pauseMainLooper();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        ShadowLooper.pauseMainLooper();
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
 
         subject.scheduleRefreshTimerIfEnabled();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
     }
 
     @Test
     public void scheduleRefreshTimer_shouldNotScheduleIfRefreshTimeIsZero() {
         response = response.toBuilder().setRefreshTimeMilliseconds(0).build();
         subject.onAdLoadSuccess(response);
-        Robolectric.pauseMainLooper();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        ShadowLooper.pauseMainLooper();
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
 
         subject.scheduleRefreshTimerIfEnabled();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
     }
 
     @Test
     public void scheduleRefreshTimerIfEnabled_shouldCancelOldRefreshAndScheduleANewOne() throws Exception {
         response = response.toBuilder().setRefreshTimeMilliseconds(30).build();
         subject.onAdLoadSuccess(response);
-        Robolectric.pauseMainLooper();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        ShadowLooper.pauseMainLooper();
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
 
         subject.scheduleRefreshTimerIfEnabled();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
 
         subject.scheduleRefreshTimerIfEnabled();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
     }
 
     @Test
@@ -174,29 +180,29 @@ public class AdViewControllerTest {
         response = response.toBuilder().setRefreshTimeMilliseconds(30).build();
         subject.onAdLoadSuccess(response);
 
-        Robolectric.pauseMainLooper();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        ShadowLooper.pauseMainLooper();
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
 
         subject.forceSetAutorefreshEnabled(false);
 
         subject.scheduleRefreshTimerIfEnabled();
 
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
     }
 
     @Test
     public void scheduleRefreshTimer_whenAdViewControllerNotConfiguredByResponse_shouldHaveDefaultRefreshTime() throws Exception {
-        Robolectric.pauseMainLooper();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        ShadowLooper.pauseMainLooper();
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
 
         subject.scheduleRefreshTimerIfEnabled();
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
 
-        Robolectric.idleMainLooper(AdViewController.DEFAULT_REFRESH_TIME_MILLISECONDS - 1);
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        ShadowLooper.idleMainLooper(AdViewController.DEFAULT_REFRESH_TIME_MILLISECONDS - 1);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
 
-        Robolectric.idleMainLooper(1);
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        ShadowLooper.idleMainLooper(1);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
     }
 
     @Test
@@ -260,14 +266,14 @@ public class AdViewControllerTest {
     public void disablingAutoRefresh_shouldCancelRefreshTimers() throws Exception {
         response = response.toBuilder().setRefreshTimeMilliseconds(30).build();
         subject.onAdLoadSuccess(response);
-        Robolectric.pauseMainLooper();
+        ShadowLooper.pauseMainLooper();
 
         subject.loadAd();
         subject.forceSetAutorefreshEnabled(true);
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(1);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(1);
 
         subject.forceSetAutorefreshEnabled(false);
-        assertThat(Robolectric.getUiThreadScheduler().enqueuedTaskCount()).isEqualTo(0);
+        assertThat(Robolectric.getForegroundThreadScheduler().size()).isEqualTo(0);
     }
 
     @Test
@@ -308,8 +314,9 @@ public class AdViewControllerTest {
 
     @Test
     public void loadAd_shouldNotLoadWithoutConnectivity() throws Exception {
-        ConnectivityManager connectivityManager = (ConnectivityManager) Robolectric.application.getSystemService(Context.CONNECTIVITY_SERVICE);
-        shadowOf(connectivityManager.getActiveNetworkInfo()).setConnectionStatus(false);
+        ConnectivityManager connectivityManager = (ConnectivityManager) RuntimeEnvironment.application.getSystemService(Context.CONNECTIVITY_SERVICE);
+        Shadows.shadowOf(connectivityManager.getActiveNetworkInfo()).setConnectionStatus(false);
+        subject.setAdUnitId("adunit");
 
         subject.loadAd();
         verifyZeroInteractions(mockRequestQueue);
@@ -324,7 +331,7 @@ public class AdViewControllerTest {
 
     @Test
     public void loadNonJavascript_shouldFetchAd() throws Exception {
-        String url = "http://www.guy.com";
+        String url = "https://www.guy.com";
         subject.loadNonJavascript(url);
 
         verify(mockRequestQueue).add(argThat(isUrl(url)));
@@ -332,7 +339,7 @@ public class AdViewControllerTest {
 
     @Test
     public void loadNonJavascript_whenAlreadyLoading_shouldNotFetchAd() throws Exception {
-        String url = "http://www.guy.com";
+        String url = "https://www.guy.com";
         subject.loadNonJavascript(url);
         reset(mockRequestQueue);
         subject.loadNonJavascript(url);
@@ -348,7 +355,7 @@ public class AdViewControllerTest {
 
     @Test
     public void reload_shouldReuseOldUrl() throws Exception {
-        String url = "http://www.guy.com";
+        String url = "https://www.guy.com";
         subject.loadNonJavascript(url);
         subject.setNotLoading();
         reset(mockRequestQueue);
@@ -394,7 +401,7 @@ public class AdViewControllerTest {
             }
         }).start();
         ThreadUtils.pause(100);
-        Robolectric.runUiThreadTasks();
+        ShadowLooper.runUiThreadTasks();
 
         verify(mockMoPubView).removeAllViews();
         ArgumentCaptor<FrameLayout.LayoutParams> layoutParamsCaptor = ArgumentCaptor.forClass(FrameLayout.LayoutParams.class);
@@ -420,7 +427,7 @@ public class AdViewControllerTest {
             }
         }).start();
         ThreadUtils.pause(10);
-        Robolectric.runUiThreadTasks();
+        ShadowLooper.runUiThreadTasks();
 
         verify(mockMoPubView, never()).removeAllViews();
         verify(mockMoPubView, never()).addView(any(View.class), any(FrameLayout.LayoutParams.class));
@@ -567,6 +574,32 @@ public class AdViewControllerTest {
     }
 
     @Test
+    public void loadCustomEvent_shouldCallMoPubViewLoadCustomEvent() throws Exception {
+        Map serverExtras = mock(Map.class);
+        String customEventClassName = "customEventClassName";
+        subject.loadCustomEvent(mockMoPubView, customEventClassName, serverExtras);
+
+        verify(mockMoPubView).loadCustomEvent(customEventClassName, serverExtras);
+    }
+
+    @Test
+    public void loadCustomEvent_withNullMoPubView_shouldNotCallMoPubViewLoadCustomEvent() throws Exception {
+        Map serverExtras = mock(Map.class);
+        String customEventClassName = "customEventClassName";
+        subject.loadCustomEvent(null, customEventClassName, serverExtras);
+
+        verify(mockMoPubView, never()).loadCustomEvent(anyString(), anyMap());
+    }
+
+    @Test
+    public void loadCustomEvent_withNullCustomEventClassName_shouldCallMoPubViewLoadCustomEvent() throws Exception {
+        Map serverExtras = mock(Map.class);
+        subject.loadCustomEvent(mockMoPubView, null, serverExtras);
+
+        verify(mockMoPubView).loadCustomEvent(null, serverExtras);
+    }
+
+    @Test
     public void getErrorCodeFromVolleyError_whenNoConnection_shouldReturnErrorCodeNoConnection() {
         final VolleyError noConnectionError = new NoConnectionError();
 
@@ -582,7 +615,7 @@ public class AdViewControllerTest {
     public void getErrorCodeFromVolleyError_withNullResponse_whenConnectionValid_shouldReturnErrorCodeUnspecified() {
         final VolleyError noConnectionError = new NoConnectionError();
 
-        shadowOf(activity).grantPermissions(Manifest.permission.INTERNET);
+        Shadows.shadowOf(activity).grantPermissions(Manifest.permission.INTERNET);
         final MoPubErrorCode errorCode = AdViewController.getErrorCodeFromVolleyError(
                 noConnectionError, activity);
 

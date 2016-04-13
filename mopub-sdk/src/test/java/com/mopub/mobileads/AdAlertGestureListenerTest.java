@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.robolectric.annotation.Config;
 
 import static com.mopub.mobileads.AdAlertGestureListener.ZigZagState.FAILED;
 import static com.mopub.mobileads.AdAlertGestureListener.ZigZagState.FINISHED;
@@ -22,6 +23,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.stub;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class AdAlertGestureListenerTest {
     @Mock
     private View mockView;

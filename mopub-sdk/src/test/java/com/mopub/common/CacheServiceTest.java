@@ -3,6 +3,7 @@ package com.mopub.common;
 import android.app.Activity;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -26,6 +28,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class CacheServiceTest {
 
     private Activity context;
@@ -39,7 +42,7 @@ public class CacheServiceTest {
     @Before
     public void setUp() throws Exception {
         context = Robolectric.buildActivity(Activity.class).create().get();
-        key1 = "http://www.mopub.com/";
+        key1 = "https://www.mopub.com/";
         data1 = "image_data_1";
 
         semaphore = new Semaphore(0);

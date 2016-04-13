@@ -1,6 +1,6 @@
 package com.mopub.nativeads;
 
-import android.content.Context;
+import android.app.Activity;
 import android.support.annotation.NonNull;
 
 import java.util.Map;
@@ -20,37 +20,20 @@ public abstract class CustomEventNative {
      * native ad from a third-party ad network, or execute any application code. It must also notify
      * the provided {@link CustomEventNativeListener} Object of certain lifecycle events.
      *
-     * @param context The activity context.
+     * @param activity The activity.
      * @param customEventNativeListener An Object that must be notified of certain lifecycle
      * events.
      * @param localExtras A Map containing additional custom data that is set within your
-     * application by calling {@link MoPubNative#setLocalExtras(Map<String, Object>)}. Note that the
-     * localExtras Map is a copy of the Map supplied to {@link MoPubNative#setLocalExtras(Map<String,
-     * Object>)}.
+     * application by calling {@link MoPubNative#setLocalExtras(Map)}. Note that the
+     * localExtras Map is a copy of the Map supplied to {@link MoPubNative#setLocalExtras(Map)}.
      * @param serverExtras A Map containing additional custom data configurable on the MoPub website
      * that you want to associate with a given custom event request. This data may be used to pass
      * dynamic information, such as publisher IDs, without changes in application code.
      */
-    protected abstract void loadNativeAd(@NonNull final Context context,
+    protected abstract void loadNativeAd(@NonNull final Activity activity,
             @NonNull final CustomEventNativeListener customEventNativeListener,
             @NonNull final Map<String, Object> localExtras,
             @NonNull final Map<String, String> serverExtras);
-
-    public interface ImageListener {
-        /**
-         * Called when images are successfully cached. If you haven't already called {@link
-         * CustomEventNativeListener#onNativeAdLoaded}, you should typically do so now.
-         */
-        void onImagesCached();
-
-        /**
-         * Called when images failed to cache. You should typically call {@link
-         * CustomEventNativeListener#onNativeAdFailed} from this callback.
-         *
-         * @param errorCode An enum value with the relevant error message.
-         */
-        void onImagesFailedToCache(NativeErrorCode errorCode);
-    }
 
     public interface CustomEventNativeListener {
         /**
@@ -58,9 +41,9 @@ public abstract class CustomEventNative {
          * Failure to do so will disrupt the mediation waterfall and cause future ad requests to
          * stall.
          *
-         * @param nativeAd The ad that was succesfully loaded.
+         * @param nativeAd The ad that was successfully loaded.
          */
-        void onNativeAdLoaded(NativeAdInterface nativeAd);
+        void onNativeAdLoaded(BaseNativeAd nativeAd);
 
         /**
          * Your custom event subclass must call this method when it fails to load a native ad.

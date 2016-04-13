@@ -6,6 +6,7 @@ import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.widget.ImageView;
 
+import com.mopub.TestSdkHelper;
 import com.mopub.common.test.support.SdkTestRunner;
 
 import org.junit.Before;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastVideoBlurLastVideoFrameTaskTest {
     @Mock private MediaMetadataRetriever mockMediaMetadataRetriever;
     @Mock private ImageView mockBlurredLastVideoFrameImageView;
@@ -47,18 +49,18 @@ public class VastVideoBlurLastVideoFrameTaskTest {
                 mockBlurredLastVideoFrameImageView, videoDuration);
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.GINGERBREAD)
     @Test
     public void doInBackground_beforeGingerbreadMr1_shouldReturnFalse() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.GINGERBREAD);
         assertThat(subject.doInBackground(videoPath)).isFalse();
         verifyNoMoreInteractions(mockMediaMetadataRetriever);
         assertThat(subject.getBlurredLastVideoFrame()).isNull();
     }
 
     @TargetApi(Build.VERSION_CODES.GINGERBREAD_MR1)
-    @Config(reportSdk = Build.VERSION_CODES.GINGERBREAD_MR1)
     @Test
     public void doInBackground_atLeastGingerbreadMr1_shouldSetVideoPath_shouldUseVideoDurationMinusOffset_shouldReturnTrue() throws Exception {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.GINGERBREAD_MR1);
         assertThat(subject.doInBackground(videoPath)).isTrue();
         verify(mockMediaMetadataRetriever).setDataSource(videoPath);
         verify(mockMediaMetadataRetriever).getFrameAtTime(9800000,

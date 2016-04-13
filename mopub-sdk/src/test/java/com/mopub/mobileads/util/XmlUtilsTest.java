@@ -1,10 +1,12 @@
 package com.mopub.mobileads.util;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
@@ -24,11 +26,12 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class XmlUtilsTest {
 
     // From Microsoft's sample xml documents page: https://msdn.microsoft.com/en-us/library/bb387026.aspx
     private String testXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<aw:PurchaseOrders xmlns:aw=\"http://www.adventure-works.com\">\n" +
+            "<aw:PurchaseOrders xmlns:aw=\"https://www.adventure-works.com\">\n" +
             "  <aw:PurchaseOrder aw:PurchaseOrderNumber=\"99503\" aw:OrderDate=\"1999-10-20\">\n" +
             "    <aw:Address aw:Type=\"Shipping\">\n" +
             "      <aw:Name>Ellen Adams</aw:Name>\n" +

@@ -7,6 +7,7 @@ import com.mopub.mobileads.test.support.VastUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
@@ -17,9 +18,10 @@ import javax.xml.parsers.ParserConfigurationException;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastXmlManagerTest {
     private static final String XML_HEADER_TAG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-    private static final String TEST_VAST_XML_STRING = "<VAST xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" version=\"2.0\" xsi:noNamespaceSchemaLocation=\"vast.xsd\">" +
+    private static final String TEST_VAST_XML_STRING = "<VAST xmlns:xsi=\"https://www.w3.org/2001/XMLSchema-instance\" version=\"2.0\" xsi:noNamespaceSchemaLocation=\"vast.xsd\">" +
             "            <Ad id=\"223626102\">" +
             "                <InLine>" +
             "                    <AdSystem version=\"2.0\">DART_DFA</AdSystem>" +
@@ -28,12 +30,12 @@ public class VastXmlManagerTest {
             "                    <Survey/>" +
             "                    <Impression id=\"DART\">" +
             "                        <![CDATA[" +
-            "                        http://ad.doubleclick.net/imp;v7;x;223626102;0-0;0;47414672;0/0;30477563/30495440/1;;~aopt=0/0/ff/0;~cs=j%3fhttp://s0.2mdn.net/dot.gif" +
+            "                        https://ad.doubleclick.net/imp;v7;x;223626102;0-0;0;47414672;0/0;30477563/30495440/1;;~aopt=0/0/ff/0;~cs=j%3fhttp://s0.2mdn.net/dot.gif" +
             "                        ]]>" +
             "                    </Impression>" +
             "                    <Impression id=\"ThirdParty\">" +
             "                        <![CDATA[" +
-            "                        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145;sz=1x1;ord=2922389?" +
+            "                        https://ad.doubleclick.net/ad/N270.Process_Other/B3473145;sz=1x1;ord=2922389?" +
             "                        ]]>" +
             "                    </Impression>" +
             "                    <Creatives>" +
@@ -43,137 +45,137 @@ public class VastXmlManagerTest {
             "                                <TrackingEvents>" +
             "                                    <Tracking event=\"start\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"progress\" offset=\"13%\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"progress\" offset=\"01:01:10.300\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             // Invalid tracking due to ambiguous offset.
             "                                    <Tracking event=\"progress\" offset=\"01:01\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             // Invalid tracking due to a too-high percentage offset.
             "                                    <Tracking event=\"progress\" offset=\"113%\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             // Invalid tracking due to a negative percentage offset.
             "                                    <Tracking event=\"progress\" offset=\"-113%\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             // Invalid tracking due to a non-number offset
             "                                    <Tracking event=\"progress\" offset=\"ten seconds\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"midpoint\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"midpoint\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.3;sz=1x1;ord=2922389?" +
+            "                                        https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.3;sz=1x1;ord=2922389?" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"firstQuartile\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=26;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=26;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"firstQuartile\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.2;sz=1x1;ord=2922389?" +
+            "                                        https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.2;sz=1x1;ord=2922389?" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"thirdQuartile\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=27;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=27;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"thirdQuartile\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.4;sz=1x1;ord=2922389?" +
+            "                                        https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.4;sz=1x1;ord=2922389?" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"complete\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=13;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=13;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"complete\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.5;sz=1x1;ord=2922389?" +
+            "                                        https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.5;sz=1x1;ord=2922389?" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"close\">" +
             "                                        <![CDATA[" +
-            "                                        http://www.mopub.com/close?q=ignatius" +
+            "                                        https://www.mopub.com/close?q=ignatius" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"close\">" +
             "                                        <![CDATA[" +
-            "                                        http://www.mopub.com/close?q=j3" +
+            "                                        https://www.mopub.com/close?q=j3" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"skip\">" +
             "                                        <![CDATA[" +
-            "                                        http://www.mopub.com/skip?q=ignatius" +
+            "                                        https://www.mopub.com/skip?q=ignatius" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"skip\">" +
             "                                        <![CDATA[" +
-            "                                        http://www.mopub.com/skip?q=j3" +
+            "                                        https://www.mopub.com/skip?q=j3" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"mute\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=16;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=16;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"pause\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=15;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=15;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"fullscreen\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=19;ecn1=1;etm1=0;" +
+            "                                        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=19;ecn1=1;etm1=0;" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                    <Tracking event=\"fullscreen\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.6;sz=1x1;ord=2922389?" +
+            "                                        https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.6;sz=1x1;ord=2922389?" +
             "                                        ]]>" +
             "                                    </Tracking>" +
             "                                </TrackingEvents>" +
             "                                <AdParameters/>" +
             "                                <VideoClicks>" +
             "                                    <ClickThrough>" +
-            "                                        <![CDATA[ http://www.google.com/support/richmedia ]]>" +
+            "                                        <![CDATA[ https://www.google.com/support/richmedia ]]>" +
             "                                    </ClickThrough>" +
             "                                    <ClickTracking id=\"DART\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/click%3Bh%3Dv8/3e1b/3/0/%2a/z%3B223626102%3B0-0%3B0%3B47414672%3B255-0/0%3B30477563/30495440/1%3B%3B%7Eaopt%3D0/0/ff/0%3B%7Esscs%3D%3fhttp://s0.2mdn.net/dot.gif" +
+            "                                        https://ad.doubleclick.net/click%3Bh%3Dv8/3e1b/3/0/%2a/z%3B223626102%3B0-0%3B0%3B47414672%3B255-0/0%3B30477563/30495440/1%3B%3B%7Eaopt%3D0/0/ff/0%3B%7Esscs%3D%3fhttp://s0.2mdn.net/dot.gif" +
             "                                        ]]>" +
             "                                    </ClickTracking>" +
             "                                    <ClickTracking id=\"ThirdParty\">" +
             "                                        <![CDATA[" +
-            "                                        http://ad.doubleclick.net/clk;212442087;33815766;i?http://www.google.com/support/richmedia" +
+            "                                        https://ad.doubleclick.net/clk;212442087;33815766;i?https://www.google.com/support/richmedia" +
             "                                        ]]>" +
             "                                    </ClickTracking>" +
             "                                </VideoClicks>" +
@@ -181,7 +183,7 @@ public class VastXmlManagerTest {
             "                                    <MediaFile id=\"1\" delivery=\"progressive\" type=\"video/quicktime\" bitrate=\"457\"" +
             "                                               width=\"300\" height=\"225\">" +
             "                                        <![CDATA[" +
-            "                                        http://s3.amazonaws.com/uploads.hipchat.com/10627/429509/t8hqeqf98nvtir7/big_buck_bunny.mp4" +
+            "                                        https://s3.amazonaws.com/uploads.hipchat.com/10627/429509/t8hqeqf98nvtir7/big_buck_bunny.mp4" +
             "                                        ]]>" +
             "                                    </MediaFile>" +
             "                                </MediaFiles>" +
@@ -216,92 +218,92 @@ public class VastXmlManagerTest {
             "                        <Creative AdID=\"601364-Companion\">" +
             "                            <CompanionAds>" +
             "                               <Companion height=\"90\" width=\"728\">" +
-            "                                   <StaticResource creativeType=\"image/jpeg\">http://demo.tremormedia.com/proddev/vast/728x90_banner1.jpg</StaticResource>" +
-            "                                   <CompanionClickThrough>http://www.tremormedia.com</CompanionClickThrough>" +
+            "                                   <StaticResource creativeType=\"image/jpeg\">https://demo.tremormedia.com/proddev/vast/728x90_banner1.jpg</StaticResource>" +
+            "                                   <CompanionClickThrough>https://www.tremormedia.com</CompanionClickThrough>" +
             "                                   <BADTrackingEvents>" +
-            "                                       <Tracking event=\"creativeView\">http://myTrackingURL/firstCompanionCreativeView</Tracking>" +
-            "                                       <Tracking event=\"creativeView\">http://myTrackingURL/secondCompanionCreativeView</Tracking>" +
+            "                                       <Tracking event=\"creativeView\">https://myTrackingURL/firstCompanionCreativeView</Tracking>" +
+            "                                       <Tracking event=\"creativeView\">https://myTrackingURL/secondCompanionCreativeView</Tracking>" +
             "                                   </BADTrackingEvents>" +
             "                               </Companion>" +
             "                               <Companion id=\"valid\" height=\"250\" width=\"300\">" +
-            "                                   <StaticResource creativeType=\"image/png\">http://demo.tremormedia.com/proddev/vast/Blistex1.png</StaticResource>" +
+            "                                   <StaticResource creativeType=\"image/png\">https://demo.tremormedia.com/proddev/vast/Blistex1.png</StaticResource>" +
             "                                   <TrackingEvents>" +
-            "                                       <Tracking event=\"creativeView\">http://myTrackingURL/firstCompanionCreativeView</Tracking>" +
-            "                                       <Tracking event=\"creativeView\">http://myTrackingURL/secondCompanionCreativeView</Tracking>" +
+            "                                       <Tracking event=\"creativeView\">https://myTrackingURL/firstCompanionCreativeView</Tracking>" +
+            "                                       <Tracking event=\"creativeView\">https://myTrackingURL/secondCompanionCreativeView</Tracking>" +
             "                                   </TrackingEvents>" +
-            "                                   <CompanionClickThrough>http://www.tremormedia.com</CompanionClickThrough>" +
-            "                                   <CompanionClickTracking><![CDATA[http://companionClickTracking1]]></CompanionClickTracking>" +
+            "                                   <CompanionClickThrough>https://www.tremormedia.com</CompanionClickThrough>" +
+            "                                   <CompanionClickTracking><![CDATA[https://companionClickTracking1]]></CompanionClickTracking>" +
             "                               </Companion>" +
             "                               <Companion height=\"789\" width=\"456\">" +
             "                                   <StaticResource creativeType=\"image/bmp\">" +
             "                                       <![CDATA[" +
-            "                                           http://cdn.liverail.com/adasset/229/7969/300x250.bmp" +
+            "                                           https://cdn.liverail.com/adasset/229/7969/300x250.bmp" +
             "                                       ]]>" +
             "                                   </StaticResource>" +
             "                                   <TrackingEvents>" +
             "                                       <Tracking event=\"creativeView\">" +
             "                                           <![CDATA[" +
-            "                                               http://trackingUrl1.com/" +
+            "                                               https://trackingUrl1.com/" +
             "                                           ]]>" +
             "                                       </Tracking>" +
             "                                   </TrackingEvents>" +
             "                                   <CompanionClickThrough>" +
             "                                       <![CDATA[" +
-            "                                           http://clickThroughUrl1.com/" +
+            "                                           https://clickThroughUrl1.com/" +
             "                                       ]]>" +
             "                                   </CompanionClickThrough>" +
-            "                                   <CompanionClickTracking><![CDATA[http://companionClickTracking2]]></CompanionClickTracking>" +
+            "                                   <CompanionClickTracking><![CDATA[https://companionClickTracking2]]></CompanionClickTracking>" +
             "                               </Companion>" +
             "                               <Companion height=\"789\" width=\"1011\">" +
             "                                   <StaticResource creativeType=\"image/gif\">" +
             "                                       <![CDATA[" +
-            "                                           http://cdn.liverail.com/adasset/229/7969/300x250.gif" +
+            "                                           https://cdn.liverail.com/adasset/229/7969/300x250.gif" +
             "                                       ]]>" +
             "                                   </StaticResource>" +
             "                                   <CompanionClickThrough>" +
             "                                       <![CDATA[" +
-            "                                           http://clickThroughUrl2.com/" +
+            "                                           https://clickThroughUrl2.com/" +
             "                                       ]]>" +
             "                                   </CompanionClickThrough>" +
-            "                                   <CompanionClickTracking><![CDATA[http://companionClickTracking3]]></CompanionClickTracking>" +
+            "                                   <CompanionClickTracking><![CDATA[https://companionClickTracking3]]></CompanionClickTracking>" +
             "                               </Companion>" +
             "                               <Companion width=\"300\" height=\"60\">" +
             "                                   <StaticResource creativeType=\"application/x-shockwave-flash\">" +
             "                                       <![CDATA[" +
-            "                                           http://cdn.liverail.com/adasset4/1331/229/7969/5122396e510b80db6b5ef4013ddabe90.swf" +
+            "                                           https://cdn.liverail.com/adasset4/1331/229/7969/5122396e510b80db6b5ef4013ddabe90.swf" +
             "                                       ]]>" +
             "                                   </StaticResource>" +
             "                                   <TrackingEvents>" +
             "                                       <Tracking event=\"creativeView\">" +
             "                                           <![CDATA[" +
-            "                                               http://trackingUrl2.com/" +
+            "                                               https://trackingUrl2.com/" +
             "                                           ]]>" +
             "                                       </Tracking>" +
             "                                   </TrackingEvents>" +
             "                                   <CompanionClickThrough>" +
             "                                       <![CDATA[" +
-            "                                           http://clickThroughUrl3.com/" +
+            "                                           https://clickThroughUrl3.com/" +
             "                                       ]]>" +
             "                                   </CompanionClickThrough>" +
-            "                                   <CompanionClickTracking><![CDATA[http://companionClickTracking4]]></CompanionClickTracking>" +
+            "                                   <CompanionClickTracking><![CDATA[https://companionClickTracking4]]></CompanionClickTracking>" +
             "                               </Companion>" +
             "                               <Companion id=\"valid\" height=\"249\" width=\"299\">" +
-            "                                   <BADStaticResource creativeType=\"image/jpeg\">http://demo.tremormedia.com/proddev/vast/Blistex1.jpg</BADStaticResource>" +
+            "                                   <BADStaticResource creativeType=\"image/jpeg\">https://demo.tremormedia.com/proddev/vast/Blistex1.jpg</BADStaticResource>" +
             "                                   <TrackingEvents>" +
-            "                                           <Tracking event=\"creativeView\">http://myTrackingURL/firstCompanionCreativeView</Tracking>" +
-            "                                           <Tracking event=\"creativeView\">http://myTrackingURL/secondCompanionCreativeView</Tracking>" +
-            "                                           <BADTracking event=\"creativeView\">http://myTrackingURL/thirdCompanionCreativeView</BADTracking>" +
-            "                                           <Tracking BADevent=\"creativeView\">http://myTrackingURL/fourthCompanionCreativeView</Tracking>" +
-            "                                           <Tracking event=\"BADcreativeView\">http://myTrackingURL/fifthCompanionCreativeView</Tracking>" +
+            "                                           <Tracking event=\"creativeView\">https://myTrackingURL/firstCompanionCreativeView</Tracking>" +
+            "                                           <Tracking event=\"creativeView\">https://myTrackingURL/secondCompanionCreativeView</Tracking>" +
+            "                                           <BADTracking event=\"creativeView\">https://myTrackingURL/thirdCompanionCreativeView</BADTracking>" +
+            "                                           <Tracking BADevent=\"creativeView\">https://myTrackingURL/fourthCompanionCreativeView</Tracking>" +
+            "                                           <Tracking event=\"BADcreativeView\">https://myTrackingURL/fifthCompanionCreativeView</Tracking>" +
             "                                   </TrackingEvents>" +
-            "                                   <BADCompanionClickThrough>http://www.tremormedia.com</BADCompanionClickThrough>" +
-            "                                   <BADCompanionClickTracking><![CDATA[http://companionClickTracking5]]></BADCompanionClickTracking>" +
+            "                                   <BADCompanionClickThrough>https://www.tremormedia.com</BADCompanionClickThrough>" +
+            "                                   <BADCompanionClickTracking><![CDATA[https://companionClickTracking5]]></BADCompanionClickTracking>" +
             "                               </Companion>" +
             "                               <Companion width=\"9000\">" +
             "                                   <TrackingEvents>" +
             "                                       <ThisWillNotBeFound>" +
-            "                                           <Tracking event=\"creativeView\">http://myTrackingURL/firstCompanionCreativeView</Tracking>" +
-            "                                           <Tracking event=\"creativeView\">http://myTrackingURL/secondCompanionCreativeView</Tracking>" +
+            "                                           <Tracking event=\"creativeView\">https://myTrackingURL/firstCompanionCreativeView</Tracking>" +
+            "                                           <Tracking event=\"creativeView\">https://myTrackingURL/secondCompanionCreativeView</Tracking>" +
             "                                       </ThisWillNotBeFound>" +
             "                                   </TrackingEvents>" +
             "                               </Companion>" +
@@ -325,23 +327,30 @@ public class VastXmlManagerTest {
             "                        <Extension type=\"MoPub\">" +
             "                           <MoPubCtaText>custom CTA text</MoPubCtaText>" +
             "                           <MoPubSkipText>skip</MoPubSkipText>" +
-            "                           <MoPubCloseIcon>http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png</MoPubCloseIcon>" +
+            "                           <MoPubCloseIcon>https://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png</MoPubCloseIcon>" +
             "                           <MoPubForceOrientation>device</MoPubForceOrientation>" +
+            "                           <MoPubViewabilityTracker" +
+"                                           viewablePlaytime=\"2.5\"" +
+            "                               percentViewable=\"50%\">" +
+            "                               <![CDATA[" +
+            "                                   https://ad.server.com/impression/dot.gif" +
+            "                               ]]>" +
+            "                           </MoPubViewabilityTracker>" +
             "                        </Extension>" +
             "                    </Extensions>" +
             "                </InLine>" +
             "                <Wrapper>" +
             "                   <AdSystem>Acudeo Compatible</AdSystem>" +
-            "                   <VASTAdTagURI>http://0.dsp.dev1.mopub.com/xml</VASTAdTagURI>" +
-            "                   <Impression>http://myTrackingURL/wrapper/impression</Impression>" +
+            "                   <VASTAdTagURI>https://0.dsp.dev1.mopub.com/xml</VASTAdTagURI>" +
+            "                   <Impression>https://myTrackingURL/wrapper/impression</Impression>" +
             "                   <Creatives>" +
             "                   </Creatives>" +
             "                </Wrapper>" +
             "            </Ad>" +
             "        </VAST>" +
             "<MP_TRACKING_URLS>" +
-            "   <MP_TRACKING_URL>http://www.mopub.com/imp1</MP_TRACKING_URL>" +
-            "   <MP_TRACKING_URL>http://www.mopub.com/imp2</MP_TRACKING_URL>" +
+            "   <MP_TRACKING_URL>https://www.mopub.com/imp1</MP_TRACKING_URL>" +
+            "   <MP_TRACKING_URL>https://www.mopub.com/imp2</MP_TRACKING_URL>" +
             "</MP_TRACKING_URLS>";
 
     private VastXmlManager mXmlManager;
@@ -423,7 +432,7 @@ public class VastXmlManagerTest {
 
     @Test
     public void getAdXmlManagers_shouldReturnAllAdXmlManagers() throws Exception {
-        String vastXml = "<VAST xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" version=\"2.0\" xsi:noNamespaceSchemaLocation=\"vast.xsd\">" +
+        String vastXml = "<VAST xmlns:xsi=\"https://www.w3.org/2001/XMLSchema-instance\" version=\"2.0\" xsi:noNamespaceSchemaLocation=\"vast.xsd\">" +
                 "    <Ad id=\"12345678\">" +
                 "        <InLine></InLine>" +
                 "    </Ad>" +
@@ -446,7 +455,7 @@ public class VastXmlManagerTest {
     @Test
     public void getMoPubImpressionTrackers_shouldReturnTheCorrectValue() {
         assertThat(VastUtils.vastTrackersToStrings(mXmlManager.getMoPubImpressionTrackers()))
-                .containsOnly("http://www.mopub.com/imp1", "http://www.mopub.com/imp2");
+                .containsOnly("https://www.mopub.com/imp1", "https://www.mopub.com/imp2");
     }
 
     @Test
@@ -467,7 +476,7 @@ public class VastXmlManagerTest {
     public void getCustomCloseIconUrl_shouldReturnTheCorrectValue() {
         String customCloseIconUrl = mXmlManager.getCustomCloseIconUrl();
 
-        assertThat(customCloseIconUrl).isEqualTo("http://ton.twitter" +
+        assertThat(customCloseIconUrl).isEqualTo("https://ton.twitter" +
                 ".com/exchange-media/images/v4/star_icon_3x.png");
     }
 
@@ -486,17 +495,17 @@ public class VastXmlManagerTest {
     public void getVastAdTagURI_withWrapperXmlManager_shouldReturnTheCorrectValue() {
         String url = mXmlManager.getAdXmlManagers().get(0).getWrapperXmlManager().getVastAdTagURI();
 
-        assertThat(url).isEqualTo("http://0.dsp.dev1.mopub.com/xml");
+        assertThat(url).isEqualTo("https://0.dsp.dev1.mopub.com/xml");
     }
 
     @Test
     public void getImpressionTrackers_withInLineXmlManager_shouldReturnTheCorrectValue() {
         assertThat(VastUtils.vastTrackersToStrings(mXmlManager.getAdXmlManagers().get(0)
                 .getInLineXmlManager().getImpressionTrackers()))
-                .containsOnly("http://ad.doubleclick.net/imp;v7;x;223626102;0-0;0;47414672;0/0;" +
+                .containsOnly("https://ad.doubleclick.net/imp;v7;x;223626102;0-0;0;47414672;0/0;" +
                                 "30477563/30495440/1;;~aopt=0/0/ff/0;~cs=j%3fhttp://s0.2mdn" +
                                 ".net/dot.gif",
-                        "http://ad.doubleclick.net/ad/N270.Process_Other/B3473145;sz=1x1;ord=2922389?");
+                        "https://ad.doubleclick.net/ad/N270.Process_Other/B3473145;sz=1x1;ord=2922389?");
     }
 
     @Test
@@ -510,9 +519,9 @@ public class VastXmlManagerTest {
         assertThat(imageCompanionAdXmlManagers.get(0).getResourceXmlManager().getStaticResourceType())
                 .isEqualTo("image/jpeg");
         assertThat(imageCompanionAdXmlManagers.get(0).getResourceXmlManager().getStaticResource())
-                .isEqualTo("http://demo.tremormedia.com/proddev/vast/728x90_banner1.jpg");
+                .isEqualTo("https://demo.tremormedia.com/proddev/vast/728x90_banner1.jpg");
         assertThat(imageCompanionAdXmlManagers.get(0).getClickThroughUrl()).isEqualTo(
-                "http://www.tremormedia.com");
+                "https://www.tremormedia.com");
         assertThat(imageCompanionAdXmlManagers.get(0).getClickTrackers()).isEmpty();
 
         assertThat(imageCompanionAdXmlManagers.get(1).getWidth()).isEqualTo(300);
@@ -520,35 +529,35 @@ public class VastXmlManagerTest {
         assertThat(imageCompanionAdXmlManagers.get(1).getResourceXmlManager().getStaticResourceType())
                 .isEqualTo("image/png");
         assertThat(imageCompanionAdXmlManagers.get(1).getResourceXmlManager().getStaticResource())
-                .isEqualTo("http://demo.tremormedia.com/proddev/vast/Blistex1.png");
+                .isEqualTo("https://demo.tremormedia.com/proddev/vast/Blistex1.png");
         assertThat(imageCompanionAdXmlManagers.get(1).getClickThroughUrl()).isEqualTo(
-                "http://www.tremormedia.com");
+                "https://www.tremormedia.com");
         assertThat(VastUtils.vastTrackersToStrings(imageCompanionAdXmlManagers.get(1)
-                .getClickTrackers())).containsOnly("http://companionClickTracking1");
+                .getClickTrackers())).containsOnly("https://companionClickTracking1");
 
         assertThat(imageCompanionAdXmlManagers.get(2).getWidth()).isEqualTo(456);
         assertThat(imageCompanionAdXmlManagers.get(2).getHeight()).isEqualTo(789);
         assertThat(imageCompanionAdXmlManagers.get(2).getResourceXmlManager().getStaticResourceType())
                 .isEqualTo("image/bmp");
         assertThat(imageCompanionAdXmlManagers.get(2).getResourceXmlManager().getStaticResource())
-                .isEqualTo("http://cdn.liverail.com/adasset/229/7969/300x250.bmp");
+                .isEqualTo("https://cdn.liverail.com/adasset/229/7969/300x250.bmp");
         assertThat(imageCompanionAdXmlManagers.get(2).getClickThroughUrl())
-                .isEqualTo("http://clickThroughUrl1.com/");
+                .isEqualTo("https://clickThroughUrl1.com/");
         assertThat(VastUtils.vastTrackersToStrings(imageCompanionAdXmlManagers.get(2)
-                .getClickTrackers())).containsOnly("http://companionClickTracking2");
+                .getClickTrackers())).containsOnly("https://companionClickTracking2");
         assertThat(VastUtils.vastTrackersToStrings(imageCompanionAdXmlManagers.get(2)
-                .getCompanionCreativeViewTrackers())).containsOnly("http://trackingUrl1.com/");
+                .getCompanionCreativeViewTrackers())).containsOnly("https://trackingUrl1.com/");
 
         assertThat(imageCompanionAdXmlManagers.get(3).getWidth()).isEqualTo(1011);
         assertThat(imageCompanionAdXmlManagers.get(3).getHeight()).isEqualTo(789);
         assertThat(imageCompanionAdXmlManagers.get(3).getResourceXmlManager().getStaticResourceType())
                 .isEqualTo("image/gif");
         assertThat(imageCompanionAdXmlManagers.get(3).getResourceXmlManager().getStaticResource())
-                .isEqualTo("http://cdn.liverail.com/adasset/229/7969/300x250.gif");
+                .isEqualTo("https://cdn.liverail.com/adasset/229/7969/300x250.gif");
         assertThat(imageCompanionAdXmlManagers.get(3).getClickThroughUrl()).isEqualTo(
-                "http://clickThroughUrl2.com/");
+                "https://clickThroughUrl2.com/");
         assertThat(VastUtils.vastTrackersToStrings(imageCompanionAdXmlManagers.get(3)
-                .getClickTrackers())).containsOnly("http://companionClickTracking3");
+                .getClickTrackers())).containsOnly("https://companionClickTracking3");
         assertThat(imageCompanionAdXmlManagers.get(3).getCompanionCreativeViewTrackers()).isEmpty();
 
         assertThat(imageCompanionAdXmlManagers.get(4).getWidth()).isEqualTo(300);
@@ -557,13 +566,13 @@ public class VastXmlManagerTest {
                 .isEqualTo("application/x-shockwave-flash");
         assertThat(imageCompanionAdXmlManagers.get(4).getResourceXmlManager().getStaticResource())
                 .isEqualTo(
-                        "http://cdn.liverail.com/adasset4/1331/229/7969/5122396e510b80db6b5ef4013ddabe90.swf");
+                        "https://cdn.liverail.com/adasset4/1331/229/7969/5122396e510b80db6b5ef4013ddabe90.swf");
         assertThat(imageCompanionAdXmlManagers.get(4).getClickThroughUrl()).isEqualTo(
-                "http://clickThroughUrl3.com/");
+                "https://clickThroughUrl3.com/");
         assertThat(VastUtils.vastTrackersToStrings(imageCompanionAdXmlManagers.get(4)
-                .getClickTrackers())).containsOnly("http://companionClickTracking4");
+                .getClickTrackers())).containsOnly("https://companionClickTracking4");
         assertThat(VastUtils.vastTrackersToStrings(imageCompanionAdXmlManagers.get(4)
-                .getCompanionCreativeViewTrackers())).containsOnly("http://trackingUrl2.com/");
+                .getCompanionCreativeViewTrackers())).containsOnly("https://trackingUrl2.com/");
 
         assertThat(imageCompanionAdXmlManagers.get(5).getWidth()).isEqualTo(299);
         assertThat(imageCompanionAdXmlManagers.get(5).getHeight()).isEqualTo(249);
@@ -573,8 +582,8 @@ public class VastXmlManagerTest {
         assertThat(imageCompanionAdXmlManagers.get(5).getClickTrackers()).isEmpty();
         assertThat(VastUtils.vastTrackersToStrings(imageCompanionAdXmlManagers.get(5)
                 .getCompanionCreativeViewTrackers()))
-                .containsOnly("http://myTrackingURL/firstCompanionCreativeView",
-                        "http://myTrackingURL/secondCompanionCreativeView");
+                .containsOnly("https://myTrackingURL/firstCompanionCreativeView",
+                        "https://myTrackingURL/secondCompanionCreativeView");
 
         assertThat(imageCompanionAdXmlManagers.get(6).getWidth()).isEqualTo(9000);
         assertThat(imageCompanionAdXmlManagers.get(6).getHeight()).isNull();
@@ -594,11 +603,11 @@ public class VastXmlManagerTest {
 
         VastAbsoluteProgressTracker tracker0 = trackers.get(0);
         assertThat(tracker0.getTrackingMilliseconds()).isEqualTo(2000);
-        assertThat(tracker0.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
+        assertThat(tracker0.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
 
         VastAbsoluteProgressTracker tracker1 = trackers.get(1);
         assertThat(tracker1.getTrackingMilliseconds()).isEqualTo(3670300);
-        assertThat(tracker1.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;" +
+        assertThat(tracker1.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;" +
                 "src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;" +
                 "rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
     }
@@ -612,40 +621,40 @@ public class VastXmlManagerTest {
 
         VastFractionalProgressTracker tracker0 = trackers.get(0);
         assertThat(tracker0.trackingFraction()).isEqualTo(0.13f);
-        assertThat(tracker0.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
+        assertThat(tracker0.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker1 = trackers.get(1);
         assertThat(tracker1.trackingFraction()).isEqualTo(0.25f);
-        assertThat(tracker1.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=26;ecn1=1;etm1=0;");
+        assertThat(tracker1.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=26;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker2 = trackers.get(2);
         assertThat(tracker2.trackingFraction()).isEqualTo(0.25f);
-        assertThat(tracker2.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.2;sz=1x1;ord=2922389?");
+        assertThat(tracker2.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.2;sz=1x1;ord=2922389?");
 
         VastFractionalProgressTracker tracker3 = trackers.get(3);
         assertThat(tracker3.trackingFraction()).isEqualTo(0.5f);
-        assertThat(tracker3.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;");
+        assertThat(tracker3.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker4 = trackers.get(4);
         assertThat(tracker4.trackingFraction()).isEqualTo(0.5f);
-        assertThat(tracker4.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.3;sz=1x1;ord=2922389?");
+        assertThat(tracker4.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.3;sz=1x1;ord=2922389?");
 
         VastFractionalProgressTracker tracker5 = trackers.get(5);
         assertThat(tracker5.trackingFraction()).isEqualTo(0.75f);
-        assertThat(tracker5.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=27;ecn1=1;etm1=0;");
+        assertThat(tracker5.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=27;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker6 = trackers.get(6);
         assertThat(tracker6.trackingFraction()).isEqualTo(0.75f);
-        assertThat(tracker6.getTrackingUrl()).isEqualTo("http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.4;sz=1x1;ord=2922389?");
+        assertThat(tracker6.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.4;sz=1x1;ord=2922389?");
     }
 
     @Test
     public void getVideoCompleteTrackers_withLinearXmlManager_shouldReturnTheCorrectValue() {
         assertThat(VastUtils.vastTrackersToStrings(mXmlManager.getAdXmlManagers().get(0).getInLineXmlManager().getLinearXmlManagers().get(0).getVideoCompleteTrackers()))
-                .containsOnly("http://ad.doubleclick.net/activity;src=2215309;met=1;v=1;" +
+                .containsOnly("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;" +
                                 "pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;" +
                                 "timestamp=2922389;eid1=13;ecn1=1;etm1=0;",
-                        "http://ad.doubleclick.net/ad/N270.Process_Other/B3473145.5;sz=1x1;" +
+                        "https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.5;sz=1x1;" +
                                 "ord=2922389?");
     }
 
@@ -653,16 +662,16 @@ public class VastXmlManagerTest {
     public void getVideoCloseTrackers_withLinearXmlManager_shouldReturnTheCorrectValue() {
         assertThat(VastUtils.vastTrackersToStrings(mXmlManager.getAdXmlManagers().get(0)
                 .getInLineXmlManager().getLinearXmlManagers().get(0).getVideoCloseTrackers()))
-                .containsOnly("http://www.mopub.com/close?q=ignatius",
-                        "http://www.mopub.com/close?q=j3");
+                .containsOnly("https://www.mopub.com/close?q=ignatius",
+                        "https://www.mopub.com/close?q=j3");
     }
 
     @Test
     public void getVideoSkipTrackers_withLinearXmlManager_shouldReturnTheCorrectValue() {
         assertThat(VastUtils.vastTrackersToStrings(mXmlManager.getAdXmlManagers().get(0)
                 .getInLineXmlManager().getLinearXmlManagers().get(0).getVideoSkipTrackers()))
-                .containsOnly("http://www.mopub.com/skip?q=ignatius",
-                        "http://www.mopub.com/skip?q=j3");
+                .containsOnly("https://www.mopub.com/skip?q=ignatius",
+                        "https://www.mopub.com/skip?q=j3");
     }
 
     @Test
@@ -670,14 +679,14 @@ public class VastXmlManagerTest {
         String url = mXmlManager.getAdXmlManagers().get(0)
                 .getInLineXmlManager().getLinearXmlManagers().get(0).getClickThroughUrl();
 
-        assertThat(url).isEqualTo("http://www.google.com/support/richmedia");
+        assertThat(url).isEqualTo("https://www.google.com/support/richmedia");
     }
 
     @Test
     public void getClickTrackers_withLinearXmlManager_shouldReturnTheCorrectValue() {
         assertThat(VastUtils.vastTrackersToStrings(mXmlManager.getAdXmlManagers().get(0).getInLineXmlManager().getLinearXmlManagers().get(0).getClickTrackers()))
-                .containsOnly("http://ad.doubleclick.net/click%3Bh%3Dv8/3e1b/3/0/%2a/z%3B223626102%3B0-0%3B0%3B47414672%3B255-0/0%3B30477563/30495440/1%3B%3B%7Eaopt%3D0/0/ff/0%3B%7Esscs%3D%3fhttp://s0.2mdn.net/dot.gif",
-                        "http://ad.doubleclick.net/clk;212442087;33815766;i?http://www.google.com/support/richmedia");
+                .containsOnly("https://ad.doubleclick.net/click%3Bh%3Dv8/3e1b/3/0/%2a/z%3B223626102%3B0-0%3B0%3B47414672%3B255-0/0%3B30477563/30495440/1%3B%3B%7Eaopt%3D0/0/ff/0%3B%7Esscs%3D%3fhttp://s0.2mdn.net/dot.gif",
+                        "https://ad.doubleclick.net/clk;212442087;33815766;i?https://www.google.com/support/richmedia");
     }
 
     @Test
@@ -693,7 +702,7 @@ public class VastXmlManagerTest {
         String url = mXmlManager.getAdXmlManagers().get(0).getInLineXmlManager()
                 .getLinearXmlManagers().get(0).getMediaXmlManagers().get(0).getMediaUrl();
 
-        assertThat(url).isEqualTo("http://s3.amazonaws.com/uploads.hipchat" +
+        assertThat(url).isEqualTo("https://s3.amazonaws.com/uploads.hipchat" +
                 ".com/10627/429509/t8hqeqf98nvtir7/big_buck_bunny.mp4");
     }
 }

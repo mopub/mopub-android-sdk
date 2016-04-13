@@ -1,5 +1,6 @@
 package com.mopub.common.util;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
@@ -8,16 +9,20 @@ import android.view.Surface;
 
 import com.mopub.common.CreativeOrientation;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.test.support.MoPubShadowDisplay;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.Shadows;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class DeviceUtilsTest {
 
     private Activity testActivity;
@@ -131,5 +136,29 @@ public class DeviceUtilsTest {
 
         DeviceUtils.lockOrientation(testActivity, CreativeOrientation.PORTRAIT);
         assertThat(testActivity.getRequestedOrientation()).isEqualTo(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+    }
+
+    @Test
+    public void isPermissionGranted_withPermissionGranted_shouldReturnTrue() {
+        Shadows.shadowOf(testActivity).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION);
+
+        assertThat(DeviceUtils.isPermissionGranted(testActivity, Manifest.permission.ACCESS_FINE_LOCATION)).isTrue();
+    }
+
+    @Test
+    public void isPermissionGranted_withPermissionNotGranted_shouldReturnFalse() {
+        Shadows.shadowOf(testActivity).grantPermissions(Manifest.permission.ACCESS_COARSE_LOCATION);
+
+        assertThat(DeviceUtils.isPermissionGranted(testActivity, Manifest.permission.ACCESS_FINE_LOCATION)).isFalse();
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void isPermissionGranted_withNullContext_shouldThrowNPE() {
+        DeviceUtils.isPermissionGranted(null, Manifest.permission.INTERNET);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void isPermissionGranted_withNullPermission_shouldThrowNPE() {
+        DeviceUtils.isPermissionGranted(testActivity, null);
     }
 }

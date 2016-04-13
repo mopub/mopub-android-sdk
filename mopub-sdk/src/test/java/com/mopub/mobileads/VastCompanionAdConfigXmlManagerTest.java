@@ -6,12 +6,14 @@ import com.mopub.mobileads.test.support.VastUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 import org.w3c.dom.Node;
 
 import static com.mopub.mobileads.test.support.VastUtils.createNode;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastCompanionAdConfigXmlManagerTest {
 
     private VastCompanionAdXmlManager subject;
@@ -20,19 +22,19 @@ public class VastCompanionAdConfigXmlManagerTest {
     @Before
     public void setup() throws Exception {
         String companionXml = "<Companion id=\"valid\" height=\"250\" width=\"300\">" +
-                "    <StaticResource creativeType=\"image/png\">http://pngimage</StaticResource>" +
+                "    <StaticResource creativeType=\"image/png\">https://pngimage</StaticResource>" +
                 "    <TrackingEvents>" +
-                "        <Tracking event=\"creativeView\">http://tracking/creativeView1</Tracking>" +
-                "        <Tracking event=\"creativeView\">http://tracking/creativeView2</Tracking>" +
-                "        <Tracking event=\"creativeView\">http://tracking/creativeView3</Tracking>" +
+                "        <Tracking event=\"creativeView\">https://tracking/creativeView1</Tracking>" +
+                "        <Tracking event=\"creativeView\">https://tracking/creativeView2</Tracking>" +
+                "        <Tracking event=\"creativeView\">https://tracking/creativeView3</Tracking>" +
                 "    </TrackingEvents>" +
-                "    <CompanionClickThrough>http://clickthrough</CompanionClickThrough>" +
-                "    <CompanionClickThrough>http://second_clickthrough</CompanionClickThrough>" +
+                "    <CompanionClickThrough>https://clickthrough</CompanionClickThrough>" +
+                "    <CompanionClickThrough>https://second_clickthrough</CompanionClickThrough>" +
                 "    <CompanionClickTracking>" +
-                "        <![CDATA[http://clicktrackingOne]]>" +
+                "        <![CDATA[https://clicktrackingOne]]>" +
                 "    </CompanionClickTracking>" +
                 "    <CompanionClickTracking>" +
-                "        <![CDATA[http://clicktrackingTwo]]>" +
+                "        <![CDATA[https://clicktrackingTwo]]>" +
                 "    </CompanionClickTracking>" +
                 "    <RandomUnusedTag>This_is_unused</RandomUnusedTag>" +
                 "</Companion>";
@@ -76,19 +78,19 @@ public class VastCompanionAdConfigXmlManagerTest {
     @Test
     public void getResourceXmlManager_shouldReturnVastResourceXmlManager() throws Exception {
         VastResourceXmlManager resourceXmlManager = subject.getResourceXmlManager();
-        assertThat(resourceXmlManager.getStaticResource()).isEqualTo("http://pngimage");
+        assertThat(resourceXmlManager.getStaticResource()).isEqualTo("https://pngimage");
         assertThat(resourceXmlManager.getStaticResourceType()).isEqualTo("image/png");
     }
 
     @Test
     public void getClickThroughUrl_shouldReturnFirstStringUrl() {
-        assertThat(subject.getClickThroughUrl()).isEqualTo("http://clickthrough");
+        assertThat(subject.getClickThroughUrl()).isEqualTo("https://clickthrough");
     }
 
     @Test
     public void getClickTrackers_shouldReturnAllUrls() {
         assertThat(VastUtils.vastTrackersToStrings(subject.getClickTrackers()))
-                .containsOnly("http://clicktrackingOne",
-                        "http://clicktrackingTwo");
+                .containsOnly("https://clicktrackingOne",
+                        "https://clicktrackingTwo");
     }
 }

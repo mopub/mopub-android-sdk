@@ -3,6 +3,7 @@ package com.mopub.network;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.mopub.common.event.EventDetails;
 import com.mopub.common.util.DateAndTime;
 
 import org.json.JSONObject;
@@ -55,6 +56,9 @@ public class AdResponse implements Serializable {
     private final JSONObject mJsonBody;
 
     @Nullable
+    private final EventDetails mEventDetails;
+
+    @Nullable
     private final String mCustomEventClassName;
     @NonNull
     private final Map<String, String> mServerExtras;
@@ -80,6 +84,7 @@ public class AdResponse implements Serializable {
         mScrollable = builder.scrollable;
         mResponseBody = builder.responseBody;
         mJsonBody = builder.jsonBody;
+        mEventDetails = builder.eventDetails;
         mCustomEventClassName = builder.customEventClassName;
         mServerExtras = builder.serverExtras;
         mTimestamp = DateAndTime.now().getTime();
@@ -92,6 +97,11 @@ public class AdResponse implements Serializable {
     @Nullable
     public JSONObject getJsonBody() {
         return mJsonBody;
+    }
+
+    @Nullable
+    public EventDetails getEventDetails() {
+        return mEventDetails;
     }
 
     @Nullable
@@ -203,6 +213,7 @@ public class AdResponse implements Serializable {
                 .setScrollable(mScrollable)
                 .setResponseBody(mResponseBody)
                 .setJsonBody(mJsonBody)
+                .setEventDetails(mEventDetails)
                 .setCustomEventClassName(mCustomEventClassName)
                 .setServerExtras(mServerExtras);
     }
@@ -229,6 +240,8 @@ public class AdResponse implements Serializable {
 
         private String responseBody;
         private JSONObject jsonBody;
+
+        private EventDetails eventDetails;
 
         private String customEventClassName;
         private Map<String, String> serverExtras = new TreeMap<String, String>();
@@ -312,6 +325,11 @@ public class AdResponse implements Serializable {
 
         public Builder setJsonBody(@Nullable final JSONObject jsonBody) {
             this.jsonBody = jsonBody;
+            return this;
+        }
+
+        public Builder setEventDetails(@Nullable final EventDetails eventDetails) {
+            this.eventDetails = eventDetails;
             return this;
         }
 

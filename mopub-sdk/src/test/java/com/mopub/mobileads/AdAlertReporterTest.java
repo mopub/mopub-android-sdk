@@ -18,6 +18,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,6 +37,7 @@ import static org.mockito.Mockito.stub;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class AdAlertReporterTest {
     private final static String EMAIL_ADDRESS = "creative-review@mopub.com";
     private AdAlertReporter subject;
@@ -193,7 +196,7 @@ public class AdAlertReporterTest {
         subject = new AdAlertReporter(Robolectric.buildActivity(Activity.class).create().get(), mockView, mockAdReport);
         subject.send();
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_CHOOSER);
         assertThat(intent.getStringExtra(Intent.EXTRA_TITLE)).isEqualTo("Send Email...");
         assertThat(intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0);

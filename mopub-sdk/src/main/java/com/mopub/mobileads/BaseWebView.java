@@ -33,6 +33,22 @@ public class BaseWebView extends WebView {
             clearWebViewDeadlock(getContext());
             sDeadlockCleared = true;
         }
+
+        /*
+         * Disabling file access and content access prevents advertising creatives from
+         * detecting the presence of, or reading, files on the device filesystem.
+         */
+
+        getSettings().setAllowFileAccess(false);
+
+        if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
+            getSettings().setAllowContentAccess(false);
+        }
+
+        if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN) {
+            getSettings().setAllowFileAccessFromFileURLs(false);
+            getSettings().setAllowUniversalAccessFromFileURLs(false);
+        }
     }
 
     protected void enablePlugins(final boolean enabled) {

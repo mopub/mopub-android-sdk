@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 
+import com.mopub.common.AdReport;
 import com.mopub.common.CacheServiceTest;
 import com.mopub.common.DataKeys;
 import com.mopub.common.test.support.SdkTestRunner;
@@ -11,17 +12,20 @@ import com.mopub.mobileads.test.support.TestHttpResponseWithHeaders;
 import com.mopub.mobileads.test.support.TestVastManagerFactory;
 import com.mopub.mobileads.test.support.VastUtils;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.robolectric.Robolectric;
-import org.robolectric.shadows.ShadowLocalBroadcastManager;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.httpclient.FakeHttp;
+import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mopub.common.DataKeys.AD_REPORT_KEY;
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
@@ -36,11 +40,12 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
     private Context context;
     private CustomEventInterstitialListener customEventInterstitialListener;
@@ -52,15 +57,17 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
     private String videoUrl;
     private long broadcastIdentifier;
 
+    @Mock AdReport mockAdReport;
+
     @Before
     public void setUp() throws Exception {
         subject = new VastVideoInterstitial();
 
         vastManager = TestVastManagerFactory.getSingletonMock();
         expectedResponse = "<VAST>hello</VAST>";
-        videoUrl = "http://www.video.com";
+        videoUrl = "https://www.video.com";
 
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         customEventInterstitialListener = mock(CustomEventInterstitialListener.class);
         localExtras = new HashMap<String, Object>();
         serverExtras = new HashMap<String, String>();
@@ -70,6 +77,8 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
 
         broadcastIdentifier = 2222;
         localExtras.put(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
+        when(mockAdReport.getDspCreativeId()).thenReturn("dsp_creative_id");
+        localExtras.put(AD_REPORT_KEY, mockAdReport);
     }
 
     @Test
@@ -81,7 +90,7 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
         verify(customEventInterstitialListener).onInterstitialFailed(
                 eq(MoPubErrorCode.VIDEO_CACHE_ERROR));
         verify(vastManager, never()).prepareVastVideoConfiguration(anyString(),
-                any(VastManagerListener.class), any(Context.class));
+                any(VastManagerListener.class), any(String.class), any(Context.class));
     }
 
     @Test
@@ -93,7 +102,7 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
 
     @Test
     public void loadInterstitial_shouldInitializeDiskCache() throws Exception {
-        Robolectric.addPendingHttpResponse(response);
+        FakeHttp.addPendingHttpResponse(response);
 
         CacheServiceTest.assertDiskCacheIsUninitialized();
         subject.loadInterstitial(context, customEventInterstitialListener, localExtras, serverExtras);
@@ -105,7 +114,7 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
         subject.loadInterstitial(context, customEventInterstitialListener, localExtras, serverExtras);
 
         verify(vastManager).prepareVastVideoConfiguration(eq(expectedResponse),
-                eq((VastVideoInterstitial) subject), eq(context));
+                eq((VastVideoInterstitial) subject), eq("dsp_creative_id"), eq(context));
     }
 
     @Test
@@ -116,7 +125,7 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
 
         verify(customEventInterstitialListener).onInterstitialFailed(NETWORK_INVALID_STATE);
         verify(vastManager, never()).prepareVastVideoConfiguration(anyString(),
-                any(VastManagerListener.class), any(Context.class));
+                any(VastManagerListener.class), any(String.class), any(Context.class));
     }
 
     @Test

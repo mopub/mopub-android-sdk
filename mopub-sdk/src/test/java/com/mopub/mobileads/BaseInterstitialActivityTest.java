@@ -13,11 +13,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class BaseInterstitialActivityTest {
     private BaseInterstitialActivity subject;
     private long broadcastIdentifier;

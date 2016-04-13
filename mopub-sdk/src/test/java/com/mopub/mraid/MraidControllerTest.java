@@ -11,11 +11,13 @@ import android.os.Build;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import com.mopub.TestSdkHelper;
 import com.mopub.common.AdReport;
 import com.mopub.common.CloseableLayout.ClosePosition;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Utils;
 import com.mopub.mobileads.BaseVideoPlayerActivityTest;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.MraidVideoPlayerActivity;
 import com.mopub.mraid.MraidBridge.MraidBridgeListener;
 import com.mopub.mraid.MraidBridge.MraidWebView;
@@ -35,7 +37,9 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowApplication;
 
 import java.net.URI;
 
@@ -54,6 +58,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class MraidControllerTest {
     private long broadcastIdentifier = 123;
     @Mock private AdReport mockAdReport;
@@ -74,7 +79,7 @@ public class MraidControllerTest {
 
     @Before
     public void setUp() {
-        Robolectric.setDisplayMetricsDensity(1.0f);
+        ShadowApplication.setDisplayMetricsDensity(1.0f);
 
         activity = spy(Robolectric.buildActivity(Activity.class).create().get());
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -383,11 +388,11 @@ public class MraidControllerTest {
         // Move to DEFAULT state
         subject.handlePageLoad();
 
-        subject.handleExpand(URI.create("http://two-part-url"), false);
+        subject.handleExpand(URI.create("https://two-part-url"), false);
 
         verify(mockTwoPartBridge).setMraidBridgeListener(any(MraidBridgeListener.class));
         verify(mockTwoPartBridge).attachView(any(MraidWebView.class));
-        verify(mockTwoPartBridge).setContentUrl(URI.create("http://two-part-url").toString());
+        verify(mockTwoPartBridge).setContentUrl(URI.create("https://two-part-url").toString());
 
         assertThat(subject.getExpandedAdContainer().getChildCount()).isEqualTo(2);
         assertThat(subject.getAdContainer().getChildCount()).isEqualTo(1);
@@ -420,7 +425,7 @@ public class MraidControllerTest {
     @Test
     public void handleClose_fromTwoPartExpandedState_shouldDetachTwoPartBridge_shouldMoveWebViewToOriginalContainer_shouldNotFireOnClose()
             throws MraidCommandException {
-        URI uri = URI.create("http://two-part-url");
+        URI uri = URI.create("https://two-part-url");
 
         // Move to two part EXPANDED state
         subject.handlePageLoad();
@@ -453,9 +458,9 @@ public class MraidControllerTest {
 
     @Test
     public void handleShowVideo_shouldStartVideoPlayerActivity() {
-        subject.handleShowVideo("http://video");
+        subject.handleShowVideo("https://video");
         BaseVideoPlayerActivityTest.assertMraidVideoPlayerActivityStarted(
-                MraidVideoPlayerActivity.class, "http://video");
+                MraidVideoPlayerActivity.class, "https://video");
     }
 
     @Test
@@ -483,7 +488,7 @@ public class MraidControllerTest {
     public void handleOpen_withMoPubNativeBrowserUrl_shouldOpenExternalBrowser() {
         subject.handleOpen("mopubnativebrowser://navigate?url=https%3A%2F%2Fwww.example.com");
 
-        Intent intent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(intent.getDataString()).isEqualTo("https://www.example.com");
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
     }
@@ -493,18 +498,18 @@ public class MraidControllerTest {
         // invalid host parameter 'nav'
         subject.handleOpen("mopubnativebrowser://nav?url=https%3A%2F%2Fwww.example.com");
 
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
     public void handleOpen_withApplicationUrl_shouldStartNewIntent() {
         String applicationUrl = "amzn://blah";
-        Robolectric.packageManager.addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW, Uri
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW, Uri
                 .parse(applicationUrl)), new ResolveInfo());
 
         subject.handleOpen(applicationUrl);
 
-        Intent startedIntent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedIntent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedIntent).isNotNull();
         // Since we are not using an Activity context, we should have FLAG_ACTIVITY_NEW_TASK
         assertThat(Utils.bitMaskContainsFlag(startedIntent.getFlags(),
@@ -516,12 +521,12 @@ public class MraidControllerTest {
 
     @Test
     public void handleOpen_withHttpApplicationUrl_shouldStartMoPubBrowser() {
-        String applicationUrl = "http://www.mopub.com/";
+        String applicationUrl = "https://www.mopub.com/";
 
         subject.handleOpen(applicationUrl);
 
-        Robolectric.runBackgroundTasks();
-        Intent startedIntent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
+        Intent startedIntent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedIntent).isNotNull();
         // Since we are not using an Activity context, we should have FLAG_ACTIVITY_NEW_TASK
         assertThat(Utils.bitMaskContainsFlag(startedIntent.getFlags(),
@@ -539,7 +544,7 @@ public class MraidControllerTest {
 
         subject.handleOpen(applicationUrl);
 
-        Intent startedIntent = Robolectric.getShadowApplication().getNextStartedActivity();
+        Intent startedIntent = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(startedIntent).isNull();
 
         verify(mockMraidListener).onOpen();
@@ -551,7 +556,7 @@ public class MraidControllerTest {
 
         subject.handleOpen(url);
 
-        assertThat(Robolectric.getShadowApplication().getNextStartedActivity()).isNull();
+        assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
     }
 
     @Test
@@ -680,11 +685,11 @@ public class MraidControllerTest {
         assertThat(subject.getForceOrientation()).isEqualTo(MraidOrientation.NONE);
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.HONEYCOMB_MR1)
     @Test
     public void handleSetOrientationProperties_beforeHoneycombMr2_withMissingConfigChangeScreenSize_shouldUpdateProperties() throws Exception {
         setMockActivityInfo(true, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED,
                 ActivityInfo.CONFIG_ORIENTATION);
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.HONEYCOMB_MR1);
 
         subject.handleSetOrientationProperties(false, MraidOrientation.LANDSCAPE);
 
@@ -692,11 +697,11 @@ public class MraidControllerTest {
         assertThat(subject.getForceOrientation()).isEqualTo(MraidOrientation.LANDSCAPE);
     }
 
-    @Config(reportSdk = Build.VERSION_CODES.HONEYCOMB_MR2)
     @Test
     public void handleSetOrientationProperties_atLeastHoneycombMr2_withMissingConfigChangeScreenSize_shouldThrowMraidCommandException() throws Exception {
         setMockActivityInfo(true, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED,
                 ActivityInfo.CONFIG_ORIENTATION);
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.HONEYCOMB_MR2);
 
         try {
             subject.handleSetOrientationProperties(false, MraidOrientation.LANDSCAPE);
@@ -970,7 +975,7 @@ public class MraidControllerTest {
         // Necessary to set up the webview before expanding. Also moves the state to DEFAULT.
         subject.handlePageLoad();
         assertThat(subject.getViewState()).isEqualTo(ViewState.DEFAULT);
-        subject.handleExpand(URI.create("http://two-part-url"), false);
+        subject.handleExpand(URI.create("https://two-part-url"), false);
 
         assertThat(subject.getMraidWebView()).isNotNull();
         assertThat(subject.getTwoPartWebView()).isNotNull();

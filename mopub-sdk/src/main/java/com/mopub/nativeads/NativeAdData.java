@@ -5,14 +5,14 @@ import android.support.annotation.NonNull;
 /**
  * An object that represents placed ads in a {@link com.mopub.nativeads.MoPubStreamAdPlacer}
  */
-public class NativeAdData {
+class NativeAdData {
     @NonNull private final String adUnitId;
     @NonNull private final MoPubAdRenderer adRenderer;
-    @NonNull private final NativeResponse adResponse;
+    @NonNull private final NativeAd adResponse;
 
     NativeAdData(@NonNull final String adUnitId,
             @NonNull final MoPubAdRenderer adRenderer,
-            @NonNull final NativeResponse adResponse) {
+            @NonNull final NativeAd adResponse) {
         this.adUnitId = adUnitId;
         this.adRenderer = adRenderer;
         this.adResponse = adResponse;
@@ -24,12 +24,12 @@ public class NativeAdData {
     }
 
     @NonNull
-    public  MoPubAdRenderer getAdRenderer() {
+    MoPubAdRenderer getAdRenderer() {
         return adRenderer;
     }
 
     @NonNull
-    public NativeResponse getAd() {
+    NativeAd getAd() {
         return adResponse;
     }
 }

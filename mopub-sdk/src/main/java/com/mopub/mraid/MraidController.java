@@ -55,11 +55,11 @@ public class MraidController {
     private final AdReport mAdReport;
 
     public interface MraidListener {
-        public void onLoaded(View view);
-        public void onFailedToLoad();
-        public void onExpand();
-        public void onOpen();
-        public void onClose();
+        void onLoaded(View view);
+        void onFailedToLoad();
+        void onExpand();
+        void onOpen();
+        void onClose();
     }
 
     public interface UseCustomCloseListener {
@@ -446,8 +446,8 @@ public class MraidController {
     }
 
     private boolean isInlineVideoAvailable() {
-        //noinspection SimplifiableIfStatement
         final Activity activity = mWeakActivity.get();
+        //noinspection SimplifiableIfStatement
         if (activity == null || getCurrentWebView() == null) {
             return false;
         }
@@ -1036,14 +1036,19 @@ public class MraidController {
             mMraidListener.onOpen();
         }
 
-        new UrlHandler.Builder()
-                .withSupportedUrlActions(
-                        UrlAction.IGNORE_ABOUT_SCHEME,
-                        UrlAction.OPEN_NATIVE_BROWSER,
-                        UrlAction.OPEN_IN_APP_BROWSER,
-                        UrlAction.HANDLE_SHARE_TWEET,
-                        UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK,
-                        UrlAction.FOLLOW_DEEP_LINK)
+        UrlHandler.Builder builder = new UrlHandler.Builder();
+
+        if (mAdReport != null) {
+            builder.withDspCreativeId(mAdReport.getDspCreativeId());
+        }
+
+        builder.withSupportedUrlActions(
+                UrlAction.IGNORE_ABOUT_SCHEME,
+                UrlAction.OPEN_NATIVE_BROWSER,
+                UrlAction.OPEN_IN_APP_BROWSER,
+                UrlAction.HANDLE_SHARE_TWEET,
+                UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK,
+                UrlAction.FOLLOW_DEEP_LINK)
                 .build().handleUrl(mContext, url);
     }
 
