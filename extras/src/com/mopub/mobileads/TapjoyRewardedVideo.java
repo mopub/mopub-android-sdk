@@ -22,11 +22,11 @@ import com.tapjoy.TapjoyLog;
 import java.util.Hashtable;
 import java.util.Map;
 
-// Tested with Tapjoy SDK 11.5.0
+// Tested with Tapjoy SDK 11.5.1
 public class TapjoyRewardedVideo extends CustomEventRewardedVideo {
     private static final String TAG = TapjoyRewardedVideo.class.getSimpleName();
     private static final String TJC_MOPUB_NETWORK_CONSTANT = "mopub";
-    private static final String TJC_MOPUB_ADAPTER_VERSION_NUMBER = "3.0.0";
+    private static final String TJC_MOPUB_ADAPTER_VERSION_NUMBER = "4.0.0";
     private static final String TAPJOY_AD_NETWORK_CONSTANT = "tapjoy_id";
 
     private String sdkKey;
