@@ -29,7 +29,7 @@ import static com.mopub.mobileads.MoPubErrorCode.VIDEO_DOWNLOAD_ERROR;
  *
  * Certified with Chartboost 6.4.1
  */
-public abstract class ChartboostShared extends CustomEventRewardedVideo {
+public class ChartboostShared {
     private static volatile ChartboostSingletonDelegate sDelegate = new ChartboostSingletonDelegate();
 
     /*
@@ -79,8 +79,6 @@ public abstract class ChartboostShared extends CustomEventRewardedVideo {
         Chartboost.setMediation(Chartboost.CBMediation.CBMediationMoPub, MoPub.SDK_VERSION);
         Chartboost.setDelegate(sDelegate);
         Chartboost.setShouldRequestInterstitialsInFirstSession(true);
-        Chartboost.setAutoCacheAds(false);
-        Chartboost.setShouldDisplayLoadingViewForMoreApps(false);
 
         // Callers of this method need to call onCreate & onStart themselves.
         return true;
