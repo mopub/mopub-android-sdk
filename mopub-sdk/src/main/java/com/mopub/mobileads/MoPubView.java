@@ -21,7 +21,9 @@ import com.mopub.common.util.Visibility;
 import com.mopub.mobileads.factories.AdViewControllerFactory;
 import com.mopub.mobileads.factories.CustomEventBannerAdapterFactory;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_NOT_FOUND;
@@ -45,6 +47,8 @@ public class MoPubView extends FrameLayout {
 
     private BannerAdListener mBannerAdListener;
 
+    private Set<String> bannedAdapters;
+
     public MoPubView(Context context) {
         this(context, null);
     }
@@ -56,6 +60,8 @@ public class MoPubView extends FrameLayout {
 
         mContext = context;
         mScreenVisibility = getVisibility();
+
+        bannedAdapters = new HashSet<>();
 
         setHorizontalScrollBarEnabled(false);
         setVerticalScrollBarEnabled(false);
@@ -146,6 +152,12 @@ public class MoPubView extends FrameLayout {
         if (TextUtils.isEmpty(customEventClassName)) {
             MoPubLog.d("Couldn't invoke custom event because the server did not specify one.");
             loadFailUrl(ADAPTER_NOT_FOUND);
+            return;
+        }
+
+        if (bannedAdapters.contains(customEventClassName)){
+            MoPubLog.d("Native Network or Custom Event adapter was banned.");
+            loadFailUrl(MoPubErrorCode.ADAPTER_BANNED);
             return;
         }
 
@@ -365,5 +377,13 @@ public class MoPubView extends FrameLayout {
     @Deprecated
     public String getClickTrackingUrl() {
         return null;
+    }
+
+    public void banAdapter(String adapterClassName){
+        bannedAdapters.add(adapterClassName);
+    }
+
+    public void permitAdapter(String adapterClassName){
+        bannedAdapters.remove(adapterClassName);
     }
 }

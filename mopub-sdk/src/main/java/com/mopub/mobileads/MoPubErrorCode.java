@@ -9,6 +9,7 @@ public enum MoPubErrorCode {
     NO_CONNECTION("No internet connection detected."),
 
     ADAPTER_NOT_FOUND("Unable to find Native Network or Custom Event adapter."),
+    ADAPTER_BANNED("Native Network or Custom Event adapter was banned."),
     ADAPTER_CONFIGURATION_ERROR("Native Network or Custom Event adapter was configured incorrectly."),
     NETWORK_TIMEOUT("Third-party network failed to respond in a timely manner."),
     NETWORK_NO_FILL("Third-party network failed to provide an ad."),
