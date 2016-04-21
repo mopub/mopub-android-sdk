@@ -2,23 +2,27 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import com.mopub.common.AdFormat;
+import com.mopub.common.AdReport;
 import com.mopub.common.AdUrlGenerator;
+import com.mopub.common.ClientMetadata;
 import com.mopub.common.Constants;
 import com.mopub.common.DataKeys;
-import com.mopub.common.LocationService;
 import com.mopub.common.MediationSettings;
-import com.mopub.common.MoPub;
 import com.mopub.common.MoPubReward;
 import com.mopub.common.Preconditions;
+import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.MoPubCollections;
 import com.mopub.common.util.Reflection;
+import com.mopub.common.util.Utils;
 import com.mopub.network.AdRequest;
 import com.mopub.network.AdResponse;
 import com.mopub.network.MoPubNetworkError;
@@ -36,6 +40,8 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
+ * Handles requesting Rewarded Video ads and mapping Rewarded Video SDK settings to the CustomEvent
+ * that is being loaded.
  */
 public class MoPubRewardedVideoManager {
     private static MoPubRewardedVideoManager sInstance;
@@ -47,6 +53,7 @@ public class MoPubRewardedVideoManager {
     @NonNull private final AdRequestStatusMapping mAdRequestStatus;
     @NonNull private final RewardedVideoData mRewardedVideoData;
     @Nullable private MoPubRewardedVideoListener mVideoListener;
+    private final long mBroadcastIdentifier;
     
     @NonNull private final Set<MediationSettings> mGlobalMediationSettings;
     @NonNull private final Map<String, Set<MediationSettings>> mInstanceMediationSettings;
@@ -74,6 +81,21 @@ public class MoPubRewardedVideoManager {
         }
     }
 
+    public static final class RequestParameters {
+        public final String mKeywords;
+        public final Location mLocation;
+
+        public RequestParameters(final String keywords) {
+            this(keywords, null);
+        }
+
+        public RequestParameters(final String keywords, final Location location) {
+            mKeywords = keywords;
+            mLocation = location;
+        }
+    }
+
+
     private MoPubRewardedVideoManager(@NonNull Activity mainActivity, MediationSettings... mediationSettings) {
         mMainActivity = new WeakReference<Activity>(mainActivity);
         mContext = mainActivity.getApplicationContext();
@@ -84,6 +106,7 @@ public class MoPubRewardedVideoManager {
         mInstanceMediationSettings = new HashMap<String, Set<MediationSettings>>();
         mCustomEventTimeoutHandler = new Handler();
         mTimeoutMap = new HashMap<String, Runnable>();
+        mBroadcastIdentifier = Utils.generateUniqueId();
         
         mAdRequestStatus = new AdRequestStatusMapping();
     }
@@ -180,10 +203,13 @@ public class MoPubRewardedVideoManager {
      * method will not make a new request if there is already a video loading for this adUnitId.
      *
      * @param adUnitId MoPub adUnitId String
+     * @param requestParameters Optional RequestParameters object containing keywords and optional location value.
      * @param mediationSettings Optional instance-level MediationSettings to associate with the
      *                          above adUnitId.
      */
-    public static void loadVideo(@NonNull String adUnitId, @Nullable final MediationSettings... mediationSettings) {
+    public static void loadVideo(@NonNull final String adUnitId,
+            @Nullable final RequestParameters requestParameters,
+            @Nullable final MediationSettings... mediationSettings) {
         if (sInstance == null) {
             logErrorNotInitialized();
             return;
@@ -198,13 +224,8 @@ public class MoPubRewardedVideoManager {
 
         final AdUrlGenerator urlGenerator = new WebViewAdUrlGenerator(sInstance.mContext, false);
         final String adUrlString = urlGenerator.withAdUnitId(adUnitId)
-                .withLocation(
-                        LocationService.getLastKnownLocation(
-                                sInstance.mContext,
-                                MoPub.getLocationPrecision(),
-                                MoPub.getLocationAwareness()
-                        )
-                )
+                .withKeywords(requestParameters == null ? null : requestParameters.mKeywords)
+                .withLocation(requestParameters == null ? null : requestParameters.mLocation)
                 .generateUrlString(Constants.HOST);
 
         loadVideo(adUnitId, adUrlString);
@@ -249,6 +270,10 @@ public class MoPubRewardedVideoManager {
         if (sInstance != null) {
             final CustomEventRewardedVideo customEvent = sInstance.mRewardedVideoData.getCustomEvent(adUnitId);
             if (isPlayable(adUnitId, customEvent)) {
+                sInstance.mRewardedVideoData.updateCustomEventLastShownRewardMapping(
+                        customEvent.getClass(),
+                        sInstance.mRewardedVideoData.getMoPubReward(adUnitId));
+                sInstance.mRewardedVideoData.setCurrentAdUnitId(adUnitId);
                 sInstance.mAdRequestStatus.markPlayed(adUnitId);
                 customEvent.showVideo();
             } else {
@@ -279,10 +304,19 @@ public class MoPubRewardedVideoManager {
         }
 
         final String customEventClassName = adResponse.getCustomEventClassName();
+
         if (customEventClassName == null) {
             MoPubLog.e("Couldn't create custom event, class name was null.");
             failover(adUnitId, MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
             return;
+        }
+
+        // We only allow one rewarded video to be loaded at a time for each ad unit. This should
+        // clear out the old rewarded video if there already was one loaded and not played.
+        final CustomEventRewardedVideo oldRewardedVideo = mRewardedVideoData.getCustomEvent(
+                adUnitId);
+        if (oldRewardedVideo != null) {
+            oldRewardedVideo.onInvalidate();
         }
 
         try {
@@ -295,6 +329,16 @@ public class MoPubRewardedVideoManager {
             // Put important data into localExtras...
             final Map<String, Object> localExtras = new TreeMap<String, Object>();
             localExtras.put(DataKeys.AD_UNIT_ID_KEY, adUnitId);
+            localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_NAME_KEY,
+                    adResponse.getRewardedVideoCurrencyName());
+            localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_AMOUNT_STRING_KEY,
+                    adResponse.getRewardedVideoCurrencyAmount());
+            localExtras.put(DataKeys.AD_REPORT_KEY,
+                    new AdReport(adUnitId, ClientMetadata.getInstance(mContext), adResponse));
+            localExtras.put(DataKeys.BROADCAST_IDENTIFIER_KEY, mBroadcastIdentifier);
+            mRewardedVideoData.updateAdUnitRewardMapping(adUnitId,
+                    adResponse.getRewardedVideoCurrencyName(),
+                    adResponse.getRewardedVideoCurrencyAmount());
 
             Activity mainActivity = mMainActivity.get();
             if (mainActivity == null) {
@@ -409,56 +453,116 @@ public class MoPubRewardedVideoManager {
 
     public static <T extends CustomEventRewardedVideo>
     void onRewardedVideoStarted(@NonNull final Class<T> customEventClass, final String thirdPartyId) {
-        postToInstance(new ForEachMoPubIdRunnable(customEventClass, thirdPartyId) {
-            @Override
-            protected void forEach(@NonNull final String moPubId) {
-                if (sInstance.mVideoListener != null) {
-                    sInstance.mVideoListener.onRewardedVideoStarted(moPubId);
+        final String currentAdUnitId = sInstance.mRewardedVideoData.getCurrentAdUnitId();
+        if (TextUtils.isEmpty(currentAdUnitId)) {
+            postToInstance(new ForEachMoPubIdRunnable(customEventClass, thirdPartyId) {
+                @Override
+                protected void forEach(@NonNull final String moPubId) {
+                    onRewardedVideoStartedAction(moPubId);
                 }
-                TrackingRequest.makeTrackingHttpRequest(
-                        sInstance.mAdRequestStatus.getImpressionTrackerUrlString(moPubId),
-                        sInstance.mContext);
-                sInstance.mAdRequestStatus.clearImpressionUrl(moPubId);
-            }
-        });
+            });
+        } else {
+            postToInstance(new Runnable() {
+                @Override
+                public void run() {
+                    onRewardedVideoStartedAction(currentAdUnitId);
+                }
+            });
+        }
+    }
+
+    private static void onRewardedVideoStartedAction(@NonNull final String adUnitId) {
+        Preconditions.checkNotNull(adUnitId);
+        if (sInstance.mVideoListener != null) {
+            sInstance.mVideoListener.onRewardedVideoStarted(adUnitId);
+        }
+        TrackingRequest.makeTrackingHttpRequest(
+                sInstance.mAdRequestStatus.getImpressionTrackerUrlString(adUnitId),
+                sInstance.mContext);
+        sInstance.mAdRequestStatus.clearImpressionUrl(adUnitId);
     }
 
     public static <T extends CustomEventRewardedVideo>
     void onRewardedVideoPlaybackError(@NonNull final Class<T> customEventClass, final String thirdPartyId, final MoPubErrorCode errorCode) {
-        postToInstance(new ForEachMoPubIdRunnable(customEventClass, thirdPartyId) {
-            @Override
-            protected void forEach(@NonNull final String moPubId) {
-                if (sInstance.mVideoListener != null) {
-                    sInstance.mVideoListener.onRewardedVideoPlaybackError(moPubId, errorCode);
+        final String currentAdUnitId = sInstance.mRewardedVideoData.getCurrentAdUnitId();
+        if (TextUtils.isEmpty(currentAdUnitId)) {
+            postToInstance(new ForEachMoPubIdRunnable(customEventClass, thirdPartyId) {
+                @Override
+                protected void forEach(@NonNull final String moPubId) {
+                    onRewardedVideoPlaybackErrorAction(moPubId, errorCode);
                 }
-            }
-        });
+            });
+        } else {
+            postToInstance(new Runnable() {
+                @Override
+                public void run() {
+                    onRewardedVideoPlaybackErrorAction(currentAdUnitId, errorCode);
+                }
+            });
+        }
+    }
 
+    private static void onRewardedVideoPlaybackErrorAction(@NonNull final String adUnitId, @NonNull final MoPubErrorCode errorCode) {
+        Preconditions.checkNotNull(adUnitId);
+        Preconditions.checkNotNull(errorCode);
+        if (sInstance.mVideoListener != null) {
+            sInstance.mVideoListener.onRewardedVideoPlaybackError(adUnitId, errorCode);
+        }
     }
 
     public static <T extends CustomEventRewardedVideo>
     void onRewardedVideoClicked(@NonNull final Class<T> customEventClass, final String thirdPartyId) {
-        postToInstance(new ForEachMoPubIdRunnable(customEventClass, thirdPartyId) {
-            @Override
-            protected void forEach(@NonNull final String moPubId) {
-                TrackingRequest.makeTrackingHttpRequest(
-                        sInstance.mAdRequestStatus.getClickTrackerUrlString(moPubId),
-                        sInstance.mContext);
-                sInstance.mAdRequestStatus.clearClickUrl(moPubId);
-            }
-        });
+        final String currentAdUnitId = sInstance.mRewardedVideoData.getCurrentAdUnitId();
+        if (TextUtils.isEmpty(currentAdUnitId)) {
+            postToInstance(new ForEachMoPubIdRunnable(customEventClass, thirdPartyId) {
+                @Override
+                protected void forEach(@NonNull final String moPubId) {
+                    onRewardedVideoClickedAction(moPubId);
+                }
+            });
+        } else {
+            postToInstance(new Runnable() {
+                @Override
+                public void run() {
+                    onRewardedVideoClickedAction(currentAdUnitId);
+                }
+            });
+        }
+    }
+
+    private static void onRewardedVideoClickedAction(@NonNull final String adUnitId) {
+        Preconditions.checkNotNull(adUnitId);
+        TrackingRequest.makeTrackingHttpRequest(
+                sInstance.mAdRequestStatus.getClickTrackerUrlString(adUnitId),
+                sInstance.mContext);
+        sInstance.mAdRequestStatus.clearClickUrl(adUnitId);
     }
 
     public static <T extends CustomEventRewardedVideo>
     void onRewardedVideoClosed(@NonNull final Class<T> customEventClass, final String thirdPartyId) {
-        postToInstance(new ForEachMoPubIdRunnable(customEventClass, thirdPartyId) {
-            @Override
-            protected void forEach(@NonNull final String moPubId) {
-                if (sInstance.mVideoListener != null) {
-                    sInstance.mVideoListener.onRewardedVideoClosed(moPubId);
+        final String currentAdUnitId = sInstance.mRewardedVideoData.getCurrentAdUnitId();
+        if (TextUtils.isEmpty(currentAdUnitId)) {
+            postToInstance(new ForEachMoPubIdRunnable(customEventClass, thirdPartyId) {
+                @Override
+                protected void forEach(@NonNull final String moPubId) {
+                    onRewardedVideoClosedAction(moPubId);
                 }
-            }
-        });
+            });
+        } else {
+            postToInstance(new Runnable() {
+                @Override
+                public void run() {
+                    onRewardedVideoClosedAction(currentAdUnitId);
+                }
+            });
+        }
+    }
+
+    private static void onRewardedVideoClosedAction(@NonNull final String adUnitId) {
+        Preconditions.checkNotNull(adUnitId);
+        if (sInstance.mVideoListener != null) {
+            sInstance.mVideoListener.onRewardedVideoClosed(adUnitId);
+        }
     }
 
     public static <T extends CustomEventRewardedVideo>
@@ -467,13 +571,25 @@ public class MoPubRewardedVideoManager {
         postToInstance(new Runnable() {
             @Override
             public void run() {
+                final MoPubReward chosenReward = chooseReward(
+                        sInstance.mRewardedVideoData.getLastShownMoPubReward(customEventClass),
+                        moPubReward);
                 final Set<String> moPubIds = sInstance.mRewardedVideoData.getMoPubIdsForAdNetwork(customEventClass, thirdPartyId);
                 Set<String> rewarded = new HashSet<String>(moPubIds);
                 if (sInstance.mVideoListener != null) {
-                    sInstance.mVideoListener.onRewardedVideoCompleted(rewarded, moPubReward);
+                    sInstance.mVideoListener.onRewardedVideoCompleted(rewarded, chosenReward);
                 }
             }
         });
+    }
+
+    @VisibleForTesting
+    static MoPubReward chooseReward(@Nullable final MoPubReward moPubReward, @NonNull final MoPubReward networkReward) {
+        if (!networkReward.isSuccessful()) {
+            return networkReward;
+        }
+
+        return moPubReward != null ? moPubReward : networkReward;
     }
 
     /**
@@ -519,5 +635,15 @@ public class MoPubRewardedVideoManager {
                 forEach(moPubId);
             }
         }
+    }
+
+    @Deprecated
+    @VisibleForTesting
+    @Nullable
+    static RewardedVideoData getRewardedVideoData() {
+        if (sInstance != null) {
+            return sInstance.mRewardedVideoData;
+        }
+        return null;
     }
 }

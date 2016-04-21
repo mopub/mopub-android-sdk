@@ -136,7 +136,8 @@ class VastIconConfig implements Serializable {
      * @param webViewClickThroughUri The click through uri for Javascript, HTML and IFrame resources
      *                               from the WebView
      */
-    void handleClick(@NonNull final Context context, @Nullable String webViewClickThroughUri) {
+    void handleClick(@NonNull final Context context, @Nullable String webViewClickThroughUri,
+            @Nullable final String dspCreativeId) {
         Preconditions.checkNotNull(context);
 
 
@@ -159,7 +160,9 @@ class VastIconConfig implements Serializable {
                         if (urlAction == UrlAction.OPEN_IN_APP_BROWSER) {
                             Bundle bundle = new Bundle();
                             bundle.putString(MoPubBrowser.DESTINATION_URL_KEY, url);
-
+                            if (!TextUtils.isEmpty(dspCreativeId)) {
+                                bundle.putString(MoPubBrowser.DSP_CREATIVE_ID, dspCreativeId);
+                            }
                             Intent intent = Intents.getStartActivityIntent(
                                     context, MoPubBrowser.class, bundle);
                             try {

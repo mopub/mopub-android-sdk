@@ -19,7 +19,6 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.exceptions.IntentNotResolvableException;
 import com.mopub.exceptions.UrlParseException;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -99,7 +98,7 @@ public class Intents {
     /**
      * Native Browser Scheme URLs provide a means for advertisers to include links that click out to
      * an external browser, rather than the MoPub in-app browser. Properly formatted native browser
-     * URLs take the form of "mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.mopub.com".
+     * URLs take the form of "mopubnativebrowser://navigate?url=https%3A%2F%2Fwww.mopub.com".
      *
      * @param uri The Native Browser Scheme URL to open in the external browser.
      * @return An Intent that will open an app-external browser taking the user to a page specified
@@ -123,7 +122,7 @@ public class Intents {
             urlToOpenInNativeBrowser = uri.getQueryParameter("url");
         } catch (UnsupportedOperationException e) {
             // Accessing query parameters only makes sense for hierarchical URIs as per:
-            // http://developer.android.com/reference/android/net/Uri.html#getQueryParameter(java.lang.String)
+            // https://developer.android.com/reference/android/net/Uri.html#getQueryParameter(java.lang.String)
             MoPubLog.w("Could not handle url: " + uri);
             throw new UrlParseException("Passed-in URL did not create a hierarchical URI.");
         }
@@ -174,7 +173,7 @@ public class Intents {
             tweetId = uri.getQueryParameter("tweet_id");
         } catch (UnsupportedOperationException e) {
             // Accessing query parameters only makes sense for hierarchical URIs as per:
-            // http://developer.android.com/reference/android/net/Uri.html#getQueryParameter(java.lang.String)
+            // https://developer.android.com/reference/android/net/Uri.html#getQueryParameter(java.lang.String)
             MoPubLog.w("Could not handle url: " + uri);
             throw new UrlParseException("Passed-in URL did not create a hierarchical URI.");
         }
@@ -208,7 +207,8 @@ public class Intents {
      * @param uri The URL to load in the started {@link MoPubBrowser} activity.
      */
     public static void showMoPubBrowserForUrl(@NonNull final Context context,
-            @NonNull Uri uri)
+            @NonNull Uri uri,
+            @Nullable String dspCreativeId)
             throws IntentNotResolvableException {
         Preconditions.checkNotNull(context);
         Preconditions.checkNotNull(uri);
@@ -217,6 +217,9 @@ public class Intents {
 
         final Bundle extras = new Bundle();
         extras.putString(MoPubBrowser.DESTINATION_URL_KEY, uri.toString());
+        if (!TextUtils.isEmpty(dspCreativeId)) {
+            extras.putString(MoPubBrowser.DSP_CREATIVE_ID, dspCreativeId);
+        }
         Intent intent = getStartActivityIntent(context, MoPubBrowser.class, extras);
 
         String errorMessage = "Could not show MoPubBrowser for url: " + uri + "\n\tPerhaps you " +

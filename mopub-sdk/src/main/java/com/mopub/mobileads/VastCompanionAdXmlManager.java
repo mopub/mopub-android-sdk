@@ -28,6 +28,7 @@ class VastCompanionAdXmlManager {
     private static final String EVENT = "event";
     private static final String WIDTH = "width";
     private static final String HEIGHT = "height";
+    private static final String AD_SLOT_ID = "adSlotID";
 
     // Attribute values
     private static final String CREATIVE_VIEW = "creativeView";
@@ -61,6 +62,16 @@ class VastCompanionAdXmlManager {
     @Nullable
     Integer getHeight() {
         return XmlUtils.getAttributeValueAsInt(mCompanionNode, HEIGHT);
+    }
+
+    /**
+     * Gets the adSlotID attribute from the companion ad or {@code null} if not present.
+     *
+     * @return String adSlotId attribute or {@code null}.
+     */
+    @Nullable
+    String getAdSlotId() {
+        return XmlUtils.getAttributeValue(mCompanionNode, AD_SLOT_ID);
     }
 
     @NonNull

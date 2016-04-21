@@ -71,8 +71,10 @@ public class MoPubVideoNativeAdRenderer implements MoPubAdRenderer<VideoNativeAd
         NativeRendererHelper.addCtaButton(mediaViewHolder.callToActionView,
                 mediaViewHolder.mainView, videoNativeAd.getCallToAction()
         );
-        NativeImageHelper.loadImageView(videoNativeAd.getMainImageUrl(),
-                mediaViewHolder.mediaLayout.getMainImageView());
+        if (mediaViewHolder.mediaLayout != null) {
+            NativeImageHelper.loadImageView(videoNativeAd.getMainImageUrl(),
+                    mediaViewHolder.mediaLayout.getMainImageView());
+        }
         NativeImageHelper.loadImageView(videoNativeAd.getIconImageUrl(),
                 mediaViewHolder.iconImageView);
         NativeRendererHelper.addPrivacyInformationIcon(

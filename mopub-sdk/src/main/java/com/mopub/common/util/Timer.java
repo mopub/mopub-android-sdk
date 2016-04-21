@@ -3,7 +3,7 @@ package com.mopub.common.util;
 import java.util.concurrent.TimeUnit;
 
 public class Timer {
-    private static enum State { STARTED, STOPPED }
+    private enum State { STARTED, STOPPED }
     private long mStopTimeNanos;
     private long mStartTimeNanos;
     private State mState;

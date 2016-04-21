@@ -8,14 +8,13 @@ import android.support.annotation.NonNull;
  * occur.
  */
 public interface LifecycleListener {
+    void onCreate(@NonNull Activity activity);
+    void onStart(@NonNull Activity activity);
+    void onPause(@NonNull Activity activity);
+    void onResume(@NonNull Activity activity);
 
-    public void onCreate(@NonNull Activity activity);
-    public void onStart(@NonNull Activity activity);
-    public void onPause(@NonNull Activity activity);
-    public void onResume(@NonNull Activity activity);
-
-    public void onRestart(@NonNull Activity activity);
-    public void onStop(@NonNull Activity activity);
-    public void onDestroy(@NonNull Activity activity);
-    public void onBackPressed(@NonNull Activity activity);
+    void onRestart(@NonNull Activity activity);
+    void onStop(@NonNull Activity activity);
+    void onDestroy(@NonNull Activity activity);
+    void onBackPressed(@NonNull Activity activity);
 }

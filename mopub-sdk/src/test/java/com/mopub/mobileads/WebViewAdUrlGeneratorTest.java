@@ -45,6 +45,8 @@ import org.robolectric.shadows.ShadowConnectivityManager;
 import org.robolectric.shadows.ShadowLocationManager;
 import org.robolectric.shadows.ShadowNetworkInfo;
 
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
 import static android.net.ConnectivityManager.TYPE_DUMMY;
 import static android.net.ConnectivityManager.TYPE_ETHERNET;
@@ -85,6 +87,8 @@ public class WebViewAdUrlGeneratorTest {
     public void setup() {
         context = spy(Robolectric.buildActivity(Activity.class).create().get());
         Shadows.shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
+        Shadows.shadowOf(context).grantPermissions(ACCESS_FINE_LOCATION);
+        Shadows.shadowOf(context).grantPermissions(ACCESS_COARSE_LOCATION);
 
         // Set the expected screen dimensions to arbitrary numbers
         final Resources spyResources = spy(context.getResources());
@@ -124,7 +128,6 @@ public class WebViewAdUrlGeneratorTest {
         shadowTelephonyManager = (MoPubShadowTelephonyManager) Shadows.shadowOf((TelephonyManager) RuntimeEnvironment.application.getSystemService(Context.TELEPHONY_SERVICE));
         shadowConnectivityManager = Shadows.shadowOf((ConnectivityManager) RuntimeEnvironment.application.getSystemService(Context.CONNECTIVITY_SERVICE));
         methodBuilder = TestMethodBuilderFactory.getSingletonMock();
-        Networking.useHttps(false);
     }
 
     @After
@@ -143,9 +146,8 @@ public class WebViewAdUrlGeneratorTest {
 
     @Test
     public void generateAdUrl_withHttpsScheme() throws Exception {
-        Networking.useHttps(true);
         String adUrl = generateMinimumUrlString();
-        assertThat(adUrl).startsWith("https://");
+        assertThat(adUrl).startsWith("http://");
     }
 
     @Test
@@ -397,6 +399,91 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
+    public void generateAdUrl_whenLocationServiceGpsProviderHasMostRecentLocation_WithFineLocationPermissionOnly_shouldUseLocationServiceValue() {
+        Shadows.shadowOf(context).denyPermissions(ACCESS_COARSE_LOCATION);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(37);
+        locationFromSdk.setLongitude(-122);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.GPS_PROVIDER, locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("37.0,-122.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("5");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEqualTo("1");
+    }
+
+    @Test
+    public void generateAdUrl_whenLocationServiceGpsProviderHasMostRecentLocation_WithCoarseLocationPermissionOnly_shouldUseDeveloperSuppliedLocation() {
+        Shadows.shadowOf(context).denyPermissions(ACCESS_FINE_LOCATION);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(37);
+        locationFromSdk.setLongitude(-122);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.GPS_PROVIDER, locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("42.0,-42.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("3");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEmpty();
+    }
+
+    @Test
+    public void generateAdUrl_whenLocationServiceGpsProviderHasMostRecentLocation_WithNoLocationPermission_shouldUseDeveloperSuppliedLocation() {
+        Shadows.shadowOf(context).denyPermissions(ACCESS_FINE_LOCATION);
+        Shadows.shadowOf(context).denyPermissions(ACCESS_COARSE_LOCATION);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(37);
+        locationFromSdk.setLongitude(-122);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.GPS_PROVIDER, locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("42.0,-42.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("3");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEmpty();
+    }
+
+    @Test
     public void generateAdUrl_whenDeveloperSuppliesMoreRecentLocationThanLocationService_shouldUseDeveloperSuppliedLocation() {
         Location locationFromDeveloper = new Location("");
         locationFromDeveloper.setLatitude(42);
@@ -448,6 +535,94 @@ public class WebViewAdUrlGeneratorTest {
         assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("38.0,-123.0");
         assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("5");
         assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEqualTo("1");
+    }
+
+    @Test
+    public void generateAdUrl_whenLocationServiceNetworkProviderHasMostRecentLocation_WithFineLocationPermissionOnly_shouldUseLocationServiceValue() {
+        Shadows.shadowOf(context).denyPermissions(ACCESS_COARSE_LOCATION);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(38);
+        locationFromSdk.setLongitude(-123);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.NETWORK_PROVIDER,
+                locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("38.0,-123.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("5");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEqualTo("1");
+    }
+
+    @Test
+    public void generateAdUrl_whenLocationServiceNetworkProviderHasMostRecentLocation_WithCoarseLocationPermissionOnly_shouldUseLocationServiceValue() {
+        Shadows.shadowOf(context).denyPermissions(ACCESS_FINE_LOCATION);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(38);
+        locationFromSdk.setLongitude(-123);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.NETWORK_PROVIDER,
+                locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("38.0,-123.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("5");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEqualTo("1");
+    }
+
+    @Test
+    public void generateAdUrl_whenLocationServiceNetworkProviderHasMostRecentLocation_WithNoLocationPermission_shouldUseDeveloperSuppliedLocation() {
+        Shadows.shadowOf(context).denyPermissions(ACCESS_FINE_LOCATION);
+        Shadows.shadowOf(context).denyPermissions(ACCESS_COARSE_LOCATION);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(38);
+        locationFromSdk.setLongitude(-123);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.NETWORK_PROVIDER,
+                locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("42.0,-42.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("3");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEmpty();
     }
 
     @Test

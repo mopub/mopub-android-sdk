@@ -27,7 +27,8 @@ class VastVideoInterstitial extends ResponseBodyInterstitial implements VastMana
         }
 
         mVastManager = VastManagerFactory.create(mContext);
-        mVastManager.prepareVastVideoConfiguration(mVastResponse, this, mContext);
+        mVastManager.prepareVastVideoConfiguration(mVastResponse, this,
+                mAdReport.getDspCreativeId(), mContext);
     }
 
     @Override

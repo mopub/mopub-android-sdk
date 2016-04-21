@@ -19,6 +19,7 @@ import android.view.TextureView;
 import com.google.android.exoplayer.ExoPlaybackException;
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.MediaCodecAudioTrackRenderer;
+import com.google.android.exoplayer.MediaCodecSelector;
 import com.google.android.exoplayer.MediaCodecVideoTrackRenderer;
 import com.google.android.exoplayer.extractor.Extractor;
 import com.google.android.exoplayer.extractor.ExtractorSampleSource;
@@ -97,10 +98,11 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
     private boolean mExoPlayerStateStartedFromIdle = true;
 
     /**
-     * Create a new NativeVideoController for this id with the given parameters.
+     * Create a new {@link NativeVideoController} for this id with the given parameters.
      * Any existing entry with the same id is removed.
-     * @param id
-     * @return
+     *
+     * @param id the unique id of the native video ad
+     * @return an initialized {@link NativeVideoController}
      */
     @NonNull
     public static NativeVideoController createForId(final long id,
@@ -291,10 +293,9 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
 
     @Override
     public void onPlayerStateChanged(final boolean playWhenReady, final int newState) {
-        startProgressRunnable(playWhenReady, newState);
-
         if (newState == STATE_ENDED && mFinalFrame == null) {
             mFinalFrame = new BitmapDrawable(mContext.getResources(), mTextureView.getBitmap());
+            mNativeVideoProgressRunnable.requestStop();
         }
 
         if (mPreviousExoPlayerState == ExoPlayer.STATE_READY && newState == ExoPlayer.STATE_BUFFERING) {
@@ -360,6 +361,7 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
                 mEventDetails));
 
         mListener.onError(e);
+        mNativeVideoProgressRunnable.requestStop();
     }
 
     /**
@@ -386,14 +388,6 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
         mNativeVideoProgressRunnable.checkImpressionTrackers(true);
     }
 
-    private void startProgressRunnable(final boolean playWhenReady, final int state) {
-        if (playWhenReady && state == STATE_READY) {
-            mNativeVideoProgressRunnable.startRepeating(50);
-        } else {
-            mNativeVideoProgressRunnable.stop();
-        }
-    }
-
     private void clearExistingPlayer() {
         if (mExoPlayer == null) {
             return;
@@ -403,6 +397,7 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
         mExoPlayer.stop();
         mExoPlayer.release();
         mExoPlayer = null;
+        mNativeVideoProgressRunnable.stop();
         mNativeVideoProgressRunnable.setExoPlayer(null);
     }
 
@@ -423,11 +418,14 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
 
             final ExtractorSampleSource sampleSource = new ExtractorSampleSource(Uri.parse(videoUrl),
                     httpSource, allocator, BUFFER_SEGMENT_SIZE * BUFFER_SEGMENT_COUNT, extractor);
-            mVideoTrackRenderer = new MediaCodecVideoTrackRenderer(
-                    sampleSource, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING,
-                    0, mHandler, null, 10);
-            mAudioTrackRenderer = new MediaCodecAudioTrackRenderer(sampleSource);
+            mVideoTrackRenderer = new MediaCodecVideoTrackRenderer(mContext, sampleSource,
+                    MediaCodecSelector.DEFAULT,
+                    MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING, 0, mHandler, null,
+                    10);
+            mAudioTrackRenderer = new MediaCodecAudioTrackRenderer(sampleSource,
+                    MediaCodecSelector.DEFAULT);
             mExoPlayer.prepare(mAudioTrackRenderer, mVideoTrackRenderer);
+            mNativeVideoProgressRunnable.startRepeating(50);
         }
 
         setExoAudio();
@@ -440,7 +438,6 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
         }
 
         mExoPlayer.setPlayWhenReady(mPlayWhenReady);
-        startProgressRunnable(mExoPlayer.getPlayWhenReady(), mExoPlayer.getPlaybackState());
     }
 
     private void setExoAudio() {
@@ -492,7 +489,8 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
         public interface ProgressListener {
             /**
              * Should send a number from 0 to 1000.
-             * @param progressTenthPercent
+             *
+             * @param progressTenthPercent tenth of a percentage of video progress
              */
             void updateProgress(int progressTenthPercent);
         }
@@ -506,6 +504,7 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
         @Nullable private ProgressListener mProgressListener;
         private long mCurrentPosition;
         private long mDuration;
+        private boolean mStopRequested;
 
         NativeVideoProgressRunnable(@NonNull final Context context,
                 @NonNull final Handler handler,
@@ -532,6 +531,7 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
             mVisibilityChecker = visibilityChecker;
             mVastVideoConfig = vastVideoConfig;
             mDuration = -1L; // Initialized to -1 so we can distinguish between "never started" and a zero-length video.
+            mStopRequested = false;
         }
 
         void setExoPlayer(@Nullable final ExoPlayer exoPlayer) {
@@ -558,9 +558,15 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
             return mDuration;
         }
 
+        void requestStop() {
+            mStopRequested = true;
+        }
+
         void checkImpressionTrackers(final boolean forceTrigger) {
+            int trackedCount = 0;
             for (VisibilityTrackingEvent event : mVisibilityTrackingEvents) {
                 if (event.isTracked) {
+                    trackedCount++;
                     continue;
                 }
                 if (forceTrigger || mVisibilityChecker.isVisible(mTextureView, mTextureView,
@@ -570,8 +576,12 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
                             event.totalQualifiedPlayCounter >= event.totalRequiredPlayTimeMs) {
                         event.strategy.execute();
                         event.isTracked = true;
+                        trackedCount++;
                     }
                 }
+            }
+            if (trackedCount == mVisibilityTrackingEvents.size() && mStopRequested) {
+                stop();
             }
         }
 
@@ -583,9 +593,6 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
 
             mCurrentPosition = mExoPlayer.getCurrentPosition();
             mDuration = mExoPlayer.getDuration();
-            if (mDuration <= 0) {
-                return;
-            }
 
             checkImpressionTrackers(false);
 

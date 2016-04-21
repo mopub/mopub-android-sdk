@@ -56,7 +56,7 @@ public abstract class ResponseBodyInterstitial extends CustomEventInterstitial {
 
         mBroadcastReceiver = new EventForwardingBroadcastReceiver(customEventInterstitialListener,
                 mBroadcastIdentifier);
-        mBroadcastReceiver.register(context);
+        mBroadcastReceiver.register(mBroadcastReceiver, context);
 
         preRenderHtml(customEventInterstitialListener);
     }
@@ -64,7 +64,7 @@ public abstract class ResponseBodyInterstitial extends CustomEventInterstitial {
     @Override
     public void onInvalidate() {
         if (mBroadcastReceiver != null) {
-            mBroadcastReceiver.unregister();
+            mBroadcastReceiver.unregister(mBroadcastReceiver);
         }
     }
 

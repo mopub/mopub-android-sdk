@@ -20,22 +20,22 @@ public class VastWrapperXmlManagerTest {
     public void getVastAdTagURI_shouldReturnStringURI() throws Exception {
         String wrapperXml = "<Wrapper>" +
                 "    <Impression id=\"DART\">" +
-                "        <![CDATA[http://impression/m/wrapperOne]]>" +
+                "        <![CDATA[https://impression/m/wrapperOne]]>" +
                 "    </Impression>" +
-                "    <VASTAdTagURI>http://redirecturl/xml</VASTAdTagURI>" +
+                "    <VASTAdTagURI>https://redirecturl/xml</VASTAdTagURI>" +
                 "</Wrapper>";
 
         Node wrapperNode = createNode(wrapperXml);
         subject = new VastWrapperXmlManager(wrapperNode);
 
-        assertThat(subject.getVastAdTagURI()).isEqualTo("http://redirecturl/xml");
+        assertThat(subject.getVastAdTagURI()).isEqualTo("https://redirecturl/xml");
     }
 
     @Test
     public void getVastAdTagURI_withNoVastAdTagURI_shouldReturnNull() throws Exception {
         String wrapperXml = "<Wrapper>" +
                 "    <Impression id=\"DART\">" +
-                "        <![CDATA[http://impression/m/wrapperOne]]>" +
+                "        <![CDATA[https://impression/m/wrapperOne]]>" +
                 "    </Impression>" +
                 "</Wrapper>";
 

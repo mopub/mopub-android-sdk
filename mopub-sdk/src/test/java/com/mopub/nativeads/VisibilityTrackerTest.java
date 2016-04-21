@@ -199,6 +199,7 @@ public class VisibilityTrackerTest {
 
         ArgumentCaptor<List> visibleCaptor = ArgumentCaptor.forClass(List.class);
         ArgumentCaptor<List> invisibleCaptor = ArgumentCaptor.forClass(List.class);
+        // noinspection unchecked
         verify(visibilityTrackerListener).onVisibilityChanged(visibleCaptor.capture(),
                 invisibleCaptor.capture());
         assertThat(visibleCaptor.getValue().size()).isEqualTo(0);

@@ -23,6 +23,7 @@ public class VastVideoCtaButtonWidget extends ImageView {
     private boolean mIsVideoComplete;
     private boolean mHasCompanionAd;
     private boolean mHasClickthroughUrl;
+    private boolean mHasSocialActions;
 
     public VastVideoCtaButtonWidget(@NonNull final Context context, final int videoViewId,
             final boolean hasCompanionAd, final boolean hasClickthroughUrl) {
@@ -30,6 +31,7 @@ public class VastVideoCtaButtonWidget extends ImageView {
 
         mHasCompanionAd = hasCompanionAd;
         mHasClickthroughUrl = hasClickthroughUrl;
+        mHasSocialActions = false;
 
         setId((int) Utils.generateUniqueId());
 
@@ -46,11 +48,11 @@ public class VastVideoCtaButtonWidget extends ImageView {
         mLandscapeLayoutParams.addRule(RelativeLayout.ALIGN_BOTTOM, videoViewId);
         mLandscapeLayoutParams.addRule(RelativeLayout.ALIGN_RIGHT, videoViewId);
 
-        // portrait layout: placed center below video view
+        // portrait layout: placed bottom-right corner of screen
         mPortraitLayoutParams = new RelativeLayout.LayoutParams(width, height);
         mPortraitLayoutParams.setMargins(margin, margin, margin, margin);
-        mPortraitLayoutParams.addRule(RelativeLayout.BELOW, videoViewId);
-        mPortraitLayoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        mPortraitLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        mPortraitLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
 
         updateLayoutAndVisibility();
     }
@@ -64,6 +66,14 @@ public class VastVideoCtaButtonWidget extends ImageView {
 
     void updateCtaText(@NonNull final String customCtaText) {
         mCtaButtonDrawable.setCtaText(customCtaText);
+    }
+
+    void setHasSocialActions(final boolean hasSocialActions) {
+        mHasSocialActions = hasSocialActions;
+    }
+
+    boolean getHasSocialActions() {
+        return mHasSocialActions;
     }
 
     void notifyVideoSkippable() {
@@ -91,7 +101,8 @@ public class VastVideoCtaButtonWidget extends ImageView {
         }
 
         // If video has finished playing and there's a companion ad, do not show CTA button
-        if (mIsVideoComplete && mHasCompanionAd) {
+        // Unless the ad has social actions
+        if (mIsVideoComplete && mHasCompanionAd && !mHasSocialActions) {
             setVisibility(View.GONE);
             return;
         }
@@ -100,29 +111,25 @@ public class VastVideoCtaButtonWidget extends ImageView {
 
         switch (currentOrientation) {
             case Configuration.ORIENTATION_LANDSCAPE:
-                setVisibility(View.VISIBLE);
                 setLayoutParams(mLandscapeLayoutParams);
                 break;
             case Configuration.ORIENTATION_PORTRAIT:
-                setVisibility(View.VISIBLE);
                 setLayoutParams(mPortraitLayoutParams);
                 break;
             case Configuration.ORIENTATION_UNDEFINED:
                 MoPubLog.d("Screen orientation undefined: CTA button widget defaulting to portrait layout");
-                setVisibility(View.VISIBLE);
                 setLayoutParams(mPortraitLayoutParams);
                 break;
             case Configuration.ORIENTATION_SQUARE:
                 MoPubLog.d("Screen orientation is deprecated ORIENTATION_SQUARE: CTA button widget defaulting to portrait layout");
-                setVisibility(View.VISIBLE);
                 setLayoutParams(mPortraitLayoutParams);
                 break;
             default:
                 MoPubLog.d("Unrecognized screen orientation: CTA button widget defaulting to portrait layout");
-                setVisibility(View.VISIBLE);
                 setLayoutParams(mPortraitLayoutParams);
                 break;
         }
+        setVisibility(View.VISIBLE);
     }
 
     // for testing

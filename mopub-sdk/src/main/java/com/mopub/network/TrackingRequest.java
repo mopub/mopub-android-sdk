@@ -26,7 +26,7 @@ import java.util.List;
 public class TrackingRequest extends Request<Void> {
 
     public interface Listener extends Response.ErrorListener {
-        public void onResponse(@NonNull String url);
+        void onResponse(@NonNull String url);
     }
 
     @Nullable private final TrackingRequest.Listener mListener;

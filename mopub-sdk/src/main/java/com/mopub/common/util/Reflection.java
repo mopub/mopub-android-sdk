@@ -102,6 +102,7 @@ public class Reflection {
         Preconditions.checkNotNull(className);
 
         final Class<? extends T> clazz = Class.forName(className).asSubclass(superclass);
+        // noinspection unchecked
         final Constructor<? extends T> constructor = clazz.getDeclaredConstructor((Class[]) null);
         constructor.setAccessible(true);
 

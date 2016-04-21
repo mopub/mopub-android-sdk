@@ -1,15 +1,12 @@
 package com.mopub.nativeads;
 
-import android.app.Activity;
 import android.graphics.Bitmap;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.mopub.common.MoPub;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Utils;
 import com.mopub.mobileads.BuildConfig;
@@ -25,7 +22,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -34,7 +30,9 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.stub;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
@@ -50,6 +48,7 @@ public class MoPubStaticNativeAdRendererTest {
     @Mock private TextView callToActionView;
     @Mock private ImageView mainImageView;
     @Mock private ImageView iconImageView;
+    @Mock private ImageView privacyInformationIconImageView;
     @Mock private ImageView badView;
     @Mock private MoPubRequestQueue mockRequestQueue;
     @Mock private MaxWidthImageLoader mockImageLoader;
@@ -60,8 +59,6 @@ public class MoPubStaticNativeAdRendererTest {
         Networking.setRequestQueueForTesting(mockRequestQueue);
         Networking.setImageLoaderForTesting(mockImageLoader);
         stub(mockImageContainer.getBitmap()).toReturn(mock(Bitmap.class));
-
-        Activity context = Robolectric.buildActivity(Activity.class).create().get();
 
         when(relativeLayout.getId()).thenReturn((int) Utils.generateUniqueId());
 
@@ -78,6 +75,7 @@ public class MoPubStaticNativeAdRendererTest {
         setViewIdInLayout(callToActionView, relativeLayout);
         setViewIdInLayout(mainImageView, relativeLayout);
         setViewIdInLayout(iconImageView, relativeLayout);
+        setViewIdInLayout(privacyInformationIconImageView, relativeLayout);
         setViewIdInLayout(badView, relativeLayout);
 
         viewBinder = new ViewBinder.Builder(relativeLayout.getId())
@@ -86,6 +84,7 @@ public class MoPubStaticNativeAdRendererTest {
                 .callToActionId(callToActionView.getId())
                 .mainImageId(mainImageView.getId())
                 .iconImageId(iconImageView.getId())
+                .privacyInformationIconImageId(privacyInformationIconImageView.getId())
                 .build();
 
         subject = new MoPubStaticNativeAdRenderer(viewBinder);
@@ -149,6 +148,10 @@ public class MoPubStaticNativeAdRendererTest {
         verify(titleView, never()).setText(anyString());
         verify(textView, never()).setText(anyString());
         verify(callToActionView, never()).setText(anyString());
+        verify(mainImageView, times(2)).getId();
+        verifyNoMoreInteractions(mainImageView);
+        verify(iconImageView, times(2)).getId();
+        verifyNoMoreInteractions(iconImageView);
     }
 
     @Test
@@ -177,12 +180,16 @@ public class MoPubStaticNativeAdRendererTest {
         assertThat(actualViewHolder.callToActionView).isEqualTo(expectedViewHolder.callToActionView);
         assertThat(actualViewHolder.mainImageView).isEqualTo(expectedViewHolder.mainImageView);
         assertThat(actualViewHolder.iconImageView).isEqualTo(expectedViewHolder.iconImageView);
+        assertThat(actualViewHolder.privacyInformationIconImageView).isEqualTo(
+                expectedViewHolder.privacyInformationIconImageView);
     }
 
     @Test
-    public void supports_withInstanceOfBaseForwardingNativeAd_shouldReturnTrue() throws Exception {
+    public void supports_withCorrectInstanceOfBaseNativeAd_shouldReturnTrue() throws Exception {
         assertThat(subject.supports(new StaticNativeAd() {})).isTrue();
         assertThat(subject.supports(mock(MoPubStaticNativeAd.class))).isTrue();
         assertThat(subject.supports(mock(BaseNativeAd.class))).isFalse();
+        assertThat(subject.supports(mock(MoPubCustomEventVideoNative.MoPubVideoNativeAd.class)))
+                .isFalse();
     }
 }

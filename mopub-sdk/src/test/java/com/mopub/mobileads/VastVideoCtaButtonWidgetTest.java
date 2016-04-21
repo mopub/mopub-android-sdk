@@ -166,6 +166,18 @@ public class VastVideoCtaButtonWidgetTest {
         assertThat(subject.getLayoutParams()).isNull();
     }
 
+    @Test
+    public void notifyVideoComplete_withCompanionAd_withSocialActions_shouldBeVisible() throws Exception {
+        context.getResources().getConfiguration().orientation = Configuration.ORIENTATION_UNDEFINED;
+        subject = new VastVideoCtaButtonWidget(context, 0, true, true);
+        subject.setHasSocialActions(true);
+        subject.setVisibility(View.VISIBLE);
+
+        subject.notifyVideoComplete();
+
+        assertThat(subject.getVisibility()).isEqualTo(View.VISIBLE);
+    }
+
     // Video is complete, no companion ad, has clickthrough url, CTA button already visible
 
     @Test

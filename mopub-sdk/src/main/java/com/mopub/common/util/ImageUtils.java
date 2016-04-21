@@ -46,8 +46,8 @@ public class ImageUtils {
 
     /**
      * Sets the alpha value of the ImageView.
-     * API Level < 16: http://developer.android.com/reference/android/widget/ImageView.html#setAlpha(int)
-     * API Level >= 16: http://developer.android.com/reference/android/widget/ImageView.html#setImageAlpha(int)
+     * API Level < 16: https://developer.android.com/reference/android/widget/ImageView.html#setAlpha(int)
+     * API Level >= 16: https://developer.android.com/reference/android/widget/ImageView.html#setImageAlpha(int)
      * @param imageView the ImageView
      * @param alpha the alpha value being applied to the ImageView
      */

@@ -49,8 +49,8 @@ public class VastVideoViewProgressRunnableTest {
     @Test
     public void doWork_whenTrackersReturned_shouldMakeTrackingRequests() {
         List<VastTracker> testTrackers = new ArrayList<VastTracker>();
-        testTrackers.add(new VastAbsoluteProgressTracker("http://example.com/", 1999));
-        testTrackers.add(new VastAbsoluteProgressTracker("http://example1.com/", 2000));
+        testTrackers.add(new VastAbsoluteProgressTracker("https://example.com/", 1999));
+        testTrackers.add(new VastAbsoluteProgressTracker("https://example1.com/", 2000));
 
         when(mockVideoConfig.getUntriggeredTrackersBefore(eq(3000), eq(4000)))
                 .thenReturn(testTrackers);
@@ -72,8 +72,8 @@ public class VastVideoViewProgressRunnableTest {
         verify(mockRequestQueue, times(2)).add(requestCaptor.capture());
         final List<TrackingRequest> allValues = requestCaptor.getAllValues();
         assertThat(allValues).hasSize(2);
-        assertThat(allValues.get(0).getUrl()).isEqualTo("http://example.com/");
-        assertThat(allValues.get(1).getUrl()).isEqualTo("http://example1.com/");
+        assertThat(allValues.get(0).getUrl()).isEqualTo("https://example.com/");
+        assertThat(allValues.get(1).getUrl()).isEqualTo("https://example1.com/");
 
         verifyNoMoreInteractions(mockVastVideoViewController, mockRequestQueue);
     }

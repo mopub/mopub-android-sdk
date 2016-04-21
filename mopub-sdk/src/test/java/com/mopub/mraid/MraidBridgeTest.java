@@ -232,7 +232,7 @@ public class MraidBridgeTest {
     @Test
     public void handleShouldOverrideUrl_normalUrl_shouldReturnFalse() {
         attachWebViews();
-        boolean result = subjectBanner.handleShouldOverrideUrl("http://www.mopub.com");
+        boolean result = subjectBanner.handleShouldOverrideUrl("https://www.mopub.com");
 
         assertThat(result).isFalse();
     }
@@ -245,7 +245,7 @@ public class MraidBridgeTest {
         subjectBanner.attachView(mockBannerWebView);
         subjectBanner.setClicked(false);
         Map<String, String> params = new HashMap<String, String>();
-        params.put("uri", "http://valid-url");
+        params.put("uri", "https://valid-url");
 
         subjectBanner.runCommand(MraidJavascriptCommand.PLAY_VIDEO, params);
     }
@@ -255,7 +255,7 @@ public class MraidBridgeTest {
         attachWebViews();
         subjectBanner.setClicked(true);
         Map<String, String> params = new HashMap<String, String>();
-        params.put("uri", "http://valid-url");
+        params.put("uri", "https://valid-url");
 
         subjectBanner.runCommand(MraidJavascriptCommand.PLAY_VIDEO, params);
     }
@@ -266,7 +266,7 @@ public class MraidBridgeTest {
         attachWebViews();
         subjectInterstitial.setClicked(false);
         Map<String, String> params = new HashMap<String, String>();
-        params.put("uri", "http://valid-url");
+        params.put("uri", "https://valid-url");
 
         subjectInterstitial.runCommand(MraidJavascriptCommand.OPEN, params);
     }
@@ -277,7 +277,7 @@ public class MraidBridgeTest {
         attachWebViews();
         subjectInterstitial.setClicked(true);
         Map<String, String> params = new HashMap<String, String>();
-        params.put("url", "http://valid-url");
+        params.put("url", "https://valid-url");
 
         subjectInterstitial.runCommand(MraidJavascriptCommand.OPEN, params);
     }
@@ -312,7 +312,7 @@ public class MraidBridgeTest {
         attachWebViews();
         subjectBanner.setClicked(true);
         Map<String, String> params = new HashMap<String, String>();
-        params.put("url", "http://valid-url");
+        params.put("url", "https://valid-url");
         params.put("shouldUseCustomClose", "true");
 
         subjectBanner.runCommand(MraidJavascriptCommand.EXPAND, params);
@@ -320,7 +320,7 @@ public class MraidBridgeTest {
         ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
         verify(mockBridgeListener).onExpand(
                 uriCaptor.capture(), eq(true));
-        assertThat(uriCaptor.getValue().toString()).isEqualTo("http://valid-url");
+        assertThat(uriCaptor.getValue().toString()).isEqualTo("https://valid-url");
     }
 
     @Test
@@ -329,13 +329,13 @@ public class MraidBridgeTest {
         attachWebViews();
         subjectBanner.setClicked(true);
         Map<String, String> params = new HashMap<String, String>();
-        params.put("uri", "http://valid-url");
+        params.put("uri", "https://valid-url");
 
         subjectBanner.runCommand(MraidJavascriptCommand.PLAY_VIDEO, params);
 
         ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
         verify(mockBridgeListener).onPlayVideo(uriCaptor.capture());
-        assertThat(uriCaptor.getValue().toString()).isEqualTo("http://valid-url");
+        assertThat(uriCaptor.getValue().toString()).isEqualTo("https://valid-url");
     }
 
     @Test
@@ -344,11 +344,11 @@ public class MraidBridgeTest {
         attachWebViews();
         subjectBanner.setClicked(true);
         Map<String, String> params = new HashMap<String, String>();
-        params.put("uri", "http://valid-url");
+        params.put("uri", "https://valid-url");
 
         subjectBanner.runCommand(MraidJavascriptCommand.STORE_PICTURE, params);
 
-        verify(mockNativeCommandHandler).storePicture(any(Context.class), eq("http://valid-url"),
+        verify(mockNativeCommandHandler).storePicture(any(Context.class), eq("https://valid-url"),
                 any(MraidCommandFailureListener.class));
     }
 

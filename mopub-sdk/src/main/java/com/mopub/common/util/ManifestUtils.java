@@ -123,7 +123,7 @@ public class ManifestUtils {
      * Filters in activities to be returned based on matching their declaration state
      * in the Android Manifest with the isDeclared param.
      *
-     * @param context
+     * @param context the context
      * @param requiredActivities activities to filter against
      * @param isDeclared desired declaration state of activities in Android Manifest to be returned
      * @return the list of filtered in activities
