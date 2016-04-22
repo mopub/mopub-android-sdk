@@ -1,5 +1,6 @@
 package com.mopub.mobileads;
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.integralads.avid.library.mopub.AvidManager;
+import com.integralads.avid.library.mopub.session.AvidAdSessionContext;
+import com.integralads.avid.library.mopub.session.AvidAdSessionManager;
+import com.integralads.avid.library.mopub.session.AvidHtmlAdSession;
 import com.mopub.common.AdReport;
 import com.mopub.common.CreativeOrientation;
 import com.mopub.common.DataKeys;
@@ -25,6 +29,7 @@ import static com.mopub.common.DataKeys.CREATIVE_ORIENTATION_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.common.DataKeys.REDIRECT_URL_KEY;
 import static com.mopub.common.DataKeys.SCROLLABLE_KEY;
+import static com.mopub.common.DataKeys.AVID_AD_SESSION_ID_KEY;
 import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
 import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_CLOSE;
 import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
@@ -38,12 +43,13 @@ import static com.mopub.mobileads.HtmlWebViewClient.MOPUB_FINISH_LOAD;
 
 public class MoPubActivity extends BaseInterstitialActivity {
     private HtmlInterstitialWebView mHtmlInterstitialWebView;
+    private AvidHtmlAdSession avidAdSession;
 
     public static void start(Context context, String htmlData, AdReport adReport,
             boolean isScrollable, String redirectUrl, String clickthroughUrl,
-            CreativeOrientation creativeOrientation, long broadcastIdentifier) {
+            CreativeOrientation creativeOrientation, long broadcastIdentifier, String avidAdSessionId) {
         Intent intent = createIntent(context, htmlData, adReport, isScrollable,
-                redirectUrl, clickthroughUrl, creativeOrientation, broadcastIdentifier);
+                redirectUrl, clickthroughUrl, creativeOrientation, broadcastIdentifier, avidAdSessionId);
         try {
             context.startActivity(intent);
         } catch (ActivityNotFoundException anfe) {
@@ -53,7 +59,7 @@ public class MoPubActivity extends BaseInterstitialActivity {
 
     static Intent createIntent(Context context,
             String htmlData, AdReport adReport, boolean isScrollable, String redirectUrl,
-            String clickthroughUrl, CreativeOrientation orientation, long broadcastIdentifier) {
+            String clickthroughUrl, CreativeOrientation orientation, long broadcastIdentifier, String avidAdSessionId) {
         Intent intent = new Intent(context, MoPubActivity.class);
         intent.putExtra(HTML_RESPONSE_BODY_KEY, htmlData);
         intent.putExtra(SCROLLABLE_KEY, isScrollable);
@@ -62,11 +68,12 @@ public class MoPubActivity extends BaseInterstitialActivity {
         intent.putExtra(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
         intent.putExtra(AD_REPORT_KEY, adReport);
         intent.putExtra(CREATIVE_ORIENTATION_KEY, orientation);
+        intent.putExtra(AVID_AD_SESSION_ID_KEY, avidAdSessionId);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
     }
 
-    static WebView preRenderHtml(final Context context, final AdReport adReport,
+    static String preRenderHtml(final Context context, final AdReport adReport,
             final CustomEventInterstitialListener customEventInterstitialListener,
             String htmlData) {
         HtmlInterstitialWebView dummyWebView = HtmlInterstitialWebViewFactory.create(context, adReport, customEventInterstitialListener, false, null, null);
@@ -83,8 +90,13 @@ public class MoPubActivity extends BaseInterstitialActivity {
                 return true;
             }
         });
+        AvidAdSessionContext avidAdSessionContext = new AvidAdSessionContext(BuildConfig.VERSION_NAME);
+        AvidHtmlAdSession avidAdSession = AvidAdSessionManager.startAvidHtmlAdSession(context, avidAdSessionContext);
+        if (context instanceof Activity) {
+            avidAdSession.registerAdView(dummyWebView, (Activity) context);
+        }
         dummyWebView.loadHtmlResponse(htmlData);
-        return dummyWebView;
+        return avidAdSession.getAvidAdSessionId();
     }
 
     @Override
@@ -94,9 +106,13 @@ public class MoPubActivity extends BaseInterstitialActivity {
         String redirectUrl = intent.getStringExtra(REDIRECT_URL_KEY);
         String clickthroughUrl = intent.getStringExtra(CLICKTHROUGH_URL_KEY);
         String htmlResponse = intent.getStringExtra(HTML_RESPONSE_BODY_KEY);
+        avidAdSession = AvidAdSessionManager.findAvidAdSessionById(intent.getStringExtra(AVID_AD_SESSION_ID_KEY));
+        if (avidAdSession == null) {
+            avidAdSession = AvidAdSessionManager.startAvidHtmlAdSession(this, new AvidAdSessionContext(BuildConfig.VERSION_NAME));
+        }
 
         mHtmlInterstitialWebView = HtmlInterstitialWebViewFactory.create(getApplicationContext(), mAdReport, new BroadcastingInterstitialListener(), isScrollable, redirectUrl, clickthroughUrl);
-        AvidManager.getInstance().registerAdView(mHtmlInterstitialWebView, this);
+        avidAdSession.registerAdView(mHtmlInterstitialWebView, this);
         mHtmlInterstitialWebView.loadHtmlResponse(htmlResponse);
 
         return mHtmlInterstitialWebView;
@@ -120,7 +136,10 @@ public class MoPubActivity extends BaseInterstitialActivity {
 
     @Override
     protected void onDestroy() {
-        AvidManager.getInstance().unregisterAdView(mHtmlInterstitialWebView);
+        if (avidAdSession != null) {
+            avidAdSession.endSession();
+            avidAdSession = null;
+        }
         mHtmlInterstitialWebView.loadUrl(WEB_VIEW_DID_CLOSE.getUrl());
         mHtmlInterstitialWebView.destroy();
         broadcastAction(this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_DISMISS);

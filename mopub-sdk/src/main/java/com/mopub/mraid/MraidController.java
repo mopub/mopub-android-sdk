@@ -28,6 +28,9 @@ import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
 import com.integralads.avid.library.mopub.AvidManager;
+import com.integralads.avid.library.mopub.session.AvidAdSessionContext;
+import com.integralads.avid.library.mopub.session.AvidAdSessionManager;
+import com.integralads.avid.library.mopub.session.AvidHtmlAdSession;
 import com.mopub.common.AdReport;
 import com.mopub.common.UrlHandler;
 import com.mopub.common.CloseableLayout;
@@ -40,6 +43,7 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.Dips;
 import com.mopub.common.util.Views;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.MraidVideoPlayerActivity;
 import com.mopub.mobileads.util.WebViews;
 import com.mopub.mraid.MraidBridge.MraidBridgeListener;
@@ -54,6 +58,7 @@ import static com.mopub.common.util.Utils.bitMaskContainsFlag;
 
 public class MraidController {
     private final AdReport mAdReport;
+    private AvidHtmlAdSession avidAdSession;
 
     public interface MraidListener {
         void onLoaded(View view);
@@ -337,7 +342,9 @@ public class MraidController {
         Activity activity = mWeakActivity.get();
         if (activity != null) {
             mMraidWebView.getSettings().setJavaScriptEnabled(true);
-            AvidManager.getInstance().registerAdView(mMraidWebView, activity);
+            AvidAdSessionContext avidAdSessionContext = new AvidAdSessionContext(BuildConfig.VERSION_NAME);
+            avidAdSession = AvidAdSessionManager.startAvidHtmlAdSession(activity, avidAdSessionContext);
+            avidAdSession.registerAdView(mMraidWebView, activity);
         }
         mMraidBridge.attachView(mMraidWebView);
         mDefaultAdContainer.addView(mMraidWebView,
@@ -605,8 +612,11 @@ public class MraidController {
 
         // Calling destroy eliminates a memory leak on Gingerbread devices
         mMraidBridge.detach();
+        if (avidAdSession != null) {
+            avidAdSession.endSession();
+            avidAdSession = null;
+        }
         if (mMraidWebView != null) {
-            AvidManager.getInstance().unregisterAdView(mMraidWebView);
             mMraidWebView.destroy();
             mMraidWebView = null;
         }

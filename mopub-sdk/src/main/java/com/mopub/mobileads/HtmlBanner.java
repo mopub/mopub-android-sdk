@@ -3,7 +3,9 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.Context;
 
-import com.integralads.avid.library.mopub.AvidManager;
+import com.integralads.avid.library.mopub.session.AvidAdSessionContext;
+import com.integralads.avid.library.mopub.session.AvidAdSessionManager;
+import com.integralads.avid.library.mopub.session.AvidHtmlAdSession;
 import com.mopub.common.AdReport;
 import com.mopub.common.DataKeys;
 import com.mopub.common.logging.MoPubLog;
@@ -18,6 +20,7 @@ import static com.mopub.mobileads.MoPubErrorCode.NETWORK_INVALID_STATE;
 public class HtmlBanner extends CustomEventBanner {
 
     private HtmlBannerWebView mHtmlBannerWebView;
+    private AvidHtmlAdSession avidAdSession;
 
     @Override
     protected void loadBanner(
@@ -51,15 +54,20 @@ public class HtmlBanner extends CustomEventBanner {
         mHtmlBannerWebView = HtmlBannerWebViewFactory.create(context, adReport, customEventBannerListener, isScrollable, redirectUrl, clickthroughUrl);
         AdViewController.setShouldHonorServerDimensions(mHtmlBannerWebView);
         if (context instanceof Activity) {
-            AvidManager.getInstance().registerAdView(mHtmlBannerWebView, (Activity) context);
+            AvidAdSessionContext avidAdSessionContext = new AvidAdSessionContext(BuildConfig.VERSION_NAME);
+            avidAdSession = AvidAdSessionManager.startAvidHtmlAdSession(context, avidAdSessionContext);
+            avidAdSession.registerAdView(mHtmlBannerWebView, (Activity) context);
         }
         mHtmlBannerWebView.loadHtmlResponse(htmlData);
     }
 
     @Override
     protected void onInvalidate() {
+        if (avidAdSession != null) {
+            avidAdSession.endSession();
+            avidAdSession = null;
+        }
         if (mHtmlBannerWebView != null) {
-            AvidManager.getInstance().unregisterAdView(mHtmlBannerWebView);
             mHtmlBannerWebView.destroy();
         }
     }

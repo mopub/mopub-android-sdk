@@ -1,10 +1,9 @@
 package com.mopub.mobileads;
 
-import android.app.Activity;
 import android.support.annotation.NonNull;
-import android.webkit.WebView;
 
-import com.integralads.avid.library.mopub.AvidManager;
+import com.integralads.avid.library.mopub.session.AbstractAvidAdSession;
+import com.integralads.avid.library.mopub.session.AvidAdSessionManager;
 import com.mopub.common.CreativeOrientation;
 
 import java.security.AccessControlContext;
@@ -21,9 +20,9 @@ public class HtmlInterstitial extends ResponseBodyInterstitial {
     private boolean mIsScrollable;
     private String mRedirectUrl;
     private String mClickthroughUrl;
+    private String avidAdSessionId;
     @NonNull
     private CreativeOrientation mOrientation;
-    private WebView webView;
 
     @Override
     protected void extractExtras(Map<String, String> serverExtras) {
@@ -36,32 +35,25 @@ public class HtmlInterstitial extends ResponseBodyInterstitial {
 
     @Override
     protected void preRenderHtml(CustomEventInterstitialListener customEventInterstitialListener) {
-        webView = MoPubActivity.preRenderHtml(mContext, mAdReport, customEventInterstitialListener, mHtmlData);
-        if (mContext instanceof Activity) {
-            AvidManager.getInstance().registerAdView(webView, (Activity)mContext);
-        } else {
-            webView = null;
-        }
+        avidAdSessionId = MoPubActivity.preRenderHtml(mContext, mAdReport, customEventInterstitialListener, mHtmlData);
     }
 
     @Override
     public void showInterstitial() {
         MoPubActivity.start(mContext, mHtmlData, mAdReport, mIsScrollable,
                 mRedirectUrl, mClickthroughUrl, mOrientation,
-                mBroadcastIdentifier);
-        unregisterWebView();
+                mBroadcastIdentifier, avidAdSessionId);
     }
 
     @Override
     public void onInvalidate() {
         super.onInvalidate();
-        unregisterWebView();
-    }
-
-    private void unregisterWebView() {
-        if (webView != null) {
-            AvidManager.getInstance().unregisterAdView(webView);
-            webView = null;
+        if(avidAdSessionId != null) {
+            AbstractAvidAdSession avidAdSession = AvidAdSessionManager.findAvidAdSessionById(avidAdSessionId);
+            if(avidAdSession != null) {
+                avidAdSession.endSession();
+            }
+            avidAdSessionId = null;
         }
     }
 }
