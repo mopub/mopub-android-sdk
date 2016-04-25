@@ -10,10 +10,9 @@ import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.integralads.avid.library.mopub.AvidManager;
-import com.integralads.avid.library.mopub.session.AvidAdSessionContext;
+import com.integralads.avid.library.mopub.session.ExternalAvidAdSessionContext;
 import com.integralads.avid.library.mopub.session.AvidAdSessionManager;
-import com.integralads.avid.library.mopub.session.AvidHtmlAdSession;
+import com.integralads.avid.library.mopub.session.AvidDisplayAdSession;
 import com.mopub.common.AdReport;
 import com.mopub.common.CreativeOrientation;
 import com.mopub.common.DataKeys;
@@ -43,7 +42,7 @@ import static com.mopub.mobileads.HtmlWebViewClient.MOPUB_FINISH_LOAD;
 
 public class MoPubActivity extends BaseInterstitialActivity {
     private HtmlInterstitialWebView mHtmlInterstitialWebView;
-    private AvidHtmlAdSession avidAdSession;
+    private AvidDisplayAdSession avidAdSession;
 
     public static void start(Context context, String htmlData, AdReport adReport,
             boolean isScrollable, String redirectUrl, String clickthroughUrl,
@@ -90,8 +89,8 @@ public class MoPubActivity extends BaseInterstitialActivity {
                 return true;
             }
         });
-        AvidAdSessionContext avidAdSessionContext = new AvidAdSessionContext(BuildConfig.VERSION_NAME);
-        AvidHtmlAdSession avidAdSession = AvidAdSessionManager.startAvidHtmlAdSession(context, avidAdSessionContext);
+        ExternalAvidAdSessionContext avidAdSessionContext = new ExternalAvidAdSessionContext(BuildConfig.VERSION_NAME);
+        AvidDisplayAdSession avidAdSession = AvidAdSessionManager.startAvidDisplayAdSession(context, avidAdSessionContext);
         if (context instanceof Activity) {
             avidAdSession.registerAdView(dummyWebView, (Activity) context);
         }
@@ -108,7 +107,7 @@ public class MoPubActivity extends BaseInterstitialActivity {
         String htmlResponse = intent.getStringExtra(HTML_RESPONSE_BODY_KEY);
         avidAdSession = AvidAdSessionManager.findAvidAdSessionById(intent.getStringExtra(AVID_AD_SESSION_ID_KEY));
         if (avidAdSession == null) {
-            avidAdSession = AvidAdSessionManager.startAvidHtmlAdSession(this, new AvidAdSessionContext(BuildConfig.VERSION_NAME));
+            avidAdSession = AvidAdSessionManager.startAvidDisplayAdSession(this, new ExternalAvidAdSessionContext(BuildConfig.VERSION_NAME));
         }
 
         mHtmlInterstitialWebView = HtmlInterstitialWebViewFactory.create(getApplicationContext(), mAdReport, new BroadcastingInterstitialListener(), isScrollable, redirectUrl, clickthroughUrl);

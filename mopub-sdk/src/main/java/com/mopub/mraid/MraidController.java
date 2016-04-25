@@ -27,10 +27,9 @@ import android.webkit.JsResult;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
-import com.integralads.avid.library.mopub.AvidManager;
-import com.integralads.avid.library.mopub.session.AvidAdSessionContext;
+import com.integralads.avid.library.mopub.session.ExternalAvidAdSessionContext;
 import com.integralads.avid.library.mopub.session.AvidAdSessionManager;
-import com.integralads.avid.library.mopub.session.AvidHtmlAdSession;
+import com.integralads.avid.library.mopub.session.AvidDisplayAdSession;
 import com.mopub.common.AdReport;
 import com.mopub.common.UrlHandler;
 import com.mopub.common.CloseableLayout;
@@ -58,7 +57,7 @@ import static com.mopub.common.util.Utils.bitMaskContainsFlag;
 
 public class MraidController {
     private final AdReport mAdReport;
-    private AvidHtmlAdSession avidAdSession;
+    private AvidDisplayAdSession avidAdSession;
 
     public interface MraidListener {
         void onLoaded(View view);
@@ -342,8 +341,8 @@ public class MraidController {
         Activity activity = mWeakActivity.get();
         if (activity != null) {
             mMraidWebView.getSettings().setJavaScriptEnabled(true);
-            AvidAdSessionContext avidAdSessionContext = new AvidAdSessionContext(BuildConfig.VERSION_NAME);
-            avidAdSession = AvidAdSessionManager.startAvidHtmlAdSession(activity, avidAdSessionContext);
+            ExternalAvidAdSessionContext avidAdSessionContext = new ExternalAvidAdSessionContext(BuildConfig.VERSION_NAME);
+            avidAdSession = AvidAdSessionManager.startAvidDisplayAdSession(activity, avidAdSessionContext);
             avidAdSession.registerAdView(mMraidWebView, activity);
         }
         mMraidBridge.attachView(mMraidWebView);
