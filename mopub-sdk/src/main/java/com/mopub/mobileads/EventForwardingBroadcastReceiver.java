@@ -1,20 +1,16 @@
 package com.mopub.mobileads;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.support.v4.content.LocalBroadcastManager;
-
-import com.mopub.common.DataKeys;
+import android.support.annotation.NonNull;
 
 import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_INVALID_STATE;
 
-public class EventForwardingBroadcastReceiver extends BroadcastReceiver {
+public class EventForwardingBroadcastReceiver extends BaseBroadcastReceiver {
     private final CustomEventInterstitialListener mCustomEventInterstitialListener;
-    private final long mBroadcastIdentifier;
-    private Context mContext;
+
 
     public static final String ACTION_INTERSTITIAL_FAIL = "com.mopub.action.interstitial.fail";
     public static final String ACTION_INTERSTITIAL_SHOW = "com.mopub.action.interstitial.show";
@@ -24,18 +20,13 @@ public class EventForwardingBroadcastReceiver extends BroadcastReceiver {
 
 
     public EventForwardingBroadcastReceiver(CustomEventInterstitialListener customEventInterstitialListener, final long broadcastIdentifier) {
+        super(broadcastIdentifier);
         mCustomEventInterstitialListener = customEventInterstitialListener;
-        mBroadcastIdentifier = broadcastIdentifier;
-        sIntentFilter = getHtmlInterstitialIntentFilter();
+        getIntentFilter();
     }
 
-    static void broadcastAction(final Context context, final long broadcastIdentifier, final String action) {
-        Intent intent = new Intent(action);
-        intent.putExtra(DataKeys.BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
-        LocalBroadcastManager.getInstance(context.getApplicationContext()).sendBroadcast(intent);
-    }
-
-    public static IntentFilter getHtmlInterstitialIntentFilter() {
+    @NonNull
+    public IntentFilter getIntentFilter() {
         if (sIntentFilter == null) {
             sIntentFilter = new IntentFilter();
             sIntentFilter.addAction(ACTION_INTERSTITIAL_FAIL);
@@ -52,14 +43,7 @@ public class EventForwardingBroadcastReceiver extends BroadcastReceiver {
             return;
         }
 
-        /**
-         * Only consume this broadcast if the identifier on the received Intent and this broadcast
-         * match up. This allows us to target broadcasts to the ad that spawned them. We include
-         * this here because there is no appropriate IntentFilter condition that can recreate this
-         * behavior.
-         */
-        final long receivedIdentifier = intent.getLongExtra(DataKeys.BROADCAST_IDENTIFIER_KEY, -1);
-        if (mBroadcastIdentifier != receivedIdentifier) {
+        if (!shouldConsumeBroadcast(intent)) {
             return;
         }
 
@@ -70,22 +54,10 @@ public class EventForwardingBroadcastReceiver extends BroadcastReceiver {
             mCustomEventInterstitialListener.onInterstitialShown();
         } else if (ACTION_INTERSTITIAL_DISMISS.equals(action)) {
             mCustomEventInterstitialListener.onInterstitialDismissed();
-            unregister();
+            unregister(this);
         } else if (ACTION_INTERSTITIAL_CLICK.equals(action)) {
             mCustomEventInterstitialListener.onInterstitialClicked();
         }
 
-    }
-
-    public void register(Context context) {
-        mContext = context;
-        LocalBroadcastManager.getInstance(mContext).registerReceiver(this, sIntentFilter);
-    }
-
-    public void unregister() {
-        if (mContext != null) {
-            LocalBroadcastManager.getInstance(mContext).unregisterReceiver(this);
-            mContext = null;
-        }
     }
 }

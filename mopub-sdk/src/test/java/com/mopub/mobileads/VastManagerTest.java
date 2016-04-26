@@ -31,22 +31,23 @@ import static org.mockito.Mockito.verify;
 @Config(constants = BuildConfig.class, shadows = {ShadowMoPubHttpUrlConnection.class})
 public class VastManagerTest {
     static final String EXTENSIONS_SNIPPET_PLACEHOLDER = "<![CDATA[EXTENSIONS_SNIPPET]]>";
-    static final String TEST_VAST_XML_STRING = "<VAST version='2.0'><Ad id='62833'><Wrapper><AdSystem>Tapad</AdSystem><VASTAdTagURI>http://dsp.x-team.staging.mopub.com/xml</VASTAdTagURI><Impression>http://myTrackingURL/wrapper/impression1</Impression><Impression>http://myTrackingURL/wrapper/impression2</Impression><Creatives><Creative AdID='62833'><Linear><TrackingEvents><Tracking event='creativeView'>http://myTrackingURL/wrapper/creativeView</Tracking><Tracking event='start'>http://myTrackingURL/wrapper/start</Tracking><Tracking event='midpoint'>http://myTrackingURL/wrapper/midpoint</Tracking><Tracking event='progress' offset='00:00:03.100'>http://myTrackingURL/wrapper/progress</Tracking><Tracking event='firstQuartile'>http://myTrackingURL/wrapper/firstQuartile</Tracking><Tracking event='thirdQuartile'>http://myTrackingURL/wrapper/thirdQuartile</Tracking><Tracking event='complete'>http://myTrackingURL/wrapper/complete</Tracking><Tracking event='close'>http://myTrackingURL/wrapper/close</Tracking><Tracking event='skip'>http://myTrackingURL/wrapper/skip</Tracking><Tracking event='mute'>http://myTrackingURL/wrapper/mute</Tracking><Tracking event='unmute'>http://myTrackingURL/wrapper/unmute</Tracking><Tracking event='pause'>http://myTrackingURL/wrapper/pause</Tracking><Tracking event='resume'>http://myTrackingURL/wrapper/resume</Tracking><Tracking event='fullscreen'>http://myTrackingURL/wrapper/fullscreen</Tracking></TrackingEvents><VideoClicks><ClickTracking>http://myTrackingURL/wrapper/click</ClickTracking></VideoClicks></Linear></Creative><Creative AdID=\"601364-Companion\"> <CompanionAds><Companion width=\"9000\"></Companion> </CompanionAds></Creative></Creatives><![CDATA[EXTENSIONS_SNIPPET]]><Error><![CDATA[http://wrapperErrorTracker]]></Error></Wrapper></Ad></VAST><MP_TRACKING_URLS><MP_TRACKING_URL>http://www.mopub.com/imp1</MP_TRACKING_URL><MP_TRACKING_URL>http://www.mopub.com/imp2</MP_TRACKING_URL></MP_TRACKING_URLS>";
-    static final String TEST_NESTED_VAST_XML_STRING = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><VAST version='2.0'><Ad id='57722'><InLine><AdSystem version='1.0'>Tapad</AdSystem><AdTitle><![CDATA[PKW6T_LIV_DSN_Audience_TAPAD_3rd Party Audience Targeting_Action Movi]]></AdTitle><Description/><Impression><![CDATA[http://rtb-test.dev.tapad.com:8080/creative/imp.png?ts=1374099035457&svid=1&creative_id=30731&ctx_type=InApp&ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&liverail_cp=1]]></Impression><Creatives><Creative sequence='1' id='57722'><Linear><TrackingEvents><Tracking event='close'>http://myTrackingURL/wrapper/nested_close</Tracking><Tracking event='skip'>http://myTrackingURL/wrapper/nested_skip</Tracking></TrackingEvents><Duration>00:00:15</Duration><VideoClicks><ClickThrough><![CDATA[http://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com]]></ClickThrough></VideoClicks><MediaFiles><MediaFile delivery='progressive' bitrate='416' width='800' height='480' type='video/mp4'><![CDATA[https://s3.amazonaws.com/mopub-vast/tapad-video.mp4]]></MediaFile><MediaFile delivery='progressive' bitrate='416' width='300' height='250' type='video/mp4'><![CDATA[https://s3.amazonaws.com/mopub-vast/tapad-video1.mp4]]></MediaFile></MediaFiles></Linear></Creative><Creative AdID=\"601364-Companion\"><CompanionAds><Companion id=\"valid\" height=\"250\" width=\"300\"><StaticResource creativeType=\"image/jpeg\">http://demo.tremormedia.com/proddev/vast/Blistex1.jpg</StaticResource><TrackingEvents><Tracking event=\"creativeView\">http://myTrackingURL/firstCompanionCreativeView</Tracking><Tracking event=\"creativeView\">http://myTrackingURL/secondCompanionCreativeView</Tracking></TrackingEvents><CompanionClickThrough>http://www.tremormedia.com</CompanionClickThrough><CompanionClickTracking><![CDATA[http://companionClickTracking1]]></CompanionClickTracking><CompanionClickTracking><![CDATA[http://companionClickTracking2]]></CompanionClickTracking></Companion></CompanionAds></Creative></Creatives><![CDATA[EXTENSIONS_SNIPPET]]><Error><![CDATA[http://inLineErrorTracker]]></Error></InLine></Ad></VAST>";
-    static final String TEST_VAST_BAD_NEST_URL_XML_STRING = "<VAST version='2.0'><Ad id='62833'><Wrapper><AdSystem>Tapad</AdSystem><VASTAdTagURI>http://dsp.x-team.staging.mopub.com/xml\"$|||</VASTAdTagURI><Impression>http://myTrackingURL/wrapper/impression1</Impression><Impression>http://myTrackingURL/wrapper/impression2</Impression><Creatives><Creative AdID='62833'><Linear><TrackingEvents><Tracking event='creativeView'>http://myTrackingURL/wrapper/creativeView</Tracking><Tracking event='start'>http://myTrackingURL/wrapper/start</Tracking><Tracking event='midpoint'>http://myTrackingURL/wrapper/midpoint</Tracking><Tracking event='firstQuartile'>http://myTrackingURL/wrapper/firstQuartile</Tracking><Tracking event='thirdQuartile'>http://myTrackingURL/wrapper/thirdQuartile</Tracking><Tracking event='complete'>http://myTrackingURL/wrapper/complete</Tracking><Tracking event='mute'>http://myTrackingURL/wrapper/mute</Tracking><Tracking event='unmute'>http://myTrackingURL/wrapper/unmute</Tracking><Tracking event='pause'>http://myTrackingURL/wrapper/pause</Tracking><Tracking event='resume'>http://myTrackingURL/wrapper/resume</Tracking><Tracking event='fullscreen'>http://myTrackingURL/wrapper/fullscreen</Tracking></TrackingEvents><VideoClicks><ClickTracking>http://myTrackingURL/wrapper/click</ClickTracking></VideoClicks></Linear></Creative></Creatives></Wrapper></Ad></VAST><MP_TRACKING_URLS><MP_TRACKING_URL>http://www.mopub.com/imp1</MP_TRACKING_URL><MP_TRACKING_URL>http://www.mopub.com/imp2</MP_TRACKING_URL></MP_TRACKING_URLS>";
+    static final String TEST_VAST_XML_STRING = "<VAST version='2.0'><Ad id='62833'><Wrapper><AdSystem>Tapad</AdSystem><VASTAdTagURI>https://dsp.x-team.staging.mopub.com/xml</VASTAdTagURI><Impression>https://myTrackingURL/wrapper/impression1</Impression><Impression>https://myTrackingURL/wrapper/impression2</Impression><Creatives><Creative AdID='62833'><Linear><TrackingEvents><Tracking event='creativeView'>https://myTrackingURL/wrapper/creativeView</Tracking><Tracking event='start'>https://myTrackingURL/wrapper/start</Tracking><Tracking event='midpoint'>https://myTrackingURL/wrapper/midpoint</Tracking><Tracking event='progress' offset='00:00:03.100'>https://myTrackingURL/wrapper/progress</Tracking><Tracking event='firstQuartile'>https://myTrackingURL/wrapper/firstQuartile</Tracking><Tracking event='thirdQuartile'>https://myTrackingURL/wrapper/thirdQuartile</Tracking><Tracking event='complete'>https://myTrackingURL/wrapper/complete</Tracking><Tracking event='close'>https://myTrackingURL/wrapper/close</Tracking><Tracking event='skip'>https://myTrackingURL/wrapper/skip</Tracking><Tracking event='mute'>https://myTrackingURL/wrapper/mute</Tracking><Tracking event='unmute'>https://myTrackingURL/wrapper/unmute</Tracking><Tracking event='pause'>https://myTrackingURL/wrapper/pause</Tracking><Tracking event='resume'>https://myTrackingURL/wrapper/resume</Tracking><Tracking event='fullscreen'>https://myTrackingURL/wrapper/fullscreen</Tracking></TrackingEvents><VideoClicks><ClickTracking>https://myTrackingURL/wrapper/click</ClickTracking></VideoClicks></Linear></Creative><Creative AdID=\"601364-Companion\"> <CompanionAds><Companion width=\"9000\"></Companion> </CompanionAds></Creative></Creatives><![CDATA[EXTENSIONS_SNIPPET]]><Error><![CDATA[https://wrapperErrorTracker]]></Error></Wrapper></Ad></VAST><MP_TRACKING_URLS><MP_TRACKING_URL>https://www.mopub.com/imp1</MP_TRACKING_URL><MP_TRACKING_URL>https://www.mopub.com/imp2</MP_TRACKING_URL></MP_TRACKING_URLS>";
+    static final String TEST_NESTED_VAST_XML_STRING = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><VAST version='2.0'><Ad id='57722'><InLine><AdSystem version='1.0'>Tapad</AdSystem><AdTitle><![CDATA[PKW6T_LIV_DSN_Audience_TAPAD_3rd Party Audience Targeting_Action Movi]]></AdTitle><Description/><Impression><![CDATA[https://rtb-test.dev.tapad.com:8080/creative/imp.png?ts=1374099035457&svid=1&creative_id=30731&ctx_type=InApp&ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&liverail_cp=1]]></Impression><Creatives><Creative sequence='1' id='57722'><Linear><TrackingEvents><Tracking event='close'>https://myTrackingURL/wrapper/nested_close</Tracking><Tracking event='skip'>https://myTrackingURL/wrapper/nested_skip</Tracking></TrackingEvents><Duration>00:00:15</Duration><VideoClicks><ClickThrough><![CDATA[https://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=https%3A%2F%2Ftapad.com]]></ClickThrough></VideoClicks><MediaFiles><MediaFile delivery='progressive' bitrate='416' width='800' height='480' type='video/mp4'><![CDATA[https://s3.amazonaws.com/mopub-vast/tapad-video.mp4]]></MediaFile><MediaFile delivery='progressive' bitrate='416' width='300' height='250' type='video/mp4'><![CDATA[https://s3.amazonaws.com/mopub-vast/tapad-video1.mp4]]></MediaFile></MediaFiles></Linear></Creative><Creative AdID=\"601364-Companion\"><CompanionAds><Companion id=\"valid\" height=\"250\" width=\"300\"><StaticResource creativeType=\"image/jpeg\">https://demo.tremormedia.com/proddev/vast/Blistex1.jpg</StaticResource><TrackingEvents><Tracking event=\"creativeView\">https://myTrackingURL/firstCompanionCreativeView</Tracking><Tracking event=\"creativeView\">https://myTrackingURL/secondCompanionCreativeView</Tracking></TrackingEvents><CompanionClickThrough>https://www.tremormedia.com</CompanionClickThrough><CompanionClickTracking><![CDATA[https://companionClickTracking1]]></CompanionClickTracking><CompanionClickTracking><![CDATA[https://companionClickTracking2]]></CompanionClickTracking></Companion></CompanionAds></Creative></Creatives><![CDATA[EXTENSIONS_SNIPPET]]><Error><![CDATA[https://inLineErrorTracker]]></Error></InLine></Ad></VAST>";
+    static final String TEST_VAST_BAD_NEST_URL_XML_STRING = "<VAST version='2.0'><Ad id='62833'><Wrapper><AdSystem>Tapad</AdSystem><VASTAdTagURI>https://dsp.x-team.staging.mopub.com/xml\"$|||</VASTAdTagURI><Impression>https://myTrackingURL/wrapper/impression1</Impression><Impression>https://myTrackingURL/wrapper/impression2</Impression><Creatives><Creative AdID='62833'><Linear><TrackingEvents><Tracking event='creativeView'>https://myTrackingURL/wrapper/creativeView</Tracking><Tracking event='start'>https://myTrackingURL/wrapper/start</Tracking><Tracking event='midpoint'>https://myTrackingURL/wrapper/midpoint</Tracking><Tracking event='firstQuartile'>https://myTrackingURL/wrapper/firstQuartile</Tracking><Tracking event='thirdQuartile'>https://myTrackingURL/wrapper/thirdQuartile</Tracking><Tracking event='complete'>https://myTrackingURL/wrapper/complete</Tracking><Tracking event='mute'>https://myTrackingURL/wrapper/mute</Tracking><Tracking event='unmute'>https://myTrackingURL/wrapper/unmute</Tracking><Tracking event='pause'>https://myTrackingURL/wrapper/pause</Tracking><Tracking event='resume'>https://myTrackingURL/wrapper/resume</Tracking><Tracking event='fullscreen'>https://myTrackingURL/wrapper/fullscreen</Tracking></TrackingEvents><VideoClicks><ClickTracking>https://myTrackingURL/wrapper/click</ClickTracking></VideoClicks></Linear></Creative></Creatives></Wrapper></Ad></VAST><MP_TRACKING_URLS><MP_TRACKING_URL>https://www.mopub.com/imp1</MP_TRACKING_URL><MP_TRACKING_URL>https://www.mopub.com/imp2</MP_TRACKING_URL></MP_TRACKING_URLS>";
 
     private VastManager subject;
     private VastManagerListener vastManagerListener;
     private Activity context;
     private VastVideoConfig mVastVideoConfig;
     private Semaphore semaphore;
+    private String dspCreativeId;
 
     @Before
     public void setup() {
         context = Robolectric.buildActivity(Activity.class).create().get();
         CacheService.initializeDiskCache(context);
         subject = new VastManager(context, true);
-
+        dspCreativeId = "dspCreativeId";
         semaphore = new Semaphore(0);
         vastManagerListener = mock(VastManagerListener.class);
         doAnswer(new Answer() {
@@ -66,7 +67,7 @@ public class VastManagerTest {
     }
 
     private void prepareVastVideoConfiguration() {
-        subject.prepareVastVideoConfiguration(TEST_VAST_XML_STRING, vastManagerListener, context);
+        subject.prepareVastVideoConfiguration(TEST_VAST_XML_STRING, vastManagerListener, dspCreativeId, context);
 
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
         ShadowLooper.runUiThreadTasks();
@@ -88,7 +89,7 @@ public class VastManagerTest {
         final String expectedFilePathDiskCache = CacheService.getFilePathDiskCache(mVastVideoConfig.getNetworkMediaFileUrl());
         assertThat(mVastVideoConfig.getDiskMediaFileUrl()).isEqualTo(expectedFilePathDiskCache);
 
-        assertThat(mVastVideoConfig.getClickThroughUrl()).isEqualTo("http://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com");
+        assertThat(mVastVideoConfig.getClickThroughUrl()).isEqualTo("https://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=https%3A%2F%2Ftapad.com");
         assertThat(mVastVideoConfig.getImpressionTrackers().size()).isEqualTo(5);
 
         // Verify quartile trackers
@@ -119,16 +120,16 @@ public class VastManagerTest {
         assertThat(vastCompanionAdConfig.getWidth()).isEqualTo(300);
         assertThat(vastCompanionAdConfig.getHeight()).isEqualTo(250);
         assertThat(vastCompanionAdConfig.getVastResource().getResource())
-                .isEqualTo("http://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
+                .isEqualTo("https://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
         assertThat(vastCompanionAdConfig.getVastResource().getType())
                 .isEqualTo(VastResource.Type.STATIC_RESOURCE);
         assertThat(vastCompanionAdConfig.getVastResource().getCreativeType())
                 .isEqualTo(VastResource.CreativeType.IMAGE);
-        assertThat(vastCompanionAdConfig.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
+        assertThat(vastCompanionAdConfig.getClickThroughUrl()).isEqualTo("https://www.tremormedia.com");
 
         assertThat(VastUtils.vastTrackersToStrings(vastCompanionAdConfig.getClickTrackers()))
-                .containsOnly("http://companionClickTracking1",
-                        "http://companionClickTracking2");
+                .containsOnly("https://companionClickTracking1",
+                        "https://companionClickTracking2");
     }
 
     @Test
@@ -150,7 +151,7 @@ public class VastManagerTest {
         final String expectedFilePathDiskCache = CacheService.getFilePathDiskCache(mVastVideoConfig.getNetworkMediaFileUrl());
         assertThat(mVastVideoConfig.getDiskMediaFileUrl()).isEqualTo(expectedFilePathDiskCache);
 
-        assertThat(mVastVideoConfig.getClickThroughUrl()).isEqualTo("http://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com");
+        assertThat(mVastVideoConfig.getClickThroughUrl()).isEqualTo("https://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=https%3A%2F%2Ftapad.com");
         assertThat(mVastVideoConfig.getImpressionTrackers().size()).isEqualTo(13);
 
         assertThat(mVastVideoConfig.getAbsoluteTrackers().size()).isEqualTo(9);
@@ -187,15 +188,15 @@ public class VastManagerTest {
         assertThat(vastCompanionAdConfig.getWidth()).isEqualTo(300);
         assertThat(vastCompanionAdConfig.getHeight()).isEqualTo(250);
         assertThat(vastCompanionAdConfig.getVastResource().getResource())
-                .isEqualTo("http://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
+                .isEqualTo("https://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
         assertThat(vastCompanionAdConfig.getVastResource().getType())
                 .isEqualTo(VastResource.Type.STATIC_RESOURCE);
         assertThat(vastCompanionAdConfig.getVastResource().getCreativeType())
                 .isEqualTo(VastResource.CreativeType.IMAGE);
-        assertThat(vastCompanionAdConfig.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
+        assertThat(vastCompanionAdConfig.getClickThroughUrl()).isEqualTo("https://www.tremormedia.com");
         assertThat(VastUtils.vastTrackersToStrings(vastCompanionAdConfig.getClickTrackers()))
-                .containsOnly("http://companionClickTracking1",
-                        "http://companionClickTracking2");
+                .containsOnly("https://companionClickTracking1",
+                        "https://companionClickTracking2");
     }
 
     @Test
@@ -243,11 +244,12 @@ public class VastManagerTest {
                             "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText>custom CTA text</MoPubCtaText>" +
                                 "<MoPubSkipText>skip</MoPubSkipText>" +
-                                "<MoPubCloseIcon>http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png</MoPubCloseIcon>" +
+                                "<MoPubCloseIcon>https://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png</MoPubCloseIcon>" +
                                 "<MoPubForceOrientation>device</MoPubForceOrientation>" +
                             "</Extension>" +
                         "</Extensions>"),
                 vastManagerListener,
+                dspCreativeId,
                 context);
 
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
@@ -258,7 +260,7 @@ public class VastManagerTest {
         // Verify custom extensions
         assertThat(mVastVideoConfig.getCustomCtaText()).isEqualTo("custom CTA text");
         assertThat(mVastVideoConfig.getCustomSkipText()).isEqualTo("skip");
-        assertThat(mVastVideoConfig.getCustomCloseIconUrl()).isEqualTo("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png");
+        assertThat(mVastVideoConfig.getCustomCloseIconUrl()).isEqualTo("https://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png");
         assertThat(mVastVideoConfig.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.DEVICE_ORIENTATION);
     }
 
@@ -271,7 +273,7 @@ public class VastManagerTest {
                                 "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText>custom CTA text</MoPubCtaText>" +
                                 "<MoPubSkipText>skip</MoPubSkipText>" +
-                                "<MoPubCloseIcon>http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png</MoPubCloseIcon>" +
+                                "<MoPubCloseIcon>https://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png</MoPubCloseIcon>" +
                                 "<MoPubForceOrientation>device</MoPubForceOrientation>" +
                                 "</Extension>" +
                                 "</Extensions>"));
@@ -286,7 +288,7 @@ public class VastManagerTest {
         // Verify custom extensions
         assertThat(mVastVideoConfig.getCustomCtaText()).isEqualTo("custom CTA text");
         assertThat(mVastVideoConfig.getCustomSkipText()).isEqualTo("skip");
-        assertThat(mVastVideoConfig.getCustomCloseIconUrl()).isEqualTo("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png");
+        assertThat(mVastVideoConfig.getCustomCloseIconUrl()).isEqualTo("https://ton.twitter.com/exchange-media/images/v4/star_icon_3x.png");
         assertThat(mVastVideoConfig.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.DEVICE_ORIENTATION);
     }
 
@@ -299,7 +301,7 @@ public class VastManagerTest {
                                 "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText>CTA 2</MoPubCtaText>" +
                                 "<MoPubSkipText>skip 2</MoPubSkipText>" +
-                                "<MoPubCloseIcon>http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_2.png</MoPubCloseIcon>" +
+                                "<MoPubCloseIcon>https://ton.twitter.com/exchange-media/images/v4/star_icon_3x_2.png</MoPubCloseIcon>" +
                                 "<MoPubForceOrientation>landscape</MoPubForceOrientation>" +
                                 "</Extension>" +
                                 "</Extensions>"));
@@ -313,11 +315,12 @@ public class VastManagerTest {
                             "<Extension type=\"MoPub\">" +
                                 "<MoPubCtaText>CTA 1</MoPubCtaText>" +
                                 "<MoPubSkipText>skip 1</MoPubSkipText>" +
-                                "<MoPubCloseIcon>http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png</MoPubCloseIcon>" +
+                                "<MoPubCloseIcon>https://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png</MoPubCloseIcon>" +
                                 "<MoPubForceOrientation>device orientation</MoPubForceOrientation>" +
                             "</Extension>" +
                         "</Extensions>"),
                 vastManagerListener,
+                dspCreativeId,
                 context);
 
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
@@ -329,7 +332,7 @@ public class VastManagerTest {
         // Verify custom extension values are the ones last parsed in TEST_NESTED_VAST_XML_STRING
         assertThat(mVastVideoConfig.getCustomCtaText()).isEqualTo("CTA 2");
         assertThat(mVastVideoConfig.getCustomSkipText()).isEqualTo("skip 2");
-        assertThat(mVastVideoConfig.getCustomCloseIconUrl()).isEqualTo("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_2.png");
+        assertThat(mVastVideoConfig.getCustomCloseIconUrl()).isEqualTo("https://ton.twitter.com/exchange-media/images/v4/star_icon_3x_2.png");
         assertThat(mVastVideoConfig.getCustomForceOrientation()).isEqualTo(DeviceUtils.ForceOrientation.FORCE_LANDSCAPE);
     }
 
@@ -490,6 +493,7 @@ public class VastManagerTest {
         subject.prepareVastVideoConfiguration(
                 TEST_VAST_XML_STRING.replace("<Linear>", "<Linear skipoffset='00:03:14'>"),
                 vastManagerListener,
+                dspCreativeId,
                 context);
 
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
@@ -520,7 +524,7 @@ public class VastManagerTest {
     @Test
     public void prepareVastVideoConfiguration_withNoMediaUrlInXml_shouldReturnNull() throws Exception {
         subject.prepareVastVideoConfiguration(TEST_VAST_BAD_NEST_URL_XML_STRING,
-                vastManagerListener, context);
+                vastManagerListener, dspCreativeId, context);
 
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
         ShadowLooper.runUiThreadTasks();
@@ -532,7 +536,7 @@ public class VastManagerTest {
 
     @Test
     public void prepareVastVideoConfiguration_withNullXml_shouldReturnNull() throws Exception {
-        subject.prepareVastVideoConfiguration(null, vastManagerListener, context);
+        subject.prepareVastVideoConfiguration(null, vastManagerListener, dspCreativeId, context);
 
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
         ShadowLooper.runUiThreadTasks();
@@ -544,7 +548,7 @@ public class VastManagerTest {
 
     @Test
     public void prepareVastVideoConfiguration_withEmptyXml_shouldReturnNull() throws Exception {
-        subject.prepareVastVideoConfiguration("", vastManagerListener, context);
+        subject.prepareVastVideoConfiguration("", vastManagerListener, dspCreativeId, context);
 
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
         ShadowLooper.runUiThreadTasks();
@@ -587,7 +591,7 @@ public class VastManagerTest {
 
         Robolectric.getBackgroundThreadScheduler().pause();
 
-        subject.prepareVastVideoConfiguration(TEST_VAST_XML_STRING, vastManagerListener, context);
+        subject.prepareVastVideoConfiguration(TEST_VAST_XML_STRING, vastManagerListener, dspCreativeId, context);
 
         subject.cancel();
 

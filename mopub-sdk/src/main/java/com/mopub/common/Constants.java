@@ -17,4 +17,6 @@ public class Constants {
     public static final int THIRTY_SECONDS_MILLIS = 30 * 1000;
 
     public static final int TEN_MB = 10 * 1024 * 1024;
+
+    public static final int UNUSED_REQUEST_CODE = 255;  // Acceptable range is [0, 255]
 }

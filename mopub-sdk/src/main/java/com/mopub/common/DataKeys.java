@@ -24,4 +24,8 @@ public class DataKeys {
     public static final String IMPRESSION_VISIBLE_MS = "Impression-Visible-Ms";
     public static final String MAX_BUFFER_MS = "Max-Buffer-Ms";
     public static final String EVENT_DETAILS = "Event-Details";
+
+    // Rewarded Video fields
+    public static final String REWARDED_VIDEO_CURRENCY_NAME_KEY = "Rewarded-Video-Currency-Name";
+    public static final String REWARDED_VIDEO_CURRENCY_AMOUNT_STRING_KEY = "Rewarded-Video-Currency-Value-String";
 }

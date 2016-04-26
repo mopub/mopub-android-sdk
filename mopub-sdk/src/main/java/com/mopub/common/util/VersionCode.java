@@ -39,7 +39,7 @@ public enum VersionCode {
         return CUR_DEVELOPMENT;
     }
 
-    private VersionCode(int apiLevel) {
+    VersionCode(int apiLevel) {
         this.mApiLevel = apiLevel;
     }
 

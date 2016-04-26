@@ -197,6 +197,7 @@ public class CustomEventBannerAdapterTest {
             }
         };
 
+        // noinspection unchecked
         doAnswer(assertTimeoutRunnableHasStarted)
                 .when(banner)
                 .loadBanner(
@@ -224,6 +225,7 @@ public class CustomEventBannerAdapterTest {
             }
         };
 
+        // noinspection unchecked
         doAnswer(justCallOnBannerFailed)
                 .when(banner)
                 .loadBanner(
@@ -317,6 +319,7 @@ public class CustomEventBannerAdapterTest {
 
         subject.loadAd();
 
+        // noinspection unchecked
         verify(banner, never()).loadBanner(
                 any(Context.class),
                 any(CustomEventBannerListener.class),

@@ -3,6 +3,7 @@ package com.mopub.nativeads;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -18,11 +19,18 @@ import com.mopub.common.VisibleForTesting;
  */
 public class NativeClickHandler {
     @NonNull private final Context mContext;
+    @Nullable private final String mDspCreativeId;
+
     private boolean mClickInProgress;
 
     public NativeClickHandler(@NonNull final Context context) {
+        this(context, null);
+    }
+
+    public NativeClickHandler(@NonNull final Context context, @Nullable final String dspCreativeId) {
         Preconditions.checkNotNull(context);
         mContext = context.getApplicationContext();
+        mDspCreativeId = dspCreativeId;
     }
 
     /**
@@ -115,15 +123,18 @@ public class NativeClickHandler {
             spinningProgressView.addToRoot(view);
         }
 
-        new UrlHandler.Builder()
-                .withSupportedUrlActions(
-                        UrlAction.IGNORE_ABOUT_SCHEME,
-                        UrlAction.OPEN_NATIVE_BROWSER,
-                        UrlAction.OPEN_APP_MARKET,
-                        UrlAction.OPEN_IN_APP_BROWSER,
-                        UrlAction.HANDLE_SHARE_TWEET,
-                        UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK,
-                        UrlAction.FOLLOW_DEEP_LINK)
+        UrlHandler.Builder builder = new UrlHandler.Builder();
+        if (!TextUtils.isEmpty(mDspCreativeId)) {
+            builder.withDspCreativeId(mDspCreativeId);
+        }
+        builder.withSupportedUrlActions(
+                UrlAction.IGNORE_ABOUT_SCHEME,
+                UrlAction.OPEN_NATIVE_BROWSER,
+                UrlAction.OPEN_APP_MARKET,
+                UrlAction.OPEN_IN_APP_BROWSER,
+                UrlAction.HANDLE_SHARE_TWEET,
+                UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK,
+                UrlAction.FOLLOW_DEEP_LINK)
                 .withResultActions(new UrlHandler.ResultActions() {
                     @Override
                     public void urlHandlingSucceeded(@NonNull String url,

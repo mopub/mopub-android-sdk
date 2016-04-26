@@ -42,7 +42,7 @@ public class CacheServiceTest {
     @Before
     public void setUp() throws Exception {
         context = Robolectric.buildActivity(Activity.class).create().get();
-        key1 = "http://www.mopub.com/";
+        key1 = "https://www.mopub.com/";
         data1 = "image_data_1";
 
         semaphore = new Semaphore(0);

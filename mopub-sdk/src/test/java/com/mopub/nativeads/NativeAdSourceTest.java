@@ -267,6 +267,7 @@ public class NativeAdSourceTest {
         assertThat(subject.mRequestInFlight).isTrue();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void replenishCache_withCacheSizeAtLimit_shouldNotLoadNativeAd() {
         // Default cache size may change in the future and this test will have to be updated
@@ -326,6 +327,7 @@ public class NativeAdSourceTest {
         assertThat(subject.mSequenceNumber).isEqualTo(6);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void moPubNativeNetworkListener_onNativeLoad_withFullCache_shouldResetRequestInFlight() {
         subject.setMoPubNative(mockMoPubNative);

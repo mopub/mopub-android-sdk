@@ -30,6 +30,7 @@ import com.mopub.mobileads.ViewGestureDetector.UserClickListener;
 import com.mopub.mobileads.resource.MraidJavascript;
 import com.mopub.mraid.MraidBridge.MraidWebView.OnVisibilityChangedListener;
 import com.mopub.mraid.MraidNativeCommandHandler.MraidCommandFailureListener;
+import com.mopub.network.Networking;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -203,7 +204,7 @@ public class MraidBridge {
         }
 
         mHasLoaded = false;
-        mMraidWebView.loadDataWithBaseURL("http://" + Constants.HOST + "/",
+        mMraidWebView.loadDataWithBaseURL(Networking.getBaseUrlScheme() + "://" + Constants.HOST + "/",
                 htmlData, "text/html", "UTF-8", null);
     }
 

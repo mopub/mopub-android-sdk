@@ -60,14 +60,14 @@ public class MoPubView extends FrameLayout {
         setVerticalScrollBarEnabled(false);
 
         // There is a rare bug in Froyo/2.2 where creation of a WebView causes a
-        // NullPointerException. (http://code.google.com/p/android/issues/detail?id=10789)
+        // NullPointerException. (https://code.google.com/p/android/issues/detail?id=10789)
         // It happens when the WebView can't access the local file store to make a cache file.
         // Here, we'll work around it by trying to create a file store and then just go inert
         // if it's not accessible.
         if (WebViewDatabase.getInstance(context) == null) {
             MoPubLog.e("Disabling MoPub. Local cache file is inaccessible so MoPub will " +
                     "fail if we try to create a WebView. Details of this Android bug found at:" +
-                    "http://code.google.com/p/android/issues/detail?id=10789");
+                    "https://code.google.com/p/android/issues/detail?id=10789");
             return;
         }
 
@@ -261,10 +261,6 @@ public class MoPubView extends FrameLayout {
         return (mAdViewController != null) ? mAdViewController.getLocation() : null;
     }
 
-    public void setTimeout(int milliseconds) {
-        if (mAdViewController != null) mAdViewController.setTimeout(milliseconds);
-    }
-
     public int getAdWidth() {
         return (mAdViewController != null) ? mAdViewController.getAdWidth() : 0;
     }
@@ -343,6 +339,13 @@ public class MoPubView extends FrameLayout {
 
     public AdFormat getAdFormat() {
         return AdFormat.BANNER;
+    }
+
+    /**
+     * @deprecated As of release 4.4.0
+     */
+    @Deprecated
+    public void setTimeout(int milliseconds) {
     }
 
     @Deprecated

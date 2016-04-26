@@ -7,6 +7,7 @@ public enum ResponseHeader {
     CUSTOM_EVENT_DATA("X-Custom-Event-Class-Data"),
     CUSTOM_EVENT_NAME("X-Custom-Event-Class-Name"),
     CUSTOM_EVENT_HTML_DATA("X-Custom-Event-Html-Data"),
+    CREATIVE_ID("X-CreativeId"),
     DSP_CREATIVE_ID("X-DspCreativeid"),
     FAIL_URL("X-Failurl"),
     FULL_AD_TYPE("X-Fulladtype"),
@@ -32,10 +33,14 @@ public enum ResponseHeader {
     IMPRESSION_VISIBLE_MS("X-Impression-Visible-Ms"),
     MAX_BUFFER_MS("X-Max-Buffer-Ms"),
 
+    // Rewarded Video fields
+    REWARDED_VIDEO_CURRENCY_NAME("X-Rewarded-Video-Currency-Name"),
+    REWARDED_VIDEO_CURRENCY_AMOUNT("X-Rewarded-Video-Currency-Amount"),
+
     @Deprecated CUSTOM_SELECTOR("X-Customselector");
 
     private final String key;
-    private ResponseHeader(String key) {
+    ResponseHeader(String key) {
         this.key = key;
     }
 

@@ -32,6 +32,7 @@ public class HtmlInterstitialWebViewTest {
     private String clickthroughUrl;
     private boolean isScrollable;
     private String redirectUrl;
+    private String dspCreativeId;
 
     @Before
     public void setUp() throws Exception {
@@ -41,11 +42,12 @@ public class HtmlInterstitialWebViewTest {
         isScrollable = false;
         clickthroughUrl = "clickthroughUrl";
         redirectUrl = "redirectUrl";
+        dspCreativeId = "dspCreativeId";
     }
 
     @Test
     public void init_shouldSetupWebViewClient() throws Exception {
-        subject.init(customEventInterstitialListener, false, clickthroughUrl, redirectUrl);
+        subject.init(customEventInterstitialListener, false, clickthroughUrl, redirectUrl, dspCreativeId);
         WebViewClient webViewClient = Shadows.shadowOf(subject).getWebViewClient();
         assertThat(webViewClient).isNotNull();
         assertThat(webViewClient).isInstanceOf(HtmlWebViewClient.class);

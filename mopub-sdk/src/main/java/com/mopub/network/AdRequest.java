@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import com.mopub.common.AdFormat;
 import com.mopub.common.AdType;
 import com.mopub.common.DataKeys;
+import com.mopub.common.FullAdType;
 import com.mopub.common.LocationService;
 import com.mopub.common.MoPub;
 import com.mopub.common.Preconditions;
@@ -50,7 +51,7 @@ public class AdRequest extends Request<AdResponse> {
     @NonNull private final Context mContext;
 
     public interface Listener extends Response.ErrorListener {
-        public void onSuccess(AdResponse response);
+        void onSuccess(AdResponse response);
     }
 
     public AdRequest(@NonNull final String url,
@@ -144,6 +145,9 @@ public class AdRequest extends Request<AdResponse> {
                     )
             );
         }
+
+        String dspCreativeId = extractHeader(headers, ResponseHeader.DSP_CREATIVE_ID);
+        builder.setDspCreativeId(dspCreativeId);
 
         String networkType = extractHeader(headers, ResponseHeader.NETWORK_TYPE);
         builder.setNetworkType(networkType);
@@ -251,6 +255,7 @@ public class AdRequest extends Request<AdResponse> {
                             .adNetworkType(networkType)
                             .adWidthPx(width)
                             .adHeightPx(height)
+                            .dspCreativeId(dspCreativeId)
                             .geoLatitude(location == null ? null : location.getLatitude())
                             .geoLongitude(location == null ? null : location.getLongitude())
                             .geoAccuracy(location == null ? null : location.getAccuracy())
@@ -263,6 +268,15 @@ public class AdRequest extends Request<AdResponse> {
         }
         builder.setServerExtras(serverExtras);
 
+        if (AdType.REWARDED_VIDEO.equals(adTypeString) || AdType.CUSTOM.equals(adTypeString)) {
+            final String rewardedVideoCurrencyName = extractHeader(headers,
+                    ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME);
+            final String rewardedVideoCurrencyAmount = extractHeader(headers,
+                    ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT);
+            builder.setRewardedVideoCurrencyName(rewardedVideoCurrencyName);
+            builder.setRewardedVideoCurrencyAmount(rewardedVideoCurrencyAmount);
+        }
+
         AdResponse adResponse = builder.build();
         logScribeEvent(adResponse, networkResponse, location);
 
@@ -272,8 +286,9 @@ public class AdRequest extends Request<AdResponse> {
 
     private boolean eventDataIsInResponseBody(@Nullable String adType,
             @Nullable String fullAdType) {
-        return "mraid".equals(adType) || "html".equals(adType) ||
-                ("interstitial".equals(adType) && "vast".equals(fullAdType));
+        return AdType.MRAID.equals(adType) || AdType.HTML.equals(adType) ||
+                (AdType.INTERSTITIAL.equals(adType) && FullAdType.VAST.equals(fullAdType)) ||
+                (AdType.REWARDED_VIDEO.equals(adType) && FullAdType.VAST.equals(fullAdType));
     }
 
     // Based on Volley's StringResponse class.
@@ -320,7 +335,7 @@ public class AdRequest extends Request<AdResponse> {
                 new Event.Builder(BaseEvent.Name.AD_REQUEST, BaseEvent.Category.REQUESTS,
                         BaseEvent.SamplingRate.AD_REQUEST.getSamplingRate())
                         .withAdUnitId(mAdUnitId)
-                        .withAdCreativeId(adResponse.getDspCreativeId())
+                        .withDspCreativeId(adResponse.getDspCreativeId())
                         .withAdType(adResponse.getAdType())
                         .withAdNetworkType(adResponse.getNetworkType())
                         .withAdWidthPx(adResponse.getWidth() != null

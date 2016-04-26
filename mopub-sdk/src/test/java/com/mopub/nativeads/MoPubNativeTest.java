@@ -104,10 +104,10 @@ public class MoPubNativeTest {
 
     @Test
     public void requestNativeAd_shouldFireNetworkRequest() {
-        subject.requestNativeAd("http://www.mopub.com");
+        subject.requestNativeAd("https://www.mopub.com");
 
         verify(mockNetworkListener, never()).onNativeFail(any(NativeErrorCode.class));
-        verify(mockRequestQueue).add(argThat(isUrl("http://www.mopub.com")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://www.mopub.com")));
     }
 
     @Test

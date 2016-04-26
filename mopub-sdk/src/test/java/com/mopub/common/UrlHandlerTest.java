@@ -53,7 +53,7 @@ public class UrlHandlerTest {
 
     @Test
     public void urlHandler_withoutMoPubBrowser_shouldCallOnClickSuccessButNotStartActivity() {
-        final String url = "http://www.mopub.com/";
+        final String url = "https://www.mopub.com/";
 
         new UrlHandler.Builder()
                 .withSupportedUrlActions(OPEN_IN_APP_BROWSER)
@@ -82,6 +82,19 @@ public class UrlHandlerTest {
     }
 
     @Test
+    public void urlHandler_withMatchingMoPubSchemeUppercasedFinishLoad_shouldCallOnFinishLoad() {
+        final String url = "mopub://FiNiShLoAd";
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(HANDLE_MOPUB_SCHEME)
+                .withResultActions(mockResultActions)
+                .withMoPubSchemeListener(mockMoPubSchemeListener)
+                .build().handleResolvedUrl(context, url, true, null);
+
+        verify(mockMoPubSchemeListener).onFinishLoad();
+        verifyNoMoreCallbacks();
+    }
+
+    @Test
     public void urlHandler_withMatchingMoPubSchemeClose_shouldCallOnClose() {
         final String url = "mopub://close";
         new UrlHandler.Builder()
@@ -95,8 +108,34 @@ public class UrlHandlerTest {
     }
 
     @Test
+    public void urlHandler_withMatchingMoPubSchemeUppercasedClose_shouldCallOnClose() {
+        final String url = "mopub://ClOsE";
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(HANDLE_MOPUB_SCHEME)
+                .withResultActions(mockResultActions)
+                .withMoPubSchemeListener(mockMoPubSchemeListener)
+                .build().handleResolvedUrl(context, url, true, null);
+
+        verify(mockMoPubSchemeListener).onClose();
+        verifyNoMoreCallbacks();
+    }
+
+    @Test
     public void urlHandler_withMatchingMoPubSchemeFailLoad_shouldCallOnFailLoad() {
         final String url = "mopub://failLoad";
+        new UrlHandler.Builder()
+                .withSupportedUrlActions(HANDLE_MOPUB_SCHEME)
+                .withResultActions(mockResultActions)
+                .withMoPubSchemeListener(mockMoPubSchemeListener)
+                .build().handleResolvedUrl(context, url, true, null);
+
+        verify(mockMoPubSchemeListener).onFailLoad();
+        verifyNoMoreCallbacks();
+    }
+
+    @Test
+    public void urlHandler_withMatchingMoPubSchemeUppercasedFailLoad_shouldCallOnFailLoad() {
+        final String url = "mopub://FaIlLoAd";
         new UrlHandler.Builder()
                 .withSupportedUrlActions(HANDLE_MOPUB_SCHEME)
                 .withResultActions(mockResultActions)
@@ -171,7 +210,7 @@ public class UrlHandlerTest {
 
     @Test
     public void urlHandler_withValidNativeBrowserUrl_shouldCallOnClickSuccess_shouldStartActivity() {
-        final String urlToLoad = "http://www.mopub.com/";
+        final String urlToLoad = "https://www.mopub.com/";
         final String url = "mopubnativebrowser://navigate?url=" + urlToLoad;
 
         new UrlHandler.Builder()
@@ -190,7 +229,7 @@ public class UrlHandlerTest {
 
     @Test
     public void urlHandler_withMatchingInAppBrowserHttpUrl_shouldCallOnClickSuccess_shouldStartActivity() {
-        final String url = "http://some_url";
+        final String url = "https://some_url";
 
         new UrlHandler.Builder()
                 .withSupportedUrlActions(IGNORE_ABOUT_SCHEME, HANDLE_MOPUB_SCHEME, FOLLOW_DEEP_LINK,
@@ -280,7 +319,7 @@ public class UrlHandlerTest {
     @Test
     public void urlHandler_withMatchingUnresolvableDeeplinkPlus_withResolvableFallback_shouldResolveRedirects_shouldCallOnClickSuccess_shouldStartActivity() {
         final String primaryUrl = "missingApp://somePath";
-        final String fallbackUrl = "http://www.twitter.com";
+        final String fallbackUrl = "https://www.twitter.com";
         final String fallbackUrlAfterRedirects = "https://twitter.com/";
         final String deeplinkPlusUrl = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
                 + "&fallbackUrl=" + Uri.encode(fallbackUrl);
@@ -320,10 +359,10 @@ public class UrlHandlerTest {
     @Test
     public void urlHandler_withDeeplinkPlus_shouldTriggerPrimaryTracker() {
         final String primaryUrl = "twitter://timeline";
-        final String primaryTracker = "http://ads.twitter.com/tracking?pubId=1234&userId=5678";
-        final String fallbackUrl = "http://twitter.com";
+        final String primaryTracker = "https://ads.twitter.com/tracking?pubId=1234&userId=5678";
+        final String fallbackUrl = "https://twitter.com";
         final String fallbackTracker =
-                "http://ads.twitter.com/fallbackTracking?pubId=1234&userId=5678";
+                "https://ads.twitter.com/fallbackTracking?pubId=1234&userId=5678";
         final String url = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
                 + "&primaryTrackingUrl=" + Uri.encode(primaryTracker)
                 + "&fallbackUrl=" + Uri.encode(fallbackUrl)
@@ -342,8 +381,8 @@ public class UrlHandlerTest {
     @Test
     public void urlHandler_withDeeplinkPlus_shouldTriggerMultiplePrimaryTrackers() {
         final String primaryUrl = "twitter://timeline";
-        final String primaryTracker1 = "http://ads.twitter.com/tracking?pubId=1234&userId=5678";
-        final String primaryTracker2 = "http://ads.mopub.com/tracking?pubId=4321&userId=8765";
+        final String primaryTracker1 = "https://ads.twitter.com/tracking?pubId=1234&userId=5678";
+        final String primaryTracker2 = "https://ads.mopub.com/tracking?pubId=4321&userId=8765";
         final String url = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
                 + "&primaryTrackingUrl=" + Uri.encode(primaryTracker1)
                 + "&primaryTrackingUrl=" + Uri.encode(primaryTracker2);
@@ -361,10 +400,10 @@ public class UrlHandlerTest {
     @Test
     public void urlHandler_withDeeplinkPlus_withResolvableFallback_shouldTriggerFallbackTracker() {
         final String primaryUrl = "missingApp://somePath";
-        final String fallbackUrl = "http://twitter.com";
-        final String primaryTracker = "http://ads.twitter.com/tracking?pubId=1234&userId=5678";
+        final String fallbackUrl = "https://twitter.com";
+        final String primaryTracker = "https://ads.twitter.com/tracking?pubId=1234&userId=5678";
         final String fallbackTracker =
-                "http://ads.twitter.com/fallbackTracking?pubId=1234&userId=5678";
+                "https://ads.twitter.com/fallbackTracking?pubId=1234&userId=5678";
         final String url = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
                 + "&primaryTrackingUrl=" + Uri.encode(primaryTracker)
                 + "&fallbackUrl=" + Uri.encode(fallbackUrl)
@@ -382,9 +421,9 @@ public class UrlHandlerTest {
     @Test
     public void urlHandler_withDeeplinkPlus_withResolvableFallback_shouldTriggerMultiplePrimaryTrackers() {
         final String primaryUrl = "missingApp://somePath";
-        final String fallbackUrl = "http://twitter.com";
-        final String fallbackTracker1 = "http://ads.twitter.com/tracking?pubId=1234&userId=5678";
-        final String fallbackTracker2 = "http://ads.mopub.com/tracking?pubId=4321&userId=8765";
+        final String fallbackUrl = "https://twitter.com";
+        final String fallbackTracker1 = "https://ads.twitter.com/tracking?pubId=1234&userId=5678";
+        final String fallbackTracker2 = "https://ads.mopub.com/tracking?pubId=4321&userId=8765";
         final String url = "deeplink+://navigate?primaryUrl=" + Uri.encode(primaryUrl)
                 + "&fallbackUrl=" + Uri.encode(fallbackUrl)
                 + "&fallbackTrackingUrl=" + Uri.encode(fallbackTracker1)
@@ -397,20 +436,6 @@ public class UrlHandlerTest {
 
         verify(mockRequestQueue).add(argThat(isUrl(fallbackTracker1)));
         verify(mockRequestQueue).add(argThat(isUrl(fallbackTracker2)));
-    }
-
-    @Test
-    public void urlHandler_withUppercasedDeeplinkPlus_shouldBeHandled() {
-        final String primaryUrl = "twitter://timeline";
-        final String url = "DeEpLiNk+://navigate?primaryUrl=" + Uri.encode(primaryUrl);
-        makeDeeplinkResolvable(primaryUrl);
-
-        new UrlHandler.Builder()
-                .withSupportedUrlActions(FOLLOW_DEEP_LINK_WITH_FALLBACK)
-                .withResultActions(mockResultActions)
-                .build().handleResolvedUrl(context, url, true, null);
-
-        verify(mockResultActions).urlHandlingSucceeded(url, FOLLOW_DEEP_LINK_WITH_FALLBACK);
     }
 
     @Test

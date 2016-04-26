@@ -28,7 +28,7 @@ public class HtmlBannerWebViewFactory {
             String redirectUrl,
             String clickthroughUrl) {
         HtmlBannerWebView htmlBannerWebView = new HtmlBannerWebView(context, adReport);
-        htmlBannerWebView.init(customEventBannerListener, isScrollable, redirectUrl, clickthroughUrl);
+        htmlBannerWebView.init(customEventBannerListener, isScrollable, redirectUrl, clickthroughUrl, adReport.getDspCreativeId());
         return htmlBannerWebView;
     }
 

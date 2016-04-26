@@ -13,12 +13,12 @@ import static com.mopub.common.ClientMetadata.MoPubNetworkType;
 
 public abstract class BaseEvent {
 
-    public static enum ScribeCategory {
+    public enum ScribeCategory {
         EXCHANGE_CLIENT_EVENT("exchange_client_event"),
         EXCHANGE_CLIENT_ERROR("exchange_client_error");
 
         @NonNull private final String mScribeCategory;
-        private ScribeCategory(@NonNull String scribeCategory) {
+        ScribeCategory(@NonNull String scribeCategory) {
             mScribeCategory = scribeCategory;
         }
 
@@ -28,13 +28,13 @@ public abstract class BaseEvent {
         }
     }
 
-    public static enum SdkProduct {
+    public enum SdkProduct {
         NONE(0),
         WEB_VIEW(1),
         NATIVE(2);
 
         private final int mType;
-        private SdkProduct(int type) {
+        SdkProduct(int type) {
             mType = type;
         }
 
@@ -43,14 +43,14 @@ public abstract class BaseEvent {
         }
     }
 
-    public static enum AppPlatform {
+    public enum AppPlatform {
         NONE(0),
         IOS(1),
         ANDROID(2),
         MOBILE_WEB(3);
 
         private final int mType;
-        private AppPlatform(int type) {
+        AppPlatform(int type) {
             mType = type;
         }
 
@@ -60,18 +60,25 @@ public abstract class BaseEvent {
     }
 
     public enum Name {
+        // Ad Requests:
         AD_REQUEST("ad_request"),
         IMPRESSION_REQUEST("impression_request"),
         CLICK_REQUEST("click_request"),
+
+        // Native Video:
         DOWNLOAD_START("download_start"),
         DOWNLOAD_VIDEO_READY("download_video_ready"),
         DOWNLOAD_BUFFERING("download_video_buffering"),
         DOWNLOAD_FINISHED("download_finished"),
         ERROR_DURING_PLAYBACK("error_during_playback"),
-        ERROR_FAILED_TO_PLAY("error_failed_to_play");
+        ERROR_FAILED_TO_PLAY("error_failed_to_play"),
+
+        // Ad Interactions
+        AD_DWELL_TIME("clickthrough_dwell_time"),
+        ;
 
         @NonNull private final String mName;
-        private Name(@NonNull String name) {
+        Name(@NonNull String name) {
             mName = name;
         }
 
@@ -83,10 +90,12 @@ public abstract class BaseEvent {
 
     public enum Category {
         REQUESTS("requests"),
-        NATIVE_VIDEO("native_video");
+        NATIVE_VIDEO("native_video"),
+        AD_INTERACTIONS("ad_interactions"),
+        ;
 
         @NonNull private final String mCategory;
-        private Category(@NonNull String category) {
+        Category(@NonNull String category) {
             mCategory = category;
         }
 
@@ -98,10 +107,12 @@ public abstract class BaseEvent {
 
     public enum SamplingRate {
         AD_REQUEST(0.1),
-        NATIVE_VIDEO(0.1);
+        NATIVE_VIDEO(0.1),
+        AD_INTERACTIONS(0.1),
+        ;
 
         private final double mSamplingRate;
-        private SamplingRate(double samplingRate) {
+        SamplingRate(double samplingRate) {
             mSamplingRate = samplingRate;
         }
 
@@ -120,6 +131,7 @@ public abstract class BaseEvent {
     @Nullable private final String mAdNetworkType;
     @Nullable private final Double mAdWidthPx;
     @Nullable private final Double mAdHeightPx;
+    @Nullable private final String mDspCreativeId;
     @Nullable private final Integer mDeviceScreenWidthDip;
     @Nullable private final Integer mDeviceScreenHeightDip;
     @Nullable private final Double mGeoLat;
@@ -158,6 +170,7 @@ public abstract class BaseEvent {
         mAdNetworkType = builder.mAdNetworkType;
         mAdWidthPx = builder.mAdWidthPx;
         mAdHeightPx = builder.mAdHeightPx;
+        mDspCreativeId = builder.mDspCreativeId;
         mGeoLat = builder.mGeoLat;
         mGeoLon = builder.mGeoLon;
         mGeoAccuracy = builder.mGeoAccuracy;
@@ -227,6 +240,11 @@ public abstract class BaseEvent {
     @Nullable
     public String getAdCreativeId() {
         return mAdCreativeId;
+    }
+
+    @Nullable
+    public String getDspCreativeId() {
+        return mDspCreativeId;
     }
 
     @Nullable
@@ -415,6 +433,7 @@ public abstract class BaseEvent {
                 "AdNetworkType: " + getAdNetworkType() + "\n" +
                 "AdWidthPx: " + getAdWidthPx() + "\n" +
                 "AdHeightPx: " + getAdHeightPx() + "\n" +
+                "DspCreativeId: " + getDspCreativeId() + "\n" +
                 "AppPlatform: " + getAppPlatform() + "\n" +
                 "AppName: " + getAppName() + "\n" +
                 "AppPackageName: " + getAppPackageName() + "\n" +
@@ -455,6 +474,7 @@ public abstract class BaseEvent {
         @Nullable private String mAdNetworkType;
         @Nullable private Double mAdWidthPx;
         @Nullable private Double mAdHeightPx;
+        @Nullable private String mDspCreativeId;
         @Nullable private Double mGeoLat;
         @Nullable private Double mGeoLon;
         @Nullable private Double mGeoAccuracy;
@@ -523,6 +543,12 @@ public abstract class BaseEvent {
         @NonNull
         public Builder withAdHeightPx(@Nullable Double adHeightPx) {
             mAdHeightPx = adHeightPx;
+            return this;
+        }
+
+        @NonNull
+        public Builder withDspCreativeId(@Nullable String dspCreativeId) {
+            mDspCreativeId = dspCreativeId;
             return this;
         }
 

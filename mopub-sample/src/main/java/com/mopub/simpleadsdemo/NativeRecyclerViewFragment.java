@@ -29,7 +29,7 @@ public class NativeRecyclerViewFragment extends Fragment {
     private MoPubRecyclerAdapter mRecyclerAdapter;
     private MoPubSampleAdUnit mAdConfiguration;
     private RequestParameters mRequestParameters;
-    private enum LayoutType { LINEAR, GRID };
+    private enum LayoutType { LINEAR, GRID }
     private LayoutType mLayoutType;
     private RecyclerView mRecyclerView;
 

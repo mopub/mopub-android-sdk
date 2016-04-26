@@ -23,7 +23,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 @Config(constants = BuildConfig.class)
 public class PositioningRequestTest {
 
-    String url = "http://example.com";
+    String url = "https://example.com";
     @Mock
     Response.Listener<MoPubNativeAdPositioning.MoPubClientPositioning> mockListener;
     @Mock

@@ -90,9 +90,9 @@ public abstract class BaseVideoViewController {
 
     void broadcastAction(final String action) {
         if (mBroadcastIdentifier != null) {
-            EventForwardingBroadcastReceiver.broadcastAction(mContext, mBroadcastIdentifier, action);
+            BaseBroadcastReceiver.broadcastAction(mContext, mBroadcastIdentifier, action);
         } else {
-            MoPubLog.w("Tried to broadcast a video event without a braodcast identifier to send to.");
+            MoPubLog.w("Tried to broadcast a video event without a broadcast identifier to send to.");
         }
     }
 }

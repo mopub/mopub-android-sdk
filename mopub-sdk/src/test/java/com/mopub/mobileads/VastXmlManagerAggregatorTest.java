@@ -25,6 +25,7 @@ import org.robolectric.annotation.Config;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
@@ -44,7 +45,7 @@ public class VastXmlManagerAggregatorTest {
     static final String TEST_VAST_XML_STRING = "<VAST version='2.0'>" +
             "    <Ad id='empty'>" +
             "        <InLine>" +
-            "            <Impression><![CDATA[http:emptyimpression]]></Impression>" +
+            "            <Impression><![CDATA[https:emptyimpression]]></Impression>" +
             "            <Creatives>" +
             "                <Creative>" +
             "                    <Linear>" +
@@ -53,37 +54,37 @@ public class VastXmlManagerAggregatorTest {
             "                    </Linear>" +
             "                </Creative>" +
             "            </Creatives>" +
-            "            <Error><![CDATA[http://neverCallThisError]]></Error>" +
+            "            <Error><![CDATA[https://neverCallThisError]]></Error>" +
             "        </InLine>" +
             "    </Ad>" +
             "    <Ad id='62833' sequence='1'>" +
             "        <Wrapper>" +
             "            <AdSystem>Tapad</AdSystem>" +
-            "            <VASTAdTagURI>http://dsp.x-team.staging.mopub.com/xml</VASTAdTagURI>" +
-            "            <Impression>http://myTrackingURL/wrapper/impression1</Impression>" +
-            "            <Impression>http://myTrackingURL/wrapper/impression2</Impression>" +
+            "            <VASTAdTagURI>https://dsp.x-team.staging.mopub.com/xml</VASTAdTagURI>" +
+            "            <Impression>https://myTrackingURL/wrapper/impression1</Impression>" +
+            "            <Impression>https://myTrackingURL/wrapper/impression2</Impression>" +
             "            <Creatives>" +
             "                <Creative AdID='62833'>" +
             "                    <Linear>" +
             "                        <TrackingEvents>" +
-            "                            <Tracking event='creativeView'>http://myTrackingURL/wrapper/creativeView</Tracking>" +
-            "                            <Tracking event='start'>http://myTrackingURL/wrapper/start</Tracking>" +
-            "                            <Tracking event='midpoint'>http://myTrackingURL/wrapper/midpoint</Tracking>" +
-            "                            <Tracking event='firstQuartile'>http://myTrackingURL/wrapper/firstQuartile</Tracking>" +
-            "                            <Tracking event='thirdQuartile'>http://myTrackingURL/wrapper/thirdQuartile</Tracking>" +
-            "                            <Tracking event='complete'>http://myTrackingURL/wrapper/complete</Tracking>" +
-            "                            <Tracking event='mute'>http://myTrackingURL/wrapper/mute</Tracking>" +
-            "                            <Tracking event='unmute'>http://myTrackingURL/wrapper/unmute</Tracking>" +
-            "                            <Tracking event='pause'>http://myTrackingURL/wrapper/pause</Tracking>" +
-            "                            <Tracking event='resume'>http://myTrackingURL/wrapper/resume</Tracking>" +
-            "                            <Tracking event='fullscreen'>http://myTrackingURL/wrapper/fullscreen</Tracking>" +
+            "                            <Tracking event='creativeView'>https://myTrackingURL/wrapper/creativeView</Tracking>" +
+            "                            <Tracking event='start'>https://myTrackingURL/wrapper/start</Tracking>" +
+            "                            <Tracking event='midpoint'>https://myTrackingURL/wrapper/midpoint</Tracking>" +
+            "                            <Tracking event='firstQuartile'>https://myTrackingURL/wrapper/firstQuartile</Tracking>" +
+            "                            <Tracking event='thirdQuartile'>https://myTrackingURL/wrapper/thirdQuartile</Tracking>" +
+            "                            <Tracking event='complete'>https://myTrackingURL/wrapper/complete</Tracking>" +
+            "                            <Tracking event='mute'>https://myTrackingURL/wrapper/mute</Tracking>" +
+            "                            <Tracking event='unmute'>https://myTrackingURL/wrapper/unmute</Tracking>" +
+            "                            <Tracking event='pause'>https://myTrackingURL/wrapper/pause</Tracking>" +
+            "                            <Tracking event='resume'>https://myTrackingURL/wrapper/resume</Tracking>" +
+            "                            <Tracking event='fullscreen'>https://myTrackingURL/wrapper/fullscreen</Tracking>" +
             "                        </TrackingEvents>" +
             "                        <VideoClicks>" +
-            "                            <ClickTracking>http://myTrackingURL/wrapper/click</ClickTracking>" +
+            "                            <ClickTracking>https://myTrackingURL/wrapper/click</ClickTracking>" +
             "                        </VideoClicks>" +
             "                        <MediaFiles>" +
             "                            <MediaFile delivery='progressive' bitrate='416' width='300' height='250' type='video/mp4'>" +
-            "                                <![CDATA[http://videosInWrappersShouldNeverBePlayed]]>" +
+            "                                <![CDATA[https://videosInWrappersShouldNeverBePlayed]]>" +
             "                            </MediaFile>" +
             "                        </MediaFiles>" +
             "                    </Linear>" +
@@ -92,22 +93,22 @@ public class VastXmlManagerAggregatorTest {
             "                    <CompanionAds>" +
             "                        <Companion id=\"wrappercompanion\" height=\"250\" width=\"456\">" +
             "                            <StaticResource creativeType=\"image/jpeg\">" +
-            "                                http://wrapperCompanionAdStaticResource" +
+            "                                https://wrapperCompanionAdStaticResource" +
             "                            </StaticResource>" +
             "                            <TrackingEvents>" +
-            "                                <Tracking event=\"creativeView\">http://firstWrapperCompanionCreativeView</Tracking>" +
-            "                                <Tracking event=\"creativeView\">http://secondWrapperCompanionCreativeView</Tracking>" +
+            "                                <Tracking event=\"creativeView\">https://firstWrapperCompanionCreativeView</Tracking>" +
+            "                                <Tracking event=\"creativeView\">https://secondWrapperCompanionCreativeView</Tracking>" +
             "                            </TrackingEvents>" +
-            "                            <CompanionClickThrough>http://wrapperCompanionClickThrough</CompanionClickThrough>" +
-            "                            <CompanionClickTracking><![CDATA[http://wrapperCompanionClickTracking]]></CompanionClickTracking>" +
+            "                            <CompanionClickThrough>https://wrapperCompanionClickThrough</CompanionClickThrough>" +
+            "                            <CompanionClickTracking><![CDATA[https://wrapperCompanionClickTracking]]></CompanionClickTracking>" +
             "                        </Companion> " +
             "                        <Companion id=\"noresource\" height=\"250\" width=\"456\">" +
             "                            <TrackingEvents>" +
-            "                                <Tracking event=\"creativeView\">http://firstNoResourceWrapperCompanionCreativeView</Tracking>" +
-            "                                <Tracking event=\"creativeView\">http://secondNoResourceWrapperCompanionCreativeView</Tracking>" +
+            "                                <Tracking event=\"creativeView\">https://firstNoResourceWrapperCompanionCreativeView</Tracking>" +
+            "                                <Tracking event=\"creativeView\">https://secondNoResourceWrapperCompanionCreativeView</Tracking>" +
             "                            </TrackingEvents>" +
-            "                            <CompanionClickThrough>http://noResourceWrapperCompanionClickThrough</CompanionClickThrough>" +
-            "                            <CompanionClickTracking><![CDATA[http://noResourceWrapperCompanionClickTracking1]]></CompanionClickTracking>" +
+            "                            <CompanionClickThrough>https://noResourceWrapperCompanionClickThrough</CompanionClickThrough>" +
+            "                            <CompanionClickTracking><![CDATA[https://noResourceWrapperCompanionClickTracking1]]></CompanionClickTracking>" +
             "                        </Companion> " +
             "                    </CompanionAds>" +
             "                </Creative>" +
@@ -117,18 +118,18 @@ public class VastXmlManagerAggregatorTest {
             "                    <MoPubViewabilityTracker" +
             "                            viewablePlaytime=\"2.5\"" +
             "                            percentViewable=\"50%\">" +
-            "                        <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+            "                        <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
             "                    </MoPubViewabilityTracker>" +
             "                </Extension>" +
             "            </Extensions>" +
-            "            <Error><![CDATA[http://wrapperErrorOne?errorcode=[ERRORCODE]]]></Error>" +
-            "            <Error><![CDATA[http://wrapperErrorTwo?errorcode=[ERRORCODE]]]></Error>" +
+            "            <Error><![CDATA[https://wrapperErrorOne?errorcode=[ERRORCODE]]]></Error>" +
+            "            <Error><![CDATA[https://wrapperErrorTwo?errorcode=[ERRORCODE]]]></Error>" +
             "        </Wrapper>" +
             "    </Ad>" +
             "</VAST>" +
             "<MP_TRACKING_URLS>" +
-            "    <MP_TRACKING_URL>http://www.mopub.com/imp1</MP_TRACKING_URL>" +
-            "    <MP_TRACKING_URL>http://www.mopub.com/imp2</MP_TRACKING_URL>" +
+            "    <MP_TRACKING_URL>https://www.mopub.com/imp1</MP_TRACKING_URL>" +
+            "    <MP_TRACKING_URL>https://www.mopub.com/imp2</MP_TRACKING_URL>" +
             "</MP_TRACKING_URLS>";
 
     static final String TEST_NESTED_VAST_XML_STRING = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
@@ -138,7 +139,7 @@ public class VastXmlManagerAggregatorTest {
             "            <AdSystem version='1.0'>Tapad</AdSystem>" +
             "            <AdTitle><![CDATA[PKW6T_LIV_DSN_Audience_TAPAD_3rd Party Audience Targeting_Action Movi]]></AdTitle>" +
             "            <Description/>" +
-            "            <Impression><![CDATA[http://rtb-test.dev.tapad.com:8080/creative/imp.png?ts=1374099035457&svid=1&creative_id=30731&ctx_type=InApp&ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&liverail_cp=1]]></Impression>" +
+            "            <Impression><![CDATA[https://rtb-test.dev.tapad.com:8080/creative/imp.png?ts=1374099035457&svid=1&creative_id=30731&ctx_type=InApp&ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&liverail_cp=1]]></Impression>" +
             "            <Creatives>" +
             "                <Creative sequence='1' id='57722'>" +
             "                    <Linear>" +
@@ -170,7 +171,7 @@ public class VastXmlManagerAggregatorTest {
             "                        </Icons>" +
             "                        <Duration>00:00:15</Duration>" +
             "                        <VideoClicks>" +
-            "                            <ClickThrough><![CDATA[http://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com]]></ClickThrough>" +
+            "                            <ClickThrough><![CDATA[https://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=https%3A%2F%2Ftapad.com]]></ClickThrough>" +
             "                        </VideoClicks>" +
             "                        <MediaFiles>" +
             "                            <MediaFile delivery='progressive' bitrate='416' width='800' height='480' type='video/mp4'>" +
@@ -183,21 +184,63 @@ public class VastXmlManagerAggregatorTest {
             "                    <CompanionAds>" +
             "                        <Companion id=\"valid\" height=\"250\" width=\"300\">" +
             "                            <StaticResource creativeType=\"image/jpeg\">" +
-            "                                http://demo.tremormedia.com/proddev/vast/Blistex1.jpg" +
+            "                                https://demo.tremormedia.com/proddev/vast/Blistex1.jpg" +
             "                            </StaticResource>" +
             "                            <TrackingEvents>" +
-            "                                <Tracking event=\"creativeView\">http://myTrackingURL/firstCompanionCreativeView</Tracking>" +
-            "                                <Tracking event=\"creativeView\">http://myTrackingURL/secondCompanionCreativeView</Tracking>" +
+            "                                <Tracking event=\"creativeView\">https://myTrackingURL/firstCompanionCreativeView</Tracking>" +
+            "                                <Tracking event=\"creativeView\">https://myTrackingURL/secondCompanionCreativeView</Tracking>" +
             "                            </TrackingEvents>" +
-            "                            <CompanionClickThrough>http://www.tremormedia.com</CompanionClickThrough>" +
-            "                            <CompanionClickTracking><![CDATA[http://companionClickTracking1]]></CompanionClickTracking>" +
-            "                            <CompanionClickTracking><![CDATA[http://companionClickTracking2]]></CompanionClickTracking>" +
+            "                            <CompanionClickThrough>https://www.tremormedia.com</CompanionClickThrough>" +
+            "                            <CompanionClickTracking><![CDATA[https://companionClickTracking1]]></CompanionClickTracking>" +
+            "                            <CompanionClickTracking><![CDATA[https://companionClickTracking2]]></CompanionClickTracking>" +
+            "                        </Companion>" +
+            "                        <Companion id=\"valid\" height=\"10000\" width=\"10000\">" +
+            "                            <HTMLResource>" +
+            "                                <![CDATA[" +
+            "                                    <link rel=\"stylesheet\" href=\"https://ton.twimg.com/exchange-media/staging/video_companions_style-29c86cb8e4193a6c4da8.css\">" +
+            "                                    <div class=\"tweet_wrapper\">" +
+            "                                    <div class=\"tweet\">" +
+            "                                    <img class=\"icon\" src=\"https://pbs.twimg.com/profile_images/641346383606235136/XLhN-zvk_reasonably_small.jpg\"/>" +
+            "                                    <span class=\"title\">Frappuccino</span>" +
+            "                                    <span id=\"tweet_text\" class=\"tweet-text\">" +
+            "                                    " +
+            "                                    The best use of your Frappuccino cup is to hold your Frappuccino. The second best is to hold your terrarium. \uD83C\uDF35☀️" +
+            "                                    </span>" +
+            "                                    </div>" +
+            "                                    </div>" +
+            "                                ]]>" +
+            "                            </HTMLResource>" +
+            "                            <TrackingEvents>" +
+            "                                <Tracking event=\"creativeView\">https://myTrackingURL/firstCompanionCreativeView</Tracking>" +
+            "                            </TrackingEvents>" +
+            "                            <CompanionClickThrough>https://frappucinoCompanion.com</CompanionClickThrough>" +
+            "                        </Companion>" +
+            "                        <Companion height=\"30\" width=\"65\" adSlotID=\"adsBy\">" +
+            "                            <HTMLResource>" +
+            "                                <![CDATA[" +
+            "                                    <link rel=\"stylesheet\" href=\"https://ton.twimg.com/exchange-media/staging/video_companions_style-29c86cb8e4193a6c4da8.css\">" +
+            "                                    <div class=\"ads-by-twitter\">" +
+            "                                    Ads by <div class=\"larry\"></div>" +
+            "                                    </div>" +
+            "                                ]]>" +
+            "                            </HTMLResource>" +
+            "                        </Companion>" +
+            "                        <Companion height=\"22\" width=\"130\" adSlotID=\"socialActions\">" +
+            "                            <HTMLResource>" +
+            "                                <![CDATA[" +
+            "                                    <link rel=\"stylesheet\" href=\"https://ton.twimg.com/exchange-media/staging/video_companions_style-29c86cb8e4193a6c4da8.css\">" +
+            "                                    <div class=\"social-actions\">" +
+            "                                    <a href=\"mopubshare://tweet?screen_name=frappuccino&tweet_id=590877845037056000\" class=\"retweet-button\"><div class=\"icon\"></div>310&nbsp;</a>" +
+            "                                    <a href=\"twitter://intent/favorite?id=590877845037056000\" class=\"like-button\"><div class=\"icon\"></div>1118&nbsp;</a>" +
+            "                                    </div>" +
+            "                                ]]>" +
+            "                            </HTMLResource>" +
             "                        </Companion>" +
             "                    </CompanionAds>" +
             "                </Creative>" +
             "            </Creatives>" +
-            "            <Error><![CDATA[http://nestedInLineErrorOne]]></Error>" +
-            "            <Error><![CDATA[http://nestedInLineErrorTwo]]></Error>" +
+            "            <Error><![CDATA[https://nestedInLineErrorOne]]></Error>" +
+            "            <Error><![CDATA[https://nestedInLineErrorTwo]]></Error>" +
             "        </InLine>" +
             "    </Ad>" +
             "</VAST>";
@@ -209,13 +252,13 @@ public class VastXmlManagerAggregatorTest {
             "            <AdSystem version='1.0'>Tapad</AdSystem>" +
             "            <AdTitle><![CDATA[PKW6T_LIV_DSN_Audience_TAPAD_3rd Party Audience Targeting_Action Movi]]></AdTitle>" +
             "            <Description/>" +
-            "            <Impression><![CDATA[http://rtb-test.dev.tapad.com:8080/creative/imp.png?ts=1374099035457&svid=1&creative_id=30731&ctx_type=InApp&ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&liverail_cp=1]]></Impression>" +
+            "            <Impression><![CDATA[https://rtb-test.dev.tapad.com:8080/creative/imp.png?ts=1374099035457&svid=1&creative_id=30731&ctx_type=InApp&ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&liverail_cp=1]]></Impression>" +
             "            <Creatives>" +
             "                <Creative sequence='1' id='57722'>" +
             "                    <Linear>" +
             "                        <Duration>00:00:15</Duration>" +
             "                        <VideoClicks>" +
-            "                            <ClickThrough><![CDATA[http://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com]]></ClickThrough>" +
+            "                            <ClickThrough><![CDATA[https://rtb-test.dev.tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=https%3A%2F%2Ftapad.com]]></ClickThrough>" +
             "                        </VideoClicks>" +
             "                        <MediaFiles>" +
             "                            <MediaFile delivery='progressive' bitrate='416' width='800' height='480' type='video/mp4'>" +
@@ -230,7 +273,7 @@ public class VastXmlManagerAggregatorTest {
             "                    <MoPubViewabilityTracker" +
             "                            viewablePlaytime=\"3.5\"" +
             "                            percentViewable=\"70%\">" +
-            "                        <![CDATA[http://ad.server.com/impression/dot.png]]>" +
+            "                        <![CDATA[https://ad.server.com/impression/dot.png]]>" +
             "                    </MoPubViewabilityTracker>" +
             "                </Extension>" +
             "            </Extensions>" +
@@ -238,10 +281,10 @@ public class VastXmlManagerAggregatorTest {
             "    </Ad>" +
             "</VAST>";
 
-    static final String TEST_VAST_BAD_NEST_URL_XML_STRING = "<VAST version='2.0'><Ad id='62833'><Wrapper><AdSystem>Tapad</AdSystem><VASTAdTagURI>http://dsp.x-team.staging.mopub.com/xml\"$|||</VASTAdTagURI><Impression>http://myTrackingURL/wrapper/impression1</Impression><Impression>http://myTrackingURL/wrapper/impression2</Impression><Creatives><Creative AdID='62833'><Linear><TrackingEvents><Tracking event='creativeView'>http://myTrackingURL/wrapper/creativeView</Tracking><Tracking event='start'>http://myTrackingURL/wrapper/start</Tracking><Tracking event='midpoint'>http://myTrackingURL/wrapper/midpoint</Tracking><Tracking event='firstQuartile'>http://myTrackingURL/wrapper/firstQuartile</Tracking><Tracking event='thirdQuartile'>http://myTrackingURL/wrapper/thirdQuartile</Tracking><Tracking event='complete'>http://myTrackingURL/wrapper/complete</Tracking><Tracking event='mute'>http://myTrackingURL/wrapper/mute</Tracking><Tracking event='unmute'>http://myTrackingURL/wrapper/unmute</Tracking><Tracking event='pause'>http://myTrackingURL/wrapper/pause</Tracking><Tracking event='resume'>http://myTrackingURL/wrapper/resume</Tracking><Tracking event='fullscreen'>http://myTrackingURL/wrapper/fullscreen</Tracking></TrackingEvents><VideoClicks><ClickTracking>http://myTrackingURL/wrapper/click</ClickTracking></VideoClicks></Linear></Creative></Creatives><Error>![CDATA[http://badNestedError]]</Error]</Wrapper></Ad></VAST><MP_TRACKING_URLS><MP_TRACKING_URL>http://www.mopub.com/imp1</MP_TRACKING_URL><MP_TRACKING_URL>http://www.mopub.com/imp2</MP_TRACKING_URL></MP_TRACKING_URLS>";
+    static final String TEST_VAST_BAD_NEST_URL_XML_STRING = "<VAST version='2.0'><Ad id='62833'><Wrapper><AdSystem>Tapad</AdSystem><VASTAdTagURI>https://dsp.x-team.staging.mopub.com/xml\"$|||</VASTAdTagURI><Impression>https://myTrackingURL/wrapper/impression1</Impression><Impression>https://myTrackingURL/wrapper/impression2</Impression><Creatives><Creative AdID='62833'><Linear><TrackingEvents><Tracking event='creativeView'>https://myTrackingURL/wrapper/creativeView</Tracking><Tracking event='start'>https://myTrackingURL/wrapper/start</Tracking><Tracking event='midpoint'>https://myTrackingURL/wrapper/midpoint</Tracking><Tracking event='firstQuartile'>https://myTrackingURL/wrapper/firstQuartile</Tracking><Tracking event='thirdQuartile'>https://myTrackingURL/wrapper/thirdQuartile</Tracking><Tracking event='complete'>https://myTrackingURL/wrapper/complete</Tracking><Tracking event='mute'>https://myTrackingURL/wrapper/mute</Tracking><Tracking event='unmute'>https://myTrackingURL/wrapper/unmute</Tracking><Tracking event='pause'>https://myTrackingURL/wrapper/pause</Tracking><Tracking event='resume'>https://myTrackingURL/wrapper/resume</Tracking><Tracking event='fullscreen'>https://myTrackingURL/wrapper/fullscreen</Tracking></TrackingEvents><VideoClicks><ClickTracking>https://myTrackingURL/wrapper/click</ClickTracking></VideoClicks></Linear></Creative></Creatives><Error>![CDATA[https://badNestedError]]</Error]</Wrapper></Ad></VAST><MP_TRACKING_URLS><MP_TRACKING_URL>https://www.mopub.com/imp1</MP_TRACKING_URL><MP_TRACKING_URL>https://www.mopub.com/imp2</MP_TRACKING_URL></MP_TRACKING_URLS>";
 
     static final String TEST_JUST_ERROR_XML_STRING = "<VAST version='3.0'>" +
-            "<Error><![CDATA[http://justErrorTracking?errorcode=[ERRORCODE]]]></Error>" +
+            "<Error><![CDATA[https://justErrorTracking?errorcode=[ERRORCODE]]]></Error>" +
             "</VAST>";
 
     static final String TEST_INVALID_VAST_XML_STRING = "<VAST version='fail'>" +
@@ -253,13 +296,13 @@ public class VastXmlManagerAggregatorTest {
     static final String TEST_VAST_WITH_NEGATIVE_SEQUENCE_NUMBER_XML_STRING = "<VAST version='3.0'>" +
             "    <Ad id='sequenceTooHigh' sequence='42'>" +
             "        <InLine>" +
-            "            <Impression><![CDATA[http:sequenceTooHighImp]]></Impression>" +
+            "            <Impression><![CDATA[https:sequenceTooHighImp]]></Impression>" +
             "            <Creatives>" +
             "                <Creative>" +
             "                    <Linear>" +
             "                        <MediaFiles>" +
             "                            <MediaFile delivery='progressive' bitrate='416' width='300' height='250' type='video/mp4'>" +
-            "                                <![CDATA[http://sequenceTooHighVideo]]>" +
+            "                                <![CDATA[https://sequenceTooHighVideo]]>" +
             "                            </MediaFile>" +
             "                        </MediaFiles>" +
             "                    </Linear>" +
@@ -269,13 +312,13 @@ public class VastXmlManagerAggregatorTest {
             "    </Ad>" +
             "    <Ad id='negativeSequence' sequence='-2'>" +
             "        <InLine>" +
-            "            <Impression><![CDATA[http://negativeSequence]]></Impression>" +
+            "            <Impression><![CDATA[https://negativeSequence]]></Impression>" +
             "            <Creatives>" +
             "                <Creative>" +
             "                    <Linear>" +
             "                        <MediaFiles>" +
             "                            <MediaFile delivery='progressive' bitrate='416' width='300' height='250' type='video/mp4'>" +
-            "                                <![CDATA[http://negativeSequence]]>" +
+            "                                <![CDATA[https://negativeSequence]]>" +
             "                            </MediaFile>" +
             "                        </MediaFiles>" +
             "                    </Linear>" +
@@ -349,7 +392,7 @@ public class VastXmlManagerAggregatorTest {
 
         assertThat(mVastVideoConfig.getNetworkMediaFileUrl()).isEqualTo("https://s3" +
                 ".amazonaws.com/mopub-vast/tapad-video.mp4");
-        assertThat(mVastVideoConfig.getClickThroughUrl()).isEqualTo("http://rtb-test.dev" +
+        assertThat(mVastVideoConfig.getClickThroughUrl()).isEqualTo("https://rtb-test.dev" +
                 ".tapad.com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMj" +
                 "AwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTN" +
                 "BMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxh" +
@@ -358,7 +401,7 @@ public class VastXmlManagerAggregatorTest {
                 "E2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzM" +
                 "wMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlk" +
                 "PUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3" +
-                "D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad." +
+                "D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=https%3A%2F%2Ftapad." +
                 "com");
         assertThat(mVastVideoConfig.getImpressionTrackers().size()).isEqualTo(4 *
                 VastXmlManagerAggregator.MAX_TIMES_TO_FOLLOW_VAST_REDIRECT + 1);
@@ -513,7 +556,7 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void getBestCompanionAd_shouldReturnCompanionAd() throws Exception {
         final VastCompanionAdXmlManager companionXmlManager = initializeCompanionXmlManagerMock(
-                300, 250, "image_url", "image/jpeg", null, null);
+                300, 250, "image_url", "image/jpeg", null, null, null);
 
         final VastCompanionAdConfig bestCompanionAd =
                 subject.getBestCompanionAd(Arrays.asList(companionXmlManager),
@@ -524,7 +567,7 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void getBestCompanionAd_withInvalidVastResource_shouldReturnNull() throws Exception {
         final VastCompanionAdXmlManager companionXmlManager = initializeCompanionXmlManagerMock(
-                300, 250, "image_url", "image/INVALID", null, null);
+                300, 250, "image_url", "image/INVALID", null, null, null);
 
         final VastCompanionAdConfig bestCompanionAd =
                 subject.getBestCompanionAd(Arrays.asList(companionXmlManager),
@@ -535,7 +578,7 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void getBestCompanionAd_withNullDimension_shouldReturnNull() throws Exception {
         final VastCompanionAdXmlManager companionXmlManager =
-                initializeCompanionXmlManagerMock(null, 250, "image_url", "image/png", null, null);
+                initializeCompanionXmlManagerMock(null, 250, "image_url", "image/png", null, null, null);
 
         final VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
                 Arrays.asList(companionXmlManager),
@@ -546,7 +589,7 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void getBestCompanionAd_withWidthTooSmall_shouldReturnNull() throws Exception {
         final VastCompanionAdXmlManager companionXmlManager =
-                initializeCompanionXmlManagerMock(299, 250, "image_url", "image/png", null, null);
+                initializeCompanionXmlManagerMock(299, 250, "image_url", "image/png", null, null, null);
 
         final VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
                 Arrays.asList(companionXmlManager),
@@ -557,7 +600,7 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void getBestCompanionAd_withHeightTooSmall_shouldReturnNull() throws Exception {
         final VastCompanionAdXmlManager companionXmlManager =
-                initializeCompanionXmlManagerMock(300, 249, "image_url", "image/png", null, null);
+                initializeCompanionXmlManagerMock(300, 249, "image_url", "image/png", null, null, null);
 
         final VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
                 Arrays.asList(companionXmlManager),
@@ -574,10 +617,10 @@ public class VastXmlManagerAggregatorTest {
 
         // Triple screen size
         final VastCompanionAdXmlManager companionXmlManager1 =
-                initializeCompanionXmlManagerMock(2400, 1440, "image_url1", "image/png", null, null);
+                initializeCompanionXmlManagerMock(2400, 1440, "image_url1", "image/png", null, null, null);
         // Double screen size
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(1600, 960, "image_url2", "image/bmp", null, null);
+                initializeCompanionXmlManagerMock(1600, 960, "image_url2", "image/bmp", null, null, null);
 
         VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
                 Arrays.asList(companionXmlManager1, companionXmlManager2),
@@ -594,10 +637,10 @@ public class VastXmlManagerAggregatorTest {
 
         // Triple screen size
         final VastCompanionAdXmlManager companionXmlManager1 =
-                initializeCompanionXmlManagerMock(2400, 1440, "image_url1", "image/png", null, null);
+                initializeCompanionXmlManagerMock(2400, 1440, "image_url1", "image/png", null, null, null);
         // Half screen size
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(400, 250, "image_url2", "image/bmp", null, null);
+                initializeCompanionXmlManagerMock(400, 250, "image_url2", "image/bmp", null, null, null);
 
         VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
                 Arrays.asList(companionXmlManager1, companionXmlManager2),
@@ -614,10 +657,10 @@ public class VastXmlManagerAggregatorTest {
 
         // Landscape
         final VastCompanionAdXmlManager companionXmlManager1 =
-                initializeCompanionXmlManagerMock(400, 250, "image_url1", "image/png", null, null);
+                initializeCompanionXmlManagerMock(400, 250, "image_url1", "image/png", null, null, null);
         // Portrait
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(250, 400, "image_url2", "image/bmp", null, null);
+                initializeCompanionXmlManagerMock(250, 400, "image_url2", "image/bmp", null, null, null);
 
         VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
                 Arrays.asList(companionXmlManager1, companionXmlManager2),
@@ -634,10 +677,10 @@ public class VastXmlManagerAggregatorTest {
 
         // Landscape
         final VastCompanionAdXmlManager companionXmlManager1 =
-                initializeCompanionXmlManagerMock(400, 300, "image_url1", "image/png", null, null);
+                initializeCompanionXmlManagerMock(400, 300, "image_url1", "image/png", null, null, null);
         // Portrait
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(300, 400, "image_url2", "image/bmp", null, null);
+                initializeCompanionXmlManagerMock(300, 400, "image_url2", "image/bmp", null, null, null);
 
         VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
                 Arrays.asList(companionXmlManager1, companionXmlManager2),
@@ -650,13 +693,13 @@ public class VastXmlManagerAggregatorTest {
         // Static Resource
         final VastCompanionAdXmlManager companionXmlManager1 =
                 initializeCompanionXmlManagerMock(400, 250, "StaticResource", "image/png", null,
-                        null);
+                        null, null);
         // HTML Resource
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(250, 400, null, null, null, "HTMLResource");
+                initializeCompanionXmlManagerMock(250, 400, null, null, null, "HTMLResource", null);
         // IFrame Resource
         final VastCompanionAdXmlManager companionXmlManager3 =
-                initializeCompanionXmlManagerMock(250, 400, null, null, "IFrameResource", null);
+                initializeCompanionXmlManagerMock(250, 400, null, null, "IFrameResource", null, null);
 
         VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
                 Arrays.asList(companionXmlManager3, companionXmlManager2, companionXmlManager1),
@@ -668,10 +711,10 @@ public class VastXmlManagerAggregatorTest {
     public void getBestCompanionAd_withHTMLAndStaticResourceTypes_shouldReturnStaticResourceType() throws Exception {
         // Static Resource
         final VastCompanionAdXmlManager companionXmlManager1 =
-                initializeCompanionXmlManagerMock(400, 250, "StaticResource", "image/png", null, null);
+                initializeCompanionXmlManagerMock(400, 250, "StaticResource", "image/png", null, null, null);
         // HTML Resource
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(250, 400, null, null, null, "HTMLResource");
+                initializeCompanionXmlManagerMock(250, 400, null, null, null, "HTMLResource", null);
 
         VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
                 Arrays.asList(companionXmlManager2, companionXmlManager1),
@@ -683,9 +726,9 @@ public class VastXmlManagerAggregatorTest {
     public void getBestCompanionAd_withInvalidStaticResource_withValidHtmlResource_shouldReturnHtmlResource() throws Exception {
         final VastCompanionAdXmlManager companionXmlManager1 =
                 initializeCompanionXmlManagerMock(400, 250, "StaticResource", "INVALID",
-                        "IFrameResource", null);
+                        "IFrameResource", null, null);
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(300, 400, null, null, null, "HTMLResource");
+                initializeCompanionXmlManagerMock(300, 400, null, null, null, "HTMLResource", null);
 
         VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
                 Arrays.asList(companionXmlManager2, companionXmlManager1),
@@ -703,9 +746,9 @@ public class VastXmlManagerAggregatorTest {
         // 305 x 305 is both fewer pixels (screen area) and a worse aspect ratio. It still should be
         // chosen because 240 is not wide enough to be considered for a companion ad
         final VastCompanionAdXmlManager companionXmlManager1 =
-                initializeCompanionXmlManagerMock(305, 305, "image_url1", "image/png", null, null);
+                initializeCompanionXmlManagerMock(305, 305, "image_url1", "image/png", null, null, null);
         final VastCompanionAdXmlManager companionXmlManager2 =
-                initializeCompanionXmlManagerMock(240, 400, "image_url2", "image/bmp", null, null);
+                initializeCompanionXmlManagerMock(240, 400, "image_url2", "image/bmp", null, null, null);
 
         VastCompanionAdConfig bestCompanionAd = subject.getBestCompanionAd(
                 Arrays.asList(companionXmlManager1, companionXmlManager2),
@@ -714,73 +757,493 @@ public class VastXmlManagerAggregatorTest {
     }
 
     @Test
-    public void getScaledDimensions_withWidthLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
-        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+    public void getSocialActionsCompanionAds_shouldReturnSocialActionsCompanionAds() throws Exception {
+        final VastCompanionAdXmlManager adsByXmlManager =
+                initializeCompanionXmlManagerMock(65, 20, null, "HTMLResource", null,
+                        "<p>Ads by</p>", "adsBy");
+        final VastCompanionAdXmlManager socialActionsXmlManager =
+                initializeCompanionXmlManagerMock(130, 30, null, "HTMLResource", null,
+                        "<p>Retweet Like</p>", "socialActions");
 
-        // Width and height are evaluated in landscape
-        Point point = subject.getScaledDimensions(1600, 400);
+        final Map<String, VastCompanionAdConfig> socialActionsCompanionAds =
+                subject.getSocialActionsCompanionAds(
+                        Arrays.asList(adsByXmlManager, socialActionsXmlManager));
+        final VastCompanionAdConfig adsByVastConfig = socialActionsCompanionAds.get("adsBy");
+        final VastCompanionAdConfig socialActionsVastConfig = socialActionsCompanionAds
+                .get("socialActions");
 
-        assertThat(point.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
-        assertThat(point.y).isEqualTo(200 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(adsByVastConfig.getWidth()).isEqualTo(65);
+        assertThat(adsByVastConfig.getHeight()).isEqualTo(20);
+        assertThat(adsByVastConfig.getVastResource().getResource()).isEqualTo("<p>Ads by</p>");
+        assertThat(socialActionsVastConfig.getWidth()).isEqualTo(130);
+        assertThat(socialActionsVastConfig.getHeight()).isEqualTo(30);
+        assertThat(socialActionsVastConfig.getVastResource().getResource())
+                .isEqualTo("<p>Retweet Like</p>");
     }
 
     @Test
-    public void getScaledDimensions_withHeightLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
-        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+    public void getSocialActionsCompanionAds_withoutSocialActions_shouldNotReturnSocialActionsCompanionAds() throws Exception {
+        final VastCompanionAdXmlManager adsByXmlManager =
+                initializeCompanionXmlManagerMock(65, 20, null, "HTMLResource", null,
+                        "<p>Ads by</p>", "NOTadsBy");
+        final VastCompanionAdXmlManager socialActionsXmlManager =
+                initializeCompanionXmlManagerMock(130, 30, null, "HTMLResource", null,
+                        "<p>Retweet Like</p>", "NOTsocialActions");
 
-        // Width and height are evaluated in landscape
-        Point point = subject.getScaledDimensions(400, 960);
+        final Map<String, VastCompanionAdConfig> socialActionsCompanionAds =
+                subject.getSocialActionsCompanionAds(
+                        Arrays.asList(adsByXmlManager, socialActionsXmlManager));
 
-        assertThat(point.x).isEqualTo(200 - VastVideoViewController.WEBVIEW_PADDING);
-        assertThat(point.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(socialActionsCompanionAds.size()).isEqualTo(0);
     }
 
     @Test
-    public void getScaledDimensions_withWidthAndHeightSmallerThanScreen_shouldNotScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
-        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+    public void getSocialActionsCompanionAds_withoutHTMLResource_shouldNotReturnSocialActionsCompanionAds() throws Exception {
+        final VastCompanionAdXmlManager adsByXmlManager =
+                initializeCompanionXmlManagerMock(65, 20, null, "HTMLResource", null, null,
+                        "adsBy");
+        final VastCompanionAdXmlManager socialActionsXmlManager =
+                initializeCompanionXmlManagerMock(130, 30, null, "HTMLResource", null,
+                        null, "socialActions");
 
-        // Width and height are evaluated in landscape
-        Point point = subject.getScaledDimensions(800, 480);
+        final Map<String, VastCompanionAdConfig> socialActionsCompanionAds =
+                subject.getSocialActionsCompanionAds(
+                        Arrays.asList(adsByXmlManager, socialActionsXmlManager));
+        final VastCompanionAdConfig adsByVastConfig = socialActionsCompanionAds.get("adsBy");
+        final VastCompanionAdConfig socialActionsVastConfig = socialActionsCompanionAds
+                .get("socialActions");
 
-        assertThat(point.x).isEqualTo(800);
-        assertThat(point.y).isEqualTo(480);
+        assertThat(socialActionsCompanionAds.size()).isEqualTo(0);
     }
 
     @Test
-    public void getScaledDimensions_withWidthAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
-        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+    public void getSocialActionsCompanionAds_whenTooWide_shouldNotReturnSocialActionsCompanionAds() throws Exception {
+        final VastCompanionAdXmlManager adsByXmlManager =
+                initializeCompanionXmlManagerMock(76, 20, null, "HTMLResource", null,
+                        "<p>Ads by</p>", "adsBy");
+        final VastCompanionAdXmlManager socialActionsXmlManager =
+                initializeCompanionXmlManagerMock(151, 30, null, "HTMLResource", null,
+                        "<p>Retweet Like</p>", "socialActions");
 
-        // Width and height are evaluated in landscape
-        Point point = subject.getScaledDimensions(1600, 2);
+        final Map<String, VastCompanionAdConfig> socialActionsCompanionAds =
+                subject.getSocialActionsCompanionAds(
+                        Arrays.asList(adsByXmlManager, socialActionsXmlManager));
 
-        assertThat(point.x).isEqualTo(1600);
-        assertThat(point.y).isEqualTo(2);
+        assertThat(socialActionsCompanionAds.size()).isEqualTo(0);
     }
 
     @Test
-    public void getScaledDimensions_withHeightAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
+    public void getSocialActionsCompanionAds_whenTooTall_shouldNotReturnSocialActionsCompanionAds() throws Exception {
+        final VastCompanionAdXmlManager adsByXmlManager =
+                initializeCompanionXmlManagerMock(65, 51, null, "HTMLResource", null,
+                        "<p>Ads by</p>", "adsBy");
+        final VastCompanionAdXmlManager socialActionsXmlManager =
+                initializeCompanionXmlManagerMock(130, 51, null, "HTMLResource", null,
+                        "<p>Retweet Like</p>", "socialActions");
+
+        final Map<String, VastCompanionAdConfig> socialActionsCompanionAds =
+                subject.getSocialActionsCompanionAds(
+                        Arrays.asList(adsByXmlManager, socialActionsXmlManager));
+
+        assertThat(socialActionsCompanionAds.size()).isEqualTo(0);
+    }
+
+    @Test
+    public void evaluateVastXmlManager_withSocialActions_shouldKeepSocialActionsFromInLineAndNotOverwriteFromWrapper() throws Exception {
+        ShadowMoPubHttpUrlConnection.addPendingResponse(200, TEST_NESTED_VAST_XML_STRING);
+        VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(
+                TEST_VAST_XML_STRING, new ArrayList<VastTracker>());
+
+        VastCompanionAdConfig adsByCompanionAd = vastVideoConfig.getSocialActionsCompanionAds()
+                .get(VastXmlManagerAggregator.ADS_BY_AD_SLOT_ID);
+        assertThat(adsByCompanionAd.getVastResource().getType())
+                .isEqualTo(VastResource.Type.HTML_RESOURCE);
+        assertThat(adsByCompanionAd.getVastResource().getResource().trim())
+                .isEqualTo(
+                        "<link rel=\"stylesheet\" href=\"https://ton.twimg.com/exchange-media/staging/video_companions_style-29c86cb8e4193a6c4da8.css\">" +
+                                "                                    <div class=\"ads-by-twitter\">" +
+                                "                                    Ads by <div class=\"larry\"></div>" +
+                                "                                    </div>");
+        VastCompanionAdConfig socialActionsCompanionAd = vastVideoConfig
+                .getSocialActionsCompanionAds()
+                .get(VastXmlManagerAggregator.SOCIAL_ACTIONS_AD_SLOT_ID);
+        assertThat(socialActionsCompanionAd.getVastResource()
+                .getType()).isEqualTo(VastResource.Type.HTML_RESOURCE);
+        assertThat(socialActionsCompanionAd.getVastResource().getResource().trim())
+        .isEqualTo("<link rel=\"stylesheet\" href=\"https://ton.twimg.com/exchange-media/staging/video_companions_style-29c86cb8e4193a6c4da8.css\">" +
+                "                                    <div class=\"social-actions\">" +
+                "                                    <a href=\"mopubshare://tweet?screen_name=frappuccino&tweet_id=590877845037056000\" class=\"retweet-button\"><div class=\"icon\"></div>310&nbsp;</a>" +
+                "                                    <a href=\"twitter://intent/favorite?id=590877845037056000\" class=\"like-button\"><div class=\"icon\"></div>1118&nbsp;</a>" +
+                "                                    </div>");
+    }
+
+    @Test
+    public void
+    getScaledDimensions_withStaticResource_withWidthLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
         // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         assertThat(display.getWidth()).isEqualTo(480);
         assertThat(display.getHeight()).isEqualTo(800);
 
         // Width and height are evaluated in landscape
-        Point point = subject.getScaledDimensions(2, 960);
+        Point landscapePoint = subject.getScaledDimensions(1600, 400,
+                VastResource.Type.STATIC_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(200 - VastVideoViewController.WEBVIEW_PADDING);
 
-        assertThat(point.x).isEqualTo(2);
-        assertThat(point.y).isEqualTo(960);
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(960, 600,
+                VastResource.Type.STATIC_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(300 - VastVideoViewController.WEBVIEW_PADDING);
+    }
+
+    @Test
+    public void getScaledDimensions_withStaticResource_withHeightLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(400, 960,
+                VastResource.Type.STATIC_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(200 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(400, 1600,
+                VastResource.Type.STATIC_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(200 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+    }
+
+    @Test
+    public void getScaledDimensions_withStaticResource_withWidthAndHeightEqualToScreen_shouldNotScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(
+                800 - VastVideoViewController.WEBVIEW_PADDING,
+                480 - VastVideoViewController.WEBVIEW_PADDING,
+                VastResource.Type.STATIC_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(
+                480 - VastVideoViewController.WEBVIEW_PADDING,
+                800 - VastVideoViewController.WEBVIEW_PADDING,
+                VastResource.Type.STATIC_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+    }
+
+    @Test
+    public void getScaledDimensions_withStaticResource_withWidthAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(
+                Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(1600, 2,
+                VastResource.Type.STATIC_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(1600);
+        assertThat(landscapePoint.y).isEqualTo(2);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(1600, 2,
+                VastResource.Type.STATIC_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(1600);
+        assertThat(portraitPoint.y).isEqualTo(2);
+    }
+
+    @Test
+    public void getScaledDimensions_withStaticResource_withHeightAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(2, 960,
+                VastResource.Type.STATIC_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(2);
+        assertThat(landscapePoint.y).isEqualTo(960);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(2, 960,
+                VastResource.Type.STATIC_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(2);
+        assertThat(portraitPoint.y).isEqualTo(960);
+    }
+
+    @Test
+    public void getScaledDimensions_withHTMLResource_withWidthLargerThanScreen_shouldScaleWidthAndHeight()
+            throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(1600, 400,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(400 - VastVideoViewController.WEBVIEW_PADDING);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(960, 600,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(600 - VastVideoViewController.WEBVIEW_PADDING);
+    }
+
+    @Test
+    public void getScaledDimensions_withHTMLResource_withHeightLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(400, 960,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(400 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(400, 1600,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(400 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+    }
+
+    @Test
+    public void getScaledDimensions_withHTMLResource_withWidthAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(
+                Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(1600, 2,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(1600);
+        assertThat(landscapePoint.y).isEqualTo(2);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(1600, 2,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(1600);
+        assertThat(portraitPoint.y).isEqualTo(2);
+    }
+
+    @Test
+    public void getScaledDimensions_withHTMLResource_withHeightAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(2, 960,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(2);
+        assertThat(landscapePoint.y).isEqualTo(960);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(2, 960,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(2);
+        assertThat(portraitPoint.y).isEqualTo(960);
+    }
+
+    @Test
+    public void getScaledDimensions_withHTMLResource_withWidthAndHeightEqualToScreen_shouldNotScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(
+                800 - VastVideoViewController.WEBVIEW_PADDING,
+                480 - VastVideoViewController.WEBVIEW_PADDING,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(
+                480 - VastVideoViewController.WEBVIEW_PADDING,
+                800 - VastVideoViewController.WEBVIEW_PADDING,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+    }
+
+    @Test
+    public void getScaledDimensions_withHTMLResource_withWidthAndHeightLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(5000, 5000,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(1337, 4200,
+                VastResource.Type.HTML_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+    }
+
+    @Test
+    public void getScaledDimensions_withIFrameResource_withWidthLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(1600, 400,
+                VastResource.Type.IFRAME_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(200 - VastVideoViewController.WEBVIEW_PADDING);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(960, 600,
+                VastResource.Type.IFRAME_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(300 - VastVideoViewController.WEBVIEW_PADDING);
+    }
+
+    @Test
+    public void getScaledDimensions_withIFrameResource_withHeightLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(400, 960,
+                VastResource.Type.IFRAME_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(200 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(400, 1600,
+                VastResource.Type.IFRAME_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(200 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+    }
+
+    @Test
+    public void getScaledDimensions_withIFrameResource_withWidthAndHeightEqualToScreen_shouldNotScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(
+                800 - VastVideoViewController.WEBVIEW_PADDING,
+                480 - VastVideoViewController.WEBVIEW_PADDING,
+                VastResource.Type.IFRAME_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(
+                480 - VastVideoViewController.WEBVIEW_PADDING,
+                800 - VastVideoViewController.WEBVIEW_PADDING,
+                VastResource.Type.IFRAME_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+    }
+
+    @Test
+    public void getScaledDimensions_withIFrameResource_withWidthAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(
+                Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(1600, 2,
+                VastResource.Type.IFRAME_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(1600);
+        assertThat(landscapePoint.y).isEqualTo(2);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(1600, 2,
+                VastResource.Type.IFRAME_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(1600);
+        assertThat(portraitPoint.y).isEqualTo(2);
+    }
+
+    @Test
+    public void getScaledDimensions_withIFrameResource_withHeightAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
+        // Default screen width is 480, height is 800
+        final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        assertThat(display.getWidth()).isEqualTo(480);
+        assertThat(display.getHeight()).isEqualTo(800);
+
+        // Width and height are evaluated in landscape
+        Point landscapePoint = subject.getScaledDimensions(2, 960,
+                VastResource.Type.IFRAME_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
+        assertThat(landscapePoint.x).isEqualTo(2);
+        assertThat(landscapePoint.y).isEqualTo(960);
+
+        // Width and height are evaluated in portrait
+        Point portraitPoint = subject.getScaledDimensions(2, 960,
+                VastResource.Type.IFRAME_RESOURCE,
+                VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
+        assertThat(portraitPoint.x).isEqualTo(2);
+        assertThat(portraitPoint.y).isEqualTo(960);
     }
 
     @Test
@@ -939,7 +1402,7 @@ public class VastXmlManagerAggregatorTest {
                 TEST_NESTED_VAST_XML_STRING, new ArrayList<VastTracker>());
 
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getImpressionTrackers()))
-                .containsOnly("http://rtb-test.dev.tapad.com:8080/creative/imp" +
+                .containsOnly("https://rtb-test.dev.tapad.com:8080/creative/imp" +
                         ".png?ts=1374099035457&svid=1&creative_id=30731&ctx_type=InApp&ta_pinfo" +
                         "=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&liverail_cp=1");
         assertThat(vastVideoConfig.getFractionalTrackers()).isEmpty();
@@ -951,13 +1414,13 @@ public class VastXmlManagerAggregatorTest {
         assertThat(vastVideoConfig.getSkipTrackers()).isEmpty();
         assertThat(vastVideoConfig.getClickTrackers()).isEmpty();
         assertThat(vastVideoConfig.getClickThroughUrl()).isEqualTo(
-                "http://rtb-test.dev.tapad" +
-                        ".com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com");
+                "https://rtb-test.dev.tapad" +
+                        ".com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=https%3A%2F%2Ftapad.com");
         assertThat(vastVideoConfig.getNetworkMediaFileUrl()).isEqualTo(
                 "https://s3.amazonaws.com/mopub-vast/tapad-video.mp4");
         assertThat(vastVideoConfig.getSkipOffsetString()).isNull();
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getErrorTrackers()))
-                .containsOnly("http://nestedInLineErrorOne", "http://nestedInLineErrorTwo");
+                .containsOnly("https://nestedInLineErrorOne", "https://nestedInLineErrorTwo");
 
         VastCompanionAdConfig[] companionAds = new VastCompanionAdConfig[2];
         companionAds[0] = vastVideoConfig.getVastCompanionAd(
@@ -968,18 +1431,18 @@ public class VastXmlManagerAggregatorTest {
             assertThat(companionAd.getWidth()).isEqualTo(300);
             assertThat(companionAd.getHeight()).isEqualTo(250);
             assertThat(companionAd.getVastResource().getResource())
-                    .isEqualTo("http://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
+                    .isEqualTo("https://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
             assertThat(companionAd.getVastResource().getType())
                     .isEqualTo(VastResource.Type.STATIC_RESOURCE);
             assertThat(companionAd.getVastResource().getCreativeType())
                     .isEqualTo(VastResource.CreativeType.IMAGE);
-            assertThat(companionAd.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
+            assertThat(companionAd.getClickThroughUrl()).isEqualTo("https://www.tremormedia.com");
             assertThat(VastUtils.vastTrackersToStrings(companionAd.getClickTrackers()))
-                    .containsOnly("http://companionClickTracking1",
-                            "http://companionClickTracking2");
+                    .containsOnly("https://companionClickTracking1",
+                            "https://companionClickTracking2");
             assertThat(VastUtils.vastTrackersToStrings(companionAd.getCreativeViewTrackers()))
-                    .containsExactly("http://myTrackingURL/firstCompanionCreativeView",
-                            "http://myTrackingURL/secondCompanionCreativeView");
+                    .containsExactly("https://myTrackingURL/firstCompanionCreativeView",
+                            "https://myTrackingURL/secondCompanionCreativeView");
         }
 
         VastIconConfig vastIconConfig = vastVideoConfig.getVastIconConfig();
@@ -1005,57 +1468,57 @@ public class VastXmlManagerAggregatorTest {
 
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getImpressionTrackers()))
                 .containsOnly(
-                        "http://rtb-test.dev.tapad.com:8080/creative/imp" +
+                        "https://rtb-test.dev.tapad.com:8080/creative/imp" +
                                 ".png?ts=1374099035457&svid=1&creative_id=30731&ctx_type=InApp" +
                                 "&ta_pinfo" +
                                 "=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&liverail_cp=1",
-                        "http://myTrackingURL/wrapper/impression1",
-                        "http://myTrackingURL/wrapper/impression2",
-                        "http://www.mopub.com/imp1",
-                        "http://www.mopub.com/imp2");
+                        "https://myTrackingURL/wrapper/impression1",
+                        "https://myTrackingURL/wrapper/impression2",
+                        "https://www.mopub.com/imp1",
+                        "https://www.mopub.com/imp2");
 
         assertThat(vastVideoConfig.getFractionalTrackers()).hasSize(3);
         assertThat(
                 vastVideoConfig.getFractionalTrackers().get(0)).isEqualsToByComparingFields(
-                new VastFractionalProgressTracker("http://myTrackingURL/wrapper/firstQuartile",
+                new VastFractionalProgressTracker("https://myTrackingURL/wrapper/firstQuartile",
                         0.25f));
         assertThat(
                 vastVideoConfig.getFractionalTrackers().get(1)).isEqualsToByComparingFields(
-                new VastFractionalProgressTracker("http://myTrackingURL/wrapper/midpoint",
+                new VastFractionalProgressTracker("https://myTrackingURL/wrapper/midpoint",
                         0.5f));
         assertThat(
                 vastVideoConfig.getFractionalTrackers().get(2)).isEqualsToByComparingFields(
-                new VastFractionalProgressTracker("http://myTrackingURL/wrapper/thirdQuartile",
+                new VastFractionalProgressTracker("https://myTrackingURL/wrapper/thirdQuartile",
                         0.75f));
 
         assertThat(vastVideoConfig.getAbsoluteTrackers().size()).isEqualTo(2);
         assertThat(vastVideoConfig.getAbsoluteTrackers().get(0)).isEqualsToByComparingFields(
-                new VastAbsoluteProgressTracker("http://myTrackingURL/wrapper/creativeView", 0));
+                new VastAbsoluteProgressTracker("https://myTrackingURL/wrapper/creativeView", 0));
         assertThat(vastVideoConfig.getAbsoluteTrackers().get(1)).isEqualsToByComparingFields(
-                new VastAbsoluteProgressTracker("http://myTrackingURL/wrapper/start", 2000));
+                new VastAbsoluteProgressTracker("https://myTrackingURL/wrapper/start", 2000));
 
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getPauseTrackers()))
-                .containsOnly("http://myTrackingURL/wrapper/pause");
+                .containsOnly("https://myTrackingURL/wrapper/pause");
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getResumeTrackers()))
-                .containsOnly("http://myTrackingURL/wrapper/resume");
+                .containsOnly("https://myTrackingURL/wrapper/resume");
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getCompleteTrackers()))
-                .containsOnly("http://myTrackingURL/wrapper/complete");
+                .containsOnly("https://myTrackingURL/wrapper/complete");
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getErrorTrackers()))
                 .containsExactly(
-                        "http://wrapperErrorOne?errorcode=[ERRORCODE]",
-                        "http://wrapperErrorTwo?errorcode=[ERRORCODE]",
-                        "http://nestedInLineErrorOne",
-                        "http://nestedInLineErrorTwo");
+                        "https://wrapperErrorOne?errorcode=[ERRORCODE]",
+                        "https://wrapperErrorTwo?errorcode=[ERRORCODE]",
+                        "https://nestedInLineErrorOne",
+                        "https://nestedInLineErrorTwo");
 
         assertThat(vastVideoConfig.getCloseTrackers()).isEmpty();
         assertThat(vastVideoConfig.getSkipTrackers()).isEmpty();
 
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getClickTrackers()))
-                .containsOnly("http://myTrackingURL/wrapper/click");
+                .containsOnly("https://myTrackingURL/wrapper/click");
 
         assertThat(vastVideoConfig.getClickThroughUrl()).isEqualTo(
-                "http://rtb-test.dev.tapad" +
-                        ".com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=http%3A%2F%2Ftapad.com");
+                "https://rtb-test.dev.tapad" +
+                        ".com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=https%3A%2F%2Ftapad.com");
         assertThat(vastVideoConfig.getNetworkMediaFileUrl()).isEqualTo(
                 "https://s3.amazonaws.com/mopub-vast/tapad-video.mp4");
         assertThat(vastVideoConfig.getSkipOffsetString()).isNull();
@@ -1069,21 +1532,21 @@ public class VastXmlManagerAggregatorTest {
             assertThat(companionAd.getWidth()).isEqualTo(300);
             assertThat(companionAd.getHeight()).isEqualTo(250);
             assertThat(companionAd.getVastResource().getResource())
-                    .isEqualTo("http://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
+                    .isEqualTo("https://demo.tremormedia.com/proddev/vast/Blistex1.jpg");
             assertThat(companionAd.getVastResource().getType())
                     .isEqualTo(VastResource.Type.STATIC_RESOURCE);
             assertThat(companionAd.getVastResource().getCreativeType())
                     .isEqualTo(VastResource.CreativeType.IMAGE);
-            assertThat(companionAd.getClickThroughUrl()).isEqualTo("http://www.tremormedia.com");
+            assertThat(companionAd.getClickThroughUrl()).isEqualTo("https://www.tremormedia.com");
             assertThat(VastUtils.vastTrackersToStrings(companionAd.getClickTrackers()))
-                    .containsOnly("http://companionClickTracking1",
-                            "http://companionClickTracking2",
-                            "http://noResourceWrapperCompanionClickTracking1");
+                    .containsOnly("https://companionClickTracking1",
+                            "https://companionClickTracking2",
+                            "https://noResourceWrapperCompanionClickTracking1");
             assertThat(VastUtils.vastTrackersToStrings(companionAd.getCreativeViewTrackers()))
-                    .containsExactly("http://myTrackingURL/firstCompanionCreativeView",
-                            "http://myTrackingURL/secondCompanionCreativeView",
-                            "http://firstNoResourceWrapperCompanionCreativeView",
-                            "http://secondNoResourceWrapperCompanionCreativeView");
+                    .containsExactly("https://myTrackingURL/firstCompanionCreativeView",
+                            "https://myTrackingURL/secondCompanionCreativeView",
+                            "https://firstNoResourceWrapperCompanionCreativeView",
+                            "https://secondNoResourceWrapperCompanionCreativeView");
         }
 
         VastIconConfig vastIconConfig = vastVideoConfig.getVastIconConfig();
@@ -1125,15 +1588,15 @@ public class VastXmlManagerAggregatorTest {
         for (VastCompanionAdConfig companionAd : companionAds) {
             assertThat(companionAd.getWidth()).isEqualTo(456);
             assertThat(companionAd.getHeight()).isEqualTo(250);
-            assertThat(companionAd.getVastResource().getResource()).isEqualTo("http" +
+            assertThat(companionAd.getVastResource().getResource()).isEqualTo("https" +
                     "://wrapperCompanionAdStaticResource");
             assertThat(companionAd.getClickThroughUrl()).isEqualTo(
-                    "http://wrapperCompanionClickThrough");
+                    "https://wrapperCompanionClickThrough");
             assertThat(VastUtils.vastTrackersToStrings(companionAd.getClickTrackers()))
-                    .containsOnly("http://wrapperCompanionClickTracking");
+                    .containsOnly("https://wrapperCompanionClickTracking");
             assertThat(VastUtils.vastTrackersToStrings(companionAd.getCreativeViewTrackers()))
-                    .containsExactly("http://firstWrapperCompanionCreativeView",
-                            "http://secondWrapperCompanionCreativeView");
+                    .containsExactly("https://firstWrapperCompanionCreativeView",
+                            "https://secondWrapperCompanionCreativeView");
         }
     }
 
@@ -1144,9 +1607,9 @@ public class VastXmlManagerAggregatorTest {
                 new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig.getNetworkMediaFileUrl()).isEqualTo(
-                "http://negativeSequence");
+                "https://negativeSequence");
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getImpressionTrackers()))
-                .containsOnly("http://negativeSequence");
+                .containsOnly("https://negativeSequence");
     }
 
     @Test
@@ -1157,7 +1620,7 @@ public class VastXmlManagerAggregatorTest {
         VideoViewabilityTracker tracker = vastVideoConfig.getVideoViewabilityTracker();
         assertThat(tracker.getPercentViewable()).isEqualTo(70);
         assertThat(tracker.getViewablePlaytimeMS()).isEqualTo(3500);
-        assertThat(tracker.getTrackingUrl()).isEqualTo("http://ad.server.com/impression/dot.png");
+        assertThat(tracker.getTrackingUrl()).isEqualTo("https://ad.server.com/impression/dot.png");
     }
 
     @Test
@@ -1169,7 +1632,7 @@ public class VastXmlManagerAggregatorTest {
         VideoViewabilityTracker tracker = vastVideoConfig.getVideoViewabilityTracker();
         assertThat(tracker.getPercentViewable()).isEqualTo(50);
         assertThat(tracker.getViewablePlaytimeMS()).isEqualTo(2500);
-        assertThat(tracker.getTrackingUrl()).isEqualTo("http://ad.server.com/impression/dot.gif");
+        assertThat(tracker.getTrackingUrl()).isEqualTo("https://ad.server.com/impression/dot.gif");
     }
 
     @Test
@@ -1182,7 +1645,7 @@ public class VastXmlManagerAggregatorTest {
         VideoViewabilityTracker tracker = vastVideoConfig.getVideoViewabilityTracker();
         assertThat(tracker.getPercentViewable()).isEqualTo(70);
         assertThat(tracker.getViewablePlaytimeMS()).isEqualTo(3500);
-        assertThat(tracker.getTrackingUrl()).isEqualTo("http://ad.server.com/impression/dot.png");
+        assertThat(tracker.getTrackingUrl()).isEqualTo("https://ad.server.com/impression/dot.png");
     }
 
     @Test
@@ -1232,7 +1695,7 @@ public class VastXmlManagerAggregatorTest {
                 new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig).isNull();
-        verify(mockRequestQueue).add(argThat(isUrl("http://justErrorTracking?errorcode=900")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://justErrorTracking?errorcode=900")));
         verifyNoMoreInteractions(mockRequestQueue);
     }
 
@@ -1243,7 +1706,7 @@ public class VastXmlManagerAggregatorTest {
                 TEST_VAST_XML_STRING, new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig).isNull();
-        verify(mockRequestQueue).add(argThat(isUrl("http://justErrorTracking?errorcode=303")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://justErrorTracking?errorcode=303")));
         verifyNoMoreInteractions(mockRequestQueue);
     }
 
@@ -1264,8 +1727,8 @@ public class VastXmlManagerAggregatorTest {
                 TEST_VAST_XML_STRING, new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig).isNull();
-        verify(mockRequestQueue).add(argThat(isUrl("http://wrapperErrorOne?errorcode=100")));
-        verify(mockRequestQueue).add(argThat(isUrl("http://wrapperErrorTwo?errorcode=100")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://wrapperErrorOne?errorcode=100")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://wrapperErrorTwo?errorcode=100")));
         verifyNoMoreInteractions(mockRequestQueue);
     }
 
@@ -1275,8 +1738,8 @@ public class VastXmlManagerAggregatorTest {
                 TEST_VAST_XML_STRING, new ArrayList<VastTracker>());
 
         assertThat(vastVideoConfig).isNull();
-        verify(mockRequestQueue).add(argThat(isUrl("http://wrapperErrorOne?errorcode=301")));
-        verify(mockRequestQueue).add(argThat(isUrl("http://wrapperErrorTwo?errorcode=301")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://wrapperErrorOne?errorcode=301")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://wrapperErrorTwo?errorcode=301")));
         verifyNoMoreInteractions(mockRequestQueue);
     }
 
@@ -1299,10 +1762,12 @@ public class VastXmlManagerAggregatorTest {
             final String staticResource,
             final String staticResourceType,
             final String iFrameResource,
-            final String htmlResource) {
+            final String htmlResource,
+            final String adSlotId) {
         VastCompanionAdXmlManager companionXmlManager = mock(VastCompanionAdXmlManager.class);
         when(companionXmlManager.getWidth()).thenReturn(width);
         when(companionXmlManager.getHeight()).thenReturn(height);
+        when(companionXmlManager.getAdSlotId()).thenReturn(adSlotId);
 
         VastResourceXmlManager mockResourceXmlManager = initializeVastResourceXmlManagerMock(
                 staticResource,

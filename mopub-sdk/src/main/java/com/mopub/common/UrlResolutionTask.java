@@ -5,10 +5,13 @@ import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 @VisibleForTesting
@@ -63,13 +66,16 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
 
         } catch (IOException e) {
             return null;
+        } catch (URISyntaxException e) {
+            return null;
         }
 
         return previousUrl;
     }
 
     @Nullable
-    private String getRedirectLocation(@NonNull final String urlString) throws IOException {
+    private String getRedirectLocation(@NonNull final String urlString) throws IOException,
+            URISyntaxException {
         final URL url = new URL(urlString);
 
         HttpURLConnection httpUrlConnection = null;
@@ -77,18 +83,35 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
             httpUrlConnection = (HttpURLConnection) url.openConnection();
             httpUrlConnection.setInstanceFollowRedirects(false);
 
-            int responseCode = httpUrlConnection.getResponseCode();
-
-            if (responseCode >= 300 && responseCode < 400) {
-                return httpUrlConnection.getHeaderField("Location");
-            } else {
-                return null;
-            }
+            return resolveRedirectLocation(urlString, httpUrlConnection);
         } finally {
             if (httpUrlConnection != null) {
                 httpUrlConnection.disconnect();
             }
         }
+    }
+
+    @VisibleForTesting
+    @Nullable
+    static String resolveRedirectLocation(@NonNull final String baseUrl,
+            @NonNull final HttpURLConnection httpUrlConnection) throws IOException, URISyntaxException {
+        final URI baseUri = new URI(baseUrl);
+        final int responseCode = httpUrlConnection.getResponseCode();
+        final String redirectUrl = httpUrlConnection.getHeaderField("Location");
+        String result = null;
+
+        if (responseCode >= 300 && responseCode < 400) {
+            try {
+                // If redirectUrl is a relative path, then resolve() will correctly complete the path;
+                // otherwise, resolve() will return the redirectUrl
+                result =  baseUri.resolve(redirectUrl).toString();
+            } catch (IllegalArgumentException e) {
+                // Ensure the request is cancelled instead of resolving an intermediary URL
+                throw new URISyntaxException(redirectUrl, "Unable to parse invalid URL");
+            }
+        }
+
+        return result;
     }
 
     @Override

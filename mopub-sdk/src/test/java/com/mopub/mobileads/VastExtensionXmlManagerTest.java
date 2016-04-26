@@ -29,7 +29,7 @@ public class VastExtensionXmlManagerTest {
                 "                  <MoPubViewabilityTracker" +
                 "                          viewablePlaytime=\"2.5\"" +
                 "                          percentViewable=\"50%\">" +
-                "                      <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                      <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                  </MoPubViewabilityTracker>" +
                 "              </Extension>";
 
@@ -39,7 +39,7 @@ public class VastExtensionXmlManagerTest {
         assertThat(tracker).isNotNull();
         assertThat(tracker.getViewablePlaytimeMS()).isEqualTo(2500);
         assertThat(tracker.getPercentViewable()).isEqualTo(50);
-        assertThat(tracker.getTrackingUrl()).isEqualTo("http://ad.server.com/impression/dot.gif");
+        assertThat(tracker.getTrackingUrl()).isEqualTo("https://ad.server.com/impression/dot.gif");
     }
 
     @Test
@@ -57,7 +57,7 @@ public class VastExtensionXmlManagerTest {
         String extensionXml = "<Extension type=\"MoPub\">" +
                 "                  <MoPubViewabilityTracker" +
                 "                          percentViewable=\"50%\">" +
-                "                      <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                      <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                  </MoPubViewabilityTracker>" +
                 "              </Extension>";
 
@@ -72,7 +72,7 @@ public class VastExtensionXmlManagerTest {
         String extensionXml = "<Extension type=\"MoPub\">" +
                 "                  <MoPubViewabilityTracker" +
                 "                          viewablePlaytime=\"2.5\">" +
-                "                      <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                      <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                  </MoPubViewabilityTracker>" +
                 "              </Extension>";
 

@@ -24,9 +24,8 @@ public abstract class CustomEventNative {
      * @param customEventNativeListener An Object that must be notified of certain lifecycle
      * events.
      * @param localExtras A Map containing additional custom data that is set within your
-     * application by calling {@link MoPubNative#setLocalExtras(Map<String, Object>)}. Note that the
-     * localExtras Map is a copy of the Map supplied to {@link MoPubNative#setLocalExtras(Map<String,
-     * Object>)}.
+     * application by calling {@link MoPubNative#setLocalExtras(Map)}. Note that the
+     * localExtras Map is a copy of the Map supplied to {@link MoPubNative#setLocalExtras(Map)}.
      * @param serverExtras A Map containing additional custom data configurable on the MoPub website
      * that you want to associate with a given custom event request. This data may be used to pass
      * dynamic information, such as publisher IDs, without changes in application code.

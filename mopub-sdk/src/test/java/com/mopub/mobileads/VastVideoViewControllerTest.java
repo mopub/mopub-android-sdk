@@ -55,8 +55,11 @@ import org.robolectric.shadows.httpclient.TestHttpResponse;
 import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
@@ -65,13 +68,14 @@ import static com.mopub.mobileads.BaseVideoViewController.BaseVideoViewControlle
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_FAIL;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.getHtmlInterstitialIntentFilter;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiverTest.getIntentForActionAndIdentifier;
 import static com.mopub.mobileads.VastVideoViewController.CURRENT_POSITION;
 import static com.mopub.mobileads.VastVideoViewController.DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON;
 import static com.mopub.mobileads.VastVideoViewController.MAX_VIDEO_DURATION_FOR_CLOSE_BUTTON;
 import static com.mopub.mobileads.VastVideoViewController.RESUMED_VAST_CONFIG;
 import static com.mopub.mobileads.VastVideoViewController.VAST_VIDEO_CONFIG;
+import static com.mopub.mobileads.VastXmlManagerAggregator.ADS_BY_AD_SLOT_ID;
+import static com.mopub.mobileads.VastXmlManagerAggregator.SOCIAL_ACTIONS_AD_SLOT_ID;
 import static com.mopub.volley.toolbox.ImageLoader.ImageListener;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -100,11 +104,11 @@ public class VastVideoViewControllerTest {
     private static final String COMPANION_CLICK_TRACKING_URL_1 = "companion_click_tracking_url_1";
     private static final String COMPANION_CLICK_TRACKING_URL_2 = "companion_click_tracking_url_2";
     private static final String COMPANION_CLICK_TRACKING_URL_3 = "companion_click_tracking_url_3";
-    private static final String COMPANION_CLICK_DESTINATION_URL = "http://companion_click_destination_url";
+    private static final String COMPANION_CLICK_DESTINATION_URL = "https://companion_click_destination_url";
     private static final String COMPANION_CREATIVE_VIEW_URL_1 = "companion_creative_view_url_1";
     private static final String COMPANION_CREATIVE_VIEW_URL_2 = "companion_creative_view_url_2";
     private static final String COMPANION_CREATIVE_VIEW_URL_3 = "companion_creative_view_url_3";
-    private static final String RESOLVED_CLICKTHROUGH_URL = "http://www.mopub.com/";
+    private static final String RESOLVED_CLICKTHROUGH_URL = "https://www.mopub.com/";
     private static final String CLICKTHROUGH_URL = "deeplink+://navigate?" +
             "&primaryUrl=bogus%3A%2F%2Furl" +
             "&fallbackUrl=" + Uri.encode(RESOLVED_CLICKTHROUGH_URL);
@@ -147,6 +151,7 @@ public class VastVideoViewControllerTest {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setNetworkMediaFileUrl("video_url");
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setDspCreativeId("dsp_creative_id");
         vastVideoConfig.addAbsoluteTrackers(
                 Arrays.asList(new VastAbsoluteProgressTracker("start" + MACRO_TAGS, 2000)));
         vastVideoConfig.addFractionalTrackers(
@@ -202,6 +207,16 @@ public class VastVideoViewControllerTest {
         when(mMockVastIconConfig.getVastResource()).thenReturn(vastResource);
         vastVideoConfig.setVastIconConfig(mMockVastIconConfig);
 
+
+        final ArrayList<VastTracker> vastTrackers = new ArrayList<>();
+        VastCompanionAdConfig socialActionsCompanionAd =
+                new VastCompanionAdConfig(65, 20, vastResource, "", vastTrackers, vastTrackers);
+        Map<String, VastCompanionAdConfig> socialActionsCompanionAds =
+                new HashMap<String, VastCompanionAdConfig>();
+        socialActionsCompanionAds.put(ADS_BY_AD_SLOT_ID, socialActionsCompanionAd);
+        socialActionsCompanionAds.put(SOCIAL_ACTIONS_AD_SLOT_ID, socialActionsCompanionAd);
+        vastVideoConfig.setSocialActionsCompanionAds(socialActionsCompanionAds);
+
         when(mockMediaMetadataRetriever.getFrameAtTime(anyLong(), anyInt())).thenReturn(mockBitmap);
 
         bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
@@ -220,7 +235,9 @@ public class VastVideoViewControllerTest {
             }
         }, new TestHttpResponse(200, "body"));
 
-        ShadowLocalBroadcastManager.getInstance(context).registerReceiver(broadcastReceiver, getHtmlInterstitialIntentFilter());
+        ShadowLocalBroadcastManager.getInstance(context).registerReceiver(broadcastReceiver,
+                new EventForwardingBroadcastReceiver(null,
+                testBroadcastIdentifier).getIntentFilter());
 
         expectedUserAgent = new WebView(context).getSettings().getUserAgentString();
     }
@@ -266,6 +283,38 @@ public class VastVideoViewControllerTest {
         assertThat(radialCountdownWidget.getVisibility()).isEqualTo(View.INVISIBLE);
         ShadowImageView radialCountdownWidgetShadow = Shadows.shadowOf(radialCountdownWidget);
         assertThat(radialCountdownWidgetShadow.getOnTouchListener()).isNull();
+    }
+
+    @Test
+    public void constructor_shouldAddIconViewToLayoutAndSetInvisibleWithWebViewClickListener() throws Exception {
+        initializeSubject();
+
+        View iconView = subject.getIconView();
+        assertThat(iconView.getParent()).isEqualTo(subject.getLayout());
+        assertThat(iconView.getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(((VastWebView)iconView).getVastWebViewClickListener()).isNotNull();
+    }
+
+    @Test
+    public void constructor_withAdsByCompanion_shouldAddAdsByViewToLayout() throws Exception {
+        initializeSubject();
+
+        View adsByView = subject.createAdsByView((Activity) context);
+        assertThat(adsByView.getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(subject.getHasSocialActions()).isTrue();
+        assertThat(subject.getCtaButtonWidget().getHasSocialActions()).isTrue();
+        assertThat(((VastWebView) adsByView).getVastWebViewClickListener()).isNotNull();
+    }
+
+    @Test
+    public void constructor_withSocialActionsCompanion_shouldAddSocialActionsViewToLayout() throws Exception {
+        initializeSubject();
+
+        View socialActionsView = subject.getSocialActionsView();
+        assertThat(socialActionsView.getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(subject.getHasSocialActions()).isTrue();
+        assertThat(subject.getCtaButtonWidget().getHasSocialActions()).isTrue();
+        assertThat(((VastWebView) socialActionsView).getVastWebViewClickListener()).isNotNull();
     }
 
     @Test
@@ -441,13 +490,13 @@ public class VastVideoViewControllerTest {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         vastVideoConfig.setCustomCloseIconUrl(
-                "http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png");
+                "https://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png");
         bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
         verify(mockImageLoader).get(
-                eq("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png"),
+                eq("https://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png"),
                 any(ImageListener.class));
     }
 
@@ -581,7 +630,7 @@ public class VastVideoViewControllerTest {
                 vastCompanionAdConfig, View.INVISIBLE);
 
         view.getVastWebViewClickListener().onVastWebViewClick();
-        verify(vastCompanionAdConfig).handleClick(any(Context.class), eq(1), anyString());
+        verify(vastCompanionAdConfig).handleClick(any(Context.class), eq(1), anyString(), eq("dsp_creative_id"));
     }
 
     @Test
@@ -629,7 +678,8 @@ public class VastVideoViewControllerTest {
     public void onDestroy_withBlurLastVideoFrameTaskStillRunning_shouldCancelTask() throws Exception {
         initializeSubject();
 
-        VastVideoBlurLastVideoFrameTask mockBlurLastVideoFrameTask = mock(VastVideoBlurLastVideoFrameTask.class);
+        VastVideoBlurLastVideoFrameTask mockBlurLastVideoFrameTask = mock(
+                VastVideoBlurLastVideoFrameTask.class);
         when(mockBlurLastVideoFrameTask.getStatus()).thenReturn(AsyncTask.Status.RUNNING);
         subject.getVastVideoView().setBlurLastVideoFrameTask(mockBlurLastVideoFrameTask);
 
@@ -1035,7 +1085,7 @@ public class VastVideoViewControllerTest {
     }
 
     @Test
-    public void onPrepared_whenSkipOffsetIsLongerThanDurationForShortVideo_shouldNotSetShowCloseButtonDelay() throws Exception {
+    public void onPrepared_whenSkipOffsetIsLongerThanDurationForShortVideo_shouldSetShowCloseButtonDelay() throws Exception {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         vastVideoConfig.setSkipOffset("00:00:11");   // 11s
@@ -1048,11 +1098,11 @@ public class VastVideoViewControllerTest {
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
         assertThat(subject.getShowCloseButtonDelay()).isEqualTo(10 * 1000);
-        assertThat(subject.getHasSkipOffset()).isFalse();
+        assertThat(subject.getHasSkipOffset()).isTrue();
     }
 
     @Test
-    public void onPrepared_whenSkipOffsetIsLongerThanDurationForLongVideo_shouldNotSetShowCloseButtonDelay() throws Exception {
+    public void onPrepared_whenSkipOffsetIsLongerThanDurationForLongVideo_shouldSetShowCloseButtonDelay() throws Exception {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         vastVideoConfig.setSkipOffset("00:00:21");   // 21s
@@ -1064,8 +1114,41 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(
-                DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(20 * 1000);
+        assertThat(subject.getHasSkipOffset()).isTrue();
+    }
+
+    @Test
+    public void onPrepared_whenSkipOffset100Percent_shouldSetShowCloseButtonDelayToVideoDuration() throws Exception {
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("100%");   // 20000 ms
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
+
+        initializeSubject();
+        spyOnVideoView();
+        setVideoViewParams(0, 20000);    // 20s: long video
+
+        getShadowVideoView().getOnPreparedListener().onPrepared(null);
+
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(20000);
+        assertThat(subject.getHasSkipOffset()).isTrue();
+    }
+
+    @Test
+    public void onPrepared_whenSkipOffsetGreaterThan100Percent_shouldSetShowCloseButtonDelayToDefault() throws Exception {
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("101%");   // 20200 ms
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
+
+        initializeSubject();
+        spyOnVideoView();
+        setVideoViewParams(0, 20000);    // 20s: long video
+
+        getShadowVideoView().getOnPreparedListener().onPrepared(null);
+
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
         assertThat(subject.getHasSkipOffset()).isFalse();
     }
 
@@ -1265,6 +1348,10 @@ public class VastVideoViewControllerTest {
 
     @Test
     public void onCompletion_whenCompanionAdAvailable_shouldShowCompanionAdAndHideBlurredLastVideoFrame() throws Exception {
+        final VastVideoConfig vastVideoConfig =
+                (VastVideoConfig) bundle.getSerializable(VAST_VIDEO_CONFIG);
+        vastVideoConfig.setSocialActionsCompanionAds(new HashMap<String, VastCompanionAdConfig>());
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
         initializeSubject();
 
         final View companionView = subject.getLandscapeCompanionAdView();
@@ -1404,6 +1491,30 @@ public class VastVideoViewControllerTest {
 
         assertThat(topGradientStripWidget.getVisibility()).isEqualTo(View.GONE);
         assertThat(bottomGradientStripWidget.getVisibility()).isEqualTo(View.GONE);
+    }
+
+    @Test
+    public void onCompletion_withSocialActions_shouldShowCompanionAdAndShowBlurredLastVideoFrame() throws Exception {
+        initializeSubject();
+
+        final View companionView = subject.getLandscapeCompanionAdView();
+        final ImageView blurredLastVideoFrameImageView = subject.getBlurredLastVideoFrameImageView();
+
+        assertThat(subject.getVideoView().getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(companionView.getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.INVISIBLE);
+
+        getShadowVideoView().getOnPreparedListener().onPrepared(null);
+        Robolectric.getBackgroundThreadScheduler().unPause();
+        Robolectric.getForegroundThreadScheduler().unPause();
+        Thread.sleep(NETWORK_DELAY);
+
+        getShadowVideoView().getOnCompletionListener().onCompletion(null);
+
+        assertThat(subject.getVastVideoView().getBlurLastVideoFrameTask()).isNotNull();
+        assertThat(subject.getVideoView().getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(companionView.getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.VISIBLE);
     }
 
     @Test
@@ -2115,7 +2226,7 @@ public class VastVideoViewControllerTest {
         VastWebView view = (VastWebView) subject.createIconView(context, vastIconConfig, View.INVISIBLE);
 
         view.getVastWebViewClickListener().onVastWebViewClick();
-        verify(vastIconConfig).handleClick(any(Context.class), anyString());
+        verify(vastIconConfig).handleClick(any(Context.class), anyString(), eq("dsp_creative_id"));
     }
 
     @Test
@@ -2157,13 +2268,14 @@ public class VastVideoViewControllerTest {
     }
 
     @Test
-    public void makeInteractable_shouldHideCountdownWidgetAndShowCtaAndCloseButtonWidgets() throws Exception {
+    public void makeInteractable_shouldHideCountdownWidgetAndShowCtaAndCloseButtonWidgetsAndShowSocialActions() throws Exception {
         initializeSubject();
 
         subject.makeVideoInteractable();
 
         assertThat(subject.getRadialCountdownWidget().getVisibility()).isEqualTo(View.GONE);
         assertThat(subject.getCloseButtonWidget().getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(subject.getSocialActionsView().getVisibility()).isEqualTo(View.VISIBLE);
     }
 
     private void initializeSubject() throws IllegalAccessException {

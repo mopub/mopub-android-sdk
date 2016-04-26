@@ -196,6 +196,7 @@ public class CustomEventInterstitialAdapterTest {
             }
         };
 
+        // noinspection unchecked
         doAnswer(assertTimeoutRunnableHasStarted)
                 .when(interstitial)
                 .loadInterstitial(
@@ -222,6 +223,7 @@ public class CustomEventInterstitialAdapterTest {
             }
         };
 
+        // noinspection unchecked
         doAnswer(justCallOnInterstitialFailed)
                 .when(interstitial)
                 .loadInterstitial(
@@ -298,6 +300,7 @@ public class CustomEventInterstitialAdapterTest {
 
         subject.loadInterstitial();
 
+        // noinspection unchecked
         verify(interstitial, never()).loadInterstitial(
                 any(Context.class),
                 any(CustomEventInterstitialListener.class),

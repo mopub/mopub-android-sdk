@@ -343,6 +343,21 @@ public class AdRequestTest {
     }
 
     @Test
+    public void parseNetworkResponse_forRewardedVideo_shouldSucceed() {
+        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.REWARDED_VIDEO);
+        defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME.getKey(), "currencyName");
+        defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT.getKey(), "25");
+        NetworkResponse testResponse = new NetworkResponse(200,
+                "{\"abc\": \"def\"}".getBytes(Charset.defaultCharset()), defaultHeaders, false);
+
+        final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
+
+        assertThat(response.result.getAdType()).isEqualTo(AdType.REWARDED_VIDEO);
+        assertThat(response.result.getRewardedVideoCurrencyName()).isEqualTo("currencyName");
+        assertThat(response.result.getRewardedVideoCurrencyAmount()).isEqualTo("25");
+    }
+
+    @Test
     public void deliverResponse_shouldCallListenerOnSuccess() throws Exception {
         subject.deliverResponse(mockAdResponse);
         verify(mockListener).onSuccess(mockAdResponse);
@@ -350,7 +365,7 @@ public class AdRequestTest {
 
     @Test
     public void getRequestId_shouldParseAndReturnRequestIdFromFailUrl() throws Exception {
-        String requestId = subject.getRequestId("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca&exclude=043fde1fe2f9470c9aa67fec262a0596&request_id=7fd6dd3bf1c84f87876b4740c1dd7baa&fail=1");
+        String requestId = subject.getRequestId("https://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca&exclude=043fde1fe2f9470c9aa67fec262a0596&request_id=7fd6dd3bf1c84f87876b4740c1dd7baa&fail=1");
 
         assertThat(requestId).isEqualTo("7fd6dd3bf1c84f87876b4740c1dd7baa");
     }
@@ -362,7 +377,7 @@ public class AdRequestTest {
 
     @Test
     public void getRequestId_withUrlWithNoRequestIdParam_shouldReturnNull() throws Exception {
-        assertThat(subject.getRequestId("http://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca")).isNull();
+        assertThat(subject.getRequestId("https://ads.mopub.com/m/ad?id=8cf00598d3664adaaeccd800e46afaca")).isNull();
     }
 
     @Test
@@ -447,7 +462,7 @@ public class AdRequestTest {
                 assertThat(baseEvent.getCategory()).isEqualTo(BaseEvent.Category.REQUESTS);
                 assertThat(baseEvent.getSamplingRate()).isEqualTo(0.1);
                 assertThat(baseEvent.getAdUnitId()).isEqualTo(adUnitId);
-                assertThat(baseEvent.getAdCreativeId()).isEqualTo("dsp_creative_id");
+                assertThat(baseEvent.getDspCreativeId()).isEqualTo("dsp_creative_id");
                 assertThat(baseEvent.getAdType()).isEqualTo("html");
                 assertThat(baseEvent.getAdNetworkType()).isEqualTo("network_type");
                 assertThat(baseEvent.getAdWidthPx()).isEqualTo(320);

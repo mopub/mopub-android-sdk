@@ -82,9 +82,7 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
             return;
         }
 
-        if (getTimeoutDelayMilliseconds() > 0) {
-            mHandler.postDelayed(mTimeout, getTimeoutDelayMilliseconds());
-        }
+        mHandler.postDelayed(mTimeout, getTimeoutDelayMilliseconds());
 
         // Custom event classes can be developed by any third party and may not be tested.
         // We catch all exceptions here to prevent crashes from untested code.

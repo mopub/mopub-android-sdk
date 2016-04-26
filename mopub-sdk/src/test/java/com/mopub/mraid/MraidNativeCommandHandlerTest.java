@@ -74,7 +74,7 @@ import static org.mockito.Mockito.when;
 @Config(constants = BuildConfig.class, shadows = {ShadowAsyncTasks.class, ShadowMoPubHttpUrlConnection.class})
 public class MraidNativeCommandHandlerTest {
     private static final String IMAGE_URI_VALUE = "file://tmp/expectedFile.jpg";
-    private static final String REMOTE_IMAGE_URL = "http://www.mopub.com/expectedFile.jpg";
+    private static final String REMOTE_IMAGE_URL = "https://www.mopub.com/expectedFile.jpg";
     private static final int TIME_TO_PAUSE_FOR_NETWORK = 300;
     private static final String FAKE_IMAGE_DATA = "imageFileData";
     //XXX: Robolectric or JUNIT doesn't support the correct suffix ZZZZZ in the parse pattern, so replacing xx:xx with xxxx for time.

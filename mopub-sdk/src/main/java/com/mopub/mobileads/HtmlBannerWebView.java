@@ -13,10 +13,10 @@ public class HtmlBannerWebView extends BaseHtmlWebView {
         super(context, adReport);
     }
 
-    public void init(CustomEventBannerListener customEventBannerListener, boolean isScrollable, String redirectUrl, String clickthroughUrl) {
+    public void init(CustomEventBannerListener customEventBannerListener, boolean isScrollable, String redirectUrl, String clickthroughUrl, String dspCreativeId) {
         super.init(isScrollable);
 
-        setWebViewClient(new HtmlWebViewClient(new HtmlBannerWebViewListener(customEventBannerListener), this, clickthroughUrl, redirectUrl));
+        setWebViewClient(new HtmlWebViewClient(new HtmlBannerWebViewListener(customEventBannerListener), this, clickthroughUrl, redirectUrl, dspCreativeId));
     }
 
     static class HtmlBannerWebViewListener implements HtmlWebViewListener {

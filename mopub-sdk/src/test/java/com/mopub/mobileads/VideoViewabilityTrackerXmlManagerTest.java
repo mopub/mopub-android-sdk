@@ -19,7 +19,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"01:01:01.001\"" +
                 "                             percentViewable=\"50%\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -32,7 +32,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"01.001\"" +
                 "                             percentViewable=\"50%\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -45,7 +45,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"2\"" +
                 "                             percentViewable=\"50%\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -57,7 +57,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
     public void getViewablePlaytimeMS_withoutViewablePlaytimeMS_shouldReturnNull() throws Exception {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             percentViewable=\"50%\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -70,7 +70,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"-1\"" +
                 "                             percentViewable=\"50%\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -83,7 +83,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"a01:01:01.001\"" +
                 "                             percentViewable=\"50%\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -96,7 +96,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"a01.001\"" +
                 "                             percentViewable=\"50%\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -109,7 +109,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"1234!@#$%^*(asdf\"" +
                 "                             percentViewable=\"50%\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -122,7 +122,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"1\"" +
                 "                             percentViewable=\"25%\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -135,7 +135,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"1\"" +
                 "                             percentViewable=\"25\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -148,7 +148,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"1\"" +
                 "                             percentViewable=\"25.9\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -160,7 +160,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
     public void getPercentViewable_withoutPercentViewable_shouldReturnNull() throws Exception {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"1\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -173,7 +173,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"1\"" +
                 "                             percentViewable=\"-25\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -186,7 +186,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"1\"" +
                 "                             percentViewable=\"101\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -199,7 +199,7 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"1\"" +
                 "                             percentViewable=\"1234!@#$%^*(asdf\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
@@ -212,13 +212,13 @@ public class VideoViewabilityTrackerXmlManagerTest {
         String videoViewabilityXml = "<MoPubViewabilityTracker" +
                 "                             viewablePlaytime=\"2\"" +
                 "                             percentViewable=\"50%\">" +
-                "                         <![CDATA[http://ad.server.com/impression/dot.gif]]>" +
+                "                         <![CDATA[https://ad.server.com/impression/dot.gif]]>" +
                 "                     </MoPubViewabilityTracker>";
 
         subject = new VideoViewabilityTrackerXmlManager(createNode(videoViewabilityXml));
 
         assertThat(subject.getVideoViewabilityTrackerUrl())
-                .isEqualTo("http://ad.server.com/impression/dot.gif");
+                .isEqualTo("https://ad.server.com/impression/dot.gif");
     }
 
     @Test
