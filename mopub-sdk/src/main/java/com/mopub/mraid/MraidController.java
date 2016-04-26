@@ -341,8 +341,10 @@ public class MraidController {
         Activity activity = mWeakActivity.get();
         if (activity != null) {
             mMraidWebView.getSettings().setJavaScriptEnabled(true);
-            ExternalAvidAdSessionContext avidAdSessionContext = new ExternalAvidAdSessionContext(BuildConfig.VERSION_NAME);
-            avidAdSession = AvidAdSessionManager.startAvidDisplayAdSession(activity, avidAdSessionContext);
+            if (avidAdSession == null) {
+                ExternalAvidAdSessionContext avidAdSessionContext = new ExternalAvidAdSessionContext(BuildConfig.VERSION_NAME);
+                avidAdSession = AvidAdSessionManager.startAvidDisplayAdSession(activity, avidAdSessionContext);
+            }
             avidAdSession.registerAdView(mMraidWebView, activity);
         }
         mMraidBridge.attachView(mMraidWebView);
@@ -351,6 +353,10 @@ public class MraidController {
 
         // onPageLoaded gets fired once the html is loaded into the webView
         mMraidBridge.setContentHtml(htmlData);
+    }
+
+    public void setAvidAdSessionId(String avidAdSessionId) {
+        avidAdSession = AvidAdSessionManager.findAvidAdSessionById(avidAdSessionId);
     }
 
     // onPageLoaded gets fired once the html is loaded into the webView.

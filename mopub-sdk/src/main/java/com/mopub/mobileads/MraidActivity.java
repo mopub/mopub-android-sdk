@@ -1,5 +1,6 @@
 package com.mopub.mobileads;
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +15,9 @@ import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.integralads.avid.library.mopub.session.AvidAdSessionManager;
+import com.integralads.avid.library.mopub.session.AvidDisplayAdSession;
+import com.integralads.avid.library.mopub.session.ExternalAvidAdSessionContext;
 import com.mopub.common.AdReport;
 import com.mopub.common.Constants;
 import com.mopub.common.VisibleForTesting;
@@ -27,6 +31,7 @@ import com.mopub.mraid.PlacementType;
 import com.mopub.network.Networking;
 
 import static com.mopub.common.DataKeys.AD_REPORT_KEY;
+import static com.mopub.common.DataKeys.AVID_AD_SESSION_ID_KEY;
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
@@ -41,7 +46,7 @@ public class MraidActivity extends BaseInterstitialActivity {
     @Nullable private MraidController mMraidController;
     @Nullable private MraidWebViewDebugListener mDebugListener;
 
-    public static void preRenderHtml(@NonNull final Context context,
+    public static String preRenderHtml(@NonNull final Context context,
             @NonNull final CustomEventInterstitialListener customEventInterstitialListener,
             @NonNull final String htmlData) {
         BaseWebView dummyWebView = new BaseWebView(context);
@@ -67,13 +72,18 @@ public class MraidActivity extends BaseInterstitialActivity {
                         MoPubErrorCode.MRAID_LOAD_ERROR);
             }
         });
-
+        ExternalAvidAdSessionContext avidAdSessionContext = new ExternalAvidAdSessionContext(BuildConfig.VERSION_NAME);
+        AvidDisplayAdSession avidAdSession = AvidAdSessionManager.startAvidDisplayAdSession(context, avidAdSessionContext);
+        if (context instanceof Activity) {
+            avidAdSession.registerAdView(dummyWebView, (Activity) context);
+        }
         dummyWebView.loadDataWithBaseURL(Networking.getBaseUrlScheme() + "://" + Constants.HOST + "/",
                 htmlData, "text/html", "UTF-8", null);
+        return avidAdSession.getAvidAdSessionId();
     }
 
-    public static void start(@NonNull Context context, @Nullable AdReport adreport, @NonNull String htmlData, long broadcastIdentifier) {
-        Intent intent = createIntent(context, adreport, htmlData, broadcastIdentifier);
+    public static void start(@NonNull Context context, @Nullable AdReport adreport, @NonNull String htmlData, long broadcastIdentifier, String avidAdSessionId) {
+        Intent intent = createIntent(context, adreport, htmlData, broadcastIdentifier, avidAdSessionId);
         try {
             context.startActivity(intent);
         } catch (ActivityNotFoundException exception) {
@@ -83,11 +93,12 @@ public class MraidActivity extends BaseInterstitialActivity {
 
     @VisibleForTesting
     protected static Intent createIntent(@NonNull Context context, @Nullable AdReport adReport,
-            @NonNull String htmlData, long broadcastIdentifier) {
+            @NonNull String htmlData, long broadcastIdentifier, String avidAdSessionId) {
         Intent intent = new Intent(context, MraidActivity.class);
         intent.putExtra(HTML_RESPONSE_BODY_KEY, htmlData);
         intent.putExtra(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
         intent.putExtra(AD_REPORT_KEY, adReport);
+        intent.putExtra(AVID_AD_SESSION_ID_KEY, avidAdSessionId);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
     }
@@ -150,6 +161,10 @@ public class MraidActivity extends BaseInterstitialActivity {
             }
         });
 
+        String avidAdSessionId = getIntent().getStringExtra(AVID_AD_SESSION_ID_KEY);
+        if (avidAdSessionId != null) {
+            mMraidController.setAvidAdSessionId(avidAdSessionId);
+        }
         mMraidController.loadContent(htmlData);
         return mMraidController.getAdContainer();
     }
