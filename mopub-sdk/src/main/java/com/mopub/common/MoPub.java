@@ -9,7 +9,7 @@ import com.mopub.mobileads.MoPubRewardedVideoManager;
 import com.mopub.mobileads.MoPubRewardedVideoManager.RequestParameters;
 
 public class MoPub {
-    public static final String SDK_VERSION = "4.5.1";
+    public static final String SDK_VERSION = "4.6.0";
 
     public enum LocationAwareness { NORMAL, TRUNCATED, DISABLED }
 

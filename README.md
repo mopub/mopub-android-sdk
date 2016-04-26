@@ -62,8 +62,8 @@ The MoPub SDK is available via:
 ## New in this Version
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-- Rewarded video support from the MoPub Marketplace (Beta)
-- Miscellaneous bug fixes.
+- Certified Chartboost version 6.4.1
+- Certified Tapjoy version 11.5.1
 
 ## Requirements
 
@@ -76,6 +76,10 @@ Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/mast
 
 ## Upgrading from 3.2.0 and Prior
 In 3.3.0 a dependency on android-support-annotations.jar was added. If you are using Maven or Gradle to include the MoPub SDK, this dependency is included in the build scripts. For instructions on adding dependencies for Eclipse projects, see our [Getting Started Guide](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started#adding-the-support-libraries-to-your-project)
+
+## Important Message About Upgrading to MoPub SDK 4.4.0+
+
+Version 4.4.0 of the MoPub SDK fixes a security issue identified by Google. Note that only publishers who received a message from Google are affected. While not all publishers are impacted, we recommend you upgrade to SDK 4.4.0+ ahead of Google's deadline (July 11, 2016) to avoid any issues submitting updates to your apps after the date. More information can be found in [Google's support article](https://support.google.com/faqs/answer/6345928).
 
 ## Working with Android 6.0 Runtime Permissions
 If your app's target SDK is 23 or higher _**and**_ the user's device is running Android 6.0 or higher, you are responsible for supporting [runtime permissions](http://developer.android.com/training/permissions/requesting.html), one of the [changes](http://developer.android.com/about/versions/marshmallow/android-6.0-changes.html) introduced in Android 6.0 (API level 23). In addition to listing any dangerous permissions your app needs in the manifest, your app also has to explicitly request the dangerous permission(s) during runtime by calling method `requestPermissions()` in the [`ActivityCompat`](http://developer.android.com/reference/android/support/v4/app/ActivityCompat.html) class.
