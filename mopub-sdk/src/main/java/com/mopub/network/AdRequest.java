@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import com.mopub.common.AdFormat;
 import com.mopub.common.AdType;
 import com.mopub.common.DataKeys;
+import com.mopub.common.FullAdType;
 import com.mopub.common.LocationService;
 import com.mopub.common.MoPub;
 import com.mopub.common.Preconditions;
@@ -267,6 +268,15 @@ public class AdRequest extends Request<AdResponse> {
         }
         builder.setServerExtras(serverExtras);
 
+        if (AdType.REWARDED_VIDEO.equals(adTypeString) || AdType.CUSTOM.equals(adTypeString)) {
+            final String rewardedVideoCurrencyName = extractHeader(headers,
+                    ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME);
+            final String rewardedVideoCurrencyAmount = extractHeader(headers,
+                    ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT);
+            builder.setRewardedVideoCurrencyName(rewardedVideoCurrencyName);
+            builder.setRewardedVideoCurrencyAmount(rewardedVideoCurrencyAmount);
+        }
+
         AdResponse adResponse = builder.build();
         logScribeEvent(adResponse, networkResponse, location);
 
@@ -276,8 +286,9 @@ public class AdRequest extends Request<AdResponse> {
 
     private boolean eventDataIsInResponseBody(@Nullable String adType,
             @Nullable String fullAdType) {
-        return "mraid".equals(adType) || "html".equals(adType) ||
-                ("interstitial".equals(adType) && "vast".equals(fullAdType));
+        return AdType.MRAID.equals(adType) || AdType.HTML.equals(adType) ||
+                (AdType.INTERSTITIAL.equals(adType) && FullAdType.VAST.equals(fullAdType)) ||
+                (AdType.REWARDED_VIDEO.equals(adType) && FullAdType.VAST.equals(fullAdType));
     }
 
     // Based on Volley's StringResponse class.

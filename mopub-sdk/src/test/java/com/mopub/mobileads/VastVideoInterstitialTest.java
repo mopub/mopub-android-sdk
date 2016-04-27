@@ -95,7 +95,8 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
 
     @Test
     public void loadInterstitial_shouldParseHtmlResponseBodyServerExtra() throws Exception {
-        subject.loadInterstitial(context, customEventInterstitialListener, localExtras, serverExtras);
+        subject.loadInterstitial(context, customEventInterstitialListener, localExtras,
+                serverExtras);
 
         assertThat(((VastVideoInterstitial) subject).getVastResponse()).isEqualTo(expectedResponse);
     }
@@ -169,6 +170,7 @@ public class VastVideoInterstitialTest extends ResponseBodyInterstitialTest {
                 vastVideoConfig,
                 broadcastIdentifier
                 );
+        assertThat(vastVideoConfig.isRewardedVideo()).isFalse();
     }
 
     @Test

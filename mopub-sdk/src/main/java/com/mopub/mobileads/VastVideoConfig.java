@@ -50,6 +50,7 @@ public class VastVideoConfig implements Serializable {
     @Nullable private VastCompanionAdConfig mPortraitVastCompanionAdConfig;
     @NonNull private Map<String, VastCompanionAdConfig> mSocialActionsCompanionAds;
     @Nullable private VastIconConfig mVastIconConfig;
+    private boolean mIsRewardedVideo;
 
     // Custom extensions
     @Nullable private String mCustomCtaText;
@@ -80,6 +81,7 @@ public class VastVideoConfig implements Serializable {
         mClickTrackers = new ArrayList<VastTracker>();
         mErrorTrackers = new ArrayList<VastTracker>();
         mSocialActionsCompanionAds = new HashMap<String, VastCompanionAdConfig>();
+        mIsRewardedVideo = false;
     }
 
     /**
@@ -232,6 +234,10 @@ public class VastVideoConfig implements Serializable {
         }
     }
 
+    public void setIsRewardedVideo(final boolean isRewardedVideo) {
+        mIsRewardedVideo = isRewardedVideo;
+    }
+
     /**
      * Getters
      */
@@ -380,6 +386,15 @@ public class VastVideoConfig implements Serializable {
     @Nullable
     public String getSkipOffsetString() {
         return mSkipOffset;
+    }
+
+    /**
+     * Returns whether or not this is an unskippable rewarded video.
+     *
+     * @return True if this is a rewarded video, false otherwise.
+     */
+    public boolean isRewardedVideo() {
+        return mIsRewardedVideo;
     }
 
     /**

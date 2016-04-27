@@ -1,4 +1,15 @@
-## Version 4.4.1 (February 23, 2016)
+## Version 4.6.0 (April 21, 2016)
+- Certified Chartboost version 6.4.1
+- Certified Tapjoy version 11.5.1
+
+#### Version 4.5.1 (March 31, 2016)
+- Updated ExoPlayer dependency from r1.4.2 to r1.5.6; courtesy @talklittle. Removed references to READ_EXTERNAL_STORAGE permission.
+
+## Version 4.5.0 (March 24, 2016)
+- Rewarded video support from the MoPub Marketplace (Beta)
+- Miscellaneous bug fixes.
+
+#### Version 4.4.1 (February 23, 2016)
 - Fixed deeplink bug where host must be present in URL.
 
 ## Version 4.4.0 (February 11, 2016) 

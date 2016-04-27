@@ -1,18 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.mopub.simpleadsdemo"
-      android:versionCode="36"
-      android:versionName="4.4.1">
+      android:versionCode="39"
+      android:versionName="4.6.0">
     <uses-sdk android:minSdkVersion="9"
               android:targetSdkVersion="23"/>
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- This is added as a workaround for the manifest merger duplicating exoplayer
-         and play services permissions. -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <!-- For MRAID 2 -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>

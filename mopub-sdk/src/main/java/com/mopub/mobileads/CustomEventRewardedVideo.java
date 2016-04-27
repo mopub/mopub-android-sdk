@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.mopub.common.DataKeys;
 import com.mopub.common.LifecycleListener;
 import com.mopub.common.MoPubLifecycleManager;
 import com.mopub.common.VisibleForTesting;
@@ -15,6 +16,7 @@ import java.util.Map;
  *
  */
 public abstract class CustomEventRewardedVideo {
+
     /**
      * This marker interface is used to indicate that an object is a listener for a 3rd party SDKs
      * rewarded video system.

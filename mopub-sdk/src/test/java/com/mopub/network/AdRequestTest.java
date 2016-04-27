@@ -343,6 +343,21 @@ public class AdRequestTest {
     }
 
     @Test
+    public void parseNetworkResponse_forRewardedVideo_shouldSucceed() {
+        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.REWARDED_VIDEO);
+        defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME.getKey(), "currencyName");
+        defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT.getKey(), "25");
+        NetworkResponse testResponse = new NetworkResponse(200,
+                "{\"abc\": \"def\"}".getBytes(Charset.defaultCharset()), defaultHeaders, false);
+
+        final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
+
+        assertThat(response.result.getAdType()).isEqualTo(AdType.REWARDED_VIDEO);
+        assertThat(response.result.getRewardedVideoCurrencyName()).isEqualTo("currencyName");
+        assertThat(response.result.getRewardedVideoCurrencyAmount()).isEqualTo("25");
+    }
+
+    @Test
     public void deliverResponse_shouldCallListenerOnSuccess() throws Exception {
         subject.deliverResponse(mockAdResponse);
         verify(mockListener).onSuccess(mockAdResponse);

@@ -33,6 +33,10 @@ public enum ResponseHeader {
     IMPRESSION_VISIBLE_MS("X-Impression-Visible-Ms"),
     MAX_BUFFER_MS("X-Max-Buffer-Ms"),
 
+    // Rewarded Video fields
+    REWARDED_VIDEO_CURRENCY_NAME("X-Rewarded-Video-Currency-Name"),
+    REWARDED_VIDEO_CURRENCY_AMOUNT("X-Rewarded-Video-Currency-Amount"),
+
     @Deprecated CUSTOM_SELECTOR("X-Customselector");
 
     private final String key;

@@ -345,6 +345,12 @@ public class VastVideoViewController extends BaseVideoViewController {
     private void adjustSkipOffset() {
         int videoDuration = getDuration();
 
+        // If this is a rewarded video, never allow it to be skippable.
+        if (mVastVideoConfig.isRewardedVideo()) {
+            mShowCloseButtonDelay = videoDuration;
+            return;
+        }
+
         // Default behavior: video is non-skippable if duration < 16 seconds
         if (videoDuration < MAX_VIDEO_DURATION_FOR_CLOSE_BUTTON) {
             mShowCloseButtonDelay = videoDuration;
@@ -393,6 +399,9 @@ public class VastVideoViewController extends BaseVideoViewController {
 
                 videoCompleted(false);
                 mIsVideoFinishedPlaying = true;
+                if (mVastVideoConfig.isRewardedVideo()) {
+                    broadcastAction(RewardedVideoBroadcastReceiver.ACTION_REWARDED_VIDEO_COMPLETE);
+                }
 
                 // Only fire the completion tracker if we hit all the progress marks. Some Android implementations
                 // fire the completion event even if the whole video isn't watched.

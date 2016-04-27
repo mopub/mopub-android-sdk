@@ -2,6 +2,7 @@ package com.mopub.simpleadsdemo;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,8 +23,11 @@ import static com.mopub.simpleadsdemo.Utils.logToast;
 
 public class RewardedVideoDetailFragment extends Fragment implements MoPubRewardedVideoListener {
 
-    private Button mShowButton;
-    private static boolean rewardedVideoInitialized;
+    private static boolean sRewardedVideoInitialized;
+
+    @Nullable private Button mShowButton;
+    @Nullable private String mAdUnitId;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -33,21 +37,26 @@ public class RewardedVideoDetailFragment extends Fragment implements MoPubReward
         final DetailFragmentViewHolder views = DetailFragmentViewHolder.fromView(view);
         hideSoftKeyboard(views.mKeywordsField);
 
-        if (!rewardedVideoInitialized) {
+        if (!sRewardedVideoInitialized) {
             MoPub.initializeRewardedVideo(getActivity());
-            rewardedVideoInitialized = true;
+            sRewardedVideoInitialized = true;
         }
         MoPub.setRewardedVideoListener(this);
 
-        final String adUnitId = adConfiguration.getAdUnitId();
+        mAdUnitId = adConfiguration.getAdUnitId();
         views.mDescriptionView.setText(adConfiguration.getDescription());
-        views.mAdUnitIdView.setText(adUnitId);
+        views.mAdUnitIdView.setText(mAdUnitId);
         views.mLoadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MoPub.loadRewardedVideo(adUnitId,
+                if (mAdUnitId == null) {
+                    return;
+                }
+                MoPub.loadRewardedVideo(mAdUnitId,
                         new RequestParameters(views.mKeywordsField.getText().toString()));
-                mShowButton.setEnabled(false);
+                if (mShowButton != null) {
+                    mShowButton.setEnabled(false);
+                }
             }
         });
         mShowButton = (Button) view.findViewById(R.id.interstitial_show_button);
@@ -55,7 +64,10 @@ public class RewardedVideoDetailFragment extends Fragment implements MoPubReward
         mShowButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                MoPub.showRewardedVideo(adUnitId);
+                if (mAdUnitId == null) {
+                    return;
+                }
+                MoPub.showRewardedVideo(mAdUnitId);
             }
         });
 
@@ -70,40 +82,65 @@ public class RewardedVideoDetailFragment extends Fragment implements MoPubReward
     // MoPubRewardedVideoListener implementation
     @Override
     public void onRewardedVideoLoadSuccess(@NonNull final String adUnitId) {
-        mShowButton.setEnabled(true);
-        logToast(getActivity(), "Rewarded video loaded.");
+        if (adUnitId.equals(mAdUnitId)) {
+            if (mShowButton != null) {
+                mShowButton.setEnabled(true);
+            }
+            logToast(getActivity(), "Rewarded video loaded.");
+        }
     }
 
     @Override
     public void onRewardedVideoLoadFailure(@NonNull final String adUnitId, @NonNull final MoPubErrorCode errorCode) {
-        mShowButton.setEnabled(false);
-        logToast(getActivity(), String.format(Locale.US, "Rewarded video failed to load: %s", errorCode.toString()));
+        if (adUnitId.equals(mAdUnitId)) {
+            if (mShowButton != null) {
+                mShowButton.setEnabled(false);
+            }
+            logToast(getActivity(), String.format(Locale.US, "Rewarded video failed to load: %s",
+                    errorCode.toString()));
+        }
     }
 
     @Override
     public void onRewardedVideoStarted(@NonNull final String adUnitId) {
-        logToast(getActivity(), "Rewarded video started.");
-        mShowButton.setEnabled(false);
+        if (adUnitId.equals(mAdUnitId)) {
+            logToast(getActivity(), "Rewarded video started.");
+            if (mShowButton != null) {
+                mShowButton.setEnabled(false);
+            }
+        }
     }
 
     @Override
     public void onRewardedVideoPlaybackError(@NonNull final String adUnitId, @NonNull final MoPubErrorCode errorCode) {
-        logToast(getActivity(), String.format(Locale.US, "Rewarded video playback error: %s", errorCode.toString()));
-        mShowButton.setEnabled(false);
+        if (adUnitId.equals(mAdUnitId)) {
+            logToast(getActivity(), String.format(Locale.US, "Rewarded video playback error: %s",
+                    errorCode.toString()));
+            if (mShowButton != null) {
+                mShowButton.setEnabled(false);
+            }
+        }
     }
 
     @Override
     public void onRewardedVideoClosed(@NonNull final String adUnitId) {
-        logToast(getActivity(), "Rewarded video closed.");
-        mShowButton.setEnabled(false);
+        if (adUnitId.equals(mAdUnitId)) {
+            logToast(getActivity(), "Rewarded video closed.");
+            if (mShowButton != null) {
+                mShowButton.setEnabled(false);
+            }
+        }
     }
 
     @Override
-    public void onRewardedVideoCompleted(@NonNull final Set<String> adUnitIds, @NonNull final MoPubReward reward) {
-        logToast(getActivity(),
-                String.format(Locale.US,
-                        "Rewarded video completed with reward  \"%d %s\"",
-                        reward.getAmount(),
-                        reward.getLabel()));
+    public void onRewardedVideoCompleted(@NonNull final Set<String> adUnitIds,
+            @NonNull final MoPubReward reward) {
+        if (adUnitIds.contains(mAdUnitId)) {
+            logToast(getActivity(),
+                    String.format(Locale.US,
+                            "Rewarded video completed with reward  \"%d %s\"",
+                            reward.getAmount(),
+                            reward.getLabel()));
+        }
     }
 }

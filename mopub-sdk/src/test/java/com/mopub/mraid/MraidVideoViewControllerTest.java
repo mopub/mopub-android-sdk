@@ -27,7 +27,6 @@ import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static com.mopub.mobileads.BaseVideoPlayerActivity.VIDEO_URL;
 import static com.mopub.mobileads.BaseVideoViewController.BaseVideoViewControllerListener;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.getHtmlInterstitialIntentFilter;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -60,7 +59,8 @@ public class MraidVideoViewControllerTest {
             }
         }, new TestHttpResponse(200, "body"));
 
-        ShadowLocalBroadcastManager.getInstance(context).registerReceiver(broadcastReceiver, getHtmlInterstitialIntentFilter());
+        ShadowLocalBroadcastManager.getInstance(context).registerReceiver(broadcastReceiver,
+                new EventForwardingBroadcastReceiver(null, 0).getIntentFilter());
     }
 
     @After

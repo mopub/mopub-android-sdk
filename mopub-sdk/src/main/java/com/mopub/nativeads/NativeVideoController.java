@@ -19,6 +19,7 @@ import android.view.TextureView;
 import com.google.android.exoplayer.ExoPlaybackException;
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.MediaCodecAudioTrackRenderer;
+import com.google.android.exoplayer.MediaCodecSelector;
 import com.google.android.exoplayer.MediaCodecVideoTrackRenderer;
 import com.google.android.exoplayer.extractor.Extractor;
 import com.google.android.exoplayer.extractor.ExtractorSampleSource;
@@ -417,10 +418,12 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
 
             final ExtractorSampleSource sampleSource = new ExtractorSampleSource(Uri.parse(videoUrl),
                     httpSource, allocator, BUFFER_SEGMENT_SIZE * BUFFER_SEGMENT_COUNT, extractor);
-            mVideoTrackRenderer = new MediaCodecVideoTrackRenderer(
-                    sampleSource, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING,
-                    0, mHandler, null, 10);
-            mAudioTrackRenderer = new MediaCodecAudioTrackRenderer(sampleSource);
+            mVideoTrackRenderer = new MediaCodecVideoTrackRenderer(mContext, sampleSource,
+                    MediaCodecSelector.DEFAULT,
+                    MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING, 0, mHandler, null,
+                    10);
+            mAudioTrackRenderer = new MediaCodecAudioTrackRenderer(sampleSource,
+                    MediaCodecSelector.DEFAULT);
             mExoPlayer.prepare(mAudioTrackRenderer, mVideoTrackRenderer);
             mNativeVideoProgressRunnable.startRepeating(50);
         }

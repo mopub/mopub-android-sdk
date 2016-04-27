@@ -68,7 +68,6 @@ import static com.mopub.mobileads.BaseVideoViewController.BaseVideoViewControlle
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_FAIL;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.getHtmlInterstitialIntentFilter;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiverTest.getIntentForActionAndIdentifier;
 import static com.mopub.mobileads.VastVideoViewController.CURRENT_POSITION;
 import static com.mopub.mobileads.VastVideoViewController.DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON;
@@ -236,7 +235,9 @@ public class VastVideoViewControllerTest {
             }
         }, new TestHttpResponse(200, "body"));
 
-        ShadowLocalBroadcastManager.getInstance(context).registerReceiver(broadcastReceiver, getHtmlInterstitialIntentFilter());
+        ShadowLocalBroadcastManager.getInstance(context).registerReceiver(broadcastReceiver,
+                new EventForwardingBroadcastReceiver(null,
+                testBroadcastIdentifier).getIntentFilter());
 
         expectedUserAgent = new WebView(context).getSettings().getUserAgentString();
     }
