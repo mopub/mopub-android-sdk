@@ -95,4 +95,37 @@ public class ViewBinder {
         this.privacyInformationIconImageId = builder.privacyInformationIconImageId;
         this.extras = builder.extras;
     }
+
+    public int getLayoutId() {
+        return layoutId;
+    }
+
+    public int getTitleId() {
+        return titleId;
+    }
+
+    public int getTextId() {
+        return textId;
+    }
+
+    public int getCallToActionId() {
+        return callToActionId;
+    }
+
+    public int getMainImageId() {
+        return mainImageId;
+    }
+
+    public int getIconImageId() {
+        return iconImageId;
+    }
+
+    public int getPrivacyInformationIconImageId() {
+        return privacyInformationIconImageId;
+    }
+
+    @NonNull
+    public Map<String, Integer> getExtras() {
+        return extras;
+    }
 }
