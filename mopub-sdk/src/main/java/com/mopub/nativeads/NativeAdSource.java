@@ -9,7 +9,9 @@ import android.support.annotation.Nullable;
 import com.mopub.common.VisibleForTesting;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.mopub.nativeads.MoPubNative.MoPubNativeNetworkListener;
 
@@ -57,6 +59,8 @@ class NativeAdSource {
 
     @NonNull private final AdRendererRegistry mAdRendererRegistry;
 
+    private Set<String> bannedAdapters;
+
     /**
      * A listener for when ads are available for dequeueing.
      */
@@ -78,6 +82,7 @@ class NativeAdSource {
             @NonNull final Handler replenishCacheHandler,
             @NonNull AdRendererRegistry adRendererRegistry) {
         mNativeAdCache = nativeAdCache;
+	    bannedAdapters = new HashSet<>();
         mReplenishCacheHandler = replenishCacheHandler;
         mReplenishCacheRunnable = new Runnable() {
             @Override
@@ -169,7 +174,7 @@ class NativeAdSource {
     void loadAds(@NonNull final Activity activity,
             @NonNull final String adUnitId,
             final RequestParameters requestParameters) {
-        loadAds(requestParameters, new MoPubNative(activity, adUnitId, mMoPubNativeNetworkListener));
+        loadAds(requestParameters, new MoPubNative(activity, adUnitId, mMoPubNativeNetworkListener,bannedAdapters));
     }
 
     @VisibleForTesting
@@ -183,7 +188,6 @@ class NativeAdSource {
 
         mRequestParameters = requestParameters;
         mMoPubNative = moPubNative;
-
         replenishCache();
     }
 
@@ -287,10 +291,16 @@ class NativeAdSource {
     }
 
     public void banAdapter(String networkEventClass){
-        mMoPubNative.banAdapter(networkEventClass);
+        bannedAdapters.add(networkEventClass);
+        if (mMoPubNative != null) {
+            mMoPubNative.banAdapter(networkEventClass);
+        }
     }
 
     public void permitAdapter(String networkEventClass){
-        mMoPubNative.permitAdapter(networkEventClass);
+        bannedAdapters.remove(networkEventClass);
+        if (mMoPubNative != null) {
+            mMoPubNative.permitAdapter(networkEventClass);
+        }
     }
 }

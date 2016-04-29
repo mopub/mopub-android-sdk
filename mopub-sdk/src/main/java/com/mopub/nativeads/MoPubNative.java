@@ -73,14 +73,20 @@ public class MoPubNative {
     public MoPubNative(@NonNull final Activity activity,
             @NonNull final String adUnitId,
             @NonNull final MoPubNativeNetworkListener moPubNativeNetworkListener) {
-        this(activity, adUnitId, new AdRendererRegistry(), moPubNativeNetworkListener);
+        this(activity, adUnitId, moPubNativeNetworkListener,new HashSet<String>());
+    }
+
+    public MoPubNative(@NonNull final Activity activity,
+                       @NonNull final String adUnitId,
+                       @NonNull final MoPubNativeNetworkListener moPubNativeNetworkListener, Set<String> bannedAdapters) {
+        this(activity, adUnitId, new AdRendererRegistry(), moPubNativeNetworkListener,bannedAdapters);
     }
 
     @VisibleForTesting
     public MoPubNative(@NonNull final Activity activity,
             @NonNull final String adUnitId,
             @NonNull AdRendererRegistry adRendererRegistry,
-            @NonNull final MoPubNativeNetworkListener moPubNativeNetworkListener) {
+            @NonNull final MoPubNativeNetworkListener moPubNativeNetworkListener, Set<String> bannedAdapters) {
         Preconditions.checkNotNull(activity, "Activity may not be null.");
         Preconditions.checkNotNull(adUnitId, "AdUnitId may not be null.");
         Preconditions.checkNotNull(adRendererRegistry, "AdRendererRegistry may not be null.");
@@ -88,7 +94,7 @@ public class MoPubNative {
 
         ManifestUtils.checkNativeActivitiesDeclared(activity);
 
-        bannedAdapters = new HashSet<>();
+        setBannedAdapters(bannedAdapters);
 
         mActivity = new WeakReference<Activity>(activity);
         mAdUnitId = adUnitId;
@@ -305,6 +311,12 @@ public class MoPubNative {
     @NonNull
     MoPubNativeNetworkListener getMoPubNativeNetworkListener() {
         return mMoPubNativeNetworkListener;
+    }
+
+    public void setBannedAdapters(Set<String> bannedAdapters){
+        if (bannedAdapters != null){
+            this.bannedAdapters = bannedAdapters;
+        }
     }
 
     public void banAdapter(String networkEventClass){
