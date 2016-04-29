@@ -21,7 +21,9 @@ import com.mopub.volley.RequestQueue;
 import com.mopub.volley.VolleyError;
 
 import java.lang.ref.WeakReference;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static com.mopub.common.GpsHelper.fetchAdvertisingInfoAsync;
@@ -31,6 +33,7 @@ import static com.mopub.nativeads.NativeErrorCode.EMPTY_AD_RESPONSE;
 import static com.mopub.nativeads.NativeErrorCode.INVALID_REQUEST_URL;
 import static com.mopub.nativeads.NativeErrorCode.INVALID_RESPONSE;
 import static com.mopub.nativeads.NativeErrorCode.NATIVE_RENDERER_CONFIGURATION_ERROR;
+import static com.mopub.nativeads.NativeErrorCode.NETWORK_BANNED;
 import static com.mopub.nativeads.NativeErrorCode.SERVER_ERROR_RESPONSE_CODE;
 import static com.mopub.nativeads.NativeErrorCode.UNSPECIFIED;
 
@@ -65,6 +68,8 @@ public class MoPubNative {
     @Nullable private AdRequest mNativeRequest;
     @NonNull AdRendererRegistry mAdRendererRegistry;
 
+    private Set<String> bannedAdapters;
+
     public MoPubNative(@NonNull final Activity activity,
             @NonNull final String adUnitId,
             @NonNull final MoPubNativeNetworkListener moPubNativeNetworkListener) {
@@ -82,6 +87,8 @@ public class MoPubNative {
         Preconditions.checkNotNull(moPubNativeNetworkListener, "MoPubNativeNetworkListener may not be null.");
 
         ManifestUtils.checkNativeActivitiesDeclared(activity);
+
+        bannedAdapters = new HashSet<>();
 
         mActivity = new WeakReference<Activity>(activity);
         mAdUnitId = adUnitId;
@@ -198,6 +205,12 @@ public class MoPubNative {
         if (activity == null) {
             return;
         }
+
+        if (bannedAdapters.contains(response.getCustomEventClassName())){
+            mMoPubNativeNetworkListener.onNativeFail(NETWORK_BANNED);
+            return;
+        }
+
         final CustomEventNativeListener customEventNativeListener =
                 new CustomEventNativeListener() {
                     @Override
@@ -292,5 +305,13 @@ public class MoPubNative {
     @NonNull
     MoPubNativeNetworkListener getMoPubNativeNetworkListener() {
         return mMoPubNativeNetworkListener;
+    }
+
+    public void banAdapter(String networkEventClass){
+        bannedAdapters.add(networkEventClass);
+    }
+
+    public void permitAdapter(String networkEventClass){
+        bannedAdapters.remove(networkEventClass);
     }
 }

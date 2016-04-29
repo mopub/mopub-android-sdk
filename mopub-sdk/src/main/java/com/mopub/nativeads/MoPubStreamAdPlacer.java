@@ -795,4 +795,12 @@ public class MoPubStreamAdPlacer {
         mNativeAdMap.put(view, nativeAd);
         nativeAd.prepare(view);
     }
+
+    public void banAdapter(String networkEventClass){
+        mAdSource.banAdapter(networkEventClass);
+    }
+
+    public void permitAdapter(String networkEventClass){
+        mAdSource.permitAdapter(networkEventClass);
+    }
 }

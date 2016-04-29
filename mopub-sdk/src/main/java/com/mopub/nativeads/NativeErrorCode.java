@@ -16,6 +16,7 @@ public enum NativeErrorCode {
     NETWORK_TIMEOUT("Third-party network failed to respond in a timely manner."),
     NETWORK_NO_FILL("Third-party network failed to provide an ad."),
     NETWORK_INVALID_STATE("Third-party network failed due to invalid internal state."),
+    NETWORK_BANNED("Third-party network was banned"),
 
     NATIVE_RENDERER_CONFIGURATION_ERROR("A required renderer was not registered for the CustomEventNative."),
     NATIVE_ADAPTER_CONFIGURATION_ERROR("CustomEventNative was configured incorrectly."),

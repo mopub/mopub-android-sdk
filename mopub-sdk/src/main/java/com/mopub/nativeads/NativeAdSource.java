@@ -285,4 +285,12 @@ class NativeAdSource {
     MoPubNativeNetworkListener getMoPubNativeNetworkListener() {
         return mMoPubNativeNetworkListener;
     }
+
+    public void banAdapter(String networkEventClass){
+        mMoPubNative.banAdapter(networkEventClass);
+    }
+
+    public void permitAdapter(String networkEventClass){
+        mMoPubNative.permitAdapter(networkEventClass);
+    }
 }
