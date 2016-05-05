@@ -27,6 +27,9 @@ import android.webkit.JsResult;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
+import com.integralads.avid.library.mopub.session.ExternalAvidAdSessionContext;
+import com.integralads.avid.library.mopub.session.AvidAdSessionManager;
+import com.integralads.avid.library.mopub.session.AvidDisplayAdSession;
 import com.mopub.common.AdReport;
 import com.mopub.common.UrlHandler;
 import com.mopub.common.CloseableLayout;
@@ -39,6 +42,7 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.Dips;
 import com.mopub.common.util.Views;
+import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.MraidVideoPlayerActivity;
 import com.mopub.mobileads.util.WebViews;
 import com.mopub.mraid.MraidBridge.MraidBridgeListener;
@@ -53,6 +57,7 @@ import static com.mopub.common.util.Utils.bitMaskContainsFlag;
 
 public class MraidController {
     private final AdReport mAdReport;
+    private AvidDisplayAdSession avidAdSession;
 
     public interface MraidListener {
         void onLoaded(View view);
@@ -333,12 +338,25 @@ public class MraidController {
         Preconditions.checkState(mMraidWebView == null, "loadContent should only be called once");
 
         mMraidWebView = new MraidWebView(mContext);
+        Activity activity = mWeakActivity.get();
+        if (activity != null) {
+            mMraidWebView.getSettings().setJavaScriptEnabled(true);
+            if (avidAdSession == null) {
+                ExternalAvidAdSessionContext avidAdSessionContext = new ExternalAvidAdSessionContext(BuildConfig.VERSION_NAME);
+                avidAdSession = AvidAdSessionManager.startAvidDisplayAdSession(activity, avidAdSessionContext);
+            }
+            avidAdSession.registerAdView(mMraidWebView, activity);
+        }
         mMraidBridge.attachView(mMraidWebView);
         mDefaultAdContainer.addView(mMraidWebView,
                 new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
         // onPageLoaded gets fired once the html is loaded into the webView
         mMraidBridge.setContentHtml(htmlData);
+    }
+
+    public void setAvidAdSessionId(String avidAdSessionId) {
+        avidAdSession = AvidAdSessionManager.findAvidAdSessionById(avidAdSessionId);
     }
 
     // onPageLoaded gets fired once the html is loaded into the webView.
@@ -599,6 +617,10 @@ public class MraidController {
 
         // Calling destroy eliminates a memory leak on Gingerbread devices
         mMraidBridge.detach();
+        if (avidAdSession != null) {
+            avidAdSession.endSession();
+            avidAdSession = null;
+        }
         if (mMraidWebView != null) {
             mMraidWebView.destroy();
             mMraidWebView = null;

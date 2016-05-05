@@ -2,8 +2,11 @@ package com.mopub.mobileads;
 
 import android.support.annotation.NonNull;
 
+import com.integralads.avid.library.mopub.session.AbstractAvidAdSession;
+import com.integralads.avid.library.mopub.session.AvidAdSessionManager;
 import com.mopub.common.CreativeOrientation;
 
+import java.security.AccessControlContext;
 import java.util.Map;
 
 import static com.mopub.common.DataKeys.CLICKTHROUGH_URL_KEY;
@@ -17,6 +20,7 @@ public class HtmlInterstitial extends ResponseBodyInterstitial {
     private boolean mIsScrollable;
     private String mRedirectUrl;
     private String mClickthroughUrl;
+    private String avidAdSessionId;
     @NonNull
     private CreativeOrientation mOrientation;
 
@@ -31,13 +35,25 @@ public class HtmlInterstitial extends ResponseBodyInterstitial {
 
     @Override
     protected void preRenderHtml(CustomEventInterstitialListener customEventInterstitialListener) {
-        MoPubActivity.preRenderHtml(mContext, mAdReport, customEventInterstitialListener, mHtmlData);
+        avidAdSessionId = MoPubActivity.preRenderHtml(mContext, mAdReport, customEventInterstitialListener, mHtmlData);
     }
 
     @Override
     public void showInterstitial() {
         MoPubActivity.start(mContext, mHtmlData, mAdReport, mIsScrollable,
                 mRedirectUrl, mClickthroughUrl, mOrientation,
-                mBroadcastIdentifier);
+                mBroadcastIdentifier, avidAdSessionId);
+    }
+
+    @Override
+    public void onInvalidate() {
+        super.onInvalidate();
+        if(avidAdSessionId != null) {
+            AbstractAvidAdSession avidAdSession = AvidAdSessionManager.findAvidAdSessionById(avidAdSessionId);
+            if(avidAdSession != null) {
+                avidAdSession.endSession();
+            }
+            avidAdSessionId = null;
+        }
     }
 }

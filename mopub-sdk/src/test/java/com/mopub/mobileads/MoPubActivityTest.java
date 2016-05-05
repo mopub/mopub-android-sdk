@@ -61,6 +61,7 @@ public class MoPubActivityTest {
 
     @Mock private BroadcastReceiver broadcastReceiver;
     private long testBroadcastIdentifier = 2222;
+    private String testAvidAdSessionId = "avid-ad-session-id";
 
     private HtmlInterstitialWebView htmlInterstitialWebView;
     private CustomEventInterstitialListener customEventInterstitialListener;
@@ -76,7 +77,7 @@ public class MoPubActivityTest {
         Intent moPubActivityIntent = MoPubActivity.createIntent(context,
                 EXPECTED_HTML_DATA, mockAdReport, EXPECTED_IS_SCROLLABLE,
                 EXPECTED_REDIRECT_URL,
-                EXPECTED_CLICKTHROUGH_URL, EXPECTED_ORIENTATION, testBroadcastIdentifier);
+                EXPECTED_CLICKTHROUGH_URL, EXPECTED_ORIENTATION, testBroadcastIdentifier, testAvidAdSessionId);
 
         final ActivityController<MoPubActivity> subjectController = Robolectric.buildActivity(MoPubActivity.class).withIntent(moPubActivityIntent);
         subject = subjectController.get();
@@ -192,7 +193,7 @@ public class MoPubActivityTest {
 
     @Test
     public void start_shouldStartMoPubActivityWithCorrectParameters() throws Exception {
-        MoPubActivity.start(subject, "expectedResponse", mockAdReport, true, "redirectUrl", "clickthroughUrl", CreativeOrientation.PORTRAIT, testBroadcastIdentifier);
+        MoPubActivity.start(subject, "expectedResponse", mockAdReport, true, "redirectUrl", "clickthroughUrl", CreativeOrientation.PORTRAIT, testBroadcastIdentifier, testAvidAdSessionId);
 
         Intent nextStartedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(nextStartedActivity.getStringExtra(HTML_RESPONSE_BODY_KEY)).isEqualTo("expectedResponse");
