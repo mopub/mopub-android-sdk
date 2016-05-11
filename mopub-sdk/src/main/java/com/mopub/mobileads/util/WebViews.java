@@ -14,7 +14,7 @@ import com.mopub.common.util.Reflection.MethodBuilder;
 
 public class WebViews {
     @TargetApi(VERSION_CODES.HONEYCOMB)
-    public static void onResume(@NonNull WebView webView) {
+    public static void onResume(@NonNull final WebView webView) {
         if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
             webView.onResume();
             return;
@@ -29,7 +29,7 @@ public class WebViews {
     }
 
     @TargetApi(VERSION_CODES.HONEYCOMB)
-    public static void onPause(@NonNull WebView webView, boolean isFinishing) {
+    public static void onPause(@NonNull final WebView webView, boolean isFinishing) {
         // XXX
         // We need to call WebView#stopLoading and WebView#loadUrl here due to an Android
         // bug where the audio of an HTML5 video will continue to play after the activity has been
@@ -53,31 +53,36 @@ public class WebViews {
         }
     }
 
-    public static void setDisableJSChromeClient(WebView webView) {
+    public static void setDisableJSChromeClient(@NonNull final WebView webView) {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
-            public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
+            public boolean onJsAlert(@NonNull final WebView view, @NonNull final String url,
+                    @NonNull final String message, @NonNull final JsResult result) {
                 MoPubLog.d(message);
                 result.confirm();
                 return true;
             }
 
             @Override
-            public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
+            public boolean onJsConfirm(@NonNull final WebView view, @NonNull final String url,
+                    @NonNull final String message, @NonNull final JsResult result) {
                 MoPubLog.d(message);
                 result.confirm();
                 return true;
             }
 
             @Override
-            public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
+            public boolean onJsPrompt(@NonNull final WebView view, @NonNull final String url,
+                    @NonNull final String message, @NonNull final String defaultValue,
+                    @NonNull final JsPromptResult result) {
                 MoPubLog.d(message);
                 result.confirm();
                 return true;
             }
 
             @Override
-            public boolean onJsBeforeUnload(WebView view, String url, String message, JsResult result) {
+            public boolean onJsBeforeUnload(@NonNull final WebView view, @NonNull final String url,
+                    @NonNull final String message, @NonNull final JsResult result) {
                 MoPubLog.d(message);
                 result.confirm();
                 return true;

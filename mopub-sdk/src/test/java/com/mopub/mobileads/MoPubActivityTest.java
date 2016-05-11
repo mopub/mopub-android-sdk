@@ -105,6 +105,14 @@ public class MoPubActivityTest {
     }
 
     @Test
+    public void preRenderHtml_shouldEnableJavascriptCachingForDummyWebView() {
+        MoPubActivity.preRenderHtml(subject, mockAdReport, customEventInterstitialListener,
+                "html_data");
+
+        verify(htmlInterstitialWebView).enableJavascriptCaching();
+    }
+
+    @Test
     public void preRenderHtml_shouldHaveAWebViewClientThatForwardsFinishLoad() throws Exception {
         MoPubActivity.preRenderHtml(subject, mockAdReport, customEventInterstitialListener, null);
 

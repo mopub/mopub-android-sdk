@@ -67,15 +67,19 @@ public class MoPubActivity extends BaseInterstitialActivity {
 
     static void preRenderHtml(final Context context, final AdReport adReport,
             final CustomEventInterstitialListener customEventInterstitialListener,
-            String htmlData) {
-        HtmlInterstitialWebView dummyWebView = HtmlInterstitialWebViewFactory.create(context, adReport, customEventInterstitialListener, false, null, null);
+            final String htmlData) {
+        final HtmlInterstitialWebView dummyWebView = HtmlInterstitialWebViewFactory.create(context,
+                adReport, customEventInterstitialListener, false, null, null);
+
         dummyWebView.enablePlugins(false);
+        dummyWebView.enableJavascriptCaching();
+
         dummyWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url.equals(MOPUB_FINISH_LOAD)) {
+                if (MOPUB_FINISH_LOAD.equals(url)) {
                     customEventInterstitialListener.onInterstitialLoaded();
-                } else if (url.equals(MOPUB_FAIL_LOAD)) {
+                } else if (MOPUB_FAIL_LOAD.equals(url)) {
                     customEventInterstitialListener.onInterstitialFailed(null);
                 }
 

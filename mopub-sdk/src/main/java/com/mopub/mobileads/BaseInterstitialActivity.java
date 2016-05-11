@@ -67,8 +67,6 @@ abstract class BaseInterstitialActivity extends Activity {
         mCloseableLayout.addView(adView,
                 new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         setContentView(mCloseableLayout);
-
-
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.mopub.mobileads;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -48,45 +49,64 @@ import static org.mockito.Mockito.verify;
 @Config(constants = BuildConfig.class)
 public class MraidActivityTest {
     static final String EXPECTED_SOURCE = "expected source";
+    static final String HTML_DATA = "html_data";
 
-    @Mock MraidWebView mraidWebView;
+    @Mock MraidWebView mockMraidWebView;
     @Mock MraidBridge mraidBridge;
     @Mock MraidController mraidController;
     @Mock CustomEventInterstitial.CustomEventInterstitialListener
             customEventInterstitialListener;
     @Mock BroadcastReceiver broadcastReceiver;
 
+    Context context;
+
+    // These fields are relics of a previous version of this class (all tests using them have since
+    // been deprecated).
+    MraidActivity subject;
+    ActivityController<MraidActivity> activityController;
+
     long testBroadcastIdentifier = 2222;
-
-    ActivityController<TestMraidActivity> activityController;
-    TestMraidActivity subject;
-
-    // Make a concrete version of the abstract class for testing purposes.
-    private static class TestMraidActivity extends MraidActivity {
-        View mraidWebView;
-
-        @Override
-        public View getAdView() {
-            return mraidWebView;
-        }
-    }
 
     @Before
     public void setUp() throws Exception {
-        activityController = Robolectric.buildActivity(TestMraidActivity.class).start();
-        subject = activityController.get();
-        subject.mraidWebView = mraidWebView;
-        activityController.create();
+        context = Robolectric.buildActivity(Activity.class).create().get();
+    }
+
+    @Test
+    public void preRenderHtml_shouldEnableJavascriptCachingForDummyWebView() {
+        MraidActivity.preRenderHtml(customEventInterstitialListener, HTML_DATA, mockMraidWebView);
+
+        verify(mockMraidWebView).enableJavascriptCaching();
+    }
+
+    @Test
+    public void preRenderHtml_shouldDisablePluginsForDummyWebView() {
+        MraidActivity.preRenderHtml(customEventInterstitialListener, HTML_DATA, mockMraidWebView);
+
+        verify(mockMraidWebView).enablePlugins(false);
+    }
+
+    @Test
+    public void preRenderHtml_shouldLoadHtml() {
+        MraidActivity.preRenderHtml(customEventInterstitialListener, HTML_DATA, mockMraidWebView);
+
+        verify(mockMraidWebView).loadDataWithBaseURL(
+                "http://ads.mopub.com/",
+                HTML_DATA,
+                "text/html",
+                "UTF-8",
+                null
+        );
     }
 
     @Ignore("Mraid 2.0")
     @Test
-    public void preRenderHtml_shouldDisablePluginsSetListenersAndLoadHtml() throws Exception {
+    public void preRenderHtml_shouldSetWebViewClient() throws Exception {
         MraidActivity.preRenderHtml(subject, customEventInterstitialListener, "3:27");
 
-        verify(mraidWebView).enablePlugins(eq(false));
+        verify(mockMraidWebView).enablePlugins(eq(false));
         verify(mraidController).setMraidListener(any(MraidListener.class));
-        verify(mraidWebView).setWebViewClient(any(WebViewClient.class));
+        verify(mockMraidWebView).setWebViewClient(any(WebViewClient.class));
         verify(mraidBridge).setContentHtml(eq("3:27"));
     }
 
@@ -124,7 +144,7 @@ public class MraidActivityTest {
         MraidActivity.preRenderHtml(subject, customEventInterstitialListener, "");
 
         ArgumentCaptor<WebViewClient> webViewClientArgumentCaptor = ArgumentCaptor.forClass(WebViewClient.class);
-        verify(mraidWebView).setWebViewClient(webViewClientArgumentCaptor.capture());
+        verify(mockMraidWebView).setWebViewClient(webViewClientArgumentCaptor.capture());
         WebViewClient webViewClient = webViewClientArgumentCaptor.getValue();
 
         boolean consumeUrlLoading = webViewClient.shouldOverrideUrlLoading(null, null);
@@ -141,7 +161,7 @@ public class MraidActivityTest {
         MraidActivity.preRenderHtml(subject, customEventInterstitialListener, "");
 
         ArgumentCaptor<WebViewClient> webViewClientArgumentCaptor = ArgumentCaptor.forClass(WebViewClient.class);
-        verify(mraidWebView).setWebViewClient(webViewClientArgumentCaptor.capture());
+        verify(mockMraidWebView).setWebViewClient(webViewClientArgumentCaptor.capture());
         WebViewClient webViewClient = webViewClientArgumentCaptor.getValue();
 
         webViewClient.onPageFinished(null, null);
@@ -162,7 +182,7 @@ public class MraidActivityTest {
     public void onCreate_shouldSetupAnMraidView() throws Exception {
         subject.onCreate(null);
 
-        assertThat(getContentView().getChildAt(0)).isSameAs(mraidWebView);
+        assertThat(getContentView().getChildAt(0)).isSameAs(mockMraidWebView);
         verify(mraidController).setMraidListener(any(MraidListener.class));
 
         verify(mraidBridge).setContentHtml(EXPECTED_SOURCE);
@@ -175,7 +195,7 @@ public class MraidActivityTest {
 
         ArgumentCaptor<FrameLayout.LayoutParams> captor = ArgumentCaptor.forClass(
                 FrameLayout.LayoutParams.class);
-        verify(mraidWebView).setLayoutParams(captor.capture());
+        verify(mockMraidWebView).setLayoutParams(captor.capture());
         FrameLayout.LayoutParams actualLayoutParams = captor.getValue();
 
         assertThat(actualLayoutParams.width).isEqualTo(FrameLayout.LayoutParams.MATCH_PARENT);
@@ -213,18 +233,18 @@ public class MraidActivityTest {
         subject.onDestroy();
 
         verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
-        verify(mraidWebView).destroy();
+        verify(mockMraidWebView).destroy();
         assertThat(getContentView().getChildCount()).isEqualTo(0);
     }
 
     @Ignore("Mraid 2.0")
     @Test
     public void getAdView_shouldSetupOnReadyListener() throws Exception {
-        reset(mraidWebView);
+        reset(mockMraidWebView);
         ArgumentCaptor<MraidListener> captor = ArgumentCaptor.forClass(MraidListener.class);
         View actualAdView = subject.getAdView();
 
-        assertThat(actualAdView).isSameAs(mraidWebView);
+        assertThat(actualAdView).isSameAs(mockMraidWebView);
         verify(mraidController).setMraidListener(captor.capture());
 
         subject.hideInterstitialCloseButton();
@@ -234,33 +254,33 @@ public class MraidActivityTest {
     @Ignore("Mraid 2.0")
     @Test
     public void baseMraidListenerOnReady_shouldFireJavascriptWebViewDidAppear() throws Exception {
-        reset(mraidWebView);
+        reset(mockMraidWebView);
         ArgumentCaptor<MraidListener> captor = ArgumentCaptor.forClass(MraidListener.class);
         View actualAdView = subject.getAdView();
 
-        assertThat(actualAdView).isSameAs(mraidWebView);
+        assertThat(actualAdView).isSameAs(mockMraidWebView);
         verify(mraidController).setMraidListener(captor.capture());
 
         MraidListener baseMraidListener = captor.getValue();
         baseMraidListener.onLoaded(null);
 
-        verify(mraidWebView).loadUrl(eq("javascript:webviewDidAppear();"));
+        verify(mockMraidWebView).loadUrl(eq("javascript:webviewDidAppear();"));
     }
 
     @Ignore("Mraid 2.0")
     @Test
     public void baseMraidListenerOnClose_shouldFireJavascriptWebViewDidClose() throws Exception {
-        reset(mraidWebView);
+        reset(mockMraidWebView);
         ArgumentCaptor<MraidListener> captor = ArgumentCaptor.forClass(MraidListener.class);
         View actualAdView = subject.getAdView();
 
-        assertThat(actualAdView).isSameAs(mraidWebView);
+        assertThat(actualAdView).isSameAs(mockMraidWebView);
         verify(mraidController).setMraidListener(captor.capture());
 
         MraidListener baseMraidListener = captor.getValue();
         baseMraidListener.onClose();
 
-        verify(mraidWebView).loadUrl(eq("javascript:webviewDidClose();"));
+        verify(mockMraidWebView).loadUrl(eq("javascript:webviewDidClose();"));
     }
 
     @Ignore("Mraid 2.0")
@@ -271,12 +291,12 @@ public class MraidActivityTest {
                 new EventForwardingBroadcastReceiver(customEventInterstitialListener,
                         testBroadcastIdentifier).getIntentFilter());
 
-        reset(mraidWebView);
+        reset(mockMraidWebView);
 
         ArgumentCaptor<MraidListener> captor = ArgumentCaptor.forClass(MraidListener.class);
         View actualAdView = subject.getAdView();
 
-        assertThat(actualAdView).isSameAs(mraidWebView);
+        assertThat(actualAdView).isSameAs(mockMraidWebView);
         verify(mraidController).setMraidListener(captor.capture());
 
         MraidListener baseMraidListener = captor.getValue();
@@ -288,11 +308,11 @@ public class MraidActivityTest {
     @Ignore("Mraid 2.0")
     @Test
     public void getAdView_shouldSetupOnCloseListener() throws Exception {
-        reset(mraidWebView);
+        reset(mockMraidWebView);
         ArgumentCaptor<MraidListener> captor = ArgumentCaptor.forClass(MraidListener.class);
         View actualAdView = subject.getAdView();
 
-        assertThat(actualAdView).isSameAs(mraidWebView);
+        assertThat(actualAdView).isSameAs(mockMraidWebView);
         verify(mraidController).setMraidListener(captor.capture());
 
         captor.getValue().onClose();
@@ -305,7 +325,7 @@ public class MraidActivityTest {
     public void onPause_shouldOnPauseMraidView() throws Exception {
         activityController.pause();
 
-        verify(mraidWebView).onPause();
+        verify(mockMraidWebView).onPause();
     }
 
     @Ignore("Mraid 2.0")
@@ -314,7 +334,7 @@ public class MraidActivityTest {
         subject.onCreate(null);
         Shadows.shadowOf(subject).pauseAndThenResume();
 
-        verify(mraidWebView).onResume();
+        verify(mockMraidWebView).onResume();
     }
 
     private Intent createMraidActivityIntent(String expectedSource) {

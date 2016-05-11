@@ -44,9 +44,16 @@ public class MraidActivity extends BaseInterstitialActivity {
     public static void preRenderHtml(@NonNull final Context context,
             @NonNull final CustomEventInterstitialListener customEventInterstitialListener,
             @NonNull final String htmlData) {
-        BaseWebView dummyWebView = new BaseWebView(context);
+        preRenderHtml(customEventInterstitialListener, htmlData, new BaseWebView(context));
+    }
 
+    @VisibleForTesting
+    static void preRenderHtml(
+            @NonNull final CustomEventInterstitialListener customEventInterstitialListener,
+            @NonNull final String htmlData, @NonNull final BaseWebView dummyWebView) {
         dummyWebView.enablePlugins(false);
+        dummyWebView.enableJavascriptCaching();
+
         dummyWebView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(final WebView view, final String url) {

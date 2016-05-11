@@ -1,3 +1,6 @@
+#### Version 4.6.1 (May 5, 2016)
+- Enhanced caching logic for HTML and MRAID interstitials. Resource-heavy interstitials will now render more quickly when MoPubInterstitial#show() is called.
+
 ## Version 4.6.0 (April 21, 2016)
 - Certified Chartboost version 6.4.1
 - Certified Tapjoy version 11.5.1

@@ -29,72 +29,72 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '2.6'
+	gradleVersion = '2.12'
 }
 
 group = 'com.mopub'
 description = '''MoPub Android SDK'''
-version = '4.6.0'
+version = '4.6.1'
 
 android {
-	compileSdkVersion 23
-	buildToolsVersion '23.0.3'
-	lintOptions { abortOnError false }
-	useLibrary 'org.apache.http.legacy'
+    compileSdkVersion 23
+    buildToolsVersion '23.0.3'
+    lintOptions { abortOnError false }
+    useLibrary 'org.apache.http.legacy'
 
-	defaultConfig {
-		versionCode 39
-		versionName version
-		minSdkVersion 9
-		targetSdkVersion 23
-		consumerProguardFiles 'proguard.txt'
-	}
+    defaultConfig {
+        versionCode 40
+        versionName version
+        minSdkVersion 9
+        targetSdkVersion 23
+        consumerProguardFiles 'proguard.txt'
+    }
 
-	sourceSets {
-		main {
-			manifest.srcFile 'AndroidManifest.xml'
-			java.srcDirs = ['src/main/java']
-			resources.srcDirs = ['src/main/resources']
-			aidl.srcDirs = ['src/main']
-			renderscript.srcDirs = ['src/main']
-			res.srcDirs = ['res']
-			assets.srcDirs = ['assets']
-		}
-	}
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src/main/java']
+            resources.srcDirs = ['src/main/resources']
+            aidl.srcDirs = ['src/main']
+            renderscript.srcDirs = ['src/main']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+        }
+    }
 
-	testOptions {
-		unitTests {
-			// This causes android platform methods from the test JAR
-			// to return null, false, etc instead of throwing an exception.
-			// We should periodically disable this and tackle the broken tests
-			// as it exposes when we are hitting platform APIs in our tests.
-			// If these tests *require* platform APIs we may want to make them
-			// connected tests instead.
-			returnDefaultValues = true
+    testOptions {
+        unitTests {
+            // This causes android platform methods from the test JAR
+            // to return null, false, etc instead of throwing an exception.
+            // We should periodically disable this and tackle the broken tests
+            // as it exposes when we are hitting platform APIs in our tests.
+            // If these tests *require* platform APIs we may want to make them
+            // connected tests instead.
+            returnDefaultValues = true
 
-			// Test JVM settings since we have a lot of classes loaded.
-			all {
-				jvmArgs '-XX:MaxPermSize=4096m', '-Xmx8192m'
-				forkEvery 200
-			}
-		}
-	}
+            // Test JVM settings since we have a lot of classes loaded.
+            all {
+                jvmArgs '-XX:MaxPermSize=4096m', '-Xmx8192m'
+                forkEvery 200
+            }
+        }
+    }
 
-	buildTypes {
-		release {
-			minifyEnabled false
-			proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard.txt')
-		}
+    buildTypes {
+        release {
+            minifyEnabled false
+	        consumerProguardFiles 'proguard.txt'
+        }
+      
+        debug {
+            minifyEnabled false
+        }
+    }
 
-		debug {
-			minifyEnabled false
-		}
-	}
-
-	// Note: You will also need a local.properties file to set the location of the SDK in the same
-	// way that the existing SDK requires, using the sdk.dir property.
-	// Alternatively, you can set an environment variable called ANDROID_HOME. There is no
-	// difference between the two methods, you can use the one you prefer.
+    // Note: You will also need a local.properties file to set the location of the SDK in the same 
+    // way that the existing SDK requires, using the sdk.dir property.
+    // Alternatively, you can set an environment variable called ANDROID_HOME. There is no 
+    // difference between the two methods, you can use the one you prefer.
 }
 
 

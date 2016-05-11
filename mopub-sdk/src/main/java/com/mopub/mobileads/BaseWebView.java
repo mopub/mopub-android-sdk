@@ -1,5 +1,6 @@
 package com.mopub.mobileads;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -11,6 +12,7 @@ import android.view.WindowManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import com.mopub.common.VisibleForTesting;
 import com.mopub.common.util.VersionCode;
 import com.mopub.common.util.Views;
 import com.mopub.mobileads.util.WebViews;
@@ -25,42 +27,14 @@ public class BaseWebView extends WebView {
          * an Activity context, as it will leak on Froyo devices and earlier.
          */
         super(context.getApplicationContext());
-        enablePlugins(false);
 
+        enablePlugins(false);
+        restrictDeviceContentAccess();
         WebViews.setDisableJSChromeClient(this);
 
         if (!sDeadlockCleared) {
             clearWebViewDeadlock(getContext());
             sDeadlockCleared = true;
-        }
-
-        /*
-         * Disabling file access and content access prevents advertising creatives from
-         * detecting the presence of, or reading, files on the device filesystem.
-         */
-
-        getSettings().setAllowFileAccess(false);
-
-        if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
-            getSettings().setAllowContentAccess(false);
-        }
-
-        if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN) {
-            getSettings().setAllowFileAccessFromFileURLs(false);
-            getSettings().setAllowUniversalAccessFromFileURLs(false);
-        }
-    }
-
-    protected void enablePlugins(final boolean enabled) {
-        // Android 4.3 and above has no concept of plugin states
-        if (VersionCode.currentApiLevel().isAtLeast(VersionCode.JELLY_BEAN_MR2)) {
-            return;
-        }
-
-        if (enabled) {
-            getSettings().setPluginState(WebSettings.PluginState.ON);
-        } else {
-            getSettings().setPluginState(WebSettings.PluginState.OFF);
         }
     }
 
@@ -78,9 +52,47 @@ public class BaseWebView extends WebView {
         super.destroy();
     }
 
-    @Deprecated // for testing
-    void setIsDestroyed(boolean isDestroyed) {
-        mIsDestroyed = isDestroyed;
+    protected void enablePlugins(final boolean enabled) {
+        // Android 4.3 and above has no concept of plugin states
+        if (VersionCode.currentApiLevel().isAtLeast(VersionCode.JELLY_BEAN_MR2)) {
+            return;
+        }
+
+        if (enabled) {
+            getSettings().setPluginState(WebSettings.PluginState.ON);
+        } else {
+            getSettings().setPluginState(WebSettings.PluginState.OFF);
+        }
+    }
+
+    /*
+     * Intended to be used with dummy WebViews to precache WebView javascript and assets.
+     */
+    @SuppressLint("SetJavaScriptEnabled")
+    protected void enableJavascriptCaching() {
+        getSettings().setJavaScriptEnabled(true);
+        getSettings().setDomStorageEnabled(true);
+        getSettings().setAppCacheEnabled(true);
+        // Required for the Application Caches API to be enabled
+        // See: http://developer.android.com/reference/android/webkit/WebSettings.html#setAppCachePath(java.lang.String)
+        getSettings().setAppCachePath(getContext().getCacheDir().getAbsolutePath());
+    }
+
+    /*
+     * Disabling file access and content access prevents advertising creatives from
+     * detecting the presence of, or reading, files on the device filesystem.
+     */
+    private void restrictDeviceContentAccess() {
+        getSettings().setAllowFileAccess(false);
+
+        if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
+            getSettings().setAllowContentAccess(false);
+        }
+
+        if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN) {
+            getSettings().setAllowFileAccessFromFileURLs(false);
+            getSettings().setAllowUniversalAccessFromFileURLs(false);
+        }
     }
 
     /**
@@ -96,7 +108,7 @@ public class BaseWebView extends WebView {
      */
     private void clearWebViewDeadlock(@NonNull final Context context) {
         if (VERSION.SDK_INT == VERSION_CODES.KITKAT) {
-            // Create an invisible webview
+            // Create an invisible WebView
             final WebView webView = new WebView(context.getApplicationContext());
             webView.setBackgroundColor(Color.TRANSPARENT);
 
@@ -120,5 +132,9 @@ public class BaseWebView extends WebView {
         }
     }
 
-
+    @VisibleForTesting
+    @Deprecated // for testing
+    void setIsDestroyed(boolean isDestroyed) {
+        mIsDestroyed = isDestroyed;
+    }
 }
