@@ -2,10 +2,13 @@ package com.mopub.network;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.LruCache;
+import android.text.TextUtils;
 import android.webkit.WebView;
 
 import com.mopub.common.ClientMetadata;
@@ -98,7 +101,17 @@ public class Networking {
                     imageLoader = new MaxWidthImageLoader(queue, context, new MaxWidthImageLoader.ImageCache() {
                         @Override
                         public Bitmap getBitmap(final String key) {
-                            return imageCache.get(key);
+                            Bitmap result = imageCache.get(key);
+	                        if (result != null){
+		                        return result;
+	                        }
+                            Uri uri = Uri.parse(key);
+                            String scheme = uri.getScheme();
+                            if (!TextUtils.isEmpty(scheme) && scheme.equals("file"))
+                            {
+                                return BitmapFactory.decodeFile(uri.getPath());
+                            }
+                            return result;
                         }
 
                         @Override
