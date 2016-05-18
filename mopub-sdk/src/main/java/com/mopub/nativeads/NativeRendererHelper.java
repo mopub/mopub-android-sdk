@@ -30,8 +30,10 @@ public class NativeRendererHelper {
 
         if (contents == null) {
             MoPubLog.d("Attempted to set TextView contents to null.");
+	        textView.setVisibility(View.GONE);
         } else {
             textView.setText(contents);
+            textView.setVisibility(View.VISIBLE);
         }
     }
 
