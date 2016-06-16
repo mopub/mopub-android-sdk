@@ -30,6 +30,8 @@ public class AdResponse implements Serializable {
     private final String mRewardedVideoCurrencyName;
     @Nullable
     private final String mRewardedVideoCurrencyAmount;
+    @Nullable
+    private final String mRewardedVideoCompletionUrl;
 
     @Nullable
     private final String mRedirectUrl;
@@ -79,6 +81,7 @@ public class AdResponse implements Serializable {
 
         mRewardedVideoCurrencyName = builder.rewardedVideoCurrencyName;
         mRewardedVideoCurrencyAmount = builder.rewardedVideoCurrencyAmount;
+        mRewardedVideoCompletionUrl = builder.rewardedVideoCompletionUrl;
 
         mRedirectUrl = builder.redirectUrl;
         mClickTrackingUrl = builder.clickTrackingUrl;
@@ -146,6 +149,11 @@ public class AdResponse implements Serializable {
     @Nullable
     public String getRewardedVideoCurrencyAmount() {
         return mRewardedVideoCurrencyAmount;
+    }
+
+    @Nullable
+    public String getRewardedVideoCompletionUrl() {
+        return mRewardedVideoCompletionUrl;
     }
 
     @Nullable
@@ -245,6 +253,7 @@ public class AdResponse implements Serializable {
 
         private String rewardedVideoCurrencyName;
         private String rewardedVideoCurrencyAmount;
+        private String rewardedVideoCompletionUrl;
 
         private String redirectUrl;
         private String clickTrackingUrl;
@@ -297,6 +306,12 @@ public class AdResponse implements Serializable {
         public Builder setRewardedVideoCurrencyAmount(
                 @Nullable final String rewardedVideoCurrencyAmount) {
             this.rewardedVideoCurrencyAmount = rewardedVideoCurrencyAmount;
+            return this;
+        }
+
+        public Builder setRewardedVideoCompletionUrl(
+                @Nullable final String rewardedVideoCompletionUrl) {
+            this.rewardedVideoCompletionUrl = rewardedVideoCompletionUrl;
             return this;
         }
 

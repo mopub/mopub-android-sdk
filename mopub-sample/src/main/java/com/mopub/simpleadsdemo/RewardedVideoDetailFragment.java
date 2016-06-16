@@ -53,7 +53,8 @@ public class RewardedVideoDetailFragment extends Fragment implements MoPubReward
                     return;
                 }
                 MoPub.loadRewardedVideo(mAdUnitId,
-                        new RequestParameters(views.mKeywordsField.getText().toString()));
+                        new RequestParameters(views.mKeywordsField.getText().toString(), null,
+                                "sample_app_customer_id"));
                 if (mShowButton != null) {
                     mShowButton.setEnabled(false);
                 }

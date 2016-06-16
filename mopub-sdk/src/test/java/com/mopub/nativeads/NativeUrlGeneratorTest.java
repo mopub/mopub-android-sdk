@@ -18,7 +18,6 @@ import com.mopub.common.MoPub;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.test.support.MoPubShadowTelephonyManager;
-import com.mopub.network.Networking;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -291,7 +290,7 @@ public class NativeUrlGeneratorTest {
         assertThat(adUrl).isEqualTo(
                 "http://ads.mopub.com/m/ad?id=" +
                         AD_UNIT_ID +
-                        "&nsv=" + MoPub.SDK_VERSION + 
+                        "&nsv=" + Uri.encode(MoPub.SDK_VERSION) +
                         "&dn=unknown%2Cunknown%2Cunknown" +
                         "&bundle=testBundle" +
                         "&z=-0700" +

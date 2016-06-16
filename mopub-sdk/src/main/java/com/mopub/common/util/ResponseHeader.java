@@ -36,6 +36,7 @@ public enum ResponseHeader {
     // Rewarded Video fields
     REWARDED_VIDEO_CURRENCY_NAME("X-Rewarded-Video-Currency-Name"),
     REWARDED_VIDEO_CURRENCY_AMOUNT("X-Rewarded-Video-Currency-Amount"),
+    REWARDED_VIDEO_COMPLETION_URL("X-Rewarded-Video-Completion-Url"),
 
     @Deprecated CUSTOM_SELECTOR("X-Customselector");
 

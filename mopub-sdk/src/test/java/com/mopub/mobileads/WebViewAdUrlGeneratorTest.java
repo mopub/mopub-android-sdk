@@ -28,7 +28,6 @@ import com.mopub.common.util.Utils;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
 import com.mopub.mobileads.test.support.MoPubShadowTelephonyManager;
 import com.mopub.mraid.MraidNativeCommandHandler;
-import com.mopub.network.Networking;
 import com.mopub.network.PlayServicesUrlRewriter;
 
 import org.junit.After;
@@ -712,7 +711,7 @@ public class WebViewAdUrlGeneratorTest {
             return "http://ads.mopub.com/m/ad" +
                     "?v=6" +
                     paramIfNotEmpty("id", adUnitId) +
-                    "&nv=" + MoPub.SDK_VERSION +
+                    "&nv=" + Uri.encode(MoPub.SDK_VERSION) +
                     "&dn=" + Build.MANUFACTURER +
                     "%2C" + Build.MODEL +
                     "%2C" + Build.PRODUCT +

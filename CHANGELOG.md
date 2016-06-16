@@ -1,3 +1,10 @@
+#### Version 4.7.1 (June 10, 2016)
+- Fixed deeplink bug.
+
+## Version 4.7.0 (June 2, 2016)
+- Rewarded video server-side currency rewarding (Beta).
+- Enhanced Android intent handling.
+
 #### Version 4.6.1 (May 5, 2016)
 - Enhanced caching logic for HTML and MRAID interstitials. Resource-heavy interstitials will now render more quickly when MoPubInterstitial#show() is called.
 

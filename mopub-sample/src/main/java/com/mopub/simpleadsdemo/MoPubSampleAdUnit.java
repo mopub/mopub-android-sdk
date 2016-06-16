@@ -18,6 +18,8 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
     enum AdType {
         BANNER("Banner", BannerDetailFragment.class),
         MRECT("Mrect", MrectDetailFragment.class),
+        LEADERBOARD("Leaderboard", LeaderboardDetailFragment.class),
+        SKYSCRAPER("Skyscraper", SkyscraperDetailFragment.class),
         INTERSTITIAL("Interstitial", InterstitialDetailFragment.class),
         REWARDED_VIDEO("Rewarded Video", RewardedVideoDetailFragment.class),
         LIST_VIEW("Native List View", NativeListViewFragment.class),

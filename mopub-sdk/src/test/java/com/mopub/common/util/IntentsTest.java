@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowApplication;
 
 import java.util.ArrayList;
@@ -194,13 +195,55 @@ public class IntentsTest {
 
     @Test
     public void launchIntentForUserClick_shouldStartActivity() throws Exception {
-        Context context = Robolectric.buildActivity(Activity.class).create().get()
-                .getApplicationContext();
         Intent intent = mock(Intent.class);
 
-        Intents.launchIntentForUserClick(context, intent, null);
+        Intents.launchIntentForUserClick(applicationContext, intent, null);
         final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
 
         assertThat(startedActivity).isNotNull();
+    }
+
+    @Test
+    public void launchApplicationUrl_withResolvableUrl_shouldOpenActivity() throws Exception {
+        final String url = "url_to_installed_app";
+        makeUrlResolvable(url);
+
+        Intents.launchApplicationUrl(activityContext, Uri.parse(url));
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
+
+        assertThat(startedActivity).isNotNull();
+    }
+
+    @Test(expected = IntentNotResolvableException.class)
+    public void launchApplicationUrl_withUnresolvableUrl_shouldThrowIntentNotResolvableException() throws Exception {
+        final String url = "url_to_installed_app";
+
+        Intents.launchApplicationUrl(activityContext, Uri.parse(url));
+        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
+
+        assertThat(startedActivity).isNull();
+    }
+
+    @Test
+    public void getPlayStoreUri_shouldBuildUriFromIntentPackage() throws Exception {
+        final Intent intent = new Intent();
+        final String appPackage = "com.mopub.test";
+        intent.setPackage(appPackage);
+
+        assertThat(Intents.getPlayStoreUri(intent).toString()).isEqualTo("market://details?id="
+                + appPackage);
+    }
+
+    @Test
+    public void getPlayStoreUri_shouldNotBlowUpWithEmptyPackage() throws Exception {
+        final Intent intent = new Intent();
+
+        assertThat(Intents.getPlayStoreUri(intent).toString())
+                .isEqualTo("market://details?id=null");
+    }
+
+    private void makeUrlResolvable(String url) {
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(
+                new Intent(Intent.ACTION_VIEW, Uri.parse(url)), new ResolveInfo());
     }
 }

@@ -104,6 +104,28 @@ public class UrlActionTest {
         assertUrlActionMatching(FOLLOW_DEEP_LINK, "myapp://MyView", true);
     }
 
+    @Test
+    public void followDeepLink_withEmptyScheme_shouldNotMatch() throws Exception {
+        assertUrlActionMatching(FOLLOW_DEEP_LINK, "://myview", false);
+    }
+
+    @Test
+    public void followDeepLink_withEmptyHost_shouldMatch() throws Exception {
+        assertUrlActionMatching(FOLLOW_DEEP_LINK, "myapp://", true);
+    }
+
+    @Test
+    public void followDeepLink_withIntentScheme_withEmptyHost_shouldMatch() throws Exception {
+        assertUrlActionMatching(FOLLOW_DEEP_LINK, "intent://", true);
+        assertUrlActionMatching(FOLLOW_DEEP_LINK, "InTeNt://", true);
+    }
+
+    @Test
+    public void followDeepLink_withIntentScheme_withHost_shouldMatch() throws Exception {
+        assertUrlActionMatching(FOLLOW_DEEP_LINK, "intent://host", true);
+        assertUrlActionMatching(FOLLOW_DEEP_LINK, "InTeNt://HoSt", true);
+    }
+
     private void assertUrlActionMatching(@NonNull final UrlAction action,
             @Nullable final String url, final boolean shouldMatch) {
         assertThat(action.shouldTryHandlingUrl(Uri.parse(url))).isEqualTo(shouldMatch);

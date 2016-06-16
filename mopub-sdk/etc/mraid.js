@@ -28,7 +28,6 @@
     lastSizeChangeProperties: null
   };
 
-
   bridge.fireChangeEvent = function(properties) {
     for (var p in properties) {
       if (properties.hasOwnProperty(p)) {
@@ -278,6 +277,12 @@
 
   var placementType = PLACEMENT_TYPES.UNKNOWN;
 
+  var hostSDKVersion = {
+    'major': 0,
+    'minor': 0,
+    'patch': 0
+  };
+
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
   var EventListeners = function(event) {
@@ -398,7 +403,23 @@
 
     supports: function(val) {
       broadcastEvent(EVENTS.INFO, 'Set supports to ' + stringify(val));
-        supportProperties = val;
+      supportProperties = val;
+    },
+
+    hostSDKVersion: function(val) {
+      // val is expected to be formatted like 'X.Y.Z[-+]identifier'.
+      var versions = val.split('.').map(function(version) {
+        return parseInt(version, 10);
+      }).filter(function(version) {
+        return version >= 0;
+      });
+
+      if (versions.length >= 3) {
+        hostSDKVersion['major'] = parseInt(versions[0], 10);
+        hostSDKVersion['minor'] = parseInt(versions[1], 10);
+        hostSDKVersion['patch'] = parseInt(versions[2], 10);
+        broadcastEvent(EVENTS.INFO, 'Set hostSDKVersion to ' + stringify(hostSDKVersion));
+      }
     }
   };
 
@@ -713,6 +734,14 @@
       }
     }
   };
+
+  // Determining SDK version ///////////////////////////////////////////////////////////////////////
+
+  mraid.getHostSDKVersion = function() {
+    return hostSDKVersion;
+  }
+
+  // Calendar helpers //////////////////////////////////////////////////////////////////////////////
 
   var CalendarEventParser = {
     initialize: function(parameters) {

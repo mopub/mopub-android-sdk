@@ -47,6 +47,11 @@ public class MoPubRewardedVideoManager {
     private static MoPubRewardedVideoManager sInstance;
     private static final int DEFAULT_LOAD_TIMEOUT = Constants.THIRTY_SECONDS_MILLIS;
 
+    /**
+     * This must an integer because the backend only supports int types for api version.
+     */
+    public static final int API_VERSION = 1;
+
     @NonNull private final Handler mCallbackHandler;
     @NonNull private WeakReference<Activity> mMainActivity;
     @NonNull private final Context mContext;
@@ -82,16 +87,24 @@ public class MoPubRewardedVideoManager {
     }
 
     public static final class RequestParameters {
-        public final String mKeywords;
-        public final Location mLocation;
+        @Nullable public final String mKeywords;
+        @Nullable public final Location mLocation;
+        @Nullable public final String mCustomerId;
 
-        public RequestParameters(final String keywords) {
+        public RequestParameters(@Nullable final String keywords) {
             this(keywords, null);
         }
 
-        public RequestParameters(final String keywords, final Location location) {
+        public RequestParameters(@Nullable final String keywords,
+                @Nullable final Location location) {
+            this(keywords, location, null);
+        }
+
+        public RequestParameters(@Nullable final String keywords, @Nullable final Location location,
+                @Nullable final String customerId) {
             mKeywords = keywords;
             mLocation = location;
+            mCustomerId = customerId;
         }
     }
 
@@ -203,7 +216,8 @@ public class MoPubRewardedVideoManager {
      * method will not make a new request if there is already a video loading for this adUnitId.
      *
      * @param adUnitId MoPub adUnitId String
-     * @param requestParameters Optional RequestParameters object containing keywords and optional location value.
+     * @param requestParameters Optional RequestParameters object containing optional keywords,
+     *                          optional location value, and optional customer id
      * @param mediationSettings Optional instance-level MediationSettings to associate with the
      *                          above adUnitId.
      */
@@ -221,6 +235,11 @@ public class MoPubRewardedVideoManager {
         final Set<MediationSettings> newInstanceMediationSettings = new HashSet<MediationSettings>();
         MoPubCollections.addAllNonNull(newInstanceMediationSettings, mediationSettings);
         sInstance.mInstanceMediationSettings.put(adUnitId, newInstanceMediationSettings);
+
+        final String customerId = requestParameters == null ? null : requestParameters.mCustomerId;
+        if (!TextUtils.isEmpty(customerId)) {
+            sInstance.mRewardedVideoData.setCustomerId(customerId);
+        }
 
         final AdUrlGenerator urlGenerator = new WebViewAdUrlGenerator(sInstance.mContext, false);
         final String adUrlString = urlGenerator.withAdUnitId(adUnitId)
@@ -336,9 +355,13 @@ public class MoPubRewardedVideoManager {
             localExtras.put(DataKeys.AD_REPORT_KEY,
                     new AdReport(adUnitId, ClientMetadata.getInstance(mContext), adResponse));
             localExtras.put(DataKeys.BROADCAST_IDENTIFIER_KEY, mBroadcastIdentifier);
+            localExtras.put(DataKeys.REWARDED_VIDEO_CUSTOMER_ID,
+                    mRewardedVideoData.getCustomerId());
             mRewardedVideoData.updateAdUnitRewardMapping(adUnitId,
                     adResponse.getRewardedVideoCurrencyName(),
                     adResponse.getRewardedVideoCurrencyAmount());
+            mRewardedVideoData.updateAdUnitToServerCompletionUrlMapping(adUnitId,
+                    adResponse.getRewardedVideoCompletionUrl());
 
             Activity mainActivity = mMainActivity.get();
             if (mainActivity == null) {
@@ -568,19 +591,35 @@ public class MoPubRewardedVideoManager {
     public static <T extends CustomEventRewardedVideo>
     void onRewardedVideoCompleted(@NonNull final Class<T> customEventClass, final String thirdPartyId, @NonNull final MoPubReward moPubReward) {
         // Unlike other callbacks in this class, only call the listener once with all the MoPubIds in the matching set.
-        postToInstance(new Runnable() {
-            @Override
-            public void run() {
-                final MoPubReward chosenReward = chooseReward(
-                        sInstance.mRewardedVideoData.getLastShownMoPubReward(customEventClass),
-                        moPubReward);
-                final Set<String> moPubIds = sInstance.mRewardedVideoData.getMoPubIdsForAdNetwork(customEventClass, thirdPartyId);
-                Set<String> rewarded = new HashSet<String>(moPubIds);
-                if (sInstance.mVideoListener != null) {
-                    sInstance.mVideoListener.onRewardedVideoCompleted(rewarded, chosenReward);
+        final String currentAdUnitId = sInstance.mRewardedVideoData.getCurrentAdUnitId();
+        final String serverCompletionUrl = sInstance.mRewardedVideoData.getServerCompletionUrl(
+                currentAdUnitId);
+        if (TextUtils.isEmpty(serverCompletionUrl)) {
+            postToInstance(new Runnable() {
+                @Override
+                public void run() {
+                    final MoPubReward chosenReward = chooseReward(
+                            sInstance.mRewardedVideoData.getLastShownMoPubReward(customEventClass),
+                            moPubReward);
+                    final Set<String> moPubIds = sInstance.mRewardedVideoData.getMoPubIdsForAdNetwork(
+                            customEventClass, thirdPartyId);
+                    Set<String> rewarded = new HashSet<String>(moPubIds);
+                    if (sInstance.mVideoListener != null) {
+                        sInstance.mVideoListener.onRewardedVideoCompleted(rewarded, chosenReward);
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            postToInstance(new Runnable() {
+                @Override
+                public void run() {
+                    RewardedVideoCompletionRequestHandler.makeRewardedVideoCompletionRequest(
+                            sInstance.mContext,
+                            serverCompletionUrl,
+                            sInstance.mRewardedVideoData.getCustomerId());
+                }
+            });
+        }
     }
 
     @VisibleForTesting

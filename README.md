@@ -27,7 +27,7 @@ The MoPub SDK is available via:
     }
 
     dependencies {
-        compile('com.mopub:mopub-sdk:4.6.1@aar') {
+        compile('com.mopub:mopub-sdk:4.7.0@aar') {
             transitive = true
         }
     }
@@ -62,7 +62,7 @@ The MoPub SDK is available via:
 ## New in this Version
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-- Enhanced caching logic for HTML and MRAID interstitials. Resource-heavy interstitials will now render more quickly when MoPubInterstitial#show() is called.
+- Fixed deeplink bug.
 
 ## Requirements
 

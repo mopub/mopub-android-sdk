@@ -13,6 +13,7 @@ import com.mopub.common.util.Intents;
 import com.mopub.exceptions.IntentNotResolvableException;
 import com.mopub.exceptions.UrlParseException;
 
+import java.net.URISyntaxException;
 import java.util.List;
 
 import static com.mopub.common.Constants.HTTP;
@@ -282,7 +283,17 @@ public enum UrlAction {
                 @NonNull final UrlHandler urlHandler,
                 @Nullable String creativeId)
                 throws IntentNotResolvableException {
-            Intents.launchApplicationUrl(context, uri);
+            if (Constants.INTENT_SCHEME.equalsIgnoreCase(uri.getScheme())) {
+                try {
+                    final Intent intent = Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME);
+                    Intents.launchApplicationIntent(context, intent);
+                } catch (URISyntaxException e) {
+                    throw new IntentNotResolvableException("Intent uri had invalid syntax: "
+                            + uri.toString());
+                }
+            } else {
+                Intents.launchApplicationUrl(context, uri);
+            }
         }
     },
 

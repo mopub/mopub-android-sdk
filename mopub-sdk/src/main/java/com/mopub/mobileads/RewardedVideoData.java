@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Pair;
 
 import com.mopub.common.MoPubReward;
@@ -24,6 +25,8 @@ class RewardedVideoData {
     @NonNull
     private final Map<String, MoPubReward> mAdUnitToRewardMap;
     @NonNull
+    private final Map<String, String> mAdUnitToServerCompletionUrlMap;
+    @NonNull
     private final Map<Class<? extends CustomEventRewardedVideo>, MoPubReward> mCustomEventToRewardMap;
     @NonNull
     private final Map<TwoPartKey, Set<String>> mCustomEventToMoPubIdMap;
@@ -31,10 +34,14 @@ class RewardedVideoData {
     private final Set<CustomEventRewardedVideo.CustomEventRewardedVideoListener> mAdNetworkListeners;
     @Nullable
     private String mCurrentAdUnitId;
+    @Nullable
+    private String mCustomerId;
+
 
     RewardedVideoData() {
         mAdUnitToCustomEventMap = new TreeMap<String, CustomEventRewardedVideo>();
         mAdUnitToRewardMap = new TreeMap<String, MoPubReward>();
+        mAdUnitToServerCompletionUrlMap = new TreeMap<String, String>();
         mCustomEventToRewardMap = new HashMap<Class<? extends CustomEventRewardedVideo>, MoPubReward>();
         mCustomEventToMoPubIdMap = new HashMap<TwoPartKey, Set<String>>();
         mAdNetworkListeners = new HashSet<CustomEventRewardedVideo.CustomEventRewardedVideoListener>();
@@ -48,6 +55,14 @@ class RewardedVideoData {
     @Nullable
     MoPubReward getMoPubReward(@Nullable String moPubId) {
         return mAdUnitToRewardMap.get(moPubId);
+    }
+
+    @Nullable
+    String getServerCompletionUrl(@Nullable final String moPubId) {
+        if (TextUtils.isEmpty(moPubId)) {
+            return null;
+        }
+        return mAdUnitToServerCompletionUrlMap.get(moPubId);
     }
 
     @Nullable
@@ -111,6 +126,12 @@ class RewardedVideoData {
         mAdUnitToRewardMap.put(moPubId, MoPubReward.success(currencyName, intCurrencyAmount));
     }
 
+    void updateAdUnitToServerCompletionUrlMapping(@NonNull final String moPubId,
+            @Nullable final String serverCompletionUrl) {
+        Preconditions.checkNotNull(moPubId);
+        mAdUnitToServerCompletionUrlMap.put(moPubId, serverCompletionUrl);
+    }
+
     /**
      * This method should be called right before the rewarded video is shown in order to store the
      * reward associated with the custom event class. If called earlier in the rewarded lifecycle,
@@ -169,6 +190,15 @@ class RewardedVideoData {
     @Nullable
     String getCurrentAdUnitId() {
         return mCurrentAdUnitId;
+    }
+
+    void setCustomerId(@Nullable final String customerId) {
+        mCustomerId = customerId;
+    }
+
+    @Nullable
+    String getCustomerId() {
+        return mCustomerId;
     }
 
     private static class TwoPartKey extends Pair<Class<? extends CustomEventRewardedVideo>, String> {

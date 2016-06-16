@@ -273,8 +273,11 @@ public class AdRequest extends Request<AdResponse> {
                     ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME);
             final String rewardedVideoCurrencyAmount = extractHeader(headers,
                     ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT);
+            final String rewardedVideoCompletionUrl = extractHeader(headers,
+                    ResponseHeader.REWARDED_VIDEO_COMPLETION_URL);
             builder.setRewardedVideoCurrencyName(rewardedVideoCurrencyName);
             builder.setRewardedVideoCurrencyAmount(rewardedVideoCurrencyAmount);
+            builder.setRewardedVideoCompletionUrl(rewardedVideoCompletionUrl);
         }
 
         AdResponse adResponse = builder.build();

@@ -12,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.mopub.common.Constants;
 import com.mopub.common.MoPubBrowser;
 import com.mopub.common.Preconditions;
 import com.mopub.common.UrlAction;
@@ -71,28 +72,6 @@ public class Intents {
         } catch (NullPointerException e) {
             return false;
         }
-    }
-
-    public static boolean canHandleApplicationUrl(final Context context, final Uri uri) {
-        return canHandleApplicationUrl(context, uri, true);
-    }
-
-    public static boolean canHandleApplicationUrl(final Context context, final Uri uri,
-            final boolean logError) {
-        // Determine which activities can handle the intent
-        final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-
-        // If there are no relevant activities, don't follow the link
-        if (!Intents.deviceCanHandleIntent(context, intent)) {
-            if (logError) {
-                MoPubLog.w("Could not handle application specific action: " + uri + ". " +
-                        "You may be running in the emulator or another device which does not " +
-                        "have the required application.");
-            }
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -228,16 +207,6 @@ public class Intents {
         launchIntentForUserClick(context, intent, errorMessage);
     }
 
-    public static void launchActionViewIntent(Context context, @NonNull final Uri uri,
-            @NonNull final String errorMessage) throws IntentNotResolvableException {
-        final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-        if (!(context instanceof Activity)) {
-            intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
-        }
-
-        launchIntentForUserClick(context, intent, errorMessage);
-    }
-
     public static void launchIntentForUserClick(@NonNull final Context context,
             @NonNull final Intent intent, @Nullable final String errorMessage)
             throws IntentNotResolvableException {
@@ -245,7 +214,7 @@ public class Intents {
         Preconditions.NoThrow.checkNotNull(intent);
 
         try {
-            Intents.startActivity(context, intent);
+            startActivity(context, intent);
         } catch (IntentNotResolvableException e) {
             throw new IntentNotResolvableException(errorMessage + "\n" + e.getMessage());
         }
@@ -253,13 +222,88 @@ public class Intents {
 
     public static void launchApplicationUrl(@NonNull final Context context,
             @NonNull final Uri uri) throws IntentNotResolvableException {
-        if (Intents.canHandleApplicationUrl(context, uri)) {
-            final String errorMessage = "Unable to open intent for: " + uri;
-            Intents.launchActionViewIntent(context, uri, errorMessage);
+        final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        Preconditions.checkNotNull(context);
+        Preconditions.checkNotNull(uri);
+
+        if (deviceCanHandleIntent(context, intent)) {
+            launchApplicationIntent(context, intent);
         } else {
+            // Deeplink+ needs this exception to know primaryUrl failed and then attempt fallbackUrl
+            // See UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK
             throw new IntentNotResolvableException("Could not handle application specific " +
                     "action: " + uri + "\n\tYou may be running in the emulator or another " +
                     "device which does not have the required application.");
         }
+    }
+
+    public static void launchApplicationIntent(@NonNull final Context context,
+            @NonNull final Intent intent) throws IntentNotResolvableException {
+        Preconditions.checkNotNull(context);
+        Preconditions.checkNotNull(intent);
+
+        if (deviceCanHandleIntent(context, intent)) {
+            final String errorMessage = "Unable to open intent: " + intent;
+            if (!(context instanceof Activity)) {
+                intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+            }
+            launchIntentForUserClick(context, intent, errorMessage);
+        } else {
+            final String fallbackUrl = intent.getStringExtra("browser_fallback_url");
+            if (TextUtils.isEmpty(fallbackUrl)) {
+                if (!"market".equalsIgnoreCase(intent.getScheme())) {
+                    launchApplicationUrl(context, getPlayStoreUri(intent));
+                } else {
+                    throw new IntentNotResolvableException("Device could not handle neither " +
+                            "intent nor market url.\nIntent: " + intent.toString());
+                }
+            } else {
+                final Uri fallbackUri = Uri.parse(fallbackUrl);
+                final String fallbackScheme = fallbackUri.getScheme();
+                if (Constants.HTTP.equalsIgnoreCase(fallbackScheme)
+                        || Constants.HTTPS.equalsIgnoreCase(fallbackScheme)) {
+                    showMoPubBrowserForUrl(context, fallbackUri, null);
+                } else {
+                    launchApplicationUrl(context, fallbackUri);
+                }
+            }
+        }
+    }
+
+    @NonNull
+    public static Uri getPlayStoreUri(@NonNull final Intent intent) {
+        Preconditions.checkNotNull(intent);
+
+        return Uri.parse("market://details?id=" + intent.getPackage());
+    }
+
+    public static void launchActionViewIntent(@NonNull final Context context,
+            @NonNull final Uri uri,
+            @Nullable final String errorMessage) throws IntentNotResolvableException {
+        Preconditions.checkNotNull(context);
+        Preconditions.checkNotNull(uri);
+
+        final Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        if (!(context instanceof Activity)) {
+            intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+        }
+        launchIntentForUserClick(context, intent, errorMessage);
+    }
+
+    /**
+     * @deprecated as of 4.7.0. Use {@link #deviceCanHandleIntent(Context, Intent)}
+     */
+    @Deprecated
+    public static boolean canHandleApplicationUrl(final Context context, final Uri uri) {
+        return false;
+    }
+
+    /**
+     * @deprecated as of 4.7.0. Use {@link #deviceCanHandleIntent(Context, Intent)}
+     */
+    @Deprecated
+    public static boolean canHandleApplicationUrl(final Context context, final Uri uri,
+            final boolean logError) {
+        return false;
     }
 }

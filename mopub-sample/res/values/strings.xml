@@ -20,7 +20,9 @@
     <string name="add_ad_unit_button">Add an Ad Unit</string>
     <string name="ad_unit_id_banner">b195f8dd8ded45fe847ad89ed1d016da</string>
     <string name="ad_unit_id_mrect">252412d5e9364a05ab77d9396346d73d</string>
+    <string name="ad_unit_id_leaderboard">a8919cca19784497872ae69d48f678e1</string>
     <string name="ad_unit_id_interstitial">24534e1901884e398f1253216226017e</string>
+    <string name="ad_unit_id_rewarded_video">920b6145fb1546cf8b5cf2ac34638bb7</string>
     <string name="ad_unit_id_native">11a17b188668469fb0412708c3d16813</string>
     <string name="swipe_text"><![CDATA[< Swipe Left & Right >]]></string>
 </resources>

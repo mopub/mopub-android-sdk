@@ -28,4 +28,5 @@ public class DataKeys {
     // Rewarded Video fields
     public static final String REWARDED_VIDEO_CURRENCY_NAME_KEY = "Rewarded-Video-Currency-Name";
     public static final String REWARDED_VIDEO_CURRENCY_AMOUNT_STRING_KEY = "Rewarded-Video-Currency-Value-String";
+    public static final String REWARDED_VIDEO_CUSTOMER_ID = "Rewarded-Video-Customer-Id";
 }

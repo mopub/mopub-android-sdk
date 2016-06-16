@@ -34,7 +34,7 @@ task wrapper(type: Wrapper) {
 
 group = 'com.mopub'
 description = '''MoPub Android SDK'''
-version = '4.6.1'
+version = '4.7.1'
 
 android {
     compileSdkVersion 23
@@ -43,7 +43,7 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        versionCode 40
+        versionCode 42
         versionName version
         minSdkVersion 9
         targetSdkVersion 23

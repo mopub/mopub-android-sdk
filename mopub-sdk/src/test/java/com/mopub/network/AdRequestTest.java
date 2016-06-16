@@ -347,6 +347,8 @@ public class AdRequestTest {
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.REWARDED_VIDEO);
         defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME.getKey(), "currencyName");
         defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT.getKey(), "25");
+        defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_COMPLETION_URL.getKey(),
+                "http://completionUrl");
         NetworkResponse testResponse = new NetworkResponse(200,
                 "{\"abc\": \"def\"}".getBytes(Charset.defaultCharset()), defaultHeaders, false);
 
@@ -355,6 +357,8 @@ public class AdRequestTest {
         assertThat(response.result.getAdType()).isEqualTo(AdType.REWARDED_VIDEO);
         assertThat(response.result.getRewardedVideoCurrencyName()).isEqualTo("currencyName");
         assertThat(response.result.getRewardedVideoCurrencyAmount()).isEqualTo("25");
+        assertThat(response.result.getRewardedVideoCompletionUrl()).isEqualTo(
+                "http://completionUrl");
     }
 
     @Test
