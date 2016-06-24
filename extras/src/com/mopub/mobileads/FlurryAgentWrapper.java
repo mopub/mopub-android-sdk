@@ -3,10 +3,12 @@ package com.mopub.mobileads;
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.flurry.android.FlurryAgent;
+import com.flurry.android.FlurryAgentListener;
 
 public final class FlurryAgentWrapper {
     public static final String PARAM_API_KEY = "apiKey";
@@ -34,7 +36,9 @@ public final class FlurryAgentWrapper {
         FlurryAgent.addOrigin(ORIGIN_IDENTIFIER, ORIGIN_VERSION);
     }
 
-    public synchronized void startSession(@NonNull final Context context, final String apiKey) {
+    public synchronized void startSession(@NonNull final Context context,
+                                          final String apiKey,
+                                          @Nullable FlurryAgentListener flurryAgentListener) {
         // validate parameters
         if (TextUtils.isEmpty(apiKey)) {
             return;
@@ -42,7 +46,8 @@ public final class FlurryAgentWrapper {
 
         // init
         if (!FlurryAgent.isSessionActive()) {
-            mAgentBuilder.build(context, apiKey);
+            mAgentBuilder.withListener(flurryAgentListener) // withListener allows nulls
+                    .build(context, apiKey);
 
             // sessions are automatic on ICS+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
@@ -67,6 +72,10 @@ public final class FlurryAgentWrapper {
 
             FlurryAgent.onEndSession(context);
         }
+    }
+
+    public synchronized boolean isSessionActive() {
+        return FlurryAgent.isSessionActive();
     }
 }
 

@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.flurry.android.FlurryAgentListener;
 import com.flurry.android.ads.FlurryAdErrorType;
 import com.flurry.android.ads.FlurryAdNative;
 import com.flurry.android.ads.FlurryAdNativeAsset;
@@ -81,32 +82,26 @@ public final class FlurryCustomEventNative extends CustomEventNative {
             flurryApiKey = serverExtras.get(FlurryAgentWrapper.PARAM_API_KEY);
             flurryAdSpace = serverExtras.get(FlurryAgentWrapper.PARAM_AD_SPACE_NAME);
 
-            FlurryAgentWrapper.getInstance().startSession(activity, flurryApiKey);
+            if (FlurryAgentWrapper.getInstance().isSessionActive()) {
+                fetchFlurryAd(activity, flurryAdSpace, localExtras, customEventNativeListener);
+            } else {
+                final FlurryAgentListener flurryAgentListener = new FlurryAgentListener() {
+                    @Override
+                    public void onSessionStarted() {
+                        fetchFlurryAd(activity, flurryAdSpace, localExtras,
+                                customEventNativeListener);
+                    }
+                };
+
+                FlurryAgentWrapper.getInstance().startSession(activity, flurryApiKey,
+                        flurryAgentListener);
+            }
         } else {
             customEventNativeListener.onNativeAdFailed(
                     NativeErrorCode.NATIVE_ADAPTER_CONFIGURATION_ERROR);
             Log.i(LOG_TAG, "Failed Native AdFetch: Missing required server extras" +
                     " [FLURRY_APIKEY and/or FLURRY_ADSPACE].");
-            return;
         }
-
-        FlurryAdNative flurryAdNative = new FlurryAdNative(activity, flurryAdSpace);
-
-        if (localExtras.containsKey(LOCAL_EXTRA_TEST_MODE) &&
-                localExtras.get(LOCAL_EXTRA_TEST_MODE) instanceof Boolean) {
-            FlurryAdTargeting targeting = new FlurryAdTargeting();
-            targeting.setEnableTestAds((Boolean) localExtras.get(LOCAL_EXTRA_TEST_MODE));
-        }
-
-        final FlurryBaseNativeAd flurryNativeAd;
-        if (shouldAllowVideoNativeAds()) {
-            flurryNativeAd = new FlurryVideoEnabledNativeAd(activity, flurryAdNative,
-                    customEventNativeListener);
-        } else {
-            flurryNativeAd = new FlurryStaticNativeAd(activity, flurryAdNative,
-                    customEventNativeListener);
-        }
-        flurryNativeAd.fetchAd();
     }
 
     private static synchronized void mapNativeAd(@NonNull final FlurryBaseNativeAd mopubSupportedAd,
@@ -190,6 +185,28 @@ public final class FlurryCustomEventNative extends CustomEventNative {
         return (!TextUtils.isEmpty(flurryApiKey) && !TextUtils.isEmpty(flurryAdSpace));
     }
 
+    private void fetchFlurryAd(@NonNull Activity activity, String flurryAdSpace,
+                               @NonNull Map<String, Object> localExtras,
+                               @NonNull CustomEventNativeListener customEventNativeListener) {
+        final FlurryAdNative flurryAdNative = new FlurryAdNative(activity, flurryAdSpace);
+
+        if (localExtras.containsKey(LOCAL_EXTRA_TEST_MODE) &&
+                localExtras.get(LOCAL_EXTRA_TEST_MODE) instanceof Boolean) {
+            final FlurryAdTargeting targeting = new FlurryAdTargeting();
+            targeting.setEnableTestAds((Boolean) localExtras.get(LOCAL_EXTRA_TEST_MODE));
+        }
+
+        final FlurryBaseNativeAd flurryNativeAd;
+        if (shouldAllowVideoNativeAds()) {
+            flurryNativeAd = new FlurryVideoEnabledNativeAd(activity, flurryAdNative,
+                    customEventNativeListener);
+        } else {
+            flurryNativeAd = new FlurryStaticNativeAd(activity, flurryAdNative,
+                    customEventNativeListener);
+        }
+        flurryNativeAd.fetchAd();
+    }
+
     private boolean shouldAllowVideoNativeAds() {
         try {
             Class.forName("com.mopub.nativeads.FlurryNativeAdRenderer");
@@ -210,8 +227,8 @@ public final class FlurryCustomEventNative extends CustomEventNative {
 
         private @NonNull final Context mContext;
         private @NonNull final CustomEventNativeListener mCustomEventNativeListener;
-        private @NonNull FlurryAdNative mFlurryAdNative;
-        private FlurryAdNativeListener mFlurryNativelistener = new FlurryBaseAdListener(this) {
+        private @NonNull final FlurryAdNative mFlurryAdNative;
+        private final FlurryAdNativeListener mFlurryNativelistener = new FlurryBaseAdListener(this) {
             @Override
             public void onClicked(final FlurryAdNative flurryAdNative) {
                 super.onClicked(flurryAdNative);
@@ -331,8 +348,8 @@ public final class FlurryCustomEventNative extends CustomEventNative {
     static class FlurryVideoEnabledNativeAd extends BaseNativeAd implements FlurryBaseNativeAd {
         private @NonNull final Context mContext;
         private @NonNull final CustomEventNativeListener mCustomEventNativeListener;
-        private @NonNull FlurryAdNative mFlurryAdNative;
-        private FlurryAdNativeListener mFlurryNativelistener = new FlurryBaseAdListener(this) {
+        private @NonNull final FlurryAdNative mFlurryAdNative;
+        private final FlurryAdNativeListener mFlurryNativelistener = new FlurryBaseAdListener(this) {
             @Override
             public void onClicked(final FlurryAdNative flurryAdNative) {
                 super.onClicked(flurryAdNative);
@@ -370,9 +387,6 @@ public final class FlurryCustomEventNative extends CustomEventNative {
                                    @NonNull CustomEventNativeListener mCustomEventNativeListener) {
             this.mContext = context;
             this.mFlurryAdNative = adNative;
-            FlurryAdTargeting targeting = new FlurryAdTargeting();
-            targeting.setEnableTestAds(true);
-            mFlurryAdNative.setTargeting(targeting);
             this.mCustomEventNativeListener = mCustomEventNativeListener;
             this.mExtras = new HashMap<>();
         }

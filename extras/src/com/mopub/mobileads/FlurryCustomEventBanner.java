@@ -60,7 +60,7 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
         String apiKey = serverExtras.get(FlurryAgentWrapper.PARAM_API_KEY);
         mAdSpaceName = serverExtras.get(FlurryAgentWrapper.PARAM_AD_SPACE_NAME);
 
-        FlurryAgentWrapper.getInstance().startSession(context, apiKey);
+        FlurryAgentWrapper.getInstance().startSession(context, apiKey, null);
 
         Log.d(LOG_TAG, "fetch Flurry Ad (" + mAdSpaceName + ") -- " + mLayout.toString());
         mBanner = new FlurryAdBanner(mContext, mLayout, mAdSpaceName);

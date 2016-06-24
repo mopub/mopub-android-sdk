@@ -58,7 +58,7 @@ class FlurryCustomEventInterstitial extends com.mopub.mobileads.CustomEventInter
         String apiKey = serverExtras.get(FlurryAgentWrapper.PARAM_API_KEY);
         mAdSpaceName = serverExtras.get(FlurryAgentWrapper.PARAM_AD_SPACE_NAME);
 
-        FlurryAgentWrapper.getInstance().startSession(context, apiKey);
+        FlurryAgentWrapper.getInstance().startSession(context, apiKey, null);
 
         Log.d(LOG_TAG, "fetch Flurry ad (" + mAdSpaceName + ")");
         mInterstitial = new FlurryAdInterstitial(mContext, mAdSpaceName);
