@@ -4,8 +4,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
-import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
 
 import java.io.IOException;
@@ -101,6 +101,11 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
         String result = null;
 
         if (responseCode >= 300 && responseCode < 400) {
+
+            if (TextUtils.isEmpty(redirectUrl)){
+                throw new URISyntaxException(redirectUrl, "Unable to parse invalid URL");
+            }
+
             try {
                 // If redirectUrl is a relative path, then resolve() will correctly complete the path;
                 // otherwise, resolve() will return the redirectUrl
