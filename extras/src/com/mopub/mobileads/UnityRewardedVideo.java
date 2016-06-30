@@ -25,8 +25,6 @@ import java.util.Map;
 public class UnityRewardedVideo extends CustomEventRewardedVideo {
     private static final String DEFAULT_PLACEMENT_ID = "";
     private static final String GAME_ID_KEY = "gameId";
-    private static final String ZONE_ID_KEY = "zoneId";
-    private static final String PLACEMENT_ID_KEY = "placementId";
     private static final LifecycleListener sLifecycleListener = new UnityLifecycleListener();
     private static final UnityAdsListener sUnityAdsListener = new UnityAdsListener();
 
@@ -61,24 +59,13 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
             return false;
         }
 
-        String gameId;
-        if (serverExtras.containsKey(GAME_ID_KEY)) {
-            gameId = serverExtras.get(GAME_ID_KEY);
-            if (TextUtils.isEmpty(gameId)) {
+        UnityRouter.initUnityAds(serverExtras, launcherActivity, sUnityAdsListener, new Runnable() {
+            @Override
+            public void run() {
                 throw new IllegalStateException("Unity rewarded video initialization failed due " +
-                        "to empty " + GAME_ID_KEY);
+                        "to empty or missing " + GAME_ID_KEY);
             }
-        } else {
-            throw new IllegalStateException("Unity rewarded video initialization failed due to " +
-                    "missing " + GAME_ID_KEY);
-        }
-
-        MediationMetaData mediationMetaData = new MediationMetaData(launcherActivity.getApplicationContext());
-        mediationMetaData.setName("MoPub");
-        mediationMetaData.setVersion(MoPub.SDK_VERSION);
-        mediationMetaData.commit();
-
-        UnityAds.initialize(launcherActivity, gameId, sUnityAdsListener);
+        });
         mLauncherActivity = launcherActivity;
         sInitialized = true;
 
@@ -90,19 +77,18 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
             @NonNull Map<String, Object> localExtras, @NonNull Map<String, String> serverExtras)
             throws Exception {
 
-        String placementId = null;
-        if (serverExtras.containsKey(PLACEMENT_ID_KEY)) {
-            placementId = serverExtras.get(PLACEMENT_ID_KEY);
-        } else if (serverExtras.containsKey(ZONE_ID_KEY)) {
-            placementId = serverExtras.get(ZONE_ID_KEY);
-        }
-        sPlacementId = TextUtils.isEmpty(placementId) ? sPlacementId : placementId;
-
-        if (TextUtils.isEmpty(sPlacementId)) {
-            MoPubRewardedVideoManager.onRewardedVideoLoadFailure(UnityRewardedVideo.class, sPlacementId, MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
-        } else if (hasVideoAvailable(sPlacementId)) {
-            loadRewardedVideo(sPlacementId);
-        }
+        sPlacementId = UnityRouter.placementIdForServerExtras(serverExtras);
+        UnityRouter.initPlacement(sPlacementId, new Runnable() {
+            @Override
+            public void run() {
+                MoPubRewardedVideoManager.onRewardedVideoLoadFailure(UnityRewardedVideo.class, sPlacementId, MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
+            }
+        }, new Runnable() {
+            @Override
+            public void run() {
+                loadRewardedVideo(sPlacementId);
+            }
+        });
     }
 
     @Override
