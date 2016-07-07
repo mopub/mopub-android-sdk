@@ -57,7 +57,7 @@ public class UnityRouter {
     }
 
     private static boolean hasVideoAvailable(String placementId) {
-        return UnityAds.isReady(placementId) && UnityAds.getPlacementState(placementId) == UnityAds.PlacementState.READY;
+        return UnityAds.isReady(placementId);
     }
 
 }
