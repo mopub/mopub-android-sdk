@@ -14,6 +14,7 @@ public class UnityInterstitial extends CustomEventInterstitial implements IUnity
     private static boolean sInitialized = false;
     private CustomEventInterstitialListener mCustomEventInterstitialListener;
     private Activity mLauncherActivity;
+    private String mPlacementId;
 
     @Override
     protected void loadInterstitial(Context context, CustomEventInterstitialListener customEventInterstitialListener, Map<String, Object> localExtras, Map<String, String> serverExtras) {
@@ -37,7 +38,8 @@ public class UnityInterstitial extends CustomEventInterstitial implements IUnity
             return;
         }
 
-        UnityRouter.initPlacement(UnityRouter.placementIdForServerExtras(serverExtras), new Runnable() {
+        mPlacementId = UnityRouter.placementIdForServerExtras(serverExtras);
+        UnityRouter.initPlacement(mPlacementId, new Runnable() {
             public void run() {
                 mCustomEventInterstitialListener.onInterstitialFailed(MoPubErrorCode.NETWORK_INVALID_STATE);
             }
@@ -52,8 +54,8 @@ public class UnityInterstitial extends CustomEventInterstitial implements IUnity
 
     @Override
     protected void showInterstitial() {
-        if (UnityAds.isReady() && mLauncherActivity != null) {
-            UnityAds.show(mLauncherActivity);
+        if (UnityAds.isReady(mPlacementId) && mLauncherActivity != null) {
+            UnityAds.show(mLauncherActivity, mPlacementId);
         }
     }
 
