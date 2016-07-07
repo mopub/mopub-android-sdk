@@ -14,7 +14,7 @@ public class UnityInterstitial extends CustomEventInterstitial implements IUnity
     private static boolean sInitialized = false;
     private CustomEventInterstitialListener mCustomEventInterstitialListener;
     private Activity mLauncherActivity;
-    private String mPlacementId;
+    private String mPlacementId = UnityRouter.DEFAULT_PLACEMENT_ID;
 
     @Override
     protected void loadInterstitial(Context context, CustomEventInterstitialListener customEventInterstitialListener, Map<String, Object> localExtras, Map<String, String> serverExtras) {

@@ -25,7 +25,7 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
     private static final UnityAdsListener sUnityAdsListener = new UnityAdsListener();
 
     private static boolean sInitialized = false;
-    @NonNull private static String sPlacementId = UnityRouter.DEFAULT_PLACEMENT_ID;
+    private static String sPlacementId = UnityRouter.DEFAULT_PLACEMENT_ID;
 
     @Nullable private Activity mLauncherActivity;
 
@@ -89,11 +89,7 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
 
     @Override
     public boolean hasVideoAvailable() {
-        return hasVideoAvailable(sPlacementId);
-    }
-
-    private static boolean hasVideoAvailable(String placementId) {
-        return UnityAds.isReady(placementId) && UnityAds.getPlacementState(placementId) == UnityAds.PlacementState.READY;
+        return UnityRouter.hasVideoAvailable(sPlacementId);
     }
 
     @Override
@@ -132,7 +128,7 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
             CustomEventRewardedVideoListener {
         @Override
         public void onUnityAdsReady(String placementId) {
-            if (hasVideoAvailable(placementId)) {
+            if (UnityRouter.hasVideoAvailable(placementId)) {
                 MoPubLog.d("Unity rewarded video cached for placement " + placementId + ".");
                 loadRewardedVideo(placementId);
             }
