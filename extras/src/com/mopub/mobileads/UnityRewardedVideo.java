@@ -3,17 +3,14 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.text.TextUtils;
 
 import com.mopub.common.BaseLifecycleListener;
 import com.mopub.common.LifecycleListener;
-import com.mopub.common.MoPub;
 import com.mopub.common.MoPubReward;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.unity3d.ads.IUnityAdsListener;
 import com.unity3d.ads.UnityAds;
-import com.unity3d.ads.metadata.MediationMetaData;
 
 import java.util.Map;
 
@@ -23,13 +20,12 @@ import java.util.Map;
  * Certified with Unity 2.0.0
  */
 public class UnityRewardedVideo extends CustomEventRewardedVideo {
-    private static final String DEFAULT_PLACEMENT_ID = "";
     private static final String GAME_ID_KEY = "gameId";
     private static final LifecycleListener sLifecycleListener = new UnityLifecycleListener();
     private static final UnityAdsListener sUnityAdsListener = new UnityAdsListener();
 
     private static boolean sInitialized = false;
-    @NonNull private static String sPlacementId = DEFAULT_PLACEMENT_ID;
+    @NonNull private static String sPlacementId = UnityRouter.DEFAULT_PLACEMENT_ID;
 
     @Nullable private Activity mLauncherActivity;
 
@@ -181,6 +177,6 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
     @VisibleForTesting
     void reset() {
         sInitialized = false;
-        sPlacementId = DEFAULT_PLACEMENT_ID;
+        sPlacementId = UnityRouter.DEFAULT_PLACEMENT_ID;
     }
 }
