@@ -111,15 +111,11 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
         @Override
         public void onCreate(@NonNull final Activity activity) {
             super.onCreate(activity);
-            // TODO: is there something we should do in place of changeActivity?
-//            UnityAds.changeActivity(activity);
         }
 
         @Override
         public void onResume(@NonNull final Activity activity) {
             super.onResume(activity);
-            // TODO: is there something we should do in place of changeActivity?
-//            UnityAds.changeActivity(activity);
         }
 
     }
@@ -159,7 +155,6 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
 
         @Override
         public void onUnityAdsError(UnityAds.UnityAdsError unityAdsError, String message) {
-            // TODO: since we're not passed the placementId, I'm using the static placement id - is this OK?
             MoPubLog.d("Unity rewarded video cache failed for placement " + sPlacementId + ".");
             MoPubRewardedVideoManager.onRewardedVideoLoadFailure(UnityRewardedVideo.class,
                     sPlacementId, MoPubErrorCode.NETWORK_NO_FILL);
