@@ -75,6 +75,7 @@ public class AdViewController {
     private boolean mPreviousAutoRefreshSetting = true;
     private String mKeywords;
     private Location mLocation;
+    private String mIncludes;
     private boolean mIsTesting;
     private boolean mAdWasLoaded;
     @Nullable private String mAdUnitId;
@@ -300,6 +301,14 @@ public class AdViewController {
         mLocation = location;
     }
 
+    public String getIncludes() {
+        return mIncludes;
+    }
+
+    public void setIncludes(String includes) {
+        mIncludes = includes;
+    }
+
     public String getAdUnitId() {
         return mAdUnitId;
     }
@@ -457,6 +466,7 @@ public class AdViewController {
                 .withAdUnitId(mAdUnitId)
                 .withKeywords(mKeywords)
                 .withLocation(mLocation)
+                .withDebugIncludes(mIncludes)
                 .generateUrlString(Constants.HOST);
     }
 

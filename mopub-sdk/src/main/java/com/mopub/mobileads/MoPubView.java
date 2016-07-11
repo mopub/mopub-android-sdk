@@ -253,6 +253,14 @@ public class MoPubView extends FrameLayout {
         return (mAdViewController != null) ? mAdViewController.getKeywords() : null;
     }
 
+    public void setInclude(String includes) {
+        if (mAdViewController != null) mAdViewController.setIncludes(includes);
+    }
+
+    public String getInclude() {
+        return (mAdViewController != null) ? mAdViewController.getIncludes() : null;
+    }
+
     public void setLocation(Location location) {
         if (mAdViewController != null) mAdViewController.setLocation(location);
     }

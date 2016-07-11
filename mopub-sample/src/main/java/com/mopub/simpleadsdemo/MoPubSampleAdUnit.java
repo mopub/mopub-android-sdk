@@ -13,6 +13,7 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
     public static final String AD_TYPE = "adType";
     public static final String IS_USER_DEFINED = "isCustom";
     public static final String ID = "id";
+    public static final String INCLUDE = "include";
 
     // Note that entries are also sorted in this order
     enum AdType {
@@ -68,6 +69,7 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
         private String mDescription;
         private boolean mIsUserDefined;
         private long mId;
+        private String mInclude;
 
         Builder(final String adUnitId, final AdType adType) {
             mAdUnitId = adUnitId;
@@ -90,6 +92,11 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
             return this;
         }
 
+        Builder include(final String include) {
+            mInclude = include;
+            return this;
+        }
+
         MoPubSampleAdUnit build() {
             return new MoPubSampleAdUnit(this);
         }
@@ -100,6 +107,7 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
     private final String mDescription;
     private final boolean mIsUserDefined;
     private final long mId;
+    private final String mInclude;
 
     private MoPubSampleAdUnit(final Builder builder) {
         mAdUnitId = builder.mAdUnitId;
@@ -107,6 +115,7 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
         mDescription = builder.mDescription;
         mIsUserDefined = builder.mIsUserDefined;
         mId = builder.mId;
+        mInclude = builder.mInclude;
     }
 
     Class<? extends Fragment> getFragmentClass() {
@@ -137,6 +146,8 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
         return mIsUserDefined;
     }
 
+    String include() { return mInclude; }
+
     Bundle toBundle() {
         final Bundle bundle = new Bundle();
         bundle.putLong(ID, mId);
@@ -144,6 +155,7 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
         bundle.putString(DESCRIPTION, mDescription);
         bundle.putSerializable(AD_TYPE, mAdType);
         bundle.putBoolean(IS_USER_DEFINED, mIsUserDefined);
+        bundle.putString(INCLUDE, mInclude);
 
         return bundle;
     }
@@ -154,10 +166,12 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
         final AdType adType = (AdType) bundle.getSerializable(AD_TYPE);
         final String description = bundle.getString(DESCRIPTION);
         final boolean isUserDefined = bundle.getBoolean(IS_USER_DEFINED, false);
+        final String include = bundle.getString(INCLUDE);
         final Builder builder = new MoPubSampleAdUnit.Builder(adUnitId, adType);
         builder.description(description);
         builder.id(id);
         builder.isUserDefined(isUserDefined);
+        builder.include(include);
 
         return builder.build();
     }
