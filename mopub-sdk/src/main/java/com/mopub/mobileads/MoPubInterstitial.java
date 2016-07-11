@@ -110,6 +110,10 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         mInterstitialView.setKeywords(keywords);
     }
 
+    public void setInclude(String include) {
+        mInterstitialView.setInclude(include);
+    }
+
     public String getKeywords() {
         return mInterstitialView.getKeywords();
     }

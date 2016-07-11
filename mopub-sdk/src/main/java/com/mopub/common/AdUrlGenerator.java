@@ -28,6 +28,11 @@ public abstract class AdUrlGenerator extends BaseUrlGenerator {
     private static final String KEYWORDS_KEY = "q";
 
     /**
+     * include = ad group ID to specifically target only those ad groups we want to be in the auction.
+     */
+    private static final String DEBUG_INCLUDES_KEY = "include";
+
+    /**
      * Location represented in latitude and longitude.
      * e.g. "47.638,-122.321"
      */
@@ -105,6 +110,7 @@ public abstract class AdUrlGenerator extends BaseUrlGenerator {
     protected String mAdUnitId;
     protected String mKeywords;
     protected Location mLocation;
+    protected String mIncludes;
 
     public AdUrlGenerator(Context context) {
         mContext = context;
@@ -125,6 +131,11 @@ public abstract class AdUrlGenerator extends BaseUrlGenerator {
         return this;
     }
 
+    public AdUrlGenerator withDebugIncludes(String includes) {
+        mIncludes = includes;
+        return this;
+    }
+
     protected void setAdUnitId(String adUnitId) {
         addParam(AD_UNIT_ID_KEY, adUnitId);
     }
@@ -135,6 +146,10 @@ public abstract class AdUrlGenerator extends BaseUrlGenerator {
 
     protected void setKeywords(String keywords) {
         addParam(KEYWORDS_KEY, keywords);
+    }
+
+    protected void setIncludes(String includes) {
+        addParam(DEBUG_INCLUDES_KEY, includes);
     }
 
     protected void setLocation(@Nullable Location location) {
@@ -218,6 +233,8 @@ public abstract class AdUrlGenerator extends BaseUrlGenerator {
         setKeywords(mKeywords);
 
         setLocation(mLocation);
+
+        setIncludes(mIncludes);
 
         setTimezone(DateAndTime.getTimeZoneOffsetString());
 
