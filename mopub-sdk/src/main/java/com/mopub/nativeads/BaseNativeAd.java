@@ -6,6 +6,8 @@ import android.view.View;
 
 import com.mopub.common.Preconditions;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.nativeads.events.NativeAdEventsObserver;
+import com.mopub.nativeads.events.NativeAdType;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +30,8 @@ public abstract class BaseNativeAd {
     @NonNull final private Set<String> mImpressionTrackers;
     @NonNull final private Set<String> mClickTrackers;
     @Nullable private NativeEventListener mNativeEventListener;
+
+    private NativeAdType mNativeAdType;
 
     protected BaseNativeAd() {
         mImpressionTrackers = new HashSet<String>();
@@ -79,6 +83,7 @@ public abstract class BaseNativeAd {
         if (mNativeEventListener != null) {
             mNativeEventListener.onAdImpressed();
         }
+	    NativeAdEventsObserver.instance().onAdImpressed(getNativeAdType());
     }
 
     /**
@@ -90,6 +95,7 @@ public abstract class BaseNativeAd {
         if (mNativeEventListener != null) {
             mNativeEventListener.onAdClicked();
         }
+	    NativeAdEventsObserver.instance().onAdClicked(getNativeAdType());
     }
 
     final protected void addImpressionTrackers(final Object impressionTrackers) throws ClassCastException {
@@ -159,4 +165,12 @@ public abstract class BaseNativeAd {
     Set<String> getClickTrackers() {
         return new HashSet<String>(mClickTrackers);
     }
+
+	public NativeAdType getNativeAdType() {
+		return mNativeAdType;
+	}
+
+	public void setNativeAdType(NativeAdType nativeAdType) {
+		mNativeAdType = nativeAdType;
+	}
 }

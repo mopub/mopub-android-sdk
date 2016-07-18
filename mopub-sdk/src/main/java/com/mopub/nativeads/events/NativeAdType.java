@@ -10,6 +10,9 @@ public enum NativeAdType {
 	Facebook,
 	Millennial,
 	Inneractive,
-	Amazon,
-	InMobi
+	InMobi,
+	AdToApp,
+	Flurry,
+	Mobfox,
+	AppLovin
 }
