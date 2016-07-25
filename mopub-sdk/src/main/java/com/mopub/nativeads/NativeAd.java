@@ -91,6 +91,17 @@ public class NativeAd {
             public void onAdClicked() {
                 handleClick(null);
             }
+
+            @Override
+            public void onAdRequested() {
+
+            }
+
+            @Override
+            public void onAdLoaded() {
+
+            }
+
         });
 
         mMoPubAdRenderer = moPubAdRenderer;

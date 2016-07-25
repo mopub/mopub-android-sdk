@@ -6,4 +6,6 @@ package com.mopub.nativeads.events;
 public interface NativeAdEventsListener {
 	void onNativeAdClicked(NativeAdType adType);
 	void onNativeAdImpressed(NativeAdType adType);
+	void onNativeAdRequested(NativeAdType adType);
+	void onNativeAdLoaded(NativeAdType adType);
 }

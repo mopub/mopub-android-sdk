@@ -25,6 +25,8 @@ public abstract class BaseNativeAd {
     public interface NativeEventListener {
         void onAdImpressed();
         void onAdClicked();
+        void onAdRequested();
+        void onAdLoaded();
     }
 
     @NonNull final private Set<String> mImpressionTrackers;
@@ -97,6 +99,20 @@ public abstract class BaseNativeAd {
         }
 	    NativeAdEventsObserver.instance().onAdClicked(getNativeAdType());
     }
+
+	protected final void notifyAdLoaded() {
+		if (mNativeEventListener != null) {
+			mNativeEventListener.onAdLoaded();
+		}
+		NativeAdEventsObserver.instance().onAdLoaded(getNativeAdType());
+	}
+
+	protected final void notifyAdRequested() {
+		if (mNativeEventListener != null) {
+			mNativeEventListener.onAdRequested();
+		}
+		NativeAdEventsObserver.instance().onAdRequested(getNativeAdType());
+	}
 
     final protected void addImpressionTrackers(final Object impressionTrackers) throws ClassCastException {
         if (!(impressionTrackers instanceof JSONArray)) {

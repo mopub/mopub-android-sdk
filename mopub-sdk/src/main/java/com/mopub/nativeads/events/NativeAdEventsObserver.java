@@ -45,4 +45,16 @@ public class NativeAdEventsObserver {
 			listener.onNativeAdImpressed(adType);
 		}
 	}
+
+	public void onAdRequested(NativeAdType adType) {
+		for (NativeAdEventsListener listener : listeners) {
+			listener.onNativeAdRequested(adType);
+		}
+	}
+
+	public void onAdLoaded(NativeAdType adType) {
+		for (NativeAdEventsListener listener : listeners) {
+			listener.onNativeAdLoaded(adType);
+		}
+	}
 }
