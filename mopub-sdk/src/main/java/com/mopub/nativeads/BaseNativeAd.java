@@ -69,7 +69,7 @@ public abstract class BaseNativeAd {
 
 	@CallSuper
 	protected void loadAd(){
-
+		notifyAdRequested();
 	}
 
 	public void truncate() {
