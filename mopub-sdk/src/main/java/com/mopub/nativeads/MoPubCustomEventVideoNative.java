@@ -28,6 +28,7 @@ import com.mopub.mobileads.VastVideoConfig;
 import com.mopub.mobileads.VideoViewabilityTracker;
 import com.mopub.mobileads.factories.VastManagerFactory;
 import com.mopub.nativeads.NativeVideoController.NativeVideoProgressRunnable;
+import com.mopub.nativeads.events.NativeAdType;
 import com.mopub.network.TrackingRequest;
 
 import org.json.JSONArray;
@@ -60,10 +61,13 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
             @NonNull final CustomEventNativeListener customEventNativeListener,
             @NonNull final Map<String, Object> localExtras,
             @NonNull final Map<String, String> serverExtras) {
+        setCustomEventNativeListener(customEventNativeListener);
+        setNativeAdType(NativeAdType.Mopub);
+
         final Object json = localExtras.get(JSON_BODY_KEY);
         // null or non-JSONObjects should not be passed in localExtras as JSON_BODY_KEY
         if (!(json instanceof JSONObject)) {
-            customEventNativeListener.onNativeAdFailed(NativeErrorCode.INVALID_RESPONSE);
+            notifyLoadFailed(NativeErrorCode.INVALID_RESPONSE);
             return;
         }
 
@@ -73,7 +77,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
 
         final VideoResponseHeaders videoResponseHeaders = new VideoResponseHeaders(serverExtras);
         if (!videoResponseHeaders.hasValidHeaders()) {
-            customEventNativeListener.onNativeAdFailed(NativeErrorCode.INVALID_RESPONSE);
+            notifyLoadFailed(NativeErrorCode.INVALID_RESPONSE);
             return;
         }
 
@@ -82,18 +86,18 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         // Ensure click tracking url is a non-empty String
         if (!(clickTrackingUrlFromHeaderObject instanceof String) ||
                 TextUtils.isEmpty((String) clickTrackingUrlFromHeaderObject)) {
-            customEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
+            notifyLoadFailed(NativeErrorCode.UNSPECIFIED);
             return;
         }
 
         final String clickTrackingUrlFromHeader = (String) clickTrackingUrlFromHeaderObject;
         final MoPubVideoNativeAd videoNativeAd = new MoPubVideoNativeAd(activity, (JSONObject) json,
-                customEventNativeListener, videoResponseHeaders, eventDetails,
+                this, videoResponseHeaders, eventDetails,
                 clickTrackingUrlFromHeader);
         try {
             videoNativeAd.loadAd();
         } catch (IllegalArgumentException e) {
-            customEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
+            notifyLoadFailed(NativeErrorCode.UNSPECIFIED);
         }
     }
 
@@ -158,7 +162,6 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         @NonNull private VideoState mVideoState;
         @NonNull private final VisibilityTracker mVideoVisibleTracking;
         @NonNull private final String mMoPubClickTrackingUrl;
-        @NonNull private final CustomEventNativeListener mCustomEventNativeListener;
         @NonNull private final VideoResponseHeaders mVideoResponseHeaders;
         @NonNull private final NativeVideoControllerFactory mNativeVideoControllerFactory;
         @Nullable private NativeVideoController mNativeVideoController;
@@ -187,11 +190,11 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         public MoPubVideoNativeAd(
                 @NonNull final Activity activity,
                 @NonNull final JSONObject jsonObject,
-                @NonNull final CustomEventNativeListener customEventNativeListener,
+                @NonNull final CustomEventNative customEventNative,
                 @NonNull final VideoResponseHeaders videoResponseHeaders,
                 @Nullable final EventDetails eventDetails,
                 @NonNull final String clickTrackingUrl) {
-            this(activity, jsonObject, customEventNativeListener, videoResponseHeaders,
+            this(activity, jsonObject, customEventNative, videoResponseHeaders,
                     new VisibilityTracker(activity), new NativeVideoControllerFactory(),
                     eventDetails, clickTrackingUrl, VastManagerFactory.create(activity.getApplicationContext(), false));
         }
@@ -200,7 +203,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         MoPubVideoNativeAd(
                 @NonNull final Activity activity,
                 @NonNull final JSONObject jsonObject,
-                @NonNull final CustomEventNativeListener customEventNativeListener,
+                @NonNull final CustomEventNative customEventNative,
                 @NonNull final VideoResponseHeaders videoResponseHeaders,
                 @NonNull final VisibilityTracker visibilityTracker,
                 @NonNull final NativeVideoControllerFactory nativeVideoControllerFactory,
@@ -209,16 +212,15 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                 @NonNull final VastManager vastManager) {
             Preconditions.checkNotNull(activity);
             Preconditions.checkNotNull(jsonObject);
-            Preconditions.checkNotNull(customEventNativeListener);
+            Preconditions.checkNotNull(customEventNative);
             Preconditions.checkNotNull(videoResponseHeaders);
             Preconditions.checkNotNull(visibilityTracker);
             Preconditions.checkNotNull(nativeVideoControllerFactory);
             Preconditions.checkNotNull(clickTrackingUrl);
             Preconditions.checkNotNull(vastManager);
-
+            setEventNative(customEventNative);
             mContext = activity.getApplicationContext();
             mJsonObject = jsonObject;
-            mCustomEventNativeListener = customEventNativeListener;
             mVideoResponseHeaders = videoResponseHeaders;
 
             mNativeVideoControllerFactory = nativeVideoControllerFactory;
@@ -251,11 +253,13 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
             mVastManager = vastManager;
         }
 
-        void loadAd() throws IllegalArgumentException {
+        @Override
+        protected void loadAd() throws IllegalArgumentException {
             if (!containsRequiredKeys(mJsonObject)) {
                 throw new IllegalArgumentException("JSONObject did not contain required keys.");
             }
 
+            super.loadAd();
             final Iterator<String> keys = mJsonObject.keys();
             while (keys.hasNext()) {
                 final String key = keys.next();
@@ -285,7 +289,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
 
                 @Override
                 public void onImagesFailedToCache(final NativeErrorCode errorCode) {
-                    mCustomEventNativeListener.onNativeAdFailed(errorCode);
+                    notifyLoadFailed(errorCode);
                 }
             });
         }
@@ -293,7 +297,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         @Override
         public void onVastVideoConfigurationPrepared(@Nullable VastVideoConfig vastVideoConfig) {
             if (vastVideoConfig == null) {
-                mCustomEventNativeListener.onNativeAdFailed(NativeErrorCode.INVALID_RESPONSE);
+                notifyLoadFailed(NativeErrorCode.INVALID_RESPONSE);
                 return;
             }
 
@@ -342,7 +346,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
             mNativeVideoController = mNativeVideoControllerFactory.createForId(
                     mId, mContext, visibilityTrackingEvents, mVastVideoConfig, mEventDetails);
 
-            mCustomEventNativeListener.onNativeAdLoaded(this);
+            notifyAdLoaded();
         }
 
         private boolean containsRequiredKeys(@NonNull final JSONObject jsonObject) {

@@ -9,9 +9,9 @@ import android.view.View;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.nativeads.NativeImageHelper.ImageListener;
+import com.mopub.nativeads.events.NativeAdType;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -33,11 +33,13 @@ public class MoPubCustomEventNative extends CustomEventNative {
             @NonNull final CustomEventNativeListener customEventNativeListener,
             @NonNull final Map<String, Object> localExtras,
             @NonNull final Map<String, String> serverExtras) {
+        setCustomEventNativeListener(customEventNativeListener);
+        setNativeAdType(NativeAdType.Mopub);
 
         Object json = localExtras.get(JSON_BODY_KEY);
         // null or non-JSONObjects should not be passed in localExtras as JSON_BODY_KEY
         if (!(json instanceof JSONObject)) {
-            customEventNativeListener.onNativeAdFailed(NativeErrorCode.INVALID_RESPONSE);
+            notifyLoadFailed(NativeErrorCode.INVALID_RESPONSE);
             return;
         }
 
@@ -46,12 +48,12 @@ public class MoPubCustomEventNative extends CustomEventNative {
                         (JSONObject) json,
                         new ImpressionTracker(activity),
                         new NativeClickHandler(activity),
-                        customEventNativeListener);
+                        this);
 
         try {
             moPubStaticNativeAd.loadAd();
         } catch (IllegalArgumentException e) {
-            customEventNativeListener.onNativeAdFailed(NativeErrorCode.UNSPECIFIED);
+            notifyLoadFailed(NativeErrorCode.UNSPECIFIED);
         }
     }
 
@@ -105,7 +107,6 @@ public class MoPubCustomEventNative extends CustomEventNative {
         static final String PRIVACY_INFORMATION_CLICKTHROUGH_URL = "https://www.mopub.com/optout";
 
         @NonNull private final Context mContext;
-        @NonNull private final CustomEventNativeListener mCustomEventNativeListener;
         @NonNull private final JSONObject mJsonObject;
         @NonNull private final ImpressionTracker mImpressionTracker;
         @NonNull private final NativeClickHandler mNativeClickHandler;
@@ -114,18 +115,21 @@ public class MoPubCustomEventNative extends CustomEventNative {
                 @NonNull final JSONObject jsonBody,
                 @NonNull final ImpressionTracker impressionTracker,
                 @NonNull final NativeClickHandler nativeClickHandler,
-                @NonNull final CustomEventNativeListener customEventNativeListener) {
+                @NonNull final CustomEventNative customEventNative) {
             mJsonObject = jsonBody;
             mContext = context.getApplicationContext();
             mImpressionTracker = impressionTracker;
             mNativeClickHandler = nativeClickHandler;
-            mCustomEventNativeListener = customEventNativeListener;
+            setEventNative(customEventNative);
         }
 
-        void loadAd() throws IllegalArgumentException {
+
+        protected void loadAd() throws IllegalArgumentException {
             if (!containsRequiredKeys(mJsonObject)) {
                 throw new IllegalArgumentException("JSONObject did not contain required keys.");
             }
+
+            super.loadAd();
 
             final Iterator<String> keys = mJsonObject.keys();
             while (keys.hasNext()) {
@@ -147,12 +151,12 @@ public class MoPubCustomEventNative extends CustomEventNative {
             preCacheImages(mContext, getAllImageUrls(), new ImageListener() {
                 @Override
                 public void onImagesCached() {
-                    mCustomEventNativeListener.onNativeAdLoaded(MoPubStaticNativeAd.this);
+                    notifyAdLoaded();
                 }
 
                 @Override
                 public void onImagesFailedToCache(final NativeErrorCode errorCode) {
-                    mCustomEventNativeListener.onNativeAdFailed(errorCode);
+                    notifyLoadFailed(errorCode);
                 }
             });
         }

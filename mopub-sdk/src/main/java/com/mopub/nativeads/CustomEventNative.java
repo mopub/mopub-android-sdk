@@ -3,6 +3,9 @@ package com.mopub.nativeads;
 import android.app.Activity;
 import android.support.annotation.NonNull;
 
+import com.mopub.nativeads.events.NativeAdEventsObserver;
+import com.mopub.nativeads.events.NativeAdType;
+
 import java.util.Map;
 
 /**
@@ -14,6 +17,10 @@ import java.util.Map;
  * needed and invoke its {@link #loadNativeAd} method.
  */
 public abstract class CustomEventNative {
+
+    private CustomEventNative.CustomEventNativeListener mCustomEventNativeListener;
+    private NativeAdType mNativeAdType = NativeAdType.Mopub;
+
     /**
      * When the MoPub SDK receives a response indicating it should load a custom event, it will send
      * this message to your custom event class. Your implementation of this method can either load a
@@ -53,5 +60,35 @@ public abstract class CustomEventNative {
          * @param errorCode An enum value with the relevant error message.
          */
         void onNativeAdFailed(NativeErrorCode errorCode);
+    }
+
+    public final void setCustomEventNativeListener(CustomEventNative.CustomEventNativeListener
+                                                           customEventNativeListener) {
+        this.mCustomEventNativeListener = customEventNativeListener;
+    }
+
+    protected final CustomEventNative.CustomEventNativeListener getCustomEventNativeListener() {
+        return mCustomEventNativeListener;
+    }
+
+    protected final void notifyAdLoaded(BaseNativeAd baseNativeAd) {
+        mCustomEventNativeListener.onNativeAdLoaded(baseNativeAd);
+        NativeAdEventsObserver.instance().onAdLoaded(mNativeAdType);
+    }
+
+    protected final void notifyLoadFailed(NativeErrorCode errorCode){
+        mCustomEventNativeListener.onNativeAdFailed(errorCode);
+    }
+
+    protected final void notifyAdRequested() {
+        NativeAdEventsObserver.instance().onAdRequested(mNativeAdType);
+    }
+
+    public NativeAdType getNativeAdType() {
+        return mNativeAdType;
+    }
+
+    public void setNativeAdType(NativeAdType nativeAdType) {
+        mNativeAdType = nativeAdType;
     }
 }
