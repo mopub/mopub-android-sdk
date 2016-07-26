@@ -4,15 +4,15 @@ package com.mopub.nativeads.events;
  * Created by Shad on 14.10.15.
  */
 public enum NativeAdType {
-	AdMob,
-	AdEx,
+	Google,
 	Mopub,
 	Facebook,
 	Millennial,
 	Inneractive,
 	InMobi,
-	AdToApp,
+	AdtoApp,
 	Flurry,
 	Mobfox,
-	AppLovin
+	AppLovin,
+	MyTarget
 }
