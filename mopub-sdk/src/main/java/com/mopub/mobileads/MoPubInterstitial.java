@@ -30,7 +30,7 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
     private MoPubInterstitialView mInterstitialView;
     private CustomEventInterstitialAdapter mCustomEventInterstitialAdapter;
     private InterstitialAdListener mInterstitialAdListener;
-    private Activity mActivity;
+    private Context mAppContext;
     private String mAdUnitId;
     private InterstitialState mCurrentInterstitialState;
     private boolean mIsDestroyed;
@@ -43,11 +43,11 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         public void onInterstitialDismissed(MoPubInterstitial interstitial);
     }
 
-    public MoPubInterstitial(Activity activity, String id) {
-        mActivity = activity;
+    public MoPubInterstitial(Context ctx, String id) {
+        mAppContext = ctx.getApplicationContext();
         mAdUnitId = id;
 
-        mInterstitialView = new MoPubInterstitialView(mActivity);
+        mInterstitialView = new MoPubInterstitialView(mAppContext);
         mInterstitialView.setAdUnitId(mAdUnitId);
 
         mCurrentInterstitialState = InterstitialState.NOT_READY;
@@ -114,8 +114,8 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         return mInterstitialView.getKeywords();
     }
 
-    public Activity getActivity() {
-        return mActivity;
+    public Context getAppContext() {
+        return mAppContext;
     }
 
     public Location getLocation() {
