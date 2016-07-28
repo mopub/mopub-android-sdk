@@ -42,7 +42,7 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
         Preconditions.checkNotNull(serverExtras);
         mHandler = new Handler();
         mMoPubInterstitial = moPubInterstitial;
-        mContext = mMoPubInterstitial.getActivity();
+        mContext = mMoPubInterstitial.getAppContext();
         mTimeout = new Runnable() {
             @Override
             public void run() {
