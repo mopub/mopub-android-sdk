@@ -26,7 +26,7 @@ import static com.mopub.nativeads.NativeImageHelper.preCacheImages;
 /*
  * Tested with InMobi SDK 4.4.1
  */
-class InMobiNative extends CustomEventNative {
+public class InMobiNative extends CustomEventNative {
     private static final String APP_ID_KEY = "app_id";
 
     // CustomEventNative implementation
