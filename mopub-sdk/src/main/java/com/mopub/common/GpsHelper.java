@@ -42,7 +42,7 @@ public class GpsHelper {
 
             Object result = methodBuilder.execute();
 
-            return (result != null && (Integer) result == GOOGLE_PLAY_SUCCESS_CODE);
+            return (result != null);
         } catch (Exception exception) {
             return false;
         }
