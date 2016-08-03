@@ -253,9 +253,13 @@ public class DeviceUtils {
             @NonNull final String permission) {
         Preconditions.checkNotNull(context);
         Preconditions.checkNotNull(permission);
-
-        return ContextCompat.checkSelfPermission(context, permission) ==
-                PackageManager.PERMISSION_GRANTED;
+        try {
+        	return ContextCompat.checkSelfPermission(context, permission) ==
+                    PackageManager.PERMISSION_GRANTED;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
     }
 
     /**
