@@ -1,9 +1,13 @@
 package com.mopub.mobileads;
 
+import android.app.Activity;
 import android.support.annotation.NonNull;
+import android.webkit.WebView;
 
+import com.integralads.avid.library.mopub.AvidManager;
 import com.mopub.common.CreativeOrientation;
 
+import java.security.AccessControlContext;
 import java.util.Map;
 
 import static com.mopub.common.DataKeys.CLICKTHROUGH_URL_KEY;
@@ -19,6 +23,7 @@ public class HtmlInterstitial extends ResponseBodyInterstitial {
     private String mClickthroughUrl;
     @NonNull
     private CreativeOrientation mOrientation;
+    private WebView webView;
 
     @Override
     protected void extractExtras(Map<String, String> serverExtras) {
@@ -31,7 +36,12 @@ public class HtmlInterstitial extends ResponseBodyInterstitial {
 
     @Override
     protected void preRenderHtml(CustomEventInterstitialListener customEventInterstitialListener) {
-        MoPubActivity.preRenderHtml(mContext, mAdReport, customEventInterstitialListener, mHtmlData);
+        webView = MoPubActivity.preRenderHtml(mContext, mAdReport, customEventInterstitialListener, mHtmlData);
+        if (mContext instanceof Activity) {
+            AvidManager.getInstance().registerAdView(webView, (Activity)mContext);
+        } else {
+            webView = null;
+        }
     }
 
     @Override
@@ -39,5 +49,19 @@ public class HtmlInterstitial extends ResponseBodyInterstitial {
         MoPubActivity.start(mContext, mHtmlData, mAdReport, mIsScrollable,
                 mRedirectUrl, mClickthroughUrl, mOrientation,
                 mBroadcastIdentifier);
+        unregisterWebView();
+    }
+
+    @Override
+    public void onInvalidate() {
+        super.onInvalidate();
+        unregisterWebView();
+    }
+
+    private void unregisterWebView() {
+        if (webView != null) {
+            AvidManager.getInstance().unregisterAdView(webView);
+            webView = null;
+        }
     }
 }
