@@ -54,7 +54,7 @@ public class NativeAdEventsObserver {
 
 	public void onAdLoaded(NativeAdType adType) {
 		for (NativeAdEventsListener listener : listeners) {
-			listener.onNativeAdLoaded(adType);
+			listener.onNativeAdLoadSuccess(adType);
 		}
 	}
 }
