@@ -29,7 +29,7 @@ import static com.mopub.mobileads.MoPubErrorCode.VIDEO_DOWNLOAD_ERROR;
  *
  * Certified with Chartboost 6.4.1
  */
-public class ChartboostShared {
+public abstract class ChartboostShared extends CustomEventRewardedVideo {
     private static volatile ChartboostSingletonDelegate sDelegate = new ChartboostSingletonDelegate();
 
     /*
