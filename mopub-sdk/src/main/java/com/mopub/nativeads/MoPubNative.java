@@ -186,6 +186,9 @@ public class MoPubNative {
         if (endpointUrl == null) {
             mMoPubNativeNetworkListener.onNativeFail(INVALID_REQUEST_URL);
             return;
+        } catch (NullPointerException e){
+            mMoPubNativeListener.onNativeFail(INVALID_REQUEST_URL);
+            return;
         }
 
         mNativeRequest = new AdRequest(endpointUrl, AdFormat.NATIVE, mAdUnitId, context, mVolleyListener);
