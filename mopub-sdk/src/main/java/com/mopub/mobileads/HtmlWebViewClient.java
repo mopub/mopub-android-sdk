@@ -22,6 +22,7 @@ class HtmlWebViewClient extends WebViewClient {
     static final String MOPUB_FAIL_LOAD = "mopub://failLoad";
 
     private final EnumSet<UrlAction> SUPPORTED_URL_ACTIONS = EnumSet.of(
+            UrlAction.SKILLZ,
             UrlAction.HANDLE_MOPUB_SCHEME,
             UrlAction.IGNORE_ABOUT_SCHEME,
             UrlAction.HANDLE_PHONE_SCHEME,

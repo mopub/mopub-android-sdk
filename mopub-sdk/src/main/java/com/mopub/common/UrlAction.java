@@ -196,6 +196,28 @@ public enum UrlAction {
         }
     },
 
+    SKILLZ(true) {
+        @Override
+        public boolean shouldTryHandlingUrl(@NonNull final Uri uri) {
+            return "skillz".equalsIgnoreCase(uri.getScheme());
+        }
+
+        @Override
+        protected void performAction(
+                @NonNull final Context context, @NonNull final Uri uri,
+                @NonNull final UrlHandler urlHandler)
+                throws IntentNotResolvableException {
+
+            try {
+                Intent intent = new Intent(context, Class.forName("com.skillz.activity.HomeActivity"));
+                intent.putExtra(".skillz_deep_link", uri.toString());
+                Intents.startActivity(context, intent);
+            } catch (ClassNotFoundException e) {
+                throw new IntentNotResolvableException(e);
+            }
+        }
+    },
+
     /* 7 */ FOLLOW_DEEP_LINK_WITH_FALLBACK(true) {
         @Override
         public boolean shouldTryHandlingUrl(@NonNull final Uri uri) {
