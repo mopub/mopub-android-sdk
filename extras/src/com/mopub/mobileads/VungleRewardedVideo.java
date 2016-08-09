@@ -177,7 +177,15 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
             CustomEventRewardedVideoListener {
 
         @Override
-        public void onAdEnd(final boolean wasCallToActionClicked) {
+        public void onAdEnd(final boolean wasSuccessfulView, final boolean wasCallToActionClicked) {
+            if (wasSuccessfulView) {
+                // Vungle does not provide a callback when a user should be rewarded.
+                // You will need to provide your own reward logic if you receive a reward with
+                // "NO_REWARD_LABEL" && "NO_REWARD_AMOUNT"
+                MoPubRewardedVideoManager.onRewardedVideoCompleted(VungleRewardedVideo.class,
+                        VUNGLE_AD_NETWORK_CONSTANT,
+                        MoPubReward.success(MoPubReward.NO_REWARD_LABEL, MoPubReward.NO_REWARD_AMOUNT));
+            }
             if (wasCallToActionClicked) {
                 MoPubRewardedVideoManager.onRewardedVideoClicked(VungleRewardedVideo.class,
                         VUNGLE_AD_NETWORK_CONSTANT);
@@ -209,14 +217,6 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         public void onVideoView(final boolean isCompletedView, final int watchedMillis, final int videoMillis) {
             MoPubLog.d(String.format(Locale.US, "%.1f%% of Vungle video watched.",
                     (double) watchedMillis / videoMillis * 100));
-            if (isCompletedView) {
-                // Vungle does not provide a callback when a user should be rewarded.
-                // You will need to provide your own reward logic if you receive a reward with
-                // "NO_REWARD_LABEL" && "NO_REWARD_AMOUNT"
-                MoPubRewardedVideoManager.onRewardedVideoCompleted(VungleRewardedVideo.class,
-                        VUNGLE_AD_NETWORK_CONSTANT,
-                        MoPubReward.success(MoPubReward.NO_REWARD_LABEL, MoPubReward.NO_REWARD_AMOUNT));
-            }
         }
     }
 

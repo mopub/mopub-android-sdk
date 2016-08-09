@@ -120,7 +120,7 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
     }
 
     @Override
-    public void onAdEnd(final boolean wasCallToActionClicked) {
+    public void onAdEnd(final boolean wasSuccessfulView, final boolean wasCallToActionClicked) {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
