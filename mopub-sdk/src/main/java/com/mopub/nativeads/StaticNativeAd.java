@@ -38,7 +38,7 @@ public abstract class StaticNativeAd extends BaseNativeAd implements ImpressionI
     @NonNull private final Map<String, Object> mExtras;
 
     public StaticNativeAd() {
-        mImpressionMinTimeViewed = 1000;
+        mImpressionMinTimeViewed = 0;
 
         mExtras = new HashMap<String, Object>();
     }
