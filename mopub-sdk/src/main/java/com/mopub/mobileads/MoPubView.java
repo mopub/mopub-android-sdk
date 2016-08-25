@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.webkit.WebViewDatabase;
 import android.widget.FrameLayout;
@@ -71,10 +72,15 @@ public class MoPubView extends FrameLayout {
         // It happens when the WebView can't access the local file store to make a cache file.
         // Here, we'll work around it by trying to create a file store and then just go inert
         // if it's not accessible.
-        if (WebViewDatabase.getInstance(context) == null) {
-            MoPubLog.e("Disabling MoPub. Local cache file is inaccessible so MoPub will " +
-                    "fail if we try to create a WebView. Details of this Android bug found at:" +
-                    "https://code.google.com/p/android/issues/detail?id=10789");
+        try {
+            if (WebViewDatabase.getInstance(context) == null) {
+                MoPubLog.e("Disabling MoPub. Local cache file is inaccessible so MoPub will " +
+                        "fail if we try to create a WebView. Details of this Android bug found at:" +
+                        "https://code.google.com/p/android/issues/detail?id=10789");
+                return;
+            }
+        } catch (Exception e) {
+            Log.d("Mopub", "Unable to access android.WebView");
             return;
         }
 
