@@ -104,8 +104,8 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
             try {
                 // If redirectUrl is a relative path, then resolve() will correctly complete the path;
                 // otherwise, resolve() will return the redirectUrl
-				String encodedRedirectUrl = encodeUriParameters(redirectUrl);
-				result = baseUri.resolve(encodedRedirectUrl).toString();
+                String encodedRedirectUrl = encodeUriParameters(redirectUrl);
+                result = baseUri.resolve(encodedRedirectUrl).toString();
             } catch (IllegalArgumentException e) {
                 // Ensure the request is cancelled instead of resolving an intermediary URL
                 throw new URISyntaxException(redirectUrl, "Unable to parse invalid URL");
@@ -115,19 +115,19 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
         return result;
     }
 
-	private static String encodeUriParameters(String locationUrl) {
-		URL url;
-		URI uri;
-		try {
-			url = new URL(locationUrl);
-			uri = new URI(url.getProtocol(), url.getHost(), url.getPath(), url.getQuery(), null);
-		} catch (MalformedURLException e) {
-			return null;
-		} catch (URISyntaxException e) {
-			return null;
-		}
-		return uri.toString();
-	}
+    private static String encodeUriParameters(String locationUrl) {
+        URL url;
+        URI uri;
+        try {
+            url = new URL(locationUrl);
+            uri = new URI(url.getProtocol(), url.getHost(), url.getPath(), url.getQuery(), null);
+        } catch (MalformedURLException e) {
+            return null;
+        } catch (URISyntaxException e) {
+            return null;
+        }
+        return uri.toString();
+    }
 
     @Override
     protected void onPostExecute(@Nullable final String resolvedUrl) {
@@ -147,5 +147,3 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
         mListener.onFailure("Task for resolving url was cancelled", null);
     }
 }
-
-
