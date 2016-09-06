@@ -115,6 +115,7 @@ Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/mast
 - android-support-annotations.jar, r23 (**Updated in 4.4.0**)
 - android-support-v7-recyclerview.jar, r23 (**Updated in 4.4.0**)
 - MoPub Volley Library (mopub-volley-1.1.0.jar - available on JCenter) (**Updated in 3.6.0**)
+- Google ExoPlayer r1.5.6 (**Updated in 4.5.1**)
 - **Recommended** Google Play Services 7.8.0
 
 ## Upgrading from 3.2.0 and Prior
