@@ -89,7 +89,7 @@ class MillennialBanner extends CustomEventBanner {
                 ai = ai.setSiteId(null);
             }
             MMSDK.setAppInfo(ai);
-        } catch ( IllegalStateException e ) {
+        } catch ( MMException e ) {
             Log.i(LOGCAT_TAG, "Caught exception " + e.getMessage());
             UI_THREAD_HANDLER.post(new Runnable() {
                 @Override
@@ -111,6 +111,10 @@ class MillennialBanner extends CustomEventBanner {
         try {
             mInlineAd = InlineAd.createInstance(apid, mInternalView);
             mInlineAdMetadata = new InlineAdMetadata().setAdSize(new AdSize(width, height));
+            mInlineAd.setListener(new MillennialInlineListener());
+
+            /* If MoPub gets location, so do we. */
+            MMSDK.setLocationEnabled( (localExtras.get("location") != null) );
         } catch ( MMException e ) {
             e.printStackTrace();
             UI_THREAD_HANDLER.post(new Runnable() {
@@ -122,10 +126,7 @@ class MillennialBanner extends CustomEventBanner {
             return;
         }
 
-        mInlineAd.setListener(new MillennialInlineListener());
-        
-        /* If MoPub gets location, so do we. */
-        MMSDK.setLocationEnabled( (localExtras.get("location") != null) );
+
 
         AdViewController.setShouldHonorServerDimensions(mInternalView);
 

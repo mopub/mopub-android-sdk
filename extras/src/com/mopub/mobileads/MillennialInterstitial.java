@@ -6,14 +6,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import java.util.Map;
-
 import com.millennialmedia.AppInfo;
 import com.millennialmedia.InterstitialAd;
 import com.millennialmedia.InterstitialAd.InterstitialErrorStatus;
 import com.millennialmedia.InterstitialAd.InterstitialListener;
 import com.millennialmedia.MMException;
 import com.millennialmedia.MMSDK;
+
+import java.util.Map;
 
 /**
  * Compatible with version 6.0 of the Millennial Media SDK.
@@ -78,12 +78,13 @@ class MillennialInterstitial extends CustomEventInterstitial {
                 ai.setSiteId(null);
             }
             MMSDK.setAppInfo(ai);
-        } catch ( IllegalStateException e ) {
+            /* If MoPub gets location, so do we. */
+            MMSDK.setLocationEnabled( (localExtras.get("location") != null) );
+        } catch ( MMException e ) {
             Log.i(LOGCAT_TAG, "SDK not finished initializing-- " + e.getMessage());
         }
         
-        /* If MoPub gets location, so do we. */
-        MMSDK.setLocationEnabled( (localExtras.get("location") != null) );
+
 
         try {
             mMillennialInterstitial = InterstitialAd.createInstance(apid);
