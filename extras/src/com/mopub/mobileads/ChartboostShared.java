@@ -79,8 +79,6 @@ public class ChartboostShared {
         Chartboost.setMediation(Chartboost.CBMediation.CBMediationMoPub, MoPub.SDK_VERSION);
         Chartboost.setDelegate(sDelegate);
         Chartboost.setShouldRequestInterstitialsInFirstSession(true);
-        Chartboost.setAutoCacheAds(false);
-        Chartboost.setShouldDisplayLoadingViewForMoreApps(false);
 
         // Callers of this method need to call onCreate & onStart themselves.
         return true;
