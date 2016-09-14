@@ -84,6 +84,10 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
             httpUrlConnection.setInstanceFollowRedirects(false);
 
             return resolveRedirectLocation(urlString, httpUrlConnection);
+        } catch (java.lang.IllegalStateException e) {
+            //java.lang.IllegalStateException possible from com.android.okhttp.internal.huc.HttpURLConnectionImpl.getResponseCode -> com.android.okhttp.internal.DiskLruCache.checkNotClosed
+            //Throw a new IOException like resolveRedirectLocation would for a similar IO error
+            throw new IOException("Unable to resolve URL due to IllegalStateException", e);
         } finally {
             if (httpUrlConnection != null) {
                 httpUrlConnection.disconnect();
