@@ -53,7 +53,7 @@ public class MoPubCustomEventNative extends CustomEventNative {
         }
     }
 
-    static class MoPubStaticNativeAd extends StaticNativeAd {
+    public static class MoPubStaticNativeAd extends StaticNativeAd {
         enum Parameter {
             IMPRESSION_TRACKER("imptracker", true),
             CLICK_TRACKER("clktracker", true),
