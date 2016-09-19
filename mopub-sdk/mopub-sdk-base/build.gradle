@@ -2,6 +2,8 @@ apply from: '../shared-build.gradle'
 
 dependencies {
     compile 'com.mopub.volley:mopub-volley:1.1.0'
+    compile 'com.flurry.android:ads:6.4.2'
+    compile 'com.flurry.android:analytics:6.2.0'
 }
 
 project.description = 'MoPub Android SDK - Base'

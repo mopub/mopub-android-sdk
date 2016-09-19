@@ -3,6 +3,8 @@ apply from: '../shared-build.gradle'
 dependencies {
     compile project(':mopub-sdk:mopub-sdk-base')
     compile 'com.android.support:recyclerview-v7:23.1.1'
+    compile 'com.facebook.android:facebook-android-sdk:4.15.0'
+    compile 'com.facebook.android:audience-network-sdk:4.15.0'
 }
 
 project.description = 'MoPub Android SDK - Native Static'
