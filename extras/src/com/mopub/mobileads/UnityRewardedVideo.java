@@ -49,8 +49,8 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
 
     @Override
     public boolean checkAndInitializeSdk(@NonNull final Activity launcherActivity,
-            @NonNull final Map<String, Object> localExtras,
-            @NonNull final Map<String, String> serverExtras) throws Exception {
+                                         @NonNull final Map<String, Object> localExtras,
+                                         @NonNull final Map<String, String> serverExtras) throws Exception {
         if (sInitialized) {
             return false;
         }
@@ -70,7 +70,7 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
 
     @Override
     protected void loadWithSdkInitialized(@NonNull Activity activity,
-            @NonNull Map<String, Object> localExtras, @NonNull Map<String, String> serverExtras)
+                                          @NonNull Map<String, Object> localExtras, @NonNull Map<String, String> serverExtras)
             throws Exception {
 
         sPlacementId = UnityRouter.placementIdForServerExtras(serverExtras);
@@ -138,7 +138,13 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
 
         @Override
         public void onUnityAdsFinish(String placementId, UnityAds.FinishState finishState) {
-            if (finishState == UnityAds.FinishState.COMPLETED) {
+            if (finishState == UnityAds.FinishState.ERROR) {
+                MoPubRewardedVideoManager.onRewardedVideoPlaybackError(
+                        UnityRewardedVideo.class,
+                        sPlacementId,
+                        MoPubErrorCode.VIDEO_PLAYBACK_ERROR);
+                MoPubLog.d("Unity rewarded video encountered a playback error for placement " + placementId);
+            } else if (finishState == UnityAds.FinishState.COMPLETED) {
                 MoPubRewardedVideoManager.onRewardedVideoCompleted(
                         UnityRewardedVideo.class,
                         sPlacementId,
@@ -151,6 +157,7 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
                         MoPubReward.failure());
                 MoPubLog.d("Unity rewarded video skipped for placement " + placementId);
             }
+            MoPubRewardedVideoManager.onRewardedVideoClosed(UnityRewardedVideo.class, sPlacementId);
         }
 
         @Override
