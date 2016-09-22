@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * A custom event for showing Chartboost interstitial ads.
  *
- * Certified with Chartboost 6.4.1
+ * Download the latest Chartboost SDK at  chartboost.com/android
  */
 class ChartboostInterstitial extends CustomEventInterstitial {
 
