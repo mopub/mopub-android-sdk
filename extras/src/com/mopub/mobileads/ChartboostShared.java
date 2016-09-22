@@ -27,7 +27,7 @@ import static com.mopub.mobileads.MoPubErrorCode.VIDEO_DOWNLOAD_ERROR;
 /**
  * Shared infrastructure for initializing the Chartboost SDK when mediated by MoPub
  *
- * Certified with Chartboost 6.4.1
+ * Download the latest Chartboost SDK at  chartboost.com/android
  */
 public class ChartboostShared {
     private static volatile ChartboostSingletonDelegate sDelegate = new ChartboostSingletonDelegate();
