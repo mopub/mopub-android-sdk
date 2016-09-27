@@ -1,6 +1,5 @@
 package com.mopub.nativeads;
 
-import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -69,7 +68,7 @@ public final class FlurryCustomEventNative extends CustomEventNative {
     private static final double MOPUB_STAR_RATING_SCALE = StaticNativeAd.MAX_STAR_RATING;
 
     @Override
-    protected void loadNativeAd(@NonNull final Activity activity,
+    protected void loadNativeAd(@NonNull final Context context,
                                 @NonNull final CustomEventNativeListener customEventNativeListener,
                                 @NonNull final Map<String, Object> localExtras,
                                 @NonNull final Map<String, String> serverExtras) {
@@ -83,17 +82,17 @@ public final class FlurryCustomEventNative extends CustomEventNative {
             flurryAdSpace = serverExtras.get(FlurryAgentWrapper.PARAM_AD_SPACE_NAME);
 
             if (FlurryAgentWrapper.getInstance().isSessionActive()) {
-                fetchFlurryAd(activity, flurryAdSpace, localExtras, customEventNativeListener);
+                fetchFlurryAd(context, flurryAdSpace, localExtras, customEventNativeListener);
             } else {
                 final FlurryAgentListener flurryAgentListener = new FlurryAgentListener() {
                     @Override
                     public void onSessionStarted() {
-                        fetchFlurryAd(activity, flurryAdSpace, localExtras,
+                        fetchFlurryAd(context, flurryAdSpace, localExtras,
                                 customEventNativeListener);
                     }
                 };
 
-                FlurryAgentWrapper.getInstance().startSession(activity, flurryApiKey,
+                FlurryAgentWrapper.getInstance().startSession(context, flurryApiKey,
                         flurryAgentListener);
             }
         } else {
@@ -185,10 +184,10 @@ public final class FlurryCustomEventNative extends CustomEventNative {
         return (!TextUtils.isEmpty(flurryApiKey) && !TextUtils.isEmpty(flurryAdSpace));
     }
 
-    private void fetchFlurryAd(@NonNull Activity activity, String flurryAdSpace,
+    private void fetchFlurryAd(@NonNull Context context, String flurryAdSpace,
                                @NonNull Map<String, Object> localExtras,
                                @NonNull CustomEventNativeListener customEventNativeListener) {
-        final FlurryAdNative flurryAdNative = new FlurryAdNative(activity, flurryAdSpace);
+        final FlurryAdNative flurryAdNative = new FlurryAdNative(context, flurryAdSpace);
 
         if (localExtras.containsKey(LOCAL_EXTRA_TEST_MODE) &&
                 localExtras.get(LOCAL_EXTRA_TEST_MODE) instanceof Boolean) {
@@ -198,10 +197,10 @@ public final class FlurryCustomEventNative extends CustomEventNative {
 
         final FlurryBaseNativeAd flurryNativeAd;
         if (shouldAllowVideoNativeAds()) {
-            flurryNativeAd = new FlurryVideoEnabledNativeAd(activity, flurryAdNative,
+            flurryNativeAd = new FlurryVideoEnabledNativeAd(context, flurryAdNative,
                     customEventNativeListener);
         } else {
-            flurryNativeAd = new FlurryStaticNativeAd(activity, flurryAdNative,
+            flurryNativeAd = new FlurryStaticNativeAd(context, flurryAdNative,
                     customEventNativeListener);
         }
         flurryNativeAd.fetchAd();
