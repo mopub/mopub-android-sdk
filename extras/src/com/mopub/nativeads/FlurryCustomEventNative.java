@@ -571,43 +571,43 @@ public final class FlurryCustomEventNative extends CustomEventNative {
 
         @Override
         public void onFetched(final FlurryAdNative flurryAdNative) {
-            Log.d(LOG_TAG, "onFetched: Native Ad fetched successfully!");
+            Log.d(LOG_TAG, "onFetched: Flurry native ad fetched successfully!");
             mapNativeAd(mBaseNativeAd, flurryAdNative);
         }
 
         @Override
         public void onShowFullscreen(final FlurryAdNative flurryAdNative) {
-            Log.d(LOG_TAG, "onShowFullscreen");
+            Log.d(LOG_TAG, "onShowFullscreen: Flurry native ad in full-screen");
         }
 
         @Override
         public void onCloseFullscreen(final FlurryAdNative flurryAdNative) {
-            Log.d(LOG_TAG, "onCloseFullscreen");
+            Log.d(LOG_TAG, "onCloseFullscreen: Flurry native ad full-screen closed");
         }
 
         @Override
         public void onAppExit(final FlurryAdNative flurryAdNative) {
-            Log.d(LOG_TAG, "onAppExit");
+            Log.d(LOG_TAG, "onAppExit: Flurry native ad exited app");
         }
 
         @Override
         public void onClicked(final FlurryAdNative flurryAdNative) {
-            Log.d(LOG_TAG, "onClicked");
+            Log.d(LOG_TAG, "onClicked: Flurry native ad clicked");
         }
 
         @Override
         public void onImpressionLogged(final FlurryAdNative flurryAdNative) {
-            Log.d(LOG_TAG, "onImpressionLogged");
+            Log.d(LOG_TAG, "onImpressionLogged: Flurry native ad impression logged");
         }
 
         @Override
         public void onExpanded(final FlurryAdNative flurryAdNative) {
-            Log.d(LOG_TAG, "onExpanded");
+            Log.d(LOG_TAG, "onExpanded: Flurry native ad expanded");
         }
 
         @Override
         public void onCollapsed(final FlurryAdNative flurryAdNative) {
-            Log.d(LOG_TAG, "onCollapsed");
+            Log.d(LOG_TAG, "onCollapsed: Flurry native ad collapsed");
         }
 
         @Override

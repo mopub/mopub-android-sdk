@@ -62,7 +62,7 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
 
         FlurryAgentWrapper.getInstance().startSession(context, apiKey, null);
 
-        Log.d(LOG_TAG, "fetch Flurry Ad (" + mAdSpaceName + ") -- " + mLayout.toString());
+        Log.d(LOG_TAG, "Fetching Flurry ad, ad unit name:" + mAdSpaceName);
         mBanner = new FlurryAdBanner(mContext, mLayout, mAdSpaceName);
         mBanner.setListener(new FlurryMopubBannerListener());
         mBanner.fetchAd();
@@ -74,7 +74,7 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
             return;
         }
 
-        Log.d(LOG_TAG, "MoPub issued onInvalidate (" + mAdSpaceName + ")");
+        Log.d(LOG_TAG, "MoPub issued onInvalidate. Flurry ad unit: " + mAdSpaceName);
 
         if (mBanner != null) {
             mBanner.destroy();
@@ -100,7 +100,7 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
 
         @Override
         public void onFetched(FlurryAdBanner adBanner) {
-            Log.d(LOG_TAG, "onFetched(" + adBanner.toString() + ")");
+            Log.d(LOG_TAG, "onFetched: Flurry banner ad fetched successfully!");
 
             if (mBanner != null) {
                 mBanner.displayAd();
@@ -109,7 +109,7 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
 
         @Override
         public void onRendered(FlurryAdBanner adBanner) {
-            Log.d(LOG_TAG, "onRendered(" + adBanner.toString() + ")");
+            Log.d(LOG_TAG, "onRendered: Flurry banner ad rendered");
 
             if (mListener != null) {
                 mListener.onBannerLoaded(mLayout);
@@ -118,7 +118,7 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
 
         @Override
         public void onShowFullscreen(FlurryAdBanner adBanner) {
-            Log.d(LOG_TAG, "onShowFullscreen(" + adBanner.toString() + ")");
+            Log.d(LOG_TAG, "onFetched: Flurry banner ad in full-screen");
 
             if (mListener != null) {
                 mListener.onBannerExpanded();
@@ -127,7 +127,7 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
 
         @Override
         public void onCloseFullscreen(FlurryAdBanner adBanner) {
-            Log.d(LOG_TAG, "onCloseFullscreen(" + adBanner.toString() + ")");
+            Log.d(LOG_TAG, "onCloseFullscreen: Flurry banner ad full-screen closed");
 
             if (mListener != null) {
                 mListener.onBannerCollapsed();
@@ -136,7 +136,7 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
 
         @Override
         public void onAppExit(FlurryAdBanner adBanner) {
-            Log.d(LOG_TAG, "onAppExit(" + adBanner.toString() + ")");
+            Log.d(LOG_TAG, "onAppExit: Flurry banner ad exited app");
 
             if (mListener != null) {
                 mListener.onLeaveApplication();
@@ -145,7 +145,7 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
 
         @Override
         public void onClicked(FlurryAdBanner adBanner) {
-            Log.d(LOG_TAG, "onClicked " + adBanner.toString());
+            Log.d(LOG_TAG, "onClicked: Flurry banner ad clicked");
 
             if (mListener != null) {
                 mListener.onBannerClicked();
@@ -154,16 +154,16 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
 
         @Override
         public void onVideoCompleted(FlurryAdBanner adBanner) {
-            Log.d(LOG_TAG, "onVideoCompleted " + adBanner.toString());
-            
+            Log.d(LOG_TAG, "onVideoCompleted: Flurry banner ad video completed");
+
             // no-op
         }
 
         @Override
         public void onError(FlurryAdBanner adBanner, FlurryAdErrorType adErrorType,
                             int errorCode) {
-            Log.d(LOG_TAG, "onError(" + adBanner.toString() + adErrorType.toString() +
-                    errorCode + ")");
+            Log.d(LOG_TAG, String.format("onError: Flurry banner ad not available. " +
+                    "Error type: %s. Error code: %s", adErrorType.toString(), errorCode));
 
             if (mListener != null) {
                 if (FlurryAdErrorType.FETCH.equals(adErrorType)) {
