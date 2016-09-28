@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * A custom event for showing Chartboost rewarded videos.
  *
- * Download the latest Chartboost SDK at  chartboost.com/android
+ * Certified with Chartboost 6.5.1
  */
 public class ChartboostRewardedVideo extends CustomEventRewardedVideo {
     @NonNull private static final LifecycleListener sLifecycleListener =
