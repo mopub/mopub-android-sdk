@@ -16,16 +16,11 @@ public final class FlurryAgentWrapper {
 
     private static final String ORIGIN_IDENTIFIER = "Flurry_Mopub_Android";
     private static final String ORIGIN_VERSION = "6.5.0";
-    private static FlurryAgentWrapper sWrapper;
 
     private FlurryAgent.Builder mAgentBuilder;
 
-    public static synchronized FlurryAgentWrapper getInstance() {
-        if (sWrapper == null) {
-            sWrapper = new FlurryAgentWrapper();
-        }
-
-        return sWrapper;
+    public static FlurryAgentWrapper getInstance() {
+        return FlurryAgentLoader.INSTANCE;
     }
 
     private FlurryAgentWrapper() {
@@ -76,6 +71,10 @@ public final class FlurryAgentWrapper {
 
     public synchronized boolean isSessionActive() {
         return FlurryAgent.isSessionActive();
+    }
+
+    private static class FlurryAgentLoader {
+        private static final FlurryAgentWrapper INSTANCE = new FlurryAgentWrapper();
     }
 }
 
