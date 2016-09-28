@@ -67,6 +67,8 @@ public final class FlurryCustomEventNative extends CustomEventNative {
     private static final String ASSET_VIDEO = "videoUrl";
     private static final double MOPUB_STAR_RATING_SCALE = StaticNativeAd.MAX_STAR_RATING;
 
+    private FlurryAgentListener mFlurryAgentListener;
+
     @Override
     protected void loadNativeAd(@NonNull final Context context,
                                 @NonNull final CustomEventNativeListener customEventNativeListener,
@@ -81,10 +83,10 @@ public final class FlurryCustomEventNative extends CustomEventNative {
             flurryApiKey = serverExtras.get(FlurryAgentWrapper.PARAM_API_KEY);
             flurryAdSpace = serverExtras.get(FlurryAgentWrapper.PARAM_AD_SPACE_NAME);
 
-            if (FlurryAgentWrapper.getInstance().isSessionActive()) {
+            if (FlurryAgentWrapper.getInstance().isSessionActive() || mFlurryAgentListener != null) {
                 fetchFlurryAd(context, flurryAdSpace, localExtras, customEventNativeListener);
             } else {
-                final FlurryAgentListener flurryAgentListener = new FlurryAgentListener() {
+                mFlurryAgentListener = new FlurryAgentListener() {
                     @Override
                     public void onSessionStarted() {
                         fetchFlurryAd(context, flurryAdSpace, localExtras,
@@ -93,7 +95,7 @@ public final class FlurryCustomEventNative extends CustomEventNative {
                 };
 
                 FlurryAgentWrapper.getInstance().startSession(context, flurryApiKey,
-                        flurryAgentListener);
+                        mFlurryAgentListener);
             }
         } else {
             customEventNativeListener.onNativeAdFailed(
@@ -224,9 +226,9 @@ public final class FlurryCustomEventNative extends CustomEventNative {
      */
     static class FlurryStaticNativeAd extends StaticNativeAd implements FlurryBaseNativeAd {
 
-        private @NonNull final Context mContext;
-        private @NonNull final CustomEventNativeListener mCustomEventNativeListener;
-        private @NonNull final FlurryAdNative mFlurryAdNative;
+        @NonNull private final Context mContext;
+        @NonNull private final CustomEventNativeListener mCustomEventNativeListener;
+        @NonNull private final FlurryAdNative mFlurryAdNative;
         private final FlurryAdNativeListener mFlurryNativelistener = new FlurryBaseAdListener(this) {
             @Override
             public void onClicked(final FlurryAdNative flurryAdNative) {
@@ -289,7 +291,8 @@ public final class FlurryCustomEventNative extends CustomEventNative {
             mFlurryAdNative.fetchAd();
         }
 
-        public @NonNull List<String> getImageUrls() {
+        @NonNull
+        public List<String> getImageUrls() {
             final List<String> imageUrls = new ArrayList<>(2);
             final String mainImageUrl = getMainImageUrl();
 

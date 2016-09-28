@@ -7,18 +7,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.mopub.common.VisibleForTesting;
-
 import java.util.WeakHashMap;
 
 public class FlurryNativeAdRenderer implements
         MoPubAdRenderer<FlurryCustomEventNative.FlurryVideoEnabledNativeAd> {
     @NonNull private final FlurryViewBinder mViewBinder;
-
-    // This is used instead of View.setTag, which causes a memory leak in 2.3
-    // and earlier: https://code.google.com/p/android/issues/detail?id=18273
-    @VisibleForTesting
-    @NonNull final WeakHashMap<View, FlurryNativeViewHolder> mViewHolderMap;
+    @NonNull private final WeakHashMap<View, FlurryNativeViewHolder> mViewHolderMap;
 
     public FlurryNativeAdRenderer(@NonNull final FlurryViewBinder viewBinder) {
         mViewBinder = viewBinder;
