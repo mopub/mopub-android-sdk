@@ -4,7 +4,7 @@ import android.support.annotation.NonNull;
 
 public class FlurryViewBinder {
     ViewBinder staticViewBinder;
-    public int videoViewId;
+    int videoViewId;
 
     private FlurryViewBinder(@NonNull Builder builder) {
         this.staticViewBinder = builder.staticViewBinder;

@@ -71,7 +71,7 @@ public class FlurryNativeAdRenderer implements
         }
     }
 
-    static class FlurryNativeViewHolder {
+    private static class FlurryNativeViewHolder {
         private final StaticNativeViewHolder staticNativeViewHolder;
         private final ViewGroup videoView;
 

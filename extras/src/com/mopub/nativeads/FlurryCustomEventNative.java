@@ -224,7 +224,7 @@ public final class FlurryCustomEventNative extends CustomEventNative {
      *
      * @see FlurryVideoEnabledNativeAd
      */
-    static class FlurryStaticNativeAd extends StaticNativeAd implements FlurryBaseNativeAd {
+    private static class FlurryStaticNativeAd extends StaticNativeAd implements FlurryBaseNativeAd {
 
         @NonNull private final Context mContext;
         @NonNull private final CustomEventNativeListener mCustomEventNativeListener;
@@ -252,10 +252,10 @@ public final class FlurryCustomEventNative extends CustomEventNative {
         };
 
         FlurryStaticNativeAd(@NonNull Context context, @NonNull FlurryAdNative adNative,
-                             @NonNull CustomEventNativeListener mCustomEventNativeListener) {
-            this.mContext = context;
-            this.mFlurryAdNative = adNative;
-            this.mCustomEventNativeListener = mCustomEventNativeListener;
+                             @NonNull CustomEventNativeListener customEventNativeListener) {
+            mContext = context;
+            mFlurryAdNative = adNative;
+            mCustomEventNativeListener = customEventNativeListener;
         }
 
         // region StaticNativeAd
@@ -386,11 +386,11 @@ public final class FlurryCustomEventNative extends CustomEventNative {
 
 
         FlurryVideoEnabledNativeAd(@NonNull Context context, @NonNull FlurryAdNative adNative,
-                                   @NonNull CustomEventNativeListener mCustomEventNativeListener) {
-            this.mContext = context;
-            this.mFlurryAdNative = adNative;
-            this.mCustomEventNativeListener = mCustomEventNativeListener;
-            this.mExtras = new HashMap<>();
+                                   @NonNull CustomEventNativeListener customEventNativeListener) {
+            mContext = context;
+            mFlurryAdNative = adNative;
+            mCustomEventNativeListener = customEventNativeListener;
+            mExtras = new HashMap<>();
         }
 
         // region StaticNativeAd
@@ -516,32 +516,32 @@ public final class FlurryCustomEventNative extends CustomEventNative {
 
         @Override
         public void setTitle(@Nullable String title) {
-            this.mTitle = title;
+            mTitle = title;
         }
 
         @Override
         public void setText(@Nullable String text) {
-            this.mText = text;
+            mText = text;
         }
 
         @Override
         public void setCallToAction(@Nullable String callToAction) {
-            this.mCallToAction = callToAction;
+            mCallToAction = callToAction;
         }
 
         @Override
         public void setMainImageUrl(@Nullable String mainImageUrl) {
-            this.mMainImageUrl = mainImageUrl;
+            mMainImageUrl = mainImageUrl;
         }
 
         @Override
         public void setIconImageUrl(@Nullable String iconImageUrl) {
-            this.mIconImageUrl = iconImageUrl;
+            mIconImageUrl = iconImageUrl;
         }
 
         @Override
         public void setStarRating(@Nullable Double starRating) {
-            this.mStarRating = starRating;
+            mStarRating = starRating;
         }
 
         @Override
@@ -569,7 +569,7 @@ public final class FlurryCustomEventNative extends CustomEventNative {
         private final @NonNull FlurryBaseNativeAd mBaseNativeAd;
 
         FlurryBaseAdListener(@NonNull FlurryBaseNativeAd baseNativeAd) {
-            this.mBaseNativeAd = baseNativeAd;
+            mBaseNativeAd = baseNativeAd;
         }
 
         @Override
