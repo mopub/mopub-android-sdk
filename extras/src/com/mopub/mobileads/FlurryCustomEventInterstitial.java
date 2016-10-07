@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.flurry.android.ads.FlurryAdErrorType;
@@ -47,7 +48,9 @@ class FlurryCustomEventInterstitial extends com.mopub.mobileads.CustomEventInter
             return;
         }
 
-        if (!extrasAreValid(serverExtras)) {
+        if (!validateExtras(serverExtras)) {
+            Log.e(LOG_TAG, "Failed interstitial ad fetch: Missing required server extras" +
+                    " [FLURRY_APIKEY and/or FLURRY_ADSPACE].");
             listener.onInterstitialFailed(ADAPTER_CONFIGURATION_ERROR);
             return;
         }
@@ -85,11 +88,6 @@ class FlurryCustomEventInterstitial extends com.mopub.mobileads.CustomEventInter
         mListener = null;
     }
 
-    private boolean extrasAreValid(Map<String, String> serverExtras) {
-        return serverExtras != null && serverExtras.containsKey(FlurryAgentWrapper.PARAM_API_KEY) &&
-                serverExtras.containsKey(FlurryAgentWrapper.PARAM_AD_SPACE_NAME);
-    }
-
     @Override
     protected void showInterstitial() {
         Log.d(LOG_TAG, "MoPub issued showInterstitial (" + mAdSpaceName + ")");
@@ -97,6 +95,18 @@ class FlurryCustomEventInterstitial extends com.mopub.mobileads.CustomEventInter
         if (mInterstitial != null) {
             mInterstitial.displayAd();
         }
+    }
+
+    private boolean validateExtras(final Map<String, String> serverExtras) {
+        if (serverExtras == null) { return false; }
+
+        final String flurryApiKey = serverExtras.get(FlurryAgentWrapper.PARAM_API_KEY);
+        final String flurryAdSpace = serverExtras.get(FlurryAgentWrapper.PARAM_AD_SPACE_NAME);
+        Log.i(LOG_TAG, "ServerInfo fetched from Mopub " + FlurryAgentWrapper.PARAM_API_KEY + " : "
+                + flurryApiKey + " and " + FlurryAgentWrapper.PARAM_AD_SPACE_NAME + " :" +
+                flurryAdSpace);
+
+        return (!TextUtils.isEmpty(flurryApiKey) && !TextUtils.isEmpty(flurryAdSpace));
     }
 
     // FlurryAdListener
