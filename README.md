@@ -145,3 +145,5 @@ If your app's target SDK is 23 or higher _**and**_ the user's device is running 
 ## License
 
 We have launched a new license as of version 3.2.0. To view the full license, visit [http://www.mopub.com/legal/sdk-license-agreement/](http://www.mopub.com/legal/sdk-license-agreement/).
+
+Ivan submit
