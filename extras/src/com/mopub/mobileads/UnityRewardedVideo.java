@@ -25,9 +25,11 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
     private static final UnityAdsListener sUnityAdsListener = new UnityAdsListener();
 
     private static boolean sInitialized = false;
+    private static boolean sAdCached = false;
     private static String sPlacementId = UnityRouter.DEFAULT_PLACEMENT_ID;
 
-    @Nullable private Activity mLauncherActivity;
+    @Nullable
+    private Activity mLauncherActivity;
 
     @Override
     @NonNull
@@ -62,7 +64,6 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
                         "to empty or missing " + GAME_ID_KEY);
             }
         });
-        mLauncherActivity = launcherActivity;
         sInitialized = true;
 
         return true;
@@ -70,10 +71,14 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
 
     @Override
     protected void loadWithSdkInitialized(@NonNull Activity activity,
-                                          @NonNull Map<String, Object> localExtras, @NonNull Map<String, String> serverExtras)
+                                          @NonNull Map<String, Object> localExtras,
+                                          @NonNull Map<String, String> serverExtras)
             throws Exception {
 
         sPlacementId = UnityRouter.placementIdForServerExtras(serverExtras);
+        mLauncherActivity = activity;
+        UnityAds.setListener(sUnityAdsListener);
+
         UnityRouter.initPlacement(sPlacementId, new Runnable() {
             @Override
             public void run() {
@@ -82,7 +87,11 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
         }, new Runnable() {
             @Override
             public void run() {
-                loadRewardedVideo(sPlacementId);
+                if (UnityAds.isReady(sPlacementId)) {
+                    loadRewardedVideo(sPlacementId);
+                } else {
+                    sAdCached = false;
+                }
             }
         });
     }
@@ -106,7 +115,6 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
         UnityAds.setListener(null);
     }
 
-
     private static final class UnityLifecycleListener extends BaseLifecycleListener {
         @Override
         public void onCreate(@NonNull final Activity activity) {
@@ -124,7 +132,8 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
             CustomEventRewardedVideoListener {
         @Override
         public void onUnityAdsReady(String placementId) {
-            if (UnityRouter.hasVideoAvailable(placementId)) {
+            if (!sAdCached && placementId.equals(sPlacementId)) {
+                sAdCached = true;
                 MoPubLog.d("Unity rewarded video cached for placement " + placementId + ".");
                 loadRewardedVideo(placementId);
             }
@@ -158,6 +167,7 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
                 MoPubLog.d("Unity rewarded video skipped for placement " + placementId);
             }
             MoPubRewardedVideoManager.onRewardedVideoClosed(UnityRewardedVideo.class, sPlacementId);
+            UnityAds.setListener(null);
         }
 
         @Override

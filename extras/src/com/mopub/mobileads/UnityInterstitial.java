@@ -2,7 +2,6 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.content.Context;
-import android.text.TextUtils;
 
 import com.unity3d.ads.IUnityAdsListener;
 import com.unity3d.ads.UnityAds;
@@ -12,44 +11,56 @@ import java.util.Map;
 public class UnityInterstitial extends CustomEventInterstitial implements IUnityAdsListener {
 
     private static boolean sInitialized = false;
+    private static boolean sAdCached = false;
     private CustomEventInterstitialListener mCustomEventInterstitialListener;
     private Activity mLauncherActivity;
     private String mPlacementId = UnityRouter.DEFAULT_PLACEMENT_ID;
 
     @Override
-    protected void loadInterstitial(Context context, CustomEventInterstitialListener customEventInterstitialListener, Map<String, Object> localExtras, Map<String, String> serverExtras) {
-        if (sInitialized) {
-            return;
-        }
-
-        mCustomEventInterstitialListener = customEventInterstitialListener;
-
-        if (context == null || !(context instanceof Activity)) {
-            mCustomEventInterstitialListener.onInterstitialFailed(MoPubErrorCode.NETWORK_INVALID_STATE);
-            return;
-        }
-        mLauncherActivity = (Activity) context;
-
-        if (!UnityRouter.initUnityAds(serverExtras, mLauncherActivity, this, new Runnable() {
-            public void run() {
-                mCustomEventInterstitialListener.onInterstitialFailed(MoPubErrorCode.NETWORK_INVALID_STATE);
-            }
-        })) {
-            return;
-        }
+    protected void loadInterstitial(Context context,
+                                    CustomEventInterstitialListener customEventInterstitialListener,
+                                    Map<String, Object> localExtras,
+                                    Map<String, String> serverExtras) {
 
         mPlacementId = UnityRouter.placementIdForServerExtras(serverExtras);
-        UnityRouter.initPlacement(mPlacementId, new Runnable() {
-            public void run() {
-                mCustomEventInterstitialListener.onInterstitialFailed(MoPubErrorCode.NETWORK_INVALID_STATE);
-            }
-        }, new Runnable() {
-            public void run() {
-                mCustomEventInterstitialListener.onInterstitialLoaded();
-            }
-        });
+        mLauncherActivity = (Activity) context;
+        mCustomEventInterstitialListener = customEventInterstitialListener;
 
-        sInitialized = true;
+        if (!sInitialized) {
+            if (context == null || !(context instanceof Activity)) {
+                mCustomEventInterstitialListener.onInterstitialFailed(MoPubErrorCode.NETWORK_INVALID_STATE);
+                return;
+            }
+
+            if (!UnityRouter.initUnityAds(serverExtras, mLauncherActivity, this, new Runnable() {
+                public void run() {
+                    mCustomEventInterstitialListener.onInterstitialFailed(MoPubErrorCode.NETWORK_INVALID_STATE);
+                }
+            })) {
+                return;
+            }
+
+            UnityAds.setListener(this);
+
+            UnityRouter.initPlacement(mPlacementId, new Runnable() {
+                public void run() {
+                    mCustomEventInterstitialListener.onInterstitialFailed(MoPubErrorCode.NETWORK_INVALID_STATE);
+                }
+            }, new Runnable() {
+                public void run() {
+                    mCustomEventInterstitialListener.onInterstitialLoaded();
+                }
+            });
+
+            sInitialized = true;
+        } else if (sInitialized) {
+            UnityAds.setListener(this);
+            if (UnityAds.isReady(mPlacementId)) {
+                mCustomEventInterstitialListener.onInterstitialLoaded();
+            } else {
+                sAdCached = false;
+            }
+        }
     }
 
     @Override
@@ -61,12 +72,15 @@ public class UnityInterstitial extends CustomEventInterstitial implements IUnity
 
     @Override
     protected void onInvalidate() {
-
+        UnityAds.setListener(null);
     }
 
     @Override
-    public void onUnityAdsReady(String s) {
-        mCustomEventInterstitialListener.onInterstitialLoaded();
+    public void onUnityAdsReady(String placementId) {
+        if (!sAdCached && placementId.equals(mPlacementId)) {
+            sAdCached = true;
+            mCustomEventInterstitialListener.onInterstitialLoaded();
+        }
     }
 
     @Override

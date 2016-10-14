@@ -15,7 +15,6 @@ public class UnityRouter {
     private static final String ZONE_ID_KEY = "zoneId";
     private static final String PLACEMENT_ID_KEY = "placementId";
     static final String DEFAULT_PLACEMENT_ID = null;
-    private static String sPlacementId;
 
     static boolean initUnityAds(Map<String, String> serverExtras, Activity launcherActivity, IUnityAdsListener unityAdsListener, Runnable onInitFailed) {
         String gameId;
