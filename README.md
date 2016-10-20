@@ -48,27 +48,27 @@ The MoPub SDK is available via:
         // ... other project dependencies
 
         // For banners
-        compile('com.mopub:mopub-sdk:mopub-sdk-banner:4.10.0@aar') {
+        compile('com.mopub:mopub-sdk-banner:4.10.0@aar') {
             transitive = true
         }
         
         // For interstitials
-        compile('com.mopub:mopub-sdk:mopub-sdk-interstitial:4.10.0@aar') {
+        compile('com.mopub:mopub-sdk-interstitial:4.10.0@aar') {
             transitive = true
         }
 
         // For rewarded videos. This will automatically also include interstitials
-        compile('com.mopub:mopub-sdk:mopub-sdk-rewardedvideo:4.10.0@aar') {
+        compile('com.mopub:mopub-sdk-rewardedvideo:4.10.0@aar') {
             transitive = true
         }
 
         // For native static (images).
-        compile('com.mopub:mopub-sdk:mopub-sdk-native-static:4.10.0@aar') {
+        compile('com.mopub:mopub-sdk-native-static:4.10.0@aar') {
             transitive = true
         }
 
         // For native video. This will automatically also include native static
-        compile('com.mopub:mopub-sdk:mopub-sdk-native-video:4.10.0@aar') {
+        compile('com.mopub:mopub-sdk-native-video:4.10.0@aar') {
             transitive = true
         }
     }
