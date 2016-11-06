@@ -9,7 +9,7 @@ repositories {
 }
 
 project.group = 'com.mopub'
-project.version = '4.10.0'
+project.version = '4.10.1'
 
 android {
     compileSdkVersion 23
