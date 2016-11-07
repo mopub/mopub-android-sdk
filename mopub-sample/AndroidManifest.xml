@@ -29,7 +29,7 @@
         <activity android:name="com.mopub.common.MoPubBrowser"
                 android:configChanges="keyboardHidden|orientation|screenSize"/>
         <activity android:name="com.mopub.mobileads.MraidVideoPlayerActivity"
-                android:configChanges="keyboardHidden|orientation|screenSize"/>
+                android:configChanges="keyboardHidden|orientation|screenSize" android:screenOrientation="sensorLandscape" />
 
         <meta-data android:name="com.google.android.gms.version"
                    android:value="@integer/google_play_services_version" />
