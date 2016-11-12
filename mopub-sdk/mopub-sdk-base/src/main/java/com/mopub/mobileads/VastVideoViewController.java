@@ -34,6 +34,7 @@ import java.io.Serializable;
 import java.util.Map;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static com.mopub.common.MoPubBrowser.MOPUB_BROWSER_REQUEST_CODE;
 import static com.mopub.mobileads.VastXmlManagerAggregator.ADS_BY_AD_SLOT_ID;
@@ -164,7 +165,7 @@ public class VastVideoViewController extends BaseVideoViewController {
 
         // Companion ad view, set to invisible initially to have it be drawn to calculate size
         mLandscapeCompanionAdView = createCompanionAdView(activity,
-                mVastVideoConfig.getVastCompanionAd(Configuration.ORIENTATION_LANDSCAPE),
+                mVastVideoConfig.getVastCompanionAd(Configuration.SCREEN_ORIENTATION_SENSOR_LANDSCAPE),
                 View.INVISIBLE);
         mPortraitCompanionAdView = createCompanionAdView(activity,
                 mVastVideoConfig.getVastCompanionAd(Configuration.ORIENTATION_PORTRAIT),
