@@ -20,6 +20,10 @@ import java.util.Map;
 
 import static com.mopub.nativeads.NativeImageHelper.preCacheImages;
 
+/**
+ * Compatible with version 6.3 of the Millennial Media SDK.
+ */
+
 public class MillennialNative extends CustomEventNative {
     public static final String DCN_KEY = "dcn";
     public static final String APID_KEY = "adUnitID";

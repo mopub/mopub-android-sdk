@@ -237,6 +237,20 @@ public class MoPubRewardedVideoManager {
             return;
         }
 
+        if (sInstance.mAdRequestStatus.canPlay(adUnitId)) {
+            MoPubLog.d(String.format(Locale.US, "Did not queue rewarded video request for ad " +
+            "unit %s. This ad unit already finished loading and is ready to show.", adUnitId));
+            postToInstance(new Runnable() {
+                @Override
+                public void run() {
+                    if (sInstance.mVideoListener != null) {
+                        sInstance.mVideoListener.onRewardedVideoLoadSuccess(adUnitId);
+                    }
+                }
+            });
+            return;
+        }
+
 
         // If any instance MediationSettings have been specified, update the internal map.
         // Note: This always clears the MediationSettings for the ad unit, whether or not any
@@ -708,6 +722,16 @@ public class MoPubRewardedVideoManager {
     static RewardedVideoData getRewardedVideoData() {
         if (sInstance != null) {
             return sInstance.mRewardedVideoData;
+        }
+        return null;
+    }
+
+    @Deprecated
+    @VisibleForTesting
+    @Nullable
+    static AdRequestStatusMapping getAdRequestStatusMapping() {
+        if (sInstance != null) {
+            return sInstance.mAdRequestStatus;
         }
         return null;
     }

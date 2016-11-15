@@ -602,7 +602,7 @@ public class VastXmlManagerTest {
         assertThat(trackers.size()).isEqualTo(2);
 
         VastAbsoluteProgressTracker tracker0 = trackers.get(0);
-        assertThat(tracker0.getTrackingMilliseconds()).isEqualTo(2000);
+        assertThat(tracker0.getTrackingMilliseconds()).isEqualTo(0);
         assertThat(tracker0.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
 
         VastAbsoluteProgressTracker tracker1 = trackers.get(1);

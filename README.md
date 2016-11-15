@@ -27,7 +27,7 @@ The MoPub SDK is available via:
     }
 
     dependencies {
-        compile('com.mopub:mopub-sdk:4.10.0@aar') {
+        compile('com.mopub:mopub-sdk:4.11.0@aar') {
             transitive = true
         }
     }
@@ -48,27 +48,27 @@ The MoPub SDK is available via:
         // ... other project dependencies
 
         // For banners
-        compile('com.mopub:mopub-sdk-banner:4.10.0@aar') {
+        compile('com.mopub:mopub-sdk-banner:4.11.0@aar') {
             transitive = true
         }
         
         // For interstitials
-        compile('com.mopub:mopub-sdk-interstitial:4.10.0@aar') {
+        compile('com.mopub:mopub-sdk-interstitial:4.11.0@aar') {
             transitive = true
         }
 
         // For rewarded videos. This will automatically also include interstitials
-        compile('com.mopub:mopub-sdk-rewardedvideo:4.10.0@aar') {
+        compile('com.mopub:mopub-sdk-rewardedvideo:4.11.0@aar') {
             transitive = true
         }
 
         // For native static (images).
-        compile('com.mopub:mopub-sdk-native-static:4.10.0@aar') {
+        compile('com.mopub:mopub-sdk-native-static:4.11.0@aar') {
             transitive = true
         }
 
         // For native video. This will automatically also include native static
-        compile('com.mopub:mopub-sdk-native-video:4.10.0@aar') {
+        compile('com.mopub:mopub-sdk-native-video:4.11.0@aar') {
             transitive = true
         }
     }
@@ -96,19 +96,10 @@ The MoPub SDK is available via:
 ## New in this Version
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-- **Added and updated mediated network versions**
-  - Added Flurry version 6.5.0. All Flurry adapters can be found in the corresponding `extras` directory (`/extras/src/com/mopub/mobileads` for banners and interstitials, `/extras/src/com/mopub/nativeads` for native).
-    - All Flurry ad formats must include: `FlurryAgentWrapper`
-    - Banners: `FlurryCustomEventBanner`
-    - Interstitial: `FlurryCustomEventInterstitial`
-    - Native: `FlurryCustomEventNative`, `FlurryBaseNativeAd`, `FlurryNativeAdRenderer`, and `FlurryViewBinder`
-  - Certified Google Play Services 9.4.0
-  - Certified Facebook Audience Network version 4.15.0  
-  - Certified Tapjoy version 11.8.2
-  - Certified Millennial Media version 6.3.0
-  - Certified Vungle version 4.0.2  
-- Fixed intermittent `IllegalStateException` for MRAID creatives attemping to retrieve getRootView() on unattached Views.
-- Updated `mopub-sample`'s example `proguard.cfg` to properly retain methods called only via reflection.
+- Added a workaround for an Android bug where Lollipop devices (Android 5.1.1, API level 22) and lower incorrectly handle SSL connections using Server Name Identification.
+- Rewarded video `load()` calls now do not load another rewarded video with the same ad unit id while one is already loading or loaded.
+- Moved the VAST video start tracker to immediately after the video starts (was 2 seconds after the video started).
+- Bug fixes.
 
 - **Note:** Maven builds from source are currently unstable and will be reinstated in a future release. Maven developers can still pull the MoPub SDK AAR from JCenter.
 

@@ -103,7 +103,7 @@ public class VastManagerTest {
         assertThat(mVastVideoConfig.getAbsoluteTrackers().get(0).getTrackingMilliseconds())
                 .isEqualTo(0);
         assertThat(mVastVideoConfig.getAbsoluteTrackers().get(1).getTrackingMilliseconds())
-                .isEqualTo(2000);
+                .isEqualTo(0);
         assertThat(mVastVideoConfig.getAbsoluteTrackers().get(2).getTrackingMilliseconds())
                 .isEqualTo(3100);
 
@@ -158,9 +158,9 @@ public class VastManagerTest {
         assertThat(mVastVideoConfig.getAbsoluteTrackers().get(0).getTrackingMilliseconds()).isEqualTo(0);
         assertThat(mVastVideoConfig.getAbsoluteTrackers().get(1).getTrackingMilliseconds()).isEqualTo(0);
         assertThat(mVastVideoConfig.getAbsoluteTrackers().get(2).getTrackingMilliseconds()).isEqualTo(0);
-        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(3).getTrackingMilliseconds()).isEqualTo(2000);
-        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(4).getTrackingMilliseconds()).isEqualTo(2000);
-        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(5).getTrackingMilliseconds()).isEqualTo(2000);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(3).getTrackingMilliseconds()).isEqualTo(0);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(4).getTrackingMilliseconds()).isEqualTo(0);
+        assertThat(mVastVideoConfig.getAbsoluteTrackers().get(5).getTrackingMilliseconds()).isEqualTo(0);
         assertThat(mVastVideoConfig.getAbsoluteTrackers().get(6).getTrackingMilliseconds()).isEqualTo(3100);
         assertThat(mVastVideoConfig.getAbsoluteTrackers().get(7).getTrackingMilliseconds()).isEqualTo(3100);
         assertThat(mVastVideoConfig.getAbsoluteTrackers().get(8).getTrackingMilliseconds()).isEqualTo(3100);

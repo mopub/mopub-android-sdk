@@ -36,6 +36,8 @@ public class VastLinearXmlManagerTest {
                 "        https://creativeView/two" +
                 "        ]]>" +
                 "    </Tracking>" +
+                // Ensure empty creativeView event is ignored
+                "    <Tracking event=\"creativeView\"/>" +
                 "    <Tracking event=\"start\">" +
                 "        <![CDATA[" +
                 "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
@@ -272,15 +274,15 @@ public class VastLinearXmlManagerTest {
 
         VastAbsoluteProgressTracker tracker0 = trackers.get(0);
         assertThat(tracker0.getTrackingMilliseconds()).isEqualTo(0);
-        assertThat(tracker0.getTrackingUrl()).isEqualTo("https://creativeView/one");
+        assertThat(tracker0.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
 
         VastAbsoluteProgressTracker tracker1 = trackers.get(1);
         assertThat(tracker1.getTrackingMilliseconds()).isEqualTo(0);
-        assertThat(tracker1.getTrackingUrl()).isEqualTo("https://creativeView/two");
+        assertThat(tracker1.getTrackingUrl()).isEqualTo("https://creativeView/one");
 
         VastAbsoluteProgressTracker tracker2 = trackers.get(2);
-        assertThat(tracker2.getTrackingMilliseconds()).isEqualTo(2000);
-        assertThat(tracker2.getTrackingUrl()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
+        assertThat(tracker2.getTrackingMilliseconds()).isEqualTo(0);
+        assertThat(tracker2.getTrackingUrl()).isEqualTo("https://creativeView/two");
 
         VastAbsoluteProgressTracker tracker3 = trackers.get(3);
         assertThat(tracker3.getTrackingMilliseconds()).isEqualTo(3670300);

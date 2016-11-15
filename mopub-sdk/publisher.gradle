@@ -58,6 +58,5 @@ publish {
     bintrayUser = project.hasProperty("bintray.user") ? project.getProperty("bintray.user") : ""
     bintrayKey = project.hasProperty("bintray.apikey") ? project.getProperty("bintray.apikey") : ""
 
-    autoPublish = true
     dryRun = false
 }

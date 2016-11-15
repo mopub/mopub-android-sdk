@@ -11,7 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class MoPub {
-    public static final String SDK_VERSION = "4.10.0";
+    public static final String SDK_VERSION = "4.11.0";
 
     public enum LocationAwareness { NORMAL, TRUNCATED, DISABLED }
 

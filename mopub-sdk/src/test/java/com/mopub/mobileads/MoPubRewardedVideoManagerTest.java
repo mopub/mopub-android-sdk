@@ -84,6 +84,7 @@ public class
         // Unpause the main looper in case a test terminated while the looper was paused.
         ShadowLooper.unPauseMainLooper();
         MoPubRewardedVideoManager.getRewardedVideoData().clear();
+        MoPubRewardedVideoManager.getAdRequestStatusMapping().clearMapping();
     }
 
     @Test
@@ -241,7 +242,7 @@ public class
     }
 
     @Test
-    public void onAdSuccess_withCustomEventAlreadyLoaded_shouldInvalidateOldCustomEvent() throws Exception {
+    public void loadVideo_withCustomEventAlreadyLoaded_shouldNotLoadAnotherVideo() throws Exception {
         final CustomEventRewardedVideo mockCustomEvent = mock(CustomEventRewardedVideo.class);
         MoPubRewardedVideoManager.getRewardedVideoData().updateAdUnitCustomEventMapping(
                 "testAdUnit", mockCustomEvent, null, TestCustomEvent.AD_NETWORK_ID);
@@ -266,24 +267,22 @@ public class
         assertThat(MoPubRewardedVideoManager.hasVideo("testAdUnit")).isTrue();
         verify(mockVideoListener).onRewardedVideoLoadSuccess(eq("testAdUnit"));
         verifyNoMoreInteractions(mockVideoListener);
+        verify(mockRequestQueue).add(any(Request.class));
         reset(mockVideoListener);
 
         ShadowLooper.pauseMainLooper();
 
         // Load the second custom event
         MoPubRewardedVideoManager.loadVideo("testAdUnit", null);
-        requestListener.onSuccess(testResponse);
 
         ShadowLooper.unPauseMainLooper();
 
-        // Verify the second custom event was loaded
+        // Verify the first custom event is still available
         assertThat(MoPubRewardedVideoManager.hasVideo("testAdUnit")).isTrue();
         verify(mockVideoListener).onRewardedVideoLoadSuccess(eq("testAdUnit"));
         verifyNoMoreInteractions(mockVideoListener);
-
-        // Verify that the first custom event was invalidated
-        verify(mockCustomEvent).onInvalidate();
-        verifyNoMoreInteractions(mockCustomEvent);
+        // Make sure the second load does not attempt to load another ad
+        verifyNoMoreInteractions(mockRequestQueue);
     }
 
     @Test

@@ -1,3 +1,9 @@
+## Version 4.11.0 (November 10, 2016)
+- Added a workaround for an Android bug where Lollipop devices (Android 5.1.1, API level 22) and lower incorrectly handle SSL connections using Server Name Identification.
+- Rewarded video `load()` calls now do not load another rewarded video with the same ad unit id while one is already loading or loaded.
+- Moved the VAST video start tracker to immediately after the video starts (was 2 seconds after the video started).
+- Bug fixes.
+
 ## Version 4.10.0 (October 18, 2016)
 - **Added and updated mediated network versions**
   - Added Flurry version 6.5.0. All Flurry adapters can be found in the corresponding `extras` directory (`/extras/src/com/mopub/mobileads` for banners and interstitials, `/extras/src/com/mopub/nativeads` for native).
@@ -5,7 +11,6 @@
     - Banners: `FlurryCustomEventBanner`
     - Interstitial: `FlurryCustomEventInterstitial`
     - Native: `FlurryCustomEventNative`, `FlurryBaseNativeAd`, `FlurryNativeAdRenderer`, and `FlurryViewBinder`
-  - Certified Google Play Services 9.4.0
   - Certified Facebook Audience Network version 4.15.0  
   - Certified Tapjoy version 11.8.2
   - Certified Millennial Media version 6.3.0
