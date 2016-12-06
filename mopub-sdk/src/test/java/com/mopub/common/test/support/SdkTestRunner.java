@@ -4,13 +4,16 @@ import com.mopub.common.CacheService;
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.MoPub;
 import com.mopub.common.MoPubHttpUrlConnection;
+import com.mopub.common.Preconditions;
 import com.mopub.common.event.EventDispatcher;
 import com.mopub.common.event.MoPubEvents;
 import com.mopub.common.factories.MethodBuilderFactory;
 import com.mopub.common.util.AsyncTasks;
 import com.mopub.common.util.DateAndTime;
+import com.mopub.common.util.Reflection;
 import com.mopub.common.util.test.support.ShadowAsyncTasks;
 import com.mopub.common.util.test.support.ShadowMoPubHttpUrlConnection;
+import com.mopub.common.util.test.support.ShadowReflection;
 import com.mopub.common.util.test.support.TestDateAndTime;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
 import com.mopub.mobileads.factories.AdViewControllerFactory;
@@ -58,6 +61,7 @@ public class SdkTestRunner extends RobolectricGradleTestRunner {
         InstrumentationConfiguration.Builder builder = InstrumentationConfiguration.newBuilder();
         builder.addInstrumentedClass(AsyncTasks.class.getName());
         builder.addInstrumentedClass(MoPubHttpUrlConnection.class.getName());
+        builder.addInstrumentedClass(Reflection.class.getName());
         // To mitigate: https://github.com/robolectric/robolectric/issues/2129
         builder.addInstrumentedPackage("org.xyz.testMp");
         return builder.build();
@@ -72,6 +76,10 @@ public class SdkTestRunner extends RobolectricGradleTestRunner {
         @Override
         public void prepareTest(Object test) {
             ClientMetadata.clearForTesting();
+
+            // Precondition exceptions should not be thrown during tests so that we can test
+            // for unexpected behavior even after failing a precondition.
+            Preconditions.NoThrow.setStrictMode(false);
 
             DateAndTime.setInstance(new TestDateAndTime());
             CustomEventBannerFactory.setInstance(new TestCustomEventBannerFactory());
@@ -89,6 +97,7 @@ public class SdkTestRunner extends RobolectricGradleTestRunner {
 
             ShadowAsyncTasks.reset();
             ShadowMoPubHttpUrlConnection.reset();
+            ShadowReflection.reset();
             MoPubEvents.setEventDispatcher(mock(EventDispatcher.class));
             MoPub.setLocationAwareness(LocationAwareness.NORMAL);
             MoPub.setLocationPrecision(6);

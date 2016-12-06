@@ -1,16 +1,24 @@
 package com.mopub.mobileads;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.TextureView;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.mopub.common.Constants;
 import com.mopub.common.MoPubBrowser;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mraid.MraidVideoViewController;
+import com.mopub.nativeads.NativeFullScreenVideoView;
+import com.mopub.nativeads.NativeVideoController;
+import com.mopub.nativeads.NativeVideoViewController;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -21,17 +29,22 @@ import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowActivity;
 
+import java.lang.reflect.Constructor;
+
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class MraidVideoPlayerActivityTest {
     private static final String VAST = "vast";
     private static final String MRAID = "mraid";
+    private static final String NATIVE_VIDEO_VIEW_CONTROLLER =
+            "com.mopub.nativeads.NativeVideoViewController";
 
     private MraidVideoPlayerActivity subject;
     private long testBroadcastIdentifier;
@@ -61,6 +74,13 @@ public class MraidVideoPlayerActivityTest {
         initializeSubjectForMraid();
 
         assertThat(subject.getBaseVideoViewController()).isInstanceOf(MraidVideoViewController.class);
+    }
+
+    @Test
+    public void onCreate_withNativeExtraKey_shouldUseNativeVideoViewController() throws Exception {
+        initializeSubjectForNative();
+
+        assertThat(subject.getBaseVideoViewController()).isInstanceOf(NativeVideoViewController.class);
     }
 
     @Ignore("pending: this is currently impossible to write")
@@ -167,6 +187,16 @@ public class MraidVideoPlayerActivityTest {
         assertThat(intentForResult).isNull();
     }
 
+    @Test
+    public void createVideoViewController_withNativeVideoViewControllerReflectionConstructor_shouldExist() throws Exception {
+        final Class<?> nativeVideoViewController = Class.forName(NATIVE_VIDEO_VIEW_CONTROLLER);
+        final Constructor<?> declaredConstructor = nativeVideoViewController.getDeclaredConstructor(
+                Context.class, Bundle.class, Bundle.class,
+                BaseVideoViewController.BaseVideoViewControllerListener.class);
+
+        assertThat(declaredConstructor).isNotNull();
+    }
+
     private void initializeSubjectForMraid() {
         intent.putExtra(BaseVideoPlayerActivity.VIDEO_CLASS_EXTRAS_KEY, "mraid");
 
@@ -181,6 +211,32 @@ public class MraidVideoPlayerActivityTest {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("video_path");
         intent.putExtra(VastVideoViewController.VAST_VIDEO_CONFIG, vastVideoConfig);
+
+        subject = Robolectric.buildActivity(MraidVideoPlayerActivity.class)
+                .withIntent(intent)
+                .create()
+                .get();
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    private void initializeSubjectForNative() {
+        intent.putExtra(BaseVideoPlayerActivity.VIDEO_CLASS_EXTRAS_KEY, "native");
+
+        NativeFullScreenVideoView mockFullScreenVideoView = mock(NativeFullScreenVideoView.class);
+        NativeVideoController mockVideoController = mock(NativeVideoController.class);
+        VastVideoConfig mockVastVideoConfig = mock(VastVideoConfig.class);
+        TextureView mockTextureView = mock(TextureView.class);
+        Bitmap mockBitmap = mock(Bitmap.class);
+
+        when(mockVastVideoConfig.getCustomCtaText()).thenReturn("Learn More");
+        when(mockFullScreenVideoView.getTextureView()).thenReturn(mockTextureView);
+        when(mockTextureView.getBitmap()).thenReturn(mockBitmap);
+
+        Bundle additionalExtras = new Bundle();
+        additionalExtras.putSerializable(Constants.NATIVE_VAST_VIDEO_CONFIG, mockVastVideoConfig);
+        additionalExtras.putLong(Constants.NATIVE_VIDEO_ID, 123);
+        NativeVideoController.setForId(123, mockVideoController);
+        intent.putExtras(additionalExtras);
 
         subject = Robolectric.buildActivity(MraidVideoPlayerActivity.class)
                 .withIntent(intent)

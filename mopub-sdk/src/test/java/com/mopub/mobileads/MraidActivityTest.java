@@ -33,9 +33,9 @@ import org.robolectric.util.ActivityController;
 
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_CLICK;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
+import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_CLICK;
+import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
+import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_SHOW;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiverTest.getIntentForActionAndIdentifier;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;

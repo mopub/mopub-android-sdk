@@ -83,12 +83,12 @@ public class MoPubNativeTest {
 
     @Test
     public void destroy_shouldSetListenersToEmptyAndClearContext() {
-        assertThat(subject.getActivityOrDestroy()).isSameAs(context);
+        assertThat(subject.getContextOrDestroy()).isSameAs(context);
         assertThat(subject.getMoPubNativeNetworkListener()).isSameAs(mockNetworkListener);
 
         subject.destroy();
 
-        assertThat(subject.getActivityOrDestroy()).isNull();
+        assertThat(subject.getContextOrDestroy()).isNull();
         assertThat(subject.getMoPubNativeNetworkListener()).isSameAs(EMPTY_NETWORK_LISTENER);
     }
 

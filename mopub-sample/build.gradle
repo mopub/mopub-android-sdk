@@ -7,9 +7,9 @@ repositories {
 
 apply plugin: 'com.android.application'
 
-group = 'com.mopub'
-description = '''MoPub Sample App'''
-version = '4.7.1'
+project.group = 'com.mopub'
+project.description = '''MoPub Sample App'''
+project.version = '4.11.0'
 
 android {
     compileSdkVersion 23
@@ -17,7 +17,7 @@ android {
     lintOptions { abortOnError false }
 
     defaultConfig {
-        versionCode 42
+        versionCode 48
         versionName version
         minSdkVersion 9
         targetSdkVersion 23
@@ -56,7 +56,7 @@ android {
 
 dependencies {
     compile 'com.android.support:support-v4:23.1.1'
-    compile 'com.google.android.gms:play-services-ads:7.8.0'
+    compile 'com.google.android.gms:play-services-ads:9.4.0'
     compile 'com.android.support:recyclerview-v7:23.1.1'
     compile project(':mopub-sdk')
 }

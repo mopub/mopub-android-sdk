@@ -9,6 +9,9 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import static com.mopub.common.util.Reflection.MethodBuilder;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.fest.assertions.api.Assertions.fail;
@@ -157,5 +160,49 @@ public class ReflectionTest {
         int result = (Integer) methodBuilder.execute();
 
         assertThat(result).isEqualTo(-1);
+    }
+
+    @Test
+    public void instantiateClassWithConstructor_withCorrectParameters_shouldInstiantiateObject() throws Exception {
+        Class[] classes = {int.class};
+        Object[] parameters = {30};
+        Number integer = Reflection.instantiateClassWithConstructor("java.lang.Integer",
+                Number.class, classes, parameters);
+
+        assertThat(integer).isEqualTo(new Integer(30));
+    }
+
+    @Test
+    public void instantiateClassWithConstructor_withCorrectMultipleParameters_shouldInstiantiateObject() throws Exception {
+        Class[] classes = {BigInteger.class, int.class};
+        Object[] parameters = {new BigInteger("10"), 5};
+        Number bigDecimal = Reflection.instantiateClassWithConstructor("java.math.BigDecimal",
+                Number.class, classes, parameters);
+
+        assertThat(bigDecimal).isEqualTo(new BigDecimal(new BigInteger("10"), 5));
+    }
+
+    @Test(expected = ClassCastException.class)
+    public void instantiateClassWithConstructor_withInvalidSuperClass_shouldThrowException() throws Exception {
+        Class[] classes = {int.class};
+        Object[] parameters = {30};
+
+        Reflection.instantiateClassWithConstructor("java.lang.Integer", String.class, classes, parameters);
+    }
+
+    @Test(expected = ClassNotFoundException.class)
+    public void instantiateClassWithConstructor_withClassNotFound_shouldThrowException() throws Exception {
+        Class[] classes = {int.class};
+        Object[] parameters = {30};
+
+        Reflection.instantiateClassWithConstructor("java.lang.FakeClass123", Integer.class, classes, parameters);
+    }
+
+    @Test(expected = Exception.class)
+    public void instantiateClassWithConstructor_withMismatchingClassParameters_shouldThrowException() throws Exception {
+        Class[] classes = {boolean.class};
+        Object[] parameters = {30};
+
+        Reflection.instantiateClassWithConstructor("java.lang.Integer", Number.class, classes, parameters);
     }
 }

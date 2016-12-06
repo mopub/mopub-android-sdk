@@ -11,7 +11,7 @@ import com.facebook.ads.InterstitialAdListener;
 import java.util.Map;
 
 /**
- * Tested with Facebook SDK 4.8.1.
+ * Tested with Facebook SDK 4.15.0.
  */
 public class FacebookInterstitial extends CustomEventInterstitial implements InterstitialAdListener {
     public static final String PLACEMENT_ID_KEY = "placement_id";

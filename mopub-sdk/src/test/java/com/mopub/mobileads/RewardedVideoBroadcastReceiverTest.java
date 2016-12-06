@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
 
+import com.mopub.common.IntentActions;
 import com.mopub.common.test.support.SdkTestRunner;
 
 import org.fest.util.Sets;
@@ -41,7 +42,7 @@ public class RewardedVideoBroadcastReceiverTest {
     @Test
     public void constructor_shouldSetIntentFilter() throws Exception {
         Set<String> expectedActions = Sets.newLinkedHashSet(
-                RewardedVideoBroadcastReceiver.ACTION_REWARDED_VIDEO_COMPLETE
+                IntentActions.ACTION_REWARDED_VIDEO_COMPLETE
         );
 
         final IntentFilter intentFilter = subject.getIntentFilter();
@@ -57,7 +58,7 @@ public class RewardedVideoBroadcastReceiverTest {
     public void onReceive_withActionRewardedVideoComplete_shouldNotifyListener() {
         final Intent rewardedVideoCompleteIntent = new Intent();
         rewardedVideoCompleteIntent.setAction(
-                RewardedVideoBroadcastReceiver.ACTION_REWARDED_VIDEO_COMPLETE);
+                IntentActions.ACTION_REWARDED_VIDEO_COMPLETE);
         rewardedVideoCompleteIntent.putExtra("broadcastIdentifier", broadcastIdentifier);
 
         subject.onReceive(context, rewardedVideoCompleteIntent);

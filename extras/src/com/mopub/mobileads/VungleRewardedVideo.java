@@ -1,11 +1,10 @@
 package com.mopub.mobileads;
 
 import android.app.Activity;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+
 import com.mopub.common.BaseLifecycleListener;
 import com.mopub.common.DataKeys;
 import com.mopub.common.LifecycleListener;
@@ -16,13 +15,13 @@ import com.vungle.publisher.AdConfig;
 import com.vungle.publisher.EventListener;
 import com.vungle.publisher.VunglePub;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * A custom event for showing Vungle rewarded videos.
  *
- * Certified with Vungle 3.3.0
+ * Certified with Vungle 4.0.2
  */
 public class VungleRewardedVideo extends CustomEventRewardedVideo {
 
@@ -52,14 +51,11 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         }
     };
 
-    private final Handler mHandler;
-    private boolean mIsLoading;
     private String mAdUnitId;
+    private String mCustomerId;
 
     public VungleRewardedVideo() {
         sVungleListener = new VungleRewardedVideoListener();
-        mHandler = new Handler(Looper.getMainLooper());
-        mIsLoading = false;
     }
 
     @Nullable
@@ -103,10 +99,20 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         if (adUnitObject instanceof String) {
             mAdUnitId = (String) adUnitObject;
         }
+
+        Object customerIdObject = localExtras.get(DataKeys.REWARDED_VIDEO_CUSTOMER_ID);
+        if (customerIdObject instanceof String && !TextUtils.isEmpty((String) customerIdObject)) {
+            mCustomerId = (String) customerIdObject;
+        }
+
         if (sVunglePub.isAdPlayable()) {
-            notifyAdAvailable();
+            MoPubLog.d("Vungle rewarded video ad successfully loaded.");
+            MoPubRewardedVideoManager.onRewardedVideoLoadSuccess(VungleRewardedVideo.class,
+                    VUNGLE_AD_NETWORK_CONSTANT);
         } else {
-            mIsLoading = true;
+            MoPubLog.d("Vungle rewarded video ad is not loaded.");
+            MoPubRewardedVideoManager.onRewardedVideoLoadFailure(VungleRewardedVideo.class,
+                    VUNGLE_AD_NETWORK_CONSTANT, MoPubErrorCode.NETWORK_NO_FILL);
         }
     }
 
@@ -151,33 +157,31 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         if (!TextUtils.isEmpty(mediationSettings.title)) {
             adConfig.setIncentivizedCancelDialogTitle(mediationSettings.title);
         }
-        if (!TextUtils.isEmpty(mediationSettings.userId)) {
+        if (!TextUtils.isEmpty(mCustomerId)) {
+            adConfig.setIncentivizedUserId(mCustomerId);
+        } else if (!TextUtils.isEmpty(mediationSettings.userId)) {
             adConfig.setIncentivizedUserId(mediationSettings.userId);
         }
     }
 
-    private void notifyAdAvailable() {
-        MoPubLog.d("Vungle rewarded video ad successfully loaded.");
-        mIsLoading = false;
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                MoPubRewardedVideoManager.onRewardedVideoLoadSuccess(VungleRewardedVideo.class,
-                        VUNGLE_AD_NETWORK_CONSTANT);
-            }
-        });
-    }
-
     @Override
     protected void onInvalidate() {
-        mIsLoading = false;
     }
 
     private class VungleRewardedVideoListener implements EventListener,
             CustomEventRewardedVideoListener {
 
         @Override
-        public void onAdEnd(final boolean wasCallToActionClicked) {
+        public void onAdEnd(final boolean wasSuccessfulView, final boolean wasCallToActionClicked) {
+            if (wasSuccessfulView) {
+                // Vungle does not provide a callback when a user should be rewarded.
+                // You will need to provide your own reward logic if you receive a reward with
+                // "NO_REWARD_LABEL" && "NO_REWARD_AMOUNT"
+                MoPubRewardedVideoManager.onRewardedVideoCompleted(VungleRewardedVideo.class,
+                        VUNGLE_AD_NETWORK_CONSTANT,
+                        MoPubReward.success(MoPubReward.NO_REWARD_LABEL,
+                                MoPubReward.NO_REWARD_AMOUNT));
+            }
             if (wasCallToActionClicked) {
                 MoPubRewardedVideoManager.onRewardedVideoClicked(VungleRewardedVideo.class,
                         VUNGLE_AD_NETWORK_CONSTANT);
@@ -200,23 +204,14 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
 
         @Override
         public void onAdPlayableChanged(final boolean playable) {
-            if (mIsLoading && playable) {
-                notifyAdAvailable();
-            }
+            MoPubLog.d(String.format("Vungle rewarded video ad is %s.",
+                    playable ? "playable" : "not playable"));
         }
 
         @Override
         public void onVideoView(final boolean isCompletedView, final int watchedMillis, final int videoMillis) {
             MoPubLog.d(String.format(Locale.US, "%.1f%% of Vungle video watched.",
                     (double) watchedMillis / videoMillis * 100));
-            if (isCompletedView) {
-                // Vungle does not provide a callback when a user should be rewarded.
-                // You will need to provide your own reward logic if you receive a reward with
-                // "NO_REWARD_LABEL" && "NO_REWARD_AMOUNT"
-                MoPubRewardedVideoManager.onRewardedVideoCompleted(VungleRewardedVideo.class,
-                        VUNGLE_AD_NETWORK_CONSTANT,
-                        MoPubReward.success(MoPubReward.NO_REWARD_LABEL, MoPubReward.NO_REWARD_AMOUNT));
-            }
         }
     }
 

@@ -1,0 +1,11 @@
+apply from: '../shared-build.gradle'
+
+dependencies {
+    compile 'com.mopub.volley:mopub-volley:1.1.0'
+}
+
+project.description = 'MoPub Android SDK - Base'
+project.ext.displayName = 'MoPub Android SDK - Base'
+project.ext.projectName = 'mopub-sdk-base'
+project.ext.uploadName = 'mopub-android-sdk-base'
+apply from: '../publisher.gradle'

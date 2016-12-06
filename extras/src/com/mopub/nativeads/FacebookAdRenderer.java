@@ -1,6 +1,6 @@
 package com.mopub.nativeads;
 
-import android.app.Activity;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,9 +38,9 @@ public class FacebookAdRenderer implements MoPubAdRenderer<FacebookNative.Facebo
     }
 
     @Override
-    public View createAdView(final Activity activity, final ViewGroup parent) {
+    public View createAdView(final Context context, final ViewGroup parent) {
         final View adView = LayoutInflater
-                .from(activity)
+                .from(context)
                 .inflate(mViewBinder.layoutId, parent, false);
         final View mainImageView = adView.findViewById(mViewBinder.mainImageId);
         if (mainImageView == null) {
@@ -72,7 +72,7 @@ public class FacebookAdRenderer implements MoPubAdRenderer<FacebookNative.Facebo
             mainImageView.setVisibility(View.GONE);
         }
 
-        final MediaView mediaView = new MediaView(activity);
+        final MediaView mediaView = new MediaView(context);
         ViewGroup mainImageParent = (ViewGroup) mainImageView.getParent();
         int mainImageIndex = mainImageParent.indexOfChild(mainImageView);
         mainImageParent.addView(mediaView, mainImageIndex + 1, mediaViewLayoutParams);

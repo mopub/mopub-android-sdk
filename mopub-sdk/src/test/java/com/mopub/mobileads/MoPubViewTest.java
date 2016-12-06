@@ -6,9 +6,12 @@ import android.content.Intent;
 import android.view.View;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.util.Reflection;
+import com.mopub.common.util.test.support.ShadowReflection;
 import com.mopub.mobileads.test.support.TestAdViewControllerFactory;
 import com.mopub.mobileads.test.support.TestCustomEventBannerAdapterFactory;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,7 +31,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(constants = BuildConfig.class, shadows = {ShadowReflection.class})
 public class MoPubViewTest {
     private MoPubView subject;
     private Map<String,String> paramsMap = new HashMap<String, String>();
@@ -43,6 +46,11 @@ public class MoPubViewTest {
         customEventBannerAdapter = TestCustomEventBannerAdapterFactory.getSingletonMock();
         reset(customEventBannerAdapter);
         adViewController = TestAdViewControllerFactory.getSingletonMock();
+    }
+
+    @After
+    public void tearDown() {
+        ShadowReflection.reset();
     }
 
     @Test
@@ -189,6 +197,57 @@ public class MoPubViewTest {
         verify(adViewController).loadFailUrl(eq(ADAPTER_NOT_FOUND));
         verify(customEventBannerAdapter, never()).invalidate();
         verify(customEventBannerAdapter, never()).loadAd();
+    }
+
+    @Test
+    public void loadCustomEvent_withTwoCalls_shouldInvalidateAdapterOnce() throws Exception {
+        subject.loadCustomEvent("name", paramsMap);
+        subject.loadCustomEvent("name", paramsMap);
+
+        verify(customEventBannerAdapter).invalidate();
+    }
+
+    @Test
+    public void forceRefresh_withCallToLoadCustomEvent_shouldInvalidateAdapter() throws Exception {
+        subject.loadCustomEvent("name", paramsMap);
+        subject.forceRefresh();
+
+        verify(customEventBannerAdapter).invalidate();
+    }
+
+    @Test
+    public void loadCustomEvent_withoutBannerModule_shouldNotLoadAd() throws Exception {
+        ShadowReflection.setNextClassNotFound(true);
+
+        subject.loadCustomEvent("name", paramsMap);
+
+        verify(customEventBannerAdapter, never()).loadAd();
+    }
+
+    @Test
+    public void forceRefresh_withoutBannerModule_withCallToLoadCustomEvent_shouldNotInvalidateAdapter() throws Exception {
+        ShadowReflection.setNextClassNotFound(true);
+
+        subject.loadCustomEvent("name", paramsMap);
+        subject.forceRefresh();
+
+        verify(customEventBannerAdapter, never()).invalidate();
+    }
+
+    @Test
+    public void forceRefresh_withoutBannerModule_withCallToLoadCustomEvent_shouldForceRefreshAdViewController() throws Exception {
+        ShadowReflection.setNextClassNotFound(true);
+
+        subject.loadCustomEvent("name", paramsMap);
+        subject.forceRefresh();
+
+        verify(adViewController).forceRefresh();
+    }
+
+    @Test
+    public void invalidateAdapter_withReflection_shouldExist() throws Exception {
+        assertThat(Reflection.getDeclaredMethodWithTraversal(CustomEventBannerAdapter.class,
+                "invalidate")).isNotNull();
     }
 
     private void broadcastIntent(final Intent intent) {

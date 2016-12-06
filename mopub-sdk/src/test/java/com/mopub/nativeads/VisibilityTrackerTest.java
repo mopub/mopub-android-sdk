@@ -35,9 +35,11 @@ import static com.mopub.nativeads.VisibilityTracker.VisibilityChecker;
 import static com.mopub.nativeads.VisibilityTracker.VisibilityTrackerListener;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -82,20 +84,21 @@ public class VisibilityTrackerTest {
 
     @Test
     public void constructor_shouldSetOnPreDrawListenerForDecorView() throws Exception {
-        Activity activity1 = mock(Activity.class);
+        Activity activity1 = spy(Robolectric.buildActivity(Activity.class).create().get());
         Window window = mock(Window.class);
         View decorView = mock(View.class);
         ViewTreeObserver viewTreeObserver = mock(ViewTreeObserver.class);
 
         when(activity1.getWindow()).thenReturn(window);
         when(window.getDecorView()).thenReturn(decorView);
+        when(decorView.findViewById(anyInt())).thenReturn(decorView);
         when(decorView.getViewTreeObserver()).thenReturn(viewTreeObserver);
         when(viewTreeObserver.isAlive()).thenReturn(true);
 
         subject = new VisibilityTracker(activity1, trackedViews, visibilityChecker, visibilityHandler);
-        assertThat(subject.mRootView.get()).isEqualTo(decorView);
         assertThat(subject.mOnPreDrawListener).isNotNull();
         verify(viewTreeObserver).addOnPreDrawListener(subject.mOnPreDrawListener);
+        assertThat(subject.mWeakViewTreeObserver.get()).isEqualTo(viewTreeObserver);
     }
 
     @Test
@@ -111,9 +114,16 @@ public class VisibilityTrackerTest {
         when(viewTreeObserver.isAlive()).thenReturn(false);
 
         subject = new VisibilityTracker(activity1, trackedViews, visibilityChecker, visibilityHandler);
-        assertThat(subject.mRootView.get()).isEqualTo(decorView);
-        assertThat(subject.mOnPreDrawListener).isNull();
         verify(viewTreeObserver, never()).addOnPreDrawListener(subject.mOnPreDrawListener);
+        assertThat(subject.mWeakViewTreeObserver.get()).isNull();
+    }
+
+    @Test
+    public void constructor_withApplicationContext_shouldNotSetOnPreDrawListener() {
+        subject = new VisibilityTracker(activity.getApplicationContext(), trackedViews,
+                visibilityChecker, visibilityHandler);
+
+        assertThat(subject.mWeakViewTreeObserver.get()).isNull();
     }
 
     @Test
@@ -123,7 +133,24 @@ public class VisibilityTrackerTest {
         assertThat(trackedViews).hasSize(1);
     }
 
-    @Test(expected = AssertionError.class)
+    @Test
+    public void addView_withViewTreeObserverNotSet_shouldSetViewTreeObserver() {
+        ViewTreeObserver viewTreeObserver = mock(ViewTreeObserver.class);
+        View rootView = mock(View.class);
+
+        when(view.getContext()).thenReturn(activity.getApplicationContext());
+        when(view.getRootView()).thenReturn(rootView);
+        when(rootView.getViewTreeObserver()).thenReturn(viewTreeObserver);
+        when(viewTreeObserver.isAlive()).thenReturn(true);
+
+        subject = new VisibilityTracker(activity.getApplicationContext(), trackedViews,
+                visibilityChecker, visibilityHandler);
+        subject.addView(view, MIN_PERCENTAGE_VIEWED);
+
+        assertThat(subject.mWeakViewTreeObserver.get()).isEqualTo(viewTreeObserver);
+    }
+
+    @Test(expected = NullPointerException.class)
     public void addView_whenViewIsNull_shouldThrowNPE() throws Exception {
         subject.addView(null, MIN_PERCENTAGE_VIEWED);
 
@@ -156,13 +183,14 @@ public class VisibilityTrackerTest {
 
     @Test
     public void destroy_shouldCallClear_shouldRemoveListenerFromDecorView() throws Exception {
-        Activity activity1 = mock(Activity.class);
+        Activity activity1 = spy(Robolectric.buildActivity(Activity.class).create().get());
         Window window = mock(Window.class);
         View decorView = mock(View.class);
         ViewTreeObserver viewTreeObserver = mock(ViewTreeObserver.class);
 
         when(activity1.getWindow()).thenReturn(window);
         when(window.getDecorView()).thenReturn(decorView);
+        when(decorView.findViewById(anyInt())).thenReturn(decorView);
         when(decorView.getViewTreeObserver()).thenReturn(viewTreeObserver);
         when(viewTreeObserver.isAlive()).thenReturn(true);
 
@@ -177,7 +205,7 @@ public class VisibilityTrackerTest {
         assertThat(trackedViews).isEmpty();
         verify(visibilityHandler).removeMessages(0);
         verify(viewTreeObserver).removeOnPreDrawListener(any(OnPreDrawListener.class));
-        assertThat(subject.mOnPreDrawListener).isNull();
+        assertThat(subject.mWeakViewTreeObserver.get()).isNull();
     }
 
     @Test

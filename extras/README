@@ -1,9 +1,0 @@
-Google AdSense SDK
-==================
-Although the AdSense SDK for Android is deprecated, you can support it by doing the following:
-
-1) Copy AdSenseAdapter.java under the extras/ folder to mopub-android-sdk/src/com/mopub/mobileads
-2) Place the Google AdSense SDK in mopub-android-sdk/libs
-3) Add GoogleAdView.jar to the Java Build Path in the Properties section of mopub-android-sdk.
-
-*NOTE: At this time, Google does not allow distribution of GoogleAdView.jar so you will need to get that file from Google

@@ -1,3 +1,11 @@
+// Copyright (C) 2015 by Tapjoy Inc.
+//
+// This file is part of the Tapjoy SDK.
+//
+// By using the Tapjoy SDK in your software, you agree to the terms of the Tapjoy SDK License Agreement.
+//
+// The Tapjoy SDK is bound by the Tapjoy SDK License Agreement and can be found here: https://www.tapjoy.com/sdk/license
+
 package com.mopub.mobileads;
 
 import android.content.Context;
@@ -7,18 +15,25 @@ import android.text.TextUtils;
 
 import com.mopub.common.logging.MoPubLog;
 import com.tapjoy.TJActionRequest;
+import com.tapjoy.TJConnectListener;
 import com.tapjoy.TJError;
 import com.tapjoy.TJPlacement;
 import com.tapjoy.TJPlacementListener;
+import com.tapjoy.Tapjoy;
 import com.tapjoy.TapjoyLog;
 
 import java.util.Map;
 
-// Tested with Tapjoy SDK 11.5.1
+// Tested with Tapjoy SDK 11.8.2
 public class TapjoyInterstitial extends CustomEventInterstitial implements TJPlacementListener {
     private static final String TAG = TapjoyInterstitial.class.getSimpleName();
     private static final String TJC_MOPUB_NETWORK_CONSTANT = "mopub";
-    private static final String TJC_MOPUB_ADAPTER_VERSION_NUMBER = "4.0.0";
+    private static final String TJC_MOPUB_ADAPTER_VERSION_NUMBER = "4.1.0";
+
+    // Configuration keys
+    public static final String SDK_KEY = "sdkKey";
+    public static final String DEBUG_ENABLED = "debugEnabled";
+    public static final String PLACEMENT_NAME = "name";
 
     private TJPlacement tjPlacement;
     private CustomEventInterstitialListener mInterstitialListener;
@@ -29,7 +44,7 @@ public class TapjoyInterstitial extends CustomEventInterstitial implements TJPla
     }
 
     @Override
-    protected void loadInterstitial(Context context,
+    protected void loadInterstitial(final Context context,
             CustomEventInterstitialListener customEventInterstitialListener,
             Map<String, Object> localExtras,
             Map<String, String> serverExtras) {
@@ -38,11 +53,48 @@ public class TapjoyInterstitial extends CustomEventInterstitial implements TJPla
         mInterstitialListener = customEventInterstitialListener;
         mHandler = new Handler(Looper.getMainLooper());
 
-        String name = serverExtras.get("name");
-        if (TextUtils.isEmpty(name)) {
+        final String placementName = serverExtras.get(PLACEMENT_NAME);
+        if (TextUtils.isEmpty(placementName)) {
             MoPubLog.d("Tapjoy interstitial loaded with empty 'name' field. Request will fail.");
         }
-        tjPlacement = new TJPlacement(context, name, this);
+
+        boolean canRequestPlacement = true;
+        if (!Tapjoy.isConnected()) {
+            // Check if configuration data is available
+            boolean enableDebug = Boolean.valueOf(serverExtras.get(DEBUG_ENABLED));
+            Tapjoy.setDebugEnabled(enableDebug);
+
+            String sdkKey = serverExtras.get(SDK_KEY);
+            if (!TextUtils.isEmpty(sdkKey)) {
+                MoPubLog.d("Connecting to Tapjoy via MoPub dashboard settings...");
+                Tapjoy.connect(context, sdkKey, null, new TJConnectListener() {
+                    @Override
+                    public void onConnectSuccess() {
+                        MoPubLog.d("Tapjoy connected successfully");
+                        createPlacement(context, placementName);
+                    }
+
+                    @Override
+                    public void onConnectFailure() {
+                        MoPubLog.d("Tapjoy connect failed");
+                    }
+                });
+
+                // If sdkKey is present via MoPub dashboard, we only want to request placement
+                // after auto-connect succeeds
+                canRequestPlacement = false;
+            } else {
+                MoPubLog.d("Tapjoy interstitial is initialized with empty 'sdkKey'. You must call Tapjoy.connect()");
+            }
+        }
+
+        if (canRequestPlacement) {
+            createPlacement(context, placementName);
+        }
+    }
+
+    private void createPlacement(Context context, String placementName) {
+        tjPlacement = new TJPlacement(context, placementName, this);
         tjPlacement.setMediationName(TJC_MOPUB_NETWORK_CONSTANT);
         tjPlacement.setAdapterVersion(TJC_MOPUB_ADAPTER_VERSION_NUMBER);
         tjPlacement.requestContent();

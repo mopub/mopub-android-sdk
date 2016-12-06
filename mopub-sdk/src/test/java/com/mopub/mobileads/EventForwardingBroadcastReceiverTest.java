@@ -23,10 +23,10 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_CLICK;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_FAIL;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
+import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_CLICK;
+import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
+import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_FAIL;
+import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_SHOW;
 import static com.mopub.mobileads.MoPubInterstitial.InterstitialAdListener;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;

@@ -62,6 +62,8 @@ public class ManifestUtilsTest {
         setDebugMode(false);
         // This may have been set to a mock during testing. Reset this class back to normal
         ManifestUtils.setFlagCheckUtil(new ManifestUtils.FlagCheckUtil());
+
+        addInterstitialModule();
     }
 
     @Test
@@ -96,6 +98,21 @@ public class ManifestUtilsTest {
     public void displayWarningForMissingActivities_withAllActivitiesDeclared_shouldNotShowLogOrToast() throws Exception {
         RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubActivity.class), mockResolveInfo);
         RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MraidActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MraidVideoPlayerActivity.class), mockResolveInfo);
+        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubBrowser.class), mockResolveInfo);
+
+        ShadowLog.setupLogging();
+        setDebugMode(true);
+
+        ManifestUtils.displayWarningForMissingActivities(context, requiredWebViewSdkActivities);
+
+        assertThat(ShadowToast.getLatestToast()).isNull();
+        assertThat(ShadowLog.getLogs()).isEmpty();
+    }
+
+    @Test
+    public void displayWarningForMissingActivities_withoutInterstitialModule_withoutInterstitialActivitiesDeclared_shouldNotShowLogOrToast() throws Exception {
+        removeInterstitialModule();
         RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MraidVideoPlayerActivity.class), mockResolveInfo);
         RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(context, MoPubBrowser.class), mockResolveInfo);
 
@@ -363,12 +380,39 @@ public class ManifestUtilsTest {
         );
     }
 
+    @Test
+    public void getRequiredWebViewSdkActivities_withoutInterstitialModule_shouldNotHaveAllRequiredActivities() throws Exception {
+        removeInterstitialModule();
+        assertThat(requiredWebViewSdkActivities).containsOnly(
+                MraidVideoPlayerActivity.class,
+                MoPubBrowser.class
+        );
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void getRequiredNativeSdkActivities_shouldIncludeRequiredActivities() throws Exception {
         assertThat(requiredNativeSdkActivities).containsOnly(
                 MoPubBrowser.class
         );
+    }
+
+    private void addInterstitialModule() {
+        Class moPubActivityClass = com.mopub.mobileads.MoPubActivity.class;
+        Class mraidActivityClass = com.mopub.mobileads.MraidActivity.class;
+        if (!ManifestUtils.getRequiredWebViewSdkActivities().contains(moPubActivityClass)) {
+            ManifestUtils.getRequiredWebViewSdkActivities().add(moPubActivityClass);
+        }
+        if (!ManifestUtils.getRequiredWebViewSdkActivities().contains(mraidActivityClass)) {
+            ManifestUtils.getRequiredWebViewSdkActivities().add(mraidActivityClass);
+        }
+    }
+
+    private void removeInterstitialModule() {
+        Class moPubActivityClass = com.mopub.mobileads.MoPubActivity.class;
+        Class mraidActivityClass = com.mopub.mobileads.MraidActivity.class;
+        ManifestUtils.getRequiredWebViewSdkActivities().remove(moPubActivityClass);
+        ManifestUtils.getRequiredWebViewSdkActivities().remove(mraidActivityClass);
     }
 
     private void setDebugMode(boolean enabled) {

@@ -33,6 +33,7 @@ public class InterstitialDetailFragment extends Fragment implements Interstitial
         views.mLoadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                mShowButton.setEnabled(false);
                 if (mMoPubInterstitial == null) {
                     mMoPubInterstitial = new MoPubInterstitial(getActivity(), adUnitId);
                     mMoPubInterstitial.setInterstitialAdListener(InterstitialDetailFragment.this);
@@ -40,7 +41,6 @@ public class InterstitialDetailFragment extends Fragment implements Interstitial
                 final String keywords = views.mKeywordsField.getText().toString();
                 mMoPubInterstitial.setKeywords(keywords);
                 mMoPubInterstitial.load();
-                mShowButton.setEnabled(false);
             }
         });
         mShowButton = (Button) view.findViewById(R.id.interstitial_show_button);

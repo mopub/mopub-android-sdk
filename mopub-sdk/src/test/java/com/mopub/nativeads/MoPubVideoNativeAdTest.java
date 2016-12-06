@@ -13,6 +13,7 @@ import android.view.TextureView;
 import android.view.TextureView.SurfaceTextureListener;
 import android.view.View;
 
+import com.mopub.common.Constants;
 import com.mopub.common.event.EventDetails;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BaseVideoPlayerActivity;
@@ -524,9 +525,9 @@ public class MoPubVideoNativeAdTest {
                 .isEqualTo(MraidVideoPlayerActivity.class.getName());
         assertThat(startedActivity.getStringExtra(BaseVideoPlayerActivity.VIDEO_CLASS_EXTRAS_KEY))
                 .isEqualTo("native");
-        assertThat(startedActivity.getLongExtra(NativeVideoViewController.NATIVE_VIDEO_ID, 0L))
+        assertThat(startedActivity.getLongExtra(Constants.NATIVE_VIDEO_ID, 0L))
                 .isGreaterThan(0L);
-        assertThat(startedActivity.getSerializableExtra(NativeVideoViewController
+        assertThat(startedActivity.getSerializableExtra(Constants
                 .NATIVE_VAST_VIDEO_CONFIG))
                 .isEqualTo(mockVastVideoConfig);
     }

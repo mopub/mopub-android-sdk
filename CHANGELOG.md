@@ -1,3 +1,41 @@
+## Version 4.11.0 (November 10, 2016)
+- Added a workaround for an Android bug where Lollipop devices (Android 5.1.1, API level 22) and lower incorrectly handle SSL connections using Server Name Identification.
+- Rewarded video `load()` calls now do not load another rewarded video with the same ad unit id while one is already loading or loaded.
+- Moved the VAST video start tracker to immediately after the video starts (was 2 seconds after the video started).
+- Bug fixes.
+
+## Version 4.10.0 (October 18, 2016)
+- **Added and updated mediated network versions**
+  - Added Flurry version 6.5.0. All Flurry adapters can be found in the corresponding `extras` directory (`/extras/src/com/mopub/mobileads` for banners and interstitials, `/extras/src/com/mopub/nativeads` for native).
+    - All Flurry ad formats must include: `FlurryAgentWrapper`
+    - Banners: `FlurryCustomEventBanner`
+    - Interstitial: `FlurryCustomEventInterstitial`
+    - Native: `FlurryCustomEventNative`, `FlurryBaseNativeAd`, `FlurryNativeAdRenderer`, and `FlurryViewBinder`
+  - Certified Facebook Audience Network version 4.15.0  
+  - Certified Tapjoy version 11.8.2
+  - Certified Millennial Media version 6.3.0
+  - Certified Vungle version 4.0.2  
+- Fixed intermittent `IllegalStateException` for MRAID creatives attemping to retrieve getRootView() on unattached Views.
+- Updated `mopub-sample`'s example `proguard.cfg` to properly retain methods called only via reflection.
+
+## Version 4.9.0 (September 1, 2016)
+- Removed the full SDK bundle.
+- Removed Eclipse support.
+- Removed InMobi custom events from extras.
+- Deprecated rewarded video calls from `MoPub.java` and moved them to `MoPubRewardedVideos.java`.
+  - For example, `MoPub#loadRewardedVideo` is deprecated in favor of `MoPubRewardedVideos#loadRewardedVideo`.
+- Bug fixes.
+
+**Modular SDK**
+ - Added the ability to specify which ad formats to include as dependencies (to decrease the overall footprint of the MoPub SDK in your app).
+ - Default behavior remains unchanged and includes access to all ad formats.
+ - **Note:** Maven builds from source are currently unstable and will be reinstated in a future release. Maven developers can still pull the MoPub SDK AAR from JCenter.
+
+## Version 4.8.0 (August 1, 2016)
+- Changed the behavior of `MoPubInterstitial#load()` while an interstitial is loading or has been successfully loaded. Previously, this would discard the currently-caching or cached interstitial -- now the interstitial will be unaffected and will remain in the cache.
+- `MoPubInterstitial`s can now be shown only once per successful ad load.
+- Modified a number of Native Ads APIs (manual integration) to accept Context instead of Activity. Affected classes/methods include: `MoPubNative`, `AdapterHelper`, `CustomEventNative#loadNativeAd()`, and `MoPubAdRenderer#createAdView()`.
+
 #### Version 4.7.1 (June 10, 2016)
 - Fixed deeplink bug.
 

@@ -409,7 +409,7 @@ public class MraidControllerTest {
     }
 
     @Test
-    public void handleClose_fromExpandedState_shouldMoveWebViewToOriginalContainer_shouldNotFireOnClose() throws MraidCommandException {
+    public void handleClose_fromExpandedState_shouldMoveWebViewToOriginalContainer_shouldFireOnClose() throws MraidCommandException {
         // Move to EXPANDED state
         subject.handlePageLoad();
         subject.handleExpand(null, false);
@@ -419,11 +419,11 @@ public class MraidControllerTest {
         assertThat(subject.getExpandedAdContainer().getChildCount()).isEqualTo(1);
         assertThat(subject.getAdContainer().getChildCount()).isEqualTo(1);
         assertThat(subject.getViewState()).isEqualTo(ViewState.DEFAULT);
-        verify(mockMraidListener, never()).onClose();
+        verify(mockMraidListener).onClose();
     }
 
     @Test
-    public void handleClose_fromTwoPartExpandedState_shouldDetachTwoPartBridge_shouldMoveWebViewToOriginalContainer_shouldNotFireOnClose()
+    public void handleClose_fromTwoPartExpandedState_shouldDetachTwoPartBridge_shouldMoveWebViewToOriginalContainer_shouldFireOnClose()
             throws MraidCommandException {
         URI uri = URI.create("https://two-part-url");
 
@@ -439,7 +439,7 @@ public class MraidControllerTest {
         assertThat(subject.getAdContainer().getChildCount()).isEqualTo(1);
         assertThat(subject.getViewState()).isEqualTo(ViewState.DEFAULT);
 
-        verify(mockMraidListener, never()).onClose();
+        verify(mockMraidListener).onClose();
     }
 
     @Test

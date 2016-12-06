@@ -1,6 +1,5 @@
 package com.mopub.nativeads;
 
-import android.app.Activity;
 import android.content.Context;
 import android.view.View;
 
@@ -22,7 +21,7 @@ import java.util.Map;
 import static com.mopub.nativeads.NativeImageHelper.preCacheImages;
 
 /**
- * Tested with Facebook SDK 4.8.1. FacebookAdRenderer is also necessary in order to show video ads.
+ * Tested with Facebook SDK 4.15.0. FacebookAdRenderer is also necessary in order to show video ads.
  * Video ads will only be shown if VIDEO_ENABLED is set to true or a server configuration
  * "video_enabled" flag is set to true. The server configuration will override the local
  * configuration.
@@ -47,7 +46,7 @@ public class FacebookNative extends CustomEventNative {
 
     // CustomEventNative implementation
     @Override
-    protected void loadNativeAd(final Activity activity,
+    protected void loadNativeAd(final Context context,
             final CustomEventNativeListener customEventNativeListener,
             final Map<String, Object> localExtras,
             final Map<String, String> serverExtras) {
@@ -75,12 +74,12 @@ public class FacebookNative extends CustomEventNative {
         if (shouldUseVideoEnabledNativeAd(sIsVideoRendererAvailable, videoEnabledString,
                 videoEnabledFromServer)) {
             final FacebookVideoEnabledNativeAd facebookVideoEnabledNativeAd =
-                    new FacebookVideoEnabledNativeAd(activity,
-                            new NativeAd(activity, placementId), customEventNativeListener);
+                    new FacebookVideoEnabledNativeAd(context,
+                            new NativeAd(context, placementId), customEventNativeListener);
             facebookVideoEnabledNativeAd.loadAd();
         } else {
             final FacebookStaticNativeAd facebookStaticNativeAd = new FacebookStaticNativeAd(
-                    activity, new NativeAd(activity, placementId), customEventNativeListener);
+                    context, new NativeAd(context, placementId), customEventNativeListener);
             facebookStaticNativeAd.loadAd();
         }
     }

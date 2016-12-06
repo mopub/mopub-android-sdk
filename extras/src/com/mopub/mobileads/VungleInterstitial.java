@@ -9,11 +9,9 @@ import com.vungle.publisher.EventListener;
 import com.vungle.publisher.VunglePub;
 
 import java.util.Map;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /*
- * Tested with Vungle SDK 3.3.0
+ * Tested with Vungle SDK 4.0.2
  */
 public class VungleInterstitial extends CustomEventInterstitial implements EventListener {
 
@@ -27,12 +25,10 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
     private final VunglePub mVunglePub;
     private final Handler mHandler;
     private CustomEventInterstitialListener mCustomEventInterstitialListener;
-    private boolean mIsLoading;
 
     public VungleInterstitial() {
         mHandler = new Handler(Looper.getMainLooper());
         mVunglePub = VunglePub.getInstance();
-        mIsLoading = false;
     }
 
     @Override
@@ -62,9 +58,11 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
         mVunglePub.init(context, appId);
         mVunglePub.setEventListeners(this);
         if (mVunglePub.isAdPlayable()) {
-            notifyAdAvailable();
+            Log.d("MoPub", "Vungle interstitial ad successfully loaded.");
+            mCustomEventInterstitialListener.onInterstitialLoaded();
         } else {
-            mIsLoading = true;
+            Log.d("MoPub", "Vungle interstitial ad is not loaded.");
+            mCustomEventInterstitialListener.onInterstitialFailed(MoPubErrorCode.NETWORK_NO_FILL);
         }
     }
 
@@ -80,22 +78,10 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
     @Override
     protected void onInvalidate() {
         mVunglePub.clearEventListeners();
-        mIsLoading = false;
     }
 
     private boolean extrasAreValid(Map<String, String> serverExtras) {
         return serverExtras.containsKey(APP_ID_KEY);
-    }
-
-    private void notifyAdAvailable() {
-        Log.d("MoPub", "Vungle interstitial ad successfully loaded.");
-        mIsLoading = false;
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mCustomEventInterstitialListener.onInterstitialLoaded();
-            }
-        });
     }
 
     /*
@@ -120,7 +106,7 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
     }
 
     @Override
-    public void onAdEnd(final boolean wasCallToActionClicked) {
+    public void onAdEnd(final boolean wasSuccessfulView, final boolean wasCallToActionClicked) {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -140,8 +126,7 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
 
     @Override
     public void onAdPlayableChanged(final boolean playable) {
-        if (mIsLoading && playable) {
-            notifyAdAvailable();
-        }
+        Log.d("MoPub", String.format("Vungle interstitial ad is %s.",
+                playable ? "playable" : "not playable"));
     }
 }

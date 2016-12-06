@@ -12,6 +12,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 
+import com.mopub.common.Constants;
 import com.mopub.common.MoPubBrowser;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BaseVideoViewController.BaseVideoViewControllerListener;
@@ -63,13 +64,13 @@ public class NativeVideoViewControllerTest {
         activity = Robolectric.buildActivity(Activity.class).create().get();
 
         intentExtras = new Bundle();
-        intentExtras.putLong(NativeVideoViewController.NATIVE_VIDEO_ID, 123);
+        intentExtras.putLong(Constants.NATIVE_VIDEO_ID, 123);
         NativeVideoController.setForId(123, mockVideoController);
 
         when(mockVastVideoConfig.getCustomCtaText()).thenReturn("Learn More");
         when(mockFullScreenVideoView.getTextureView()).thenReturn(mockTextureView);
         when(mockTextureView.getBitmap()).thenReturn(mockBitmap);
-        intentExtras.putSerializable(NativeVideoViewController.NATIVE_VAST_VIDEO_CONFIG, mockVastVideoConfig);
+        intentExtras.putSerializable(Constants.NATIVE_VAST_VIDEO_CONFIG, mockVastVideoConfig);
 
         subject = new NativeVideoViewController(activity, intentExtras, null,
                 mockBaseVideoViewControllerListener, mockFullScreenVideoView);
@@ -100,7 +101,7 @@ public class NativeVideoViewControllerTest {
 
     @Test(expected = NullPointerException.class)
     public void onCreate_withNullNativeVideoController_shouldThrowNPE() {
-        intentExtras.remove(NativeVideoViewController.NATIVE_VAST_VIDEO_CONFIG);
+        intentExtras.remove(Constants.NATIVE_VAST_VIDEO_CONFIG);
         subject = new NativeVideoViewController(activity, intentExtras, null,
                 mockBaseVideoViewControllerListener, mockFullScreenVideoView);
     }
