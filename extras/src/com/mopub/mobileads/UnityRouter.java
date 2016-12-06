@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.text.TextUtils;
 
 import com.mopub.common.MoPub;
-import com.unity3d.ads.IUnityAdsListener;
+import com.unity3d.ads.mediation.IUnityAdsExtendedListener;
 import com.unity3d.ads.UnityAds;
 import com.unity3d.ads.metadata.MediationMetaData;
 
@@ -16,7 +16,7 @@ public class UnityRouter {
     private static final String PLACEMENT_ID_KEY = "placementId";
     static final String DEFAULT_PLACEMENT_ID = null;
 
-    static boolean initUnityAds(Map<String, String> serverExtras, Activity launcherActivity, IUnityAdsListener unityAdsListener, Runnable onInitFailed) {
+    static boolean initUnityAds(Map<String, String> serverExtras, Activity launcherActivity, IUnityAdsExtendedListener unityAdsListener, Runnable onInitFailed) {
         String gameId;
         if (serverExtras.containsKey(GAME_ID_KEY)) {
             gameId = serverExtras.get(GAME_ID_KEY);

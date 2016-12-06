@@ -3,12 +3,12 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.Context;
 
-import com.unity3d.ads.IUnityAdsListener;
+import com.unity3d.ads.mediation.IUnityAdsExtendedListener;
 import com.unity3d.ads.UnityAds;
 
 import java.util.Map;
 
-public class UnityInterstitial extends CustomEventInterstitial implements IUnityAdsListener {
+public class UnityInterstitial extends CustomEventInterstitial implements IUnityAdsExtendedListener {
 
     private static boolean sInitialized = false;
     private static boolean sAdCached = false;
@@ -91,6 +91,11 @@ public class UnityInterstitial extends CustomEventInterstitial implements IUnity
     @Override
     public void onUnityAdsFinish(String s, UnityAds.FinishState finishState) {
         mCustomEventInterstitialListener.onInterstitialDismissed();
+    }
+
+    @Override
+    public void onUnityAdsClick(String placementId) {
+        mCustomEventInterstitialListener.onInterstitialClicked();
     }
 
     @Override

@@ -9,7 +9,7 @@ import com.mopub.common.LifecycleListener;
 import com.mopub.common.MoPubReward;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
-import com.unity3d.ads.IUnityAdsListener;
+import com.unity3d.ads.mediation.IUnityAdsExtendedListener;
 import com.unity3d.ads.UnityAds;
 
 import java.util.Map;
@@ -128,7 +128,7 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
 
     }
 
-    private static class UnityAdsListener implements IUnityAdsListener,
+    private static class UnityAdsListener implements IUnityAdsExtendedListener,
             CustomEventRewardedVideoListener {
         @Override
         public void onUnityAdsReady(String placementId) {
@@ -168,6 +168,12 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
             }
             MoPubRewardedVideoManager.onRewardedVideoClosed(UnityRewardedVideo.class, sPlacementId);
             UnityAds.setListener(null);
+        }
+
+        @Override
+        public void onUnityAdsClick(String placementId) {
+            MoPubRewardedVideoManager.onRewardedVideoClicked(UnityRewardedVideo.class, placementId);
+            MoPubLog.d("Unity rewarded video clicked for placement " + placementId + ".");
         }
 
         @Override
