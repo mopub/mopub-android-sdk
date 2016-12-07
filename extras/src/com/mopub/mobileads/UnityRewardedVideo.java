@@ -26,7 +26,7 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
 
     private static boolean sInitialized = false;
     private static boolean sAdCached = false;
-    private static String sPlacementId = UnityRouter.DEFAULT_PLACEMENT_ID;
+    private static String sPlacementId = "rewardedVideo";
 
     @Nullable
     private Activity mLauncherActivity;
@@ -75,7 +75,7 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
                                           @NonNull Map<String, String> serverExtras)
             throws Exception {
 
-        sPlacementId = UnityRouter.placementIdForServerExtras(serverExtras);
+        sPlacementId = UnityRouter.placementIdForServerExtras(serverExtras, sPlacementId);
         mLauncherActivity = activity;
         UnityAds.setListener(sUnityAdsListener);
 
@@ -191,6 +191,6 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
     @VisibleForTesting
     void reset() {
         sInitialized = false;
-        sPlacementId = UnityRouter.DEFAULT_PLACEMENT_ID;
+        sPlacementId = "";
     }
 }

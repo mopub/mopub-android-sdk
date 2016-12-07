@@ -14,7 +14,6 @@ public class UnityRouter {
     private static final String GAME_ID_KEY = "gameId";
     private static final String ZONE_ID_KEY = "zoneId";
     private static final String PLACEMENT_ID_KEY = "placementId";
-    static final String DEFAULT_PLACEMENT_ID = null;
 
     static boolean initUnityAds(Map<String, String> serverExtras, Activity launcherActivity, IUnityAdsExtendedListener unityAdsListener, Runnable onInitFailed) {
         String gameId;
@@ -38,14 +37,14 @@ public class UnityRouter {
         return true;
     }
 
-    static String placementIdForServerExtras(Map<String, String> serverExtras) {
+    static String placementIdForServerExtras(Map<String, String> serverExtras, String defaultPlacementId) {
         String placementId = null;
         if (serverExtras.containsKey(PLACEMENT_ID_KEY)) {
             placementId = serverExtras.get(PLACEMENT_ID_KEY);
         } else if (serverExtras.containsKey(ZONE_ID_KEY)) {
             placementId = serverExtras.get(ZONE_ID_KEY);
         }
-        return TextUtils.isEmpty(placementId) ? DEFAULT_PLACEMENT_ID : placementId;
+        return TextUtils.isEmpty(placementId) ? defaultPlacementId : placementId;
     }
 
     static void initPlacement(String placementId, Runnable onInitFailure, Runnable onInitSuccess) {

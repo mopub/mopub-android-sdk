@@ -14,7 +14,7 @@ public class UnityInterstitial extends CustomEventInterstitial implements IUnity
     private static boolean sAdCached = false;
     private CustomEventInterstitialListener mCustomEventInterstitialListener;
     private Activity mLauncherActivity;
-    private String mPlacementId = UnityRouter.DEFAULT_PLACEMENT_ID;
+    private String mPlacementId = "video";
 
     @Override
     protected void loadInterstitial(Context context,
@@ -22,7 +22,7 @@ public class UnityInterstitial extends CustomEventInterstitial implements IUnity
                                     Map<String, Object> localExtras,
                                     Map<String, String> serverExtras) {
 
-        mPlacementId = UnityRouter.placementIdForServerExtras(serverExtras);
+        mPlacementId = UnityRouter.placementIdForServerExtras(serverExtras, mPlacementId);
         mLauncherActivity = (Activity) context;
         mCustomEventInterstitialListener = customEventInterstitialListener;
 
