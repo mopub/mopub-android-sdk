@@ -1,6 +1,6 @@
 package com.mopub.nativeads;
 
-import android.app.Activity;
+import android.content.Context;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
@@ -166,10 +166,10 @@ class NativeAdSource {
         mAdSourceListener = adSourceListener;
     }
 
-    void loadAds(@NonNull final Activity activity,
+    void loadAds(@NonNull final Context context,
             @NonNull final String adUnitId,
             final RequestParameters requestParameters) {
-        loadAds(requestParameters, new MoPubNative(activity, adUnitId, mMoPubNativeNetworkListener));
+        loadAds(requestParameters, new MoPubNative(context, adUnitId, mMoPubNativeNetworkListener));
     }
 
     @VisibleForTesting
