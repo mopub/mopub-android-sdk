@@ -64,7 +64,6 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
 
         // init clears the event listener.
         mVunglePub.init(context, appId);
-        mVunglePub.setEventListeners(this);
         if (mVunglePub.isAdPlayable()) {
             Log.d("MoPub", "Vungle interstitial ad successfully loaded.");
             mCustomEventInterstitialListener.onInterstitialLoaded();
@@ -77,6 +76,7 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
     @Override
     protected void showInterstitial() {
         if (mVunglePub.isAdPlayable()) {
+            mVunglePub.setEventListeners(this);
             mVunglePub.playAd();
         } else {
             Log.d("MoPub", "Tried to show a Vungle interstitial ad before it finished loading. Please try again.");
@@ -85,7 +85,7 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
 
     @Override
     protected void onInvalidate() {
-        mVunglePub.clearEventListeners();
+        mVunglePub.removeEventListeners(this);
     }
 
     private boolean extrasAreValid(Map<String, String> serverExtras) {

@@ -102,7 +102,6 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
     protected void loadWithSdkInitialized(@NonNull final Activity activity, @NonNull final Map<String, Object> localExtras, @NonNull final Map<String, String> serverExtras) throws Exception {
         String appId = serverExtras.containsKey(APP_ID_KEY) ? serverExtras.get(APP_ID_KEY) : DEFAULT_VUNGLE_APP_ID;
         sVunglePub.init(activity, appId);
-        sVunglePub.setEventListeners(sVungleListener);
         Object adUnitObject = localExtras.get(DataKeys.AD_UNIT_ID_KEY);
         if (adUnitObject instanceof String) {
             mAdUnitId = (String) adUnitObject;
@@ -134,6 +133,7 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         final AdConfig adConfig = new AdConfig();
         adConfig.setIncentivized(true);
         setUpMediationSettingsForRequest(adConfig);
+        sVunglePub.setEventListeners(sVungleListener);
         sVunglePub.playAd(adConfig);
     }
 
