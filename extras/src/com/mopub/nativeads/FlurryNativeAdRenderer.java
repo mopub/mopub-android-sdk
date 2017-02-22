@@ -68,6 +68,8 @@ public class FlurryNativeAdRenderer implements
         } else {
             NativeImageHelper.loadImageView(ad.getMainImageUrl(),
                     viewHolder.staticNativeViewHolder.mainImageView);
+            NativeImageHelper.loadImageView(ad.getPrivacyInformationIconImageUrl(),
+                    viewHolder.staticNativeViewHolder.privacyInformationIconImageView);
         }
     }
 

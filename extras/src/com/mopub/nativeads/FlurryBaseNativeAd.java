@@ -21,6 +21,7 @@ public interface FlurryBaseNativeAd {
     @Nullable String getCallToAction();
     @Nullable String getMainImageUrl();
     @Nullable String getIconImageUrl();
+    @Nullable String getPrivacyInformationIconImageUrl();
     @Nullable Double getStarRating();
     @Nullable Map<String, Object> getExtras();
 
@@ -30,6 +31,7 @@ public interface FlurryBaseNativeAd {
     void setCallToAction(@Nullable final String callToAction);
     void setMainImageUrl(@Nullable final String mainImageUrl);
     void setIconImageUrl(@Nullable final String iconImageUrl);
+    void setPrivacyInformationIconImageUrl(@Nullable final String privacyInformationIconImageUrl);
     void setStarRating(@Nullable final Double starRating);
     void addExtra(@NonNull final String key, @Nullable final Object value);
 

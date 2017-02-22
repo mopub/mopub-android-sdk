@@ -112,12 +112,16 @@ public final class FlurryCustomEventNative extends CustomEventNative {
             @NonNull final FlurryAdNative flurryAdNative) {
         FlurryAdNativeAsset coverImageAsset = flurryAdNative.getAsset(ASSET_SEC_HQ_IMAGE);
         FlurryAdNativeAsset iconImageAsset = flurryAdNative.getAsset(ASSET_SEC_IMAGE);
+        FlurryAdNativeAsset privacyInformationIconImageAsset = flurryAdNative.getAsset(ASSET_SEC_HQ_BRANDING_LOGO);
 
         if (coverImageAsset != null && !TextUtils.isEmpty(coverImageAsset.getValue())) {
             mopubSupportedAd.setMainImageUrl(coverImageAsset.getValue());
         }
         if (iconImageAsset != null && !TextUtils.isEmpty(iconImageAsset.getValue())) {
             mopubSupportedAd.setIconImageUrl(iconImageAsset.getValue());
+        }
+        if (privacyInformationIconImageAsset != null && !TextUtils.isEmpty(privacyInformationIconImageAsset.getValue())) {
+            mopubSupportedAd.setPrivacyInformationIconImageUrl(privacyInformationIconImageAsset.getValue());
         }
 
         mopubSupportedAd.setTitle(flurryAdNative.getAsset(ASSET_HEADLINE).getValue());
@@ -296,18 +300,24 @@ public final class FlurryCustomEventNative extends CustomEventNative {
 
         @NonNull
         public List<String> getImageUrls() {
-            final List<String> imageUrls = new ArrayList<>(2);
-            final String mainImageUrl = getMainImageUrl();
+            final List<String> imageUrls = new ArrayList<>(3);
 
+            final String mainImageUrl = getMainImageUrl();
             if (mainImageUrl != null) {
-                imageUrls.add(getMainImageUrl());
+                imageUrls.add(mainImageUrl);
                 Log.d(LOG_TAG, "Flurry Native Ad main image found.");
             }
 
             final String iconUrl = getIconImageUrl();
             if (iconUrl != null) {
-                imageUrls.add(this.getIconImageUrl());
+                imageUrls.add(iconUrl);
                 Log.d(LOG_TAG, "Flurry Native Ad icon image found.");
+            }
+
+            final String privacyUrl = getPrivacyInformationIconImageUrl();
+            if (iconUrl != null) {
+                imageUrls.add(privacyUrl);
+                Log.d(LOG_TAG, "Flurry Native Ad privacy information icon image found.");
             }
             return imageUrls;
         }
@@ -325,6 +335,10 @@ public final class FlurryCustomEventNative extends CustomEventNative {
 
         @Override
         public void precacheImages() {
+            setPrivacyInformationIconClickThroughUrl(
+                    mFlurryAdNative.getAsset(ASSET_SEC_HQ_BRANDING_LOGO).getValue());
+            setPrivacyInformationIconImageUrl(
+                    mFlurryAdNative.getAsset(ASSET_SEC_HQ_BRANDING_LOGO).getValue());
             NativeImageHelper.preCacheImages(mContext, getImageUrls(),
                     new NativeImageHelper.ImageListener() {
                         @Override
@@ -382,6 +396,7 @@ public final class FlurryCustomEventNative extends CustomEventNative {
         @Nullable private String mCallToAction;
         @Nullable private String mMainImageUrl;
         @Nullable private String mIconImageUrl;
+        @Nullable private String mPrivacyInformationIconImageUrl;
         @Nullable private Double mStarRating;
 
         // Extras
@@ -459,18 +474,24 @@ public final class FlurryCustomEventNative extends CustomEventNative {
         @NonNull
         @Override
         public List<String> getImageUrls() {
-            final List<String> imageUrls = new ArrayList<>(2);
-            final String mainImageUrl = getMainImageUrl();
+            final List<String> imageUrls = new ArrayList<>(3);
 
+            final String mainImageUrl = getMainImageUrl();
             if (mainImageUrl != null) {
-                imageUrls.add(getMainImageUrl());
+                imageUrls.add(mainImageUrl);
                 Log.d(LOG_TAG, "Flurry Native Ad main image found.");
             }
 
             final String iconUrl = getIconImageUrl();
             if (iconUrl != null) {
-                imageUrls.add(this.getIconImageUrl());
+                imageUrls.add(iconUrl);
                 Log.d(LOG_TAG, "Flurry Native Ad icon image found.");
+            }
+
+            final String privacyUrl = getPrivacyInformationIconImageUrl();
+            if (iconUrl != null) {
+                imageUrls.add(privacyUrl);
+                Log.d(LOG_TAG, "Flurry Native Ad privacy information icon image found.");
             }
             return imageUrls;
         }
@@ -503,6 +524,12 @@ public final class FlurryCustomEventNative extends CustomEventNative {
         @Override
         public String getIconImageUrl() {
             return mIconImageUrl;
+        }
+
+        @Nullable
+        @Override
+        public String getPrivacyInformationIconImageUrl() {
+            return mPrivacyInformationIconImageUrl;
         }
 
         @Nullable
@@ -540,6 +567,11 @@ public final class FlurryCustomEventNative extends CustomEventNative {
         @Override
         public void setIconImageUrl(@Nullable String iconImageUrl) {
             mIconImageUrl = iconImageUrl;
+        }
+
+        @Override
+        public void setPrivacyInformationIconImageUrl(@Nullable String privacyInformationIconImageUrl) {
+            this.mPrivacyInformationIconImageUrl = privacyInformationIconImageUrl;
         }
 
         @Override
