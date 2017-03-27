@@ -1,22 +1,18 @@
 package com.mopub.mraid;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build.VERSION_CODES;
 import android.os.Environment;
 import android.provider.CalendarContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
@@ -32,7 +28,6 @@ import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.Intents;
 import com.mopub.common.util.Streams;
 import com.mopub.common.util.Utils;
-import com.mopub.common.util.VersionCode;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -147,8 +142,7 @@ public class MraidNativeCommandHandler {
     static boolean isCalendarAvailable(Context context) {
         Intent calendarIntent = new Intent(Intent.ACTION_INSERT).setType(ANDROID_CALENDAR_CONTENT_TYPE);
 
-        return VersionCode.currentApiLevel().isAtLeast(VersionCode.ICE_CREAM_SANDWICH)
-                && Intents.deviceCanHandleIntent(context, calendarIntent);
+        return Intents.deviceCanHandleIntent(context, calendarIntent);
     }
 
     /**
@@ -156,16 +150,7 @@ public class MraidNativeCommandHandler {
      * enabled in its foreground window and only if the View or any ParentView in the view tree
      * has not had hardware acceleration explicitly turned off.
      */
-    // TargetApi is needed to access hardware accelerated flags
-    @TargetApi(11)
     boolean isInlineVideoAvailable(@NonNull Activity activity, @NonNull View view) {
-        // In addition to potential hardware acceleration problems, there is a problem in the WebKit
-        // HTML5VideoView implementation pre-Gingerbread that would result in HTML5VideoViewProxy
-        // holding on to an instance of the WebView even after the WebView is destroyed. For
-        // this reason, we never allow inline video on Gingerbread devices.
-        if (VersionCode.currentApiLevel().isBelow(VersionCode.HONEYCOMB_MR1)) {
-            return false;
-        }
 
         // Hardware Acceleration
         // Hardware acceleration for the application and activity is enabled by default
@@ -211,7 +196,6 @@ public class MraidNativeCommandHandler {
         return false;
     }
 
-    @TargetApi(VERSION_CODES.ICE_CREAM_SANDWICH)
     private Map<String, Object> translateJSParamsToAndroidCalendarEventMapping(Map<String, String> params) {
         Map<String, Object> validatedParamsMapping = new HashMap<String, Object>();
         if (!params.containsKey("description") || !params.containsKey("start")) {

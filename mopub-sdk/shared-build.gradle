@@ -9,7 +9,7 @@ repositories {
 }
 
 project.group = 'com.mopub'
-project.version = '4.11.0'
+project.version = '4.13.0'
 
 android {
     compileSdkVersion 23
@@ -18,9 +18,9 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        versionCode 48
+        versionCode 50
         versionName version
-        minSdkVersion 9
+        minSdkVersion 16
         targetSdkVersion 23
         consumerProguardFiles project(':mopub-sdk').file('proguard.txt')
     }

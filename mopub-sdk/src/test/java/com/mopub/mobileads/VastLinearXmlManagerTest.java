@@ -77,6 +77,12 @@ public class VastLinearXmlManagerTest {
                 "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;" +
                 "        ]]>" +
                 "    </Tracking>" +
+                // Invalid tracking due to a negative offset
+                "    <Tracking event=\"progress\" offset=\"-05:01\">" +
+                "        <![CDATA[" +
+                "        https://negative.tracker.net" +
+                "        ]]>" +
+                "    </Tracking>" +
                 "    <Tracking event=\"midpoint\">" +
                 "        <![CDATA[" +
                 "        https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;" +

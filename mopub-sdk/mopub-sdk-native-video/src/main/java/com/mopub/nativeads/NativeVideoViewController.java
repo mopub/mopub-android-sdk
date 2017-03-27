@@ -1,13 +1,11 @@
 package com.mopub.nativeads;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -28,7 +26,6 @@ import com.mopub.nativeads.MoPubCustomEventVideoNative.MoPubVideoNativeAd;
 import com.mopub.nativeads.NativeFullScreenVideoView.Mode;
 import com.mopub.nativeads.NativeVideoController.NativeVideoProgressRunnable;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class NativeVideoViewController extends BaseVideoViewController implements TextureView
         .SurfaceTextureListener, NativeVideoController.Listener,
         AudioManager.OnAudioFocusChangeListener {

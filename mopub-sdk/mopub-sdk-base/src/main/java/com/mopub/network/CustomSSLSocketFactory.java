@@ -116,16 +116,25 @@ public class CustomSSLSocketFactory extends SSLSocketFactory {
             throw new SocketException("SSLSocketFactory was null. Unable to create socket.");
         }
 
-        // Don't use the original socket and create a new one. This closes the original socket
-        // if the autoClose flag is set.
-        if (autoClose && socketParam != null) {
-            socketParam.close();
+        // There is a bug in Android before version 6.0 where SNI does not work, so we try to do
+        // it manually here.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            // Don't use the original socket and create a new one. This closes the original socket
+            // if the autoClose flag is set.
+            if (autoClose && socketParam != null) {
+                socketParam.close();
+            }
+
+            final Socket socket = mCertificateSocketFactory.createSocket(
+                    InetAddressUtils.getInetAddressByName(host), port);
+            enableTlsIfAvailable(socket);
+            doManualServerNameIdentification(socket, host);
+            return socket;
         }
 
-        final Socket socket = mCertificateSocketFactory.createSocket(
-                InetAddressUtils.getInetAddressByName(host), port);
+        final Socket socket = mCertificateSocketFactory.createSocket(socketParam, host, port,
+                autoClose);
         enableTlsIfAvailable(socket);
-        doManualServerNameIdentification(socket, host);
         return socket;
     }
 

@@ -1,6 +1,5 @@
 package com.mopub.mraid;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -10,8 +9,6 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
-import android.os.Build.VERSION;
-import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -28,12 +25,12 @@ import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
 import com.mopub.common.AdReport;
-import com.mopub.common.UrlHandler;
 import com.mopub.common.CloseableLayout;
 import com.mopub.common.CloseableLayout.ClosePosition;
 import com.mopub.common.CloseableLayout.OnCloseListener;
 import com.mopub.common.Preconditions;
 import com.mopub.common.UrlAction;
+import com.mopub.common.UrlHandler;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DeviceUtils;
@@ -571,10 +568,10 @@ public class MraidController {
 
         // This causes an inline video to resume if it was playing previously
         if (mMraidWebView != null) {
-            WebViews.onResume(mMraidWebView);
+            mMraidWebView.onResume();
         }
         if (mTwoPartWebView != null) {
-            WebViews.onResume(mTwoPartWebView);
+            mTwoPartWebView.onResume();
         }
     }
 
@@ -794,7 +791,7 @@ public class MraidController {
     }
 
     @VisibleForTesting
-    void handleClose() {
+    protected void handleClose() {
         if (mMraidWebView == null) {
             // Doesn't throw an exception because the ad has been destroyed
             return;
@@ -911,7 +908,6 @@ public class MraidController {
         mOriginalActivityOrientation = null;
     }
 
-    @TargetApi(VERSION_CODES.HONEYCOMB_MR2)
     @VisibleForTesting
     boolean shouldAllowForceOrientation(final MraidOrientation newOrientation) {
         // NONE is the default and always allowed
@@ -944,17 +940,15 @@ public class MraidController {
         boolean containsNecessaryConfigChanges =
                 bitMaskContainsFlag(activityInfo.configChanges, CONFIG_ORIENTATION);
 
-        // And on API 13+, configChanges must also include "screenSize"
-        if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB_MR2) {
-            containsNecessaryConfigChanges = containsNecessaryConfigChanges
-                    && bitMaskContainsFlag(activityInfo.configChanges, CONFIG_SCREEN_SIZE);
-        }
+        // configChanges must also include "screenSize"
+        containsNecessaryConfigChanges = containsNecessaryConfigChanges
+                && bitMaskContainsFlag(activityInfo.configChanges, CONFIG_SCREEN_SIZE);
 
         return containsNecessaryConfigChanges;
     }
 
     @VisibleForTesting
-    void handleCustomClose(boolean useCustomClose) {
+    protected void handleCustomClose(boolean useCustomClose) {
         boolean wasUsingCustomClose = !mCloseableAdContainer.isCloseVisible();
         if (useCustomClose == wasUsingCustomClose) {
             return;

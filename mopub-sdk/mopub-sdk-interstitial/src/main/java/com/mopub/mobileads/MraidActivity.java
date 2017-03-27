@@ -3,8 +3,6 @@ package com.mopub.mobileads;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build.VERSION;
-import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -12,7 +10,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
 import com.mopub.common.AdReport;
 import com.mopub.common.Constants;
@@ -22,6 +19,7 @@ import com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListen
 import com.mopub.mraid.MraidController;
 import com.mopub.mraid.MraidController.MraidListener;
 import com.mopub.mraid.MraidController.UseCustomCloseListener;
+import com.mopub.mraid.MraidWebViewClient;
 import com.mopub.mraid.MraidWebViewDebugListener;
 import com.mopub.mraid.PlacementType;
 import com.mopub.network.Networking;
@@ -29,12 +27,12 @@ import com.mopub.network.Networking;
 import static com.mopub.common.DataKeys.AD_REPORT_KEY;
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
-import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
-import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_CLOSE;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_FAIL;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_SHOW;
+import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
+import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_CLOSE;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.broadcastAction;
 
 public class MraidActivity extends BaseInterstitialActivity {
@@ -43,26 +41,31 @@ public class MraidActivity extends BaseInterstitialActivity {
 
     public static void preRenderHtml(@NonNull final Context context,
             @NonNull final CustomEventInterstitialListener customEventInterstitialListener,
-            @NonNull final String htmlData) {
+            @Nullable final String htmlData) {
         preRenderHtml(customEventInterstitialListener, htmlData, new BaseWebView(context));
     }
 
     @VisibleForTesting
     static void preRenderHtml(
             @NonNull final CustomEventInterstitialListener customEventInterstitialListener,
-            @NonNull final String htmlData, @NonNull final BaseWebView dummyWebView) {
+            @Nullable final String htmlData, @NonNull final BaseWebView dummyWebView) {
         dummyWebView.enablePlugins(false);
         dummyWebView.enableJavascriptCaching();
 
-        dummyWebView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(final WebView view, final String url) {
-                customEventInterstitialListener.onInterstitialLoaded();
-            }
-
+        dummyWebView.setWebViewClient(new MraidWebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 return true;
+            }
+
+            @Override
+            public void onPageFinished(final WebView view, final String url) {
+                customEventInterstitialListener.onInterstitialLoaded();
+
+                // can't reuse MraidBridge methods because MraidController is not initialized yet
+                dummyWebView.loadUrl("javascript:mraidbridge.setState('default');");
+                dummyWebView.loadUrl("javascript:mraidbridge.notifyReadyEvent();");
+
             }
 
             @Override
@@ -79,7 +82,7 @@ public class MraidActivity extends BaseInterstitialActivity {
                 htmlData, "text/html", "UTF-8", null);
     }
 
-    public static void start(@NonNull Context context, @Nullable AdReport adreport, @NonNull String htmlData, long broadcastIdentifier) {
+    public static void start(@NonNull Context context, @Nullable AdReport adreport, @Nullable String htmlData, long broadcastIdentifier) {
         Intent intent = createIntent(context, adreport, htmlData, broadcastIdentifier);
         try {
             context.startActivity(intent);
@@ -90,7 +93,7 @@ public class MraidActivity extends BaseInterstitialActivity {
 
     @VisibleForTesting
     protected static Intent createIntent(@NonNull Context context, @Nullable AdReport adReport,
-            @NonNull String htmlData, long broadcastIdentifier) {
+            @Nullable String htmlData, long broadcastIdentifier) {
         Intent intent = new Intent(context, MraidActivity.class);
         intent.putExtra(HTML_RESPONSE_BODY_KEY, htmlData);
         intent.putExtra(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
@@ -123,8 +126,10 @@ public class MraidActivity extends BaseInterstitialActivity {
             @Override
             public void onFailedToLoad() {
                 MoPubLog.d("MraidActivity failed to load. Finishing the activity");
-                broadcastAction(MraidActivity.this, getBroadcastIdentifier(),
-                        ACTION_INTERSTITIAL_FAIL);
+                if (getBroadcastIdentifier() != null) {
+                    broadcastAction(MraidActivity.this, getBroadcastIdentifier(),
+                            ACTION_INTERSTITIAL_FAIL);
+                }
                 finish();
             }
 
@@ -140,8 +145,10 @@ public class MraidActivity extends BaseInterstitialActivity {
 
             @Override
             public void onOpen() {
-                broadcastAction(MraidActivity.this, getBroadcastIdentifier(),
-                        ACTION_INTERSTITIAL_CLICK);
+                if (getBroadcastIdentifier()!= null) {
+                    broadcastAction(MraidActivity.this, getBroadcastIdentifier(),
+                            ACTION_INTERSTITIAL_CLICK);
+                }
             }
         });
 
@@ -164,13 +171,13 @@ public class MraidActivity extends BaseInterstitialActivity {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        broadcastAction(this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_SHOW);
-
-        if (VERSION.SDK_INT >= VERSION_CODES.ICE_CREAM_SANDWICH) {
-            getWindow().setFlags(
-                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+        if (getBroadcastIdentifier()!= null) {
+            broadcastAction(this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_SHOW);
         }
+
+        getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
     }
 
     @Override
@@ -195,7 +202,9 @@ public class MraidActivity extends BaseInterstitialActivity {
             mMraidController.destroy();
         }
 
-        broadcastAction(this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_DISMISS);
+        if (getBroadcastIdentifier()!= null) {
+            broadcastAction(this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_DISMISS);
+        }
         super.onDestroy();
     }
 

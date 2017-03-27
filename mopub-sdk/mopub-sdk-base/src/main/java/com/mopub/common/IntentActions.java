@@ -11,6 +11,6 @@ public class IntentActions {
     public static final String ACTION_INTERSTITIAL_CLICK = "com.mopub.action.interstitial.click";
 
     public static final String ACTION_REWARDED_VIDEO_COMPLETE = "com.mopub.action.rewardedvideo.complete";
-
+    public static final String ACTION_REWARDED_PLAYABLE_COMPLETE = "com.mopub.action.rewardedplayable.complete";
     private IntentActions() {}
 }

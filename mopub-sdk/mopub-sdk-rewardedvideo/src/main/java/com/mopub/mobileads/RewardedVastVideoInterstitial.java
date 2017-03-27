@@ -9,15 +9,11 @@ import java.util.Map;
 
 class RewardedVastVideoInterstitial extends VastVideoInterstitial {
 
-    interface CustomEventRewardedVideoInterstitialListener extends CustomEventInterstitialListener {
+    interface RewardedVideoInterstitialListener extends CustomEventInterstitialListener {
         void onVideoComplete();
     }
 
     @Nullable private RewardedVideoBroadcastReceiver mRewardedVideoBroadcastReceiver;
-
-    public RewardedVastVideoInterstitial() {
-        super();
-    }
 
     @Override
     public void loadInterstitial(
@@ -27,9 +23,9 @@ class RewardedVastVideoInterstitial extends VastVideoInterstitial {
             Map<String, String> serverExtras) {
         super.loadInterstitial(context, customEventInterstitialListener, localExtras, serverExtras);
 
-        if (customEventInterstitialListener instanceof CustomEventRewardedVideoInterstitialListener) {
+        if (customEventInterstitialListener instanceof RewardedVideoInterstitialListener) {
             mRewardedVideoBroadcastReceiver = new RewardedVideoBroadcastReceiver(
-                    (CustomEventRewardedVideoInterstitialListener) customEventInterstitialListener,
+                    (RewardedVideoInterstitialListener) customEventInterstitialListener,
                     mBroadcastIdentifier);
             mRewardedVideoBroadcastReceiver.register(mRewardedVideoBroadcastReceiver, context);
         }

@@ -25,8 +25,19 @@ public class DataKeys {
     public static final String MAX_BUFFER_MS = "Max-Buffer-Ms";
     public static final String EVENT_DETAILS = "Event-Details";
 
-    // Rewarded Video fields
-    public static final String REWARDED_VIDEO_CURRENCY_NAME_KEY = "Rewarded-Video-Currency-Name";
-    public static final String REWARDED_VIDEO_CURRENCY_AMOUNT_STRING_KEY = "Rewarded-Video-Currency-Value-String";
-    public static final String REWARDED_VIDEO_CUSTOMER_ID = "Rewarded-Video-Customer-Id";
+    // Rewarded Ad fields
+    public static final String REWARDED_AD_CURRENCY_NAME_KEY = "Rewarded-Ad-Currency-Name";
+    public static final String REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY = "Rewarded-Ad-Currency-Value-String";
+    public static final String REWARDED_AD_CUSTOMER_ID_KEY = "Rewarded-Ad-Customer-Id";
+    public static final String REWARDED_AD_DURATION_KEY = "Rewarded-Ad-Duration";
+    public static final String SHOULD_REWARD_ON_CLICK_KEY = "Should-Reward-On-Click";
+
+    /**
+     * @deprecated as of 4.12, replaced by {@link #REWARDED_AD_CUSTOMER_ID_KEY}
+     */
+    @Deprecated
+    public static final String REWARDED_VIDEO_CUSTOMER_ID = "Rewarded-Ad-Customer-Id";
+
+    // Video tracking fields
+    public static final String VIDEO_TRACKERS_KEY = "Video-Trackers";
 }

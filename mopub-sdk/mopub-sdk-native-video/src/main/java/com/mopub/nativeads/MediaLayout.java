@@ -1,12 +1,10 @@
 package com.mopub.nativeads;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -24,7 +22,6 @@ import com.mopub.common.util.Utils;
 import com.mopub.mobileads.VastVideoProgressBarWidget;
 import com.mopub.mobileads.resource.DrawableConstants.GradientStrip;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class MediaLayout extends RelativeLayout {
     public enum Mode { IMAGE, PLAYING, LOADING, BUFFERING, PAUSED, FINISHED }
     public enum MuteState { MUTED, UNMUTED }

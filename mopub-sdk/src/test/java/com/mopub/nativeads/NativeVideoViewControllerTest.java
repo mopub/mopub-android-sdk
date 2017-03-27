@@ -1,12 +1,10 @@
 package com.mopub.nativeads;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.TextureView;
 import android.view.View;
@@ -43,7 +41,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class NativeVideoViewControllerTest {

@@ -139,4 +139,12 @@ public class AdTypeTranslatorTest {
 
         assertThat(customEventName).isEqualTo("com.mopub.mobileads.MoPubRewardedVideo");
     }
+
+    @Test
+    public void getCustomEventName_withRewardedPlayableFormat_shouldBeMoPubRewardedPlayable() {
+        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.INTERSTITIAL,
+                AdType.REWARDED_PLAYABLE, null, headers);
+
+        assertThat(customEventName).isEqualTo("com.mopub.mobileads.MoPubRewardedPlayable");
+    }
 }

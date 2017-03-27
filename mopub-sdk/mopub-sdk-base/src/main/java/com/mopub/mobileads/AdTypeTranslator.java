@@ -28,6 +28,7 @@ public class AdTypeTranslator {
         MOPUB_NATIVE("mopub_native", "com.mopub.nativeads.MoPubCustomEventNative"),
         MOPUB_VIDEO_NATIVE("mopub_video_native", "com.mopub.nativeads.MoPubCustomEventVideoNative"),
         MOPUB_REWARDED_VIDEO("rewarded_video", "com.mopub.mobileads.MoPubRewardedVideo"),
+        MOPUB_REWARDED_PLAYABLE("rewarded_playable", "com.mopub.mobileads.MoPubRewardedPlayable"),
 
         UNSPECIFIED("", null);
 
@@ -75,6 +76,8 @@ public class AdTypeTranslator {
             return CustomEventType.MOPUB_VIDEO_NATIVE.toString();
         } else if (AdType.REWARDED_VIDEO.equalsIgnoreCase(adType)) {
             return CustomEventType.MOPUB_REWARDED_VIDEO.toString();
+        } else if (AdType.REWARDED_PLAYABLE.equalsIgnoreCase(adType)) {
+            return CustomEventType.MOPUB_REWARDED_PLAYABLE.toString();
         } else if (AdType.HTML.equalsIgnoreCase(adType) || AdType.MRAID.equalsIgnoreCase(adType)) {
             return (AdFormat.INTERSTITIAL.equals(adFormat)
                     ? CustomEventType.fromString(adType + INTERSTITIAL_SUFFIX)

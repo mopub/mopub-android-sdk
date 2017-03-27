@@ -1,6 +1,5 @@
 package com.mopub.nativeads;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
@@ -9,7 +8,6 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.GradientDrawable;
-import android.os.Build;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.ImageView;
@@ -44,7 +42,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class NativeFullScreenVideoViewTest {

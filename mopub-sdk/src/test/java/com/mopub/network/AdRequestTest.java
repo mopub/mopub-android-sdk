@@ -2,9 +2,7 @@ package com.mopub.network;
 
 import android.app.Activity;
 import android.location.Location;
-import android.os.Build;
 
-import com.mopub.TestSdkHelper;
 import com.mopub.common.AdFormat;
 import com.mopub.common.AdType;
 import com.mopub.common.DataKeys;
@@ -155,7 +153,6 @@ public class AdRequestTest {
     }
 
     @Test
-    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
     public void parseNetworkResponse_forNativeVideo_shouldSucceed() throws Exception {
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
         NetworkResponse testResponse = new NetworkResponse(200,
@@ -175,7 +172,6 @@ public class AdRequestTest {
     }
 
     @Test
-    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
     public void parseNetworkResponse_forNativeVideo_shouldCombineServerExtrasAndEventData() throws Exception {
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
         defaultHeaders.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "class name");
@@ -202,23 +198,6 @@ public class AdRequestTest {
     }
 
     @Test
-    public void parseNetworkResponse_forNativeVideo_onAPILevelBefore16_shouldError() throws Exception {
-        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
-
-        defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
-        NetworkResponse testResponse = new NetworkResponse(200,
-                "{\"abc\": \"def\"}".getBytes(Charset.defaultCharset()), defaultHeaders, false);
-
-        final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
-
-        assertThat(response.error).isNotNull();
-        assertThat(response.error).isInstanceOf(MoPubNetworkError.class);
-        assertThat(((MoPubNetworkError) response.error).getReason())
-                .isEqualTo(MoPubNetworkError.Reason.UNSPECIFIED);
-    }
-
-    @Test
-    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
     public void parseNetworkResponse_forNativeVideo_withInvalidValues_shouldSucceed_shouldParseNull() throws Exception {
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.VIDEO_NATIVE);
         defaultHeaders.put(ResponseHeader.PLAY_VISIBLE_PERCENT.getKey(), "-1");
@@ -343,12 +322,23 @@ public class AdRequestTest {
     }
 
     @Test
-    public void parseNetworkResponse_forRewardedVideo_shouldSucceed() {
+    public void parseNetworkResponse_forRewardedAds_shouldSucceed() {
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.REWARDED_VIDEO);
         defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME.getKey(), "currencyName");
         defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT.getKey(), "25");
+
+        final String rewardedCurrenciesJson = "{\"rewards\": ["
+                + "{\"name\": \"Coins\", \"amount\": 8},"
+                + "{\"name\": \"Diamonds\", \"amount\": 1},"
+                + "{\"name\": \"Diamonds\", \"amount\": 10 },"
+                + "{\"name\": \"Energy\", \"amount\": 20}"
+                + "]}";
+        defaultHeaders.put(ResponseHeader.REWARDED_CURRENCIES.getKey(), rewardedCurrenciesJson);
+
         defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_COMPLETION_URL.getKey(),
                 "http://completionUrl");
+        defaultHeaders.put(ResponseHeader.REWARDED_DURATION.getKey(), "15000");
+        defaultHeaders.put(ResponseHeader.SHOULD_REWARD_ON_CLICK.getKey(), "1");
         NetworkResponse testResponse = new NetworkResponse(200,
                 "{\"abc\": \"def\"}".getBytes(Charset.defaultCharset()), defaultHeaders, false);
 
@@ -357,8 +347,11 @@ public class AdRequestTest {
         assertThat(response.result.getAdType()).isEqualTo(AdType.REWARDED_VIDEO);
         assertThat(response.result.getRewardedVideoCurrencyName()).isEqualTo("currencyName");
         assertThat(response.result.getRewardedVideoCurrencyAmount()).isEqualTo("25");
+        assertThat(response.result.getRewardedCurrencies()).isEqualTo(rewardedCurrenciesJson);
         assertThat(response.result.getRewardedVideoCompletionUrl()).isEqualTo(
                 "http://completionUrl");
+        assertThat(response.result.getRewardedDuration()).isEqualTo(15000);
+        assertThat(response.result.shouldRewardOnClick()).isTrue();
     }
 
     @Test

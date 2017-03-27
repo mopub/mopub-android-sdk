@@ -4,10 +4,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.SystemClock;
 
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,11 +30,14 @@ public class LocationServiceTest {
     private Activity activity;
     private Location networkLocation;
     private Location gpsLocation;
+    private Location cachedLocation;
     private ShadowLocationManager shadowLocationManager;
 
     @Before
     public void setUp() {
         activity = Robolectric.buildActivity(Activity.class).create().get();
+
+        LocationService.clearLastKnownLocation();
 
         networkLocation = new Location("networkLocation");
         networkLocation.setLatitude(3.1415926535);
@@ -46,10 +51,20 @@ public class LocationServiceTest {
         gpsLocation.setAccuracy(1000);
         gpsLocation.setTime(200);
 
+        cachedLocation = new Location("cachedLocation");
+        cachedLocation.setLatitude(37.776822);
+        cachedLocation.setLongitude(-122.416604);
+        cachedLocation.setAccuracy(25);
+
         shadowLocationManager = shadowOf(
                 (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
         shadowLocationManager.setLastKnownLocation(LocationManager.NETWORK_PROVIDER, networkLocation);
         shadowLocationManager.setLastKnownLocation(LocationManager.GPS_PROVIDER, gpsLocation);
+    }
+
+    @After
+    public void tearDown() {
+        LocationService.clearLastKnownLocation();
     }
 
     @Test
@@ -116,6 +131,36 @@ public class LocationServiceTest {
 
         final Location result =
                 LocationService.getLastKnownLocation(activity, 10, MoPub.LocationAwareness.DISABLED);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    public void getLastKnownLocation_withFreshPreviousKnownLocation_shouldReturnPreviousKnownLocation() {
+        LocationService locationService = LocationService.getInstance();
+        locationService.mLastKnownLocation = cachedLocation;
+        // Setting the location updated time to be more recent than minimum location refresh time,
+        // in milliseconds.
+        locationService.mLocationLastUpdatedMillis = SystemClock.elapsedRealtime() -
+                MoPub.getMinimumLocationRefreshTimeMillis() / 2;
+
+        final Location result = LocationService.getLastKnownLocation(activity, 10,
+                MoPub.LocationAwareness.NORMAL);
+
+        assertThat(result).isEqualTo(cachedLocation);
+    }
+
+    @Test
+    public void getLastKnownLocation_withStalePreviousKnownLocation_shouldReturnNull() {
+        LocationService locationService = LocationService.getInstance();
+        locationService.mLastKnownLocation = cachedLocation;
+        // Setting the location updated time to be older than minimum location refresh time,
+        // in milliseconds.
+        locationService.mLocationLastUpdatedMillis = SystemClock.elapsedRealtime() -
+                MoPub.getMinimumLocationRefreshTimeMillis() * 2;
+
+        final Location result = LocationService.getLastKnownLocation(activity, 10,
+                MoPub.LocationAwareness.NORMAL);
 
         assertThat(result).isNull();
     }

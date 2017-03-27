@@ -93,6 +93,8 @@ public class CloseableLayout extends FrameLayout {
     private final Rect mCloseButtonBounds = new Rect();
     private final Rect mInsetCloseRegionBounds = new Rect();
 
+    private boolean mCloseAlwaysInteractable;
+
     @Nullable
     private UnsetPressedState mUnsetPressedState;
 
@@ -117,6 +119,7 @@ public class CloseableLayout extends FrameLayout {
         mCloseButtonPadding = Dips.asIntPixels(CLOSE_BUTTON_PADDING_DP, context);
 
         setWillNotDraw(false);
+        mCloseAlwaysInteractable = true;
     }
 
     public void setOnCloseListener(@Nullable OnCloseListener onCloseListener) {
@@ -202,10 +205,11 @@ public class CloseableLayout extends FrameLayout {
 
     @Override
     public boolean onTouchEvent(@NonNull MotionEvent event) {
-        // Stop receiving touch events if we aren't within the bounds, including some slop.
+        // Stop receiving touch events if we aren't within the bounds (including some slop)
+        // or if we aren't allowing a touch event due to an invisible button.
         final int x = (int) event.getX();
         final int y = (int) event.getY();
-        if (!pointInCloseBounds(x, y, mTouchSlop)) {
+        if (!pointInCloseBounds(x, y, mTouchSlop) || !shouldAllowPress()) {
             setClosePressed(false);
             super.onTouchEvent(event);
             return false;
@@ -232,6 +236,20 @@ public class CloseableLayout extends FrameLayout {
                 break;
         }
         return true;
+    }
+
+    /**
+     * Sets it so that touch events are also valid when the button is not visible.
+     *
+     * @param closeAlwaysInteractable True if you want to allow touch events to an invisible button
+     */
+    public void setCloseAlwaysInteractable(boolean closeAlwaysInteractable) {
+        mCloseAlwaysInteractable = closeAlwaysInteractable;
+    }
+
+    @VisibleForTesting
+    boolean shouldAllowPress() {
+        return mCloseAlwaysInteractable || mCloseDrawable.isVisible();
     }
 
     private void setClosePressed(boolean pressed) {

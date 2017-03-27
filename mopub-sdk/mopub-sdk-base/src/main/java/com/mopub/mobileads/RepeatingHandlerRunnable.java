@@ -50,8 +50,9 @@ public abstract class RepeatingHandlerRunnable implements Runnable {
         mIsRunning = false;
     }
 
+    @Deprecated
     @VisibleForTesting
-    boolean shouldBeRunning() {
+    public boolean isRunning() {
         return mIsRunning;
     }
 }

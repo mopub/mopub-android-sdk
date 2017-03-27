@@ -1,7 +1,5 @@
 package com.mopub.mobileads.util;
 
-import android.annotation.TargetApi;
-import android.os.Build;
 import android.webkit.WebView;
 
 import com.mopub.common.test.support.SdkTestRunner;
@@ -19,7 +17,6 @@ import static org.mockito.Mockito.verify;
 @Config(constants = BuildConfig.class)
 public class WebViewsTest {
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
     @Test
     public void pause_withIsFinishingTrue_shouldStopLoading_shouldLoadBlankUrl_shouldPauseWebView() throws Exception {
         WebView mockWebView = mock(WebView.class);
@@ -31,7 +28,6 @@ public class WebViewsTest {
         verify(mockWebView).onPause();
     }
 
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
     @Test
     public void pause_withIsFinishingFalse_shouldPauseWebView() throws Exception {
         WebView mockWebView = mock(WebView.class);

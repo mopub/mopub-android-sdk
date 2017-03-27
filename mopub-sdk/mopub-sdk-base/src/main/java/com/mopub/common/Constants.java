@@ -24,4 +24,9 @@ public class Constants {
 
     public static final String NATIVE_VIDEO_ID = "native_video_id";
     public static final String NATIVE_VAST_VIDEO_CONFIG = "native_vast_video_config";
+
+    // Internal Video Tracking nouns, defined in ad server
+    public static final String VIDEO_TRACKING_EVENTS_KEY = "events";
+    public static final String VIDEO_TRACKING_URLS_KEY = "urls";
+    public static final String VIDEO_TRACKING_URL_MACRO = "%%VIDEO_EVENT%%";
 }

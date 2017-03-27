@@ -685,30 +685,12 @@ public class MraidControllerTest {
         assertThat(subject.getForceOrientation()).isEqualTo(MraidOrientation.NONE);
     }
 
-    @Test
-    public void handleSetOrientationProperties_beforeHoneycombMr2_withMissingConfigChangeScreenSize_shouldUpdateProperties() throws Exception {
+    @Test(expected = MraidCommandException.class)
+    public void handleSetOrientationProperties_withMissingConfigChangeScreenSize_shouldThrowMraidCommandException() throws Exception {
         setMockActivityInfo(true, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED,
                 ActivityInfo.CONFIG_ORIENTATION);
-        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.HONEYCOMB_MR1);
 
         subject.handleSetOrientationProperties(false, MraidOrientation.LANDSCAPE);
-
-        assertThat(subject.getAllowOrientationChange()).isFalse();
-        assertThat(subject.getForceOrientation()).isEqualTo(MraidOrientation.LANDSCAPE);
-    }
-
-    @Test
-    public void handleSetOrientationProperties_atLeastHoneycombMr2_withMissingConfigChangeScreenSize_shouldThrowMraidCommandException() throws Exception {
-        setMockActivityInfo(true, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED,
-                ActivityInfo.CONFIG_ORIENTATION);
-        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.HONEYCOMB_MR2);
-
-        try {
-            subject.handleSetOrientationProperties(false, MraidOrientation.LANDSCAPE);
-            fail("Expected MraidCommandException");
-        } catch (MraidCommandException e) {
-            // pass
-        }
 
         assertThat(subject.getAllowOrientationChange()).isTrue();
         assertThat(subject.getForceOrientation()).isEqualTo(MraidOrientation.NONE);

@@ -13,7 +13,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import com.mopub.common.VisibleForTesting;
-import com.mopub.common.util.VersionCode;
 import com.mopub.common.util.Views;
 import com.mopub.mobileads.util.WebViews;
 
@@ -54,7 +53,7 @@ public class BaseWebView extends WebView {
 
     protected void enablePlugins(final boolean enabled) {
         // Android 4.3 and above has no concept of plugin states
-        if (VersionCode.currentApiLevel().isAtLeast(VersionCode.JELLY_BEAN_MR2)) {
+        if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN_MR2) {
             return;
         }
 
@@ -84,15 +83,9 @@ public class BaseWebView extends WebView {
      */
     private void restrictDeviceContentAccess() {
         getSettings().setAllowFileAccess(false);
-
-        if (VERSION.SDK_INT >= VERSION_CODES.HONEYCOMB) {
-            getSettings().setAllowContentAccess(false);
-        }
-
-        if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN) {
-            getSettings().setAllowFileAccessFromFileURLs(false);
-            getSettings().setAllowUniversalAccessFromFileURLs(false);
-        }
+        getSettings().setAllowContentAccess(false);
+        getSettings().setAllowFileAccessFromFileURLs(false);
+        getSettings().setAllowUniversalAccessFromFileURLs(false);
     }
 
     /**

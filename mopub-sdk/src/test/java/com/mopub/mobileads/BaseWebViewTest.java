@@ -33,9 +33,9 @@ public class BaseWebViewTest {
         context = Robolectric.buildActivity(Activity.class).create().get();
     }
 
-    @Config(sdk = VERSION_CODES.JELLY_BEAN_MR1)
+    @Config(sdk = VERSION_CODES.JELLY_BEAN)
     @Test
-    public void beforeJellyBeanMr1_shouldDisablePluginsByDefault() throws Exception {
+    public void constructor_beforeJellyBeanMr1_shouldDisablePluginsByDefault() throws Exception {
         subject = new BaseWebView(context);
 
         WebSettings webSettings = subject.getSettings();
@@ -46,25 +46,23 @@ public class BaseWebViewTest {
     }
 
     @Test
-    public void allPlatforms_shouldDisableFileAccess() {
+    public void constructor_shouldDisableFileAccess() {
         subject = new BaseWebView(context);
 
         final WebSettings webSettings = subject.getSettings();
         assertThat(webSettings.getAllowFileAccess()).isEqualTo(false);
     }
 
-    @Config(sdk = VERSION_CODES.JELLY_BEAN) // Robo doesn't go earlier than this.
     @Test
-    public void atLeastHoneyComb_shouldDisableContentAccess() {
+    public void constructor_shouldDisableContentAccess() {
         subject = new BaseWebView(context);
 
         final WebSettings webSettings = subject.getSettings();
         assertThat(webSettings.getAllowContentAccess()).isEqualTo(false);
     }
 
-    @Config(sdk = VERSION_CODES.JELLY_BEAN)
     @Test
-    public void atLeastJellybean_shouldDisableAccessFromFileUrls() {
+    public void constructor_shouldDisableAccessFromFileUrls() {
         subject = new BaseWebView(context);
 
         final WebSettings webSettings = subject.getSettings();
@@ -74,7 +72,7 @@ public class BaseWebViewTest {
 
     @Config(sdk = VERSION_CODES.JELLY_BEAN_MR2)
     @Test
-    public void atLeastJellybeanMr2_shouldPass() throws Exception {
+    public void constructor_atLeastJellybeanMr2_shouldPass() throws Exception {
         subject = new BaseWebView(context);
 
         subject.enablePlugins(true);

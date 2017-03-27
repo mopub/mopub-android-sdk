@@ -27,7 +27,7 @@ The MoPub SDK is available via:
     }
 
     dependencies {
-        compile('com.mopub:mopub-sdk:4.11.0@aar') {
+        compile('com.mopub:mopub-sdk:4.13.0@aar') {
             transitive = true
         }
     }
@@ -48,27 +48,27 @@ The MoPub SDK is available via:
         // ... other project dependencies
 
         // For banners
-        compile('com.mopub:mopub-sdk-banner:4.11.0@aar') {
+        compile('com.mopub:mopub-sdk-banner:4.13.0@aar') {
             transitive = true
         }
         
         // For interstitials
-        compile('com.mopub:mopub-sdk-interstitial:4.11.0@aar') {
+        compile('com.mopub:mopub-sdk-interstitial:4.13.0@aar') {
             transitive = true
         }
 
         // For rewarded videos. This will automatically also include interstitials
-        compile('com.mopub:mopub-sdk-rewardedvideo:4.11.0@aar') {
+        compile('com.mopub:mopub-sdk-rewardedvideo:4.13.0@aar') {
             transitive = true
         }
 
         // For native static (images).
-        compile('com.mopub:mopub-sdk-native-static:4.11.0@aar') {
+        compile('com.mopub:mopub-sdk-native-static:4.13.0@aar') {
             transitive = true
         }
 
         // For native video. This will automatically also include native static
-        compile('com.mopub:mopub-sdk-native-video:4.11.0@aar') {
+        compile('com.mopub:mopub-sdk-native-video:4.13.0@aar') {
             transitive = true
         }
     }
@@ -96,16 +96,16 @@ The MoPub SDK is available via:
 ## New in this Version
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-- Added a workaround for an Android bug where Lollipop devices (Android 5.1.1, API level 22) and lower incorrectly handle SSL connections using Server Name Identification.
-- Rewarded video `load()` calls now do not load another rewarded video with the same ad unit id while one is already loading or loaded.
-- Moved the VAST video start tracker to immediately after the video starts (was 2 seconds after the video started).
+- Updated AdColony Custom Events.
+- Updated Unity Custom Events.
+- Added AdMob Custom Events:
+  - Native: `GooglePlayServicesAdRenderer` and `GooglePlayServicesNative`
+  - Rewarded Video: `GooglePlayServicesRewardedVideo`
 - Bug fixes.
-
-- **Note:** Maven builds from source are currently unstable and will be reinstated in a future release. Maven developers can still pull the MoPub SDK AAR from JCenter.
 
 ## Requirements
 
-- Android 2.3.1 (API Version 9) and up
+- Android 4.1 (API Version 16) and up (**Updated in 4.12.0**)
 - android-support-v4.jar, r23 (**Updated in 4.4.0**)
 - android-support-annotations.jar, r23 (**Updated in 4.4.0**)
 - android-support-v7-recyclerview.jar, r23 (**Updated in 4.4.0**)

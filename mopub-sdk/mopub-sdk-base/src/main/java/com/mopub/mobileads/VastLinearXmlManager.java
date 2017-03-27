@@ -105,9 +105,12 @@ class VastLinearXmlManager {
                 if (Strings.isPercentageTracker(offsetString)) {
                     String trackingUrl = XmlUtils.getNodeValue(progressNode);
                     try {
-                        float trackingFraction =
+                        final float trackingFraction =
                                 Float.parseFloat(offsetString.replace("%", "")) / 100f;
-                        percentTrackers.add(new VastFractionalProgressTracker(trackingUrl, trackingFraction));
+                        if (trackingFraction >= 0) {
+                            percentTrackers.add(new VastFractionalProgressTracker(trackingUrl,
+                                    trackingFraction));
+                        }
                     } catch (NumberFormatException e) {
                         MoPubLog.d(String.format("Failed to parse VAST progress tracker %s",
                                 offsetString));
@@ -164,7 +167,7 @@ class VastLinearXmlManager {
                     String trackingUrl = XmlUtils.getNodeValue(progressNode);
                     try {
                         Integer trackingMilliseconds = Strings.parseAbsoluteOffset(offsetString);
-                        if (trackingMilliseconds != null) {
+                        if (trackingMilliseconds != null && trackingMilliseconds >= 0) {
                             trackers.add(new VastAbsoluteProgressTracker(trackingUrl, trackingMilliseconds));
                         }
                     } catch (NumberFormatException e) {

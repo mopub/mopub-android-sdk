@@ -37,12 +37,12 @@ public class VastVideoRadialCountdownWidget extends ImageView {
         setLayoutParams(layoutParams);
     }
 
-    void calibrateAndMakeVisible(final int initialCountdownMilliseconds) {
+    public void calibrateAndMakeVisible(final int initialCountdownMilliseconds) {
         mRadialCountdownDrawable.setInitialCountdown(initialCountdownMilliseconds);
         setVisibility(VISIBLE);
     }
 
-    void updateCountdownProgress(final int initialCountdownMilliseconds, final int currentProgressMilliseconds) {
+    public void updateCountdownProgress(final int initialCountdownMilliseconds, final int currentProgressMilliseconds) {
         // There exists an Android video player bug where VideoView.getCurrentPosition()
         // temporarily returns 0 right after backgrounding and switching back to the app.
         // Therefore, we check against the last known current position to ensure that it's
@@ -65,14 +65,14 @@ public class VastVideoRadialCountdownWidget extends ImageView {
     // for testing
     @Deprecated
     @VisibleForTesting
-    RadialCountdownDrawable getImageViewDrawable() {
+    public RadialCountdownDrawable getImageViewDrawable() {
         return mRadialCountdownDrawable;
     }
 
     // for testing
     @Deprecated
     @VisibleForTesting
-    void setImageViewDrawable(RadialCountdownDrawable drawable) {
+    public void setImageViewDrawable(RadialCountdownDrawable drawable) {
         mRadialCountdownDrawable = drawable;
     }
 }

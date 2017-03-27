@@ -38,38 +38,34 @@ public class VastVideoBlurLastVideoFrameTask extends AsyncTask<String, Void, Boo
 
     @Override
     protected Boolean doInBackground(String... videoPaths) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD_MR1) {
-            if (videoPaths == null || videoPaths.length == 0 || videoPaths[0] == null) {
-                return false;
-            }
-
-            try {
-                final String videoPath = videoPaths[0];
-
-                mMediaMetadataRetriever.setDataSource(videoPath);
-
-                // This actually gets a frame just before the video ends. If we try to get a frame
-                // that's actually past the end of the video or before 0, this will pick some
-                // arbitrary frame.
-                mLastVideoFrame = mMediaMetadataRetriever.getFrameAtTime(
-                        mVideoDuration * MICROSECONDS_PER_MILLISECOND - OFFSET_IN_MICROSECONDS,
-                        MediaMetadataRetriever.OPTION_CLOSEST);
-
-                if (mLastVideoFrame == null) {
-                    return false;
-                }
-
-                mBlurredLastVideoFrame = ImageUtils.applyFastGaussianBlurToBitmap(
-                        mLastVideoFrame, 4);
-
-                return true;
-            } catch (Exception e) {
-                MoPubLog.d("Failed to blur last video frame", e);
-                return false;
-            }
+        if (videoPaths == null || videoPaths.length == 0 || videoPaths[0] == null) {
+            return false;
         }
 
-        return false;
+        try {
+            final String videoPath = videoPaths[0];
+
+            mMediaMetadataRetriever.setDataSource(videoPath);
+
+            // This actually gets a frame just before the video ends. If we try to get a frame
+            // that's actually past the end of the video or before 0, this will pick some
+            // arbitrary frame.
+            mLastVideoFrame = mMediaMetadataRetriever.getFrameAtTime(
+                    mVideoDuration * MICROSECONDS_PER_MILLISECOND - OFFSET_IN_MICROSECONDS,
+                    MediaMetadataRetriever.OPTION_CLOSEST);
+
+            if (mLastVideoFrame == null) {
+                return false;
+            }
+
+            mBlurredLastVideoFrame = ImageUtils.applyFastGaussianBlurToBitmap(
+                    mLastVideoFrame, 4);
+
+            return true;
+        } catch (Exception e) {
+            MoPubLog.d("Failed to blur last video frame", e);
+            return false;
+        }
     }
 
     @Override
@@ -81,8 +77,8 @@ public class VastVideoBlurLastVideoFrameTask extends AsyncTask<String, Void, Boo
 
         if (success != null && success) {
             mBlurredLastVideoFrameImageView.setImageBitmap(mBlurredLastVideoFrame);
-            ImageUtils.setImageViewAlpha(mBlurredLastVideoFrameImageView,
-                    DrawableConstants.BlurredLastVideoFrame.ALPHA);
+            mBlurredLastVideoFrameImageView.setImageAlpha(DrawableConstants.BlurredLastVideoFrame
+                    .ALPHA);
         }
     }
 

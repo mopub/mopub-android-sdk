@@ -8,54 +8,128 @@ import android.util.Pair;
 import com.mopub.common.MoPubReward;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
+import com.mopub.common.logging.MoPubLog;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * Used to manage the mapping between MoPub ad unit ids and third-party ad network ids for rewarded videos.
+ * Used to manage the mapping between MoPub ad unit ids and third-party ad network ids for rewarded ads.
  */
-class RewardedVideoData {
+class RewardedAdData {
     @NonNull
-    private final Map<String, CustomEventRewardedVideo> mAdUnitToCustomEventMap;
+    private final Map<String, CustomEventRewardedAd> mAdUnitToCustomEventMap;
     @NonNull
     private final Map<String, MoPubReward> mAdUnitToRewardMap;
     @NonNull
+    private final Map<String, Set<MoPubReward>> mAdUnitToAvailableRewardsMap;
+    @NonNull
     private final Map<String, String> mAdUnitToServerCompletionUrlMap;
     @NonNull
-    private final Map<Class<? extends CustomEventRewardedVideo>, MoPubReward> mCustomEventToRewardMap;
+    private final Map<Class<? extends CustomEventRewardedAd>, MoPubReward> mCustomEventToRewardMap;
     @NonNull
     private final Map<TwoPartKey, Set<String>> mCustomEventToMoPubIdMap;
-    @NonNull
-    private final Set<CustomEventRewardedVideo.CustomEventRewardedVideoListener> mAdNetworkListeners;
     @Nullable
     private String mCurrentlyShowingAdUnitId;
     @Nullable
     private String mCustomerId;
 
 
-    RewardedVideoData() {
-        mAdUnitToCustomEventMap = new TreeMap<String, CustomEventRewardedVideo>();
+    RewardedAdData() {
+        mAdUnitToCustomEventMap = new TreeMap<String, CustomEventRewardedAd>();
         mAdUnitToRewardMap = new TreeMap<String, MoPubReward>();
+        mAdUnitToAvailableRewardsMap = new TreeMap<String, Set<MoPubReward>>();
         mAdUnitToServerCompletionUrlMap = new TreeMap<String, String>();
-        mCustomEventToRewardMap = new HashMap<Class<? extends CustomEventRewardedVideo>, MoPubReward>();
+        mCustomEventToRewardMap = new HashMap<Class<? extends CustomEventRewardedAd>, MoPubReward>();
         mCustomEventToMoPubIdMap = new HashMap<TwoPartKey, Set<String>>();
-        mAdNetworkListeners = new HashSet<CustomEventRewardedVideo.CustomEventRewardedVideoListener>();
     }
 
     @Nullable
-    CustomEventRewardedVideo getCustomEvent(@NonNull String moPubId) {
+    CustomEventRewardedAd getCustomEvent(@NonNull String moPubId) {
         return mAdUnitToCustomEventMap.get(moPubId);
     }
 
     @Nullable
     MoPubReward getMoPubReward(@Nullable String moPubId) {
         return mAdUnitToRewardMap.get(moPubId);
+    }
+
+    void addAvailableReward(
+            @NonNull String moPubId,
+            @Nullable String currencyName,
+            @Nullable String currencyAmount) {
+        Preconditions.checkNotNull(moPubId);
+        if (currencyName == null || currencyAmount == null) {
+            MoPubLog.e(String.format(Locale.US, "Currency name and amount cannot be null: " +
+                    "name = %s, amount = %s", currencyName, currencyAmount));
+            return;
+        }
+
+        int intCurrencyAmount;
+        try {
+            intCurrencyAmount = Integer.parseInt(currencyAmount);
+        } catch(NumberFormatException e) {
+            MoPubLog.e(String.format(Locale.US, "Currency amount must be an integer: %s",
+                    currencyAmount));
+            return;
+        }
+
+        if (intCurrencyAmount < 0) {
+            MoPubLog.e(String.format(Locale.US, "Currency amount cannot be negative: %s",
+                    currencyAmount));
+            return;
+        }
+
+        if (mAdUnitToAvailableRewardsMap.containsKey(moPubId)) {
+            mAdUnitToAvailableRewardsMap.get(moPubId)
+                    .add(MoPubReward.success(currencyName, intCurrencyAmount));
+        } else {
+            HashSet<MoPubReward> availableRewards = new HashSet<>();
+            availableRewards.add(MoPubReward.success(currencyName, intCurrencyAmount));
+            mAdUnitToAvailableRewardsMap.put(moPubId, availableRewards);
+        }
+    }
+
+    @NonNull
+    Set<MoPubReward> getAvailableRewards(@NonNull String moPubId) {
+        Preconditions.checkNotNull(moPubId);
+        Set<MoPubReward> availableRewards = mAdUnitToAvailableRewardsMap.get(moPubId);
+        return (availableRewards == null) ? Collections.<MoPubReward>emptySet() : availableRewards;
+    }
+
+    void selectReward(@NonNull String moPubId, @NonNull MoPubReward selectedReward) {
+        Preconditions.checkNotNull(moPubId);
+        Preconditions.checkNotNull(selectedReward);
+
+        Set<MoPubReward> availableRewards = mAdUnitToAvailableRewardsMap.get(moPubId);
+        if (availableRewards == null || availableRewards.isEmpty()) {
+            MoPubLog.e(String.format(
+                    Locale.US, "AdUnit %s does not have any rewards.", moPubId));
+            return;
+        }
+
+        if (!availableRewards.contains(selectedReward)) {
+            MoPubLog.e(String.format(
+                    Locale.US, "Selected reward is invalid for AdUnit %s.", moPubId));
+            return;
+        }
+
+        updateAdUnitRewardMapping(moPubId, selectedReward.getLabel(),
+                Integer.toString(selectedReward.getAmount()));
+    }
+
+    void resetAvailableRewards(@NonNull String moPubId) {
+        Preconditions.checkNotNull(moPubId);
+        Set<MoPubReward> availableRewards = mAdUnitToAvailableRewardsMap.get(moPubId);
+        if (availableRewards != null && !availableRewards.isEmpty()) {
+            availableRewards.clear();
+        }
     }
 
     @Nullable
@@ -67,13 +141,13 @@ class RewardedVideoData {
     }
 
     @Nullable
-    MoPubReward getLastShownMoPubReward(@NonNull Class<? extends CustomEventRewardedVideo> customEventClass) {
+    MoPubReward getLastShownMoPubReward(@NonNull Class<? extends CustomEventRewardedAd> customEventClass) {
         return mCustomEventToRewardMap.get(customEventClass);
     }
 
     @NonNull
     Set<String> getMoPubIdsForAdNetwork(
-            @NonNull Class<? extends CustomEventRewardedVideo> customEventClass,
+            @NonNull Class<? extends CustomEventRewardedAd> customEventClass,
             @Nullable String adNetworkId) {
         if (adNetworkId == null) {
             final Set<String> allIds = new HashSet<String>();
@@ -94,11 +168,9 @@ class RewardedVideoData {
 
     void updateAdUnitCustomEventMapping(
             @NonNull String moPubId,
-            @NonNull CustomEventRewardedVideo customEvent,
-            @Nullable CustomEventRewardedVideo.CustomEventRewardedVideoListener listener,
+            @NonNull CustomEventRewardedAd customEvent,
             @NonNull String adNetworkId) {
         mAdUnitToCustomEventMap.put(moPubId, customEvent);
-        mAdNetworkListeners.add(listener);
         associateCustomEventWithMoPubId(customEvent.getClass(), adNetworkId, moPubId);
     }
 
@@ -117,10 +189,14 @@ class RewardedVideoData {
         try {
             intCurrencyAmount = Integer.parseInt(currencyAmount);
         } catch(NumberFormatException e) {
+            MoPubLog.e(String.format(Locale.US, "Currency amount must be an integer: %s",
+                    currencyAmount));
             return;
         }
 
         if (intCurrencyAmount < 0) {
+            MoPubLog.e(String.format(Locale.US, "Currency amount cannot be negative: %s",
+                    currencyAmount));
             return;
         }
 
@@ -134,23 +210,23 @@ class RewardedVideoData {
     }
 
     /**
-     * This method should be called right before the rewarded video is shown in order to store the
+     * This method should be called right before the rewarded ad is shown in order to store the
      * reward associated with the custom event class. If called earlier in the rewarded lifecycle,
-     * it's possible that this mapping will be overridden by another reward value before the video
+     * it's possible that this mapping will be overridden by another reward value before the ad
      * is shown.
      *
-     * @param customEventClass the rewarded video custom event class
-     * @param moPubReward the reward from teh MoPub ad server returned in HTTP headers
+     * @param customEventClass the rewarded ad custom event class
+     * @param moPubReward the reward from the MoPub ad server returned in HTTP headers
      */
     void updateCustomEventLastShownRewardMapping(
-            @NonNull final Class<? extends CustomEventRewardedVideo> customEventClass,
+            @NonNull final Class<? extends CustomEventRewardedAd> customEventClass,
             @Nullable final MoPubReward moPubReward) {
         Preconditions.checkNotNull(customEventClass);
         mCustomEventToRewardMap.put(customEventClass, moPubReward);
     }
 
     void associateCustomEventWithMoPubId(
-            @NonNull Class<? extends CustomEventRewardedVideo> customEventClass,
+            @NonNull Class<? extends CustomEventRewardedAd> customEventClass,
             @NonNull String adNetworkId,
             @NonNull String moPubId) {
         final TwoPartKey newCustomEventMapping = new TwoPartKey(customEventClass, adNetworkId);
@@ -207,22 +283,44 @@ class RewardedVideoData {
     void clear() {
         mAdUnitToCustomEventMap.clear();
         mAdUnitToRewardMap.clear();
+        mAdUnitToAvailableRewardsMap.clear();
         mAdUnitToServerCompletionUrlMap.clear();
         mCustomEventToRewardMap.clear();
         mCustomEventToMoPubIdMap.clear();
-        mAdNetworkListeners.clear();
         mCurrentlyShowingAdUnitId = null;
         mCustomerId = null;
     }
 
-    private static class TwoPartKey extends Pair<Class<? extends CustomEventRewardedVideo>, String> {
+    @VisibleForTesting
+    @Deprecated
+    /**
+     * This method is purely used as a helper method in unit tests. Note that calling
+     * {@link MoPubReward#success(String, int)} creates a new instance, even with the same reward
+     * label and amount as an existing reward. Therefore, existence of a reward cannot be asserted
+     * simply by comparing objects in the unit tests.
+     */
+    boolean existsInAvailableRewards(@NonNull String moPubId, @NonNull String currencyName,
+            int currencyAmount) {
+        Preconditions.checkNotNull(moPubId);
+        Preconditions.checkNotNull(currencyName);
+
+        for (MoPubReward reward : getAvailableRewards(moPubId)) {
+            if (reward.getLabel().equals(currencyName) && reward.getAmount() == currencyAmount) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static class TwoPartKey extends Pair<Class<? extends CustomEventRewardedAd>, String> {
         @NonNull
-        final Class<? extends CustomEventRewardedVideo> customEventClass;
+        final Class<? extends CustomEventRewardedAd> customEventClass;
         @NonNull
         final String adNetworkId;
 
         public TwoPartKey(
-                @NonNull final Class<? extends CustomEventRewardedVideo> customEventClass,
+                @NonNull final Class<? extends CustomEventRewardedAd> customEventClass,
                 @NonNull final String adNetworkId) {
             super(customEventClass, adNetworkId);
 

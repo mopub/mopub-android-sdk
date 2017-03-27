@@ -6,8 +6,8 @@ import android.support.annotation.NonNull;
 import com.mopub.common.Preconditions;
 
 /**
- * This class is used to update a {@link VastVideoViewController}'s countdown display according to rules
- * contained in the {@link VastVideoViewController}
+ * A runnable that is used to update a {@link VastVideoViewController}'s countdown display according
+ * to rules contained in the {@link VastVideoViewController}
  */
 public class VastVideoViewCountdownRunnable extends RepeatingHandlerRunnable {
 
@@ -18,7 +18,6 @@ public class VastVideoViewCountdownRunnable extends RepeatingHandlerRunnable {
         super(handler);
         Preconditions.checkNotNull(handler);
         Preconditions.checkNotNull(videoViewController);
-
 
         mVideoViewController = videoViewController;
     }

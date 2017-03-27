@@ -7,16 +7,17 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.mopub.common.IntentActions;
+import com.mopub.common.Preconditions;
 
 public class RewardedVideoBroadcastReceiver extends BaseBroadcastReceiver {
 
     private static IntentFilter sIntentFilter;
 
     @Nullable
-    private RewardedVastVideoInterstitial.CustomEventRewardedVideoInterstitialListener mRewardedVideoListener;
+    private RewardedVastVideoInterstitial.RewardedVideoInterstitialListener mRewardedVideoListener;
 
     public RewardedVideoBroadcastReceiver(
-            @Nullable RewardedVastVideoInterstitial.CustomEventRewardedVideoInterstitialListener rewardedVideoListener,
+            @Nullable RewardedVastVideoInterstitial.RewardedVideoInterstitialListener rewardedVideoListener,
             final long broadcastIdentifier) {
         super(broadcastIdentifier);
         mRewardedVideoListener = rewardedVideoListener;
@@ -34,6 +35,9 @@ public class RewardedVideoBroadcastReceiver extends BaseBroadcastReceiver {
 
     @Override
     public void onReceive(@NonNull final Context context, @NonNull final Intent intent) {
+        Preconditions.checkNotNull(context);
+        Preconditions.checkNotNull(intent);
+
         if (mRewardedVideoListener == null) {
             return;
         }

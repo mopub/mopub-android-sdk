@@ -1,10 +1,8 @@
 package com.mopub.common;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.os.Build.VERSION_CODES;
 import android.view.MotionEvent;
 
 import com.mopub.common.CloseableLayout.ClosePosition;
@@ -86,9 +84,6 @@ public class CloseableLayoutTest {
         assertThat(subject.isCloseVisible()).isTrue();
     }
 
-    // setLeft, setTop, setRight, and setBottom, are not available before honeycomb. This
-    // annotation just supresses a warning.
-    @TargetApi(VERSION_CODES.HONEYCOMB)
     @Test
     public void draw_shouldUpdateCloseBounds() {
         subject.setLeft(0);
@@ -164,6 +159,22 @@ public class CloseableLayoutTest {
     }
 
     @Test
+    public void onTouchEvent_closeRegionDown_withCloseNotVisible_withSetCloseAlwaysInteractableFalse_shouldTogglePressedState() {
+        subject.setCloseAlwaysInteractable(false);
+        subject.setCloseVisible(false);
+        subject.onTouchEvent(closeRegionDown);
+        assertThat(subject.isClosePressed()).isFalse();
+    }
+
+    @Test
+    public void onTouchEvent_closeRegionDown_withCloseNotVisible_withSetCloseAlwaysInteractableDefault_shouldTogglePressedState() {
+        // The default of mCloseAlwaysInteractable is true
+        subject.setCloseVisible(false);
+        subject.onTouchEvent(closeRegionDown);
+        assertThat(subject.isClosePressed()).isTrue();
+    }
+
+    @Test
     public void pointInCloseBounds_noSlop_shouldReturnValidValues() {
         Rect bounds = new Rect();
         bounds.left = 10;
@@ -221,5 +232,24 @@ public class CloseableLayoutTest {
         assertThat(subject.pointInCloseBounds(20, 100, slop)).isFalse();
         assertThat(subject.pointInCloseBounds(20, 199, slop)).isFalse();
         assertThat(subject.pointInCloseBounds(20, 200, slop)).isFalse();
+    }
+
+    @Test
+    public void shouldAllowPress_shouldRespectSetCloseAlwaysInteractable() {
+        subject.setCloseVisible(false);
+        subject.setCloseAlwaysInteractable(false);
+        assertThat(subject.shouldAllowPress()).isFalse();
+
+        subject.setCloseVisible(false);
+        subject.setCloseAlwaysInteractable(true);
+        assertThat(subject.shouldAllowPress()).isTrue();
+
+        subject.setCloseVisible(true);
+        subject.setCloseAlwaysInteractable(false);
+        assertThat(subject.shouldAllowPress()).isTrue();
+
+        subject.setCloseVisible(true);
+        subject.setCloseAlwaysInteractable(true);
+        assertThat(subject.shouldAllowPress()).isTrue();
     }
 }

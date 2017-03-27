@@ -93,7 +93,6 @@ public class MraidBridgeTest {
         verify(mockWebSettings, never()).setMediaPlaybackRequiresUserGesture(anyBoolean());
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
     @Test
     public void attachView_belowJellyBeanMr1_withInterstitial_shouldNotAutoPlayVideo() {
@@ -107,7 +106,6 @@ public class MraidBridgeTest {
         verifyNoMoreInteractions(mockWebSettings);
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
     @Test
     public void attachView_belowJellyBeanMr1_withInline_shouldNotAutoPlayVideo() {

@@ -19,7 +19,7 @@ public abstract class BaseBroadcastReceiver extends BroadcastReceiver {
         mBroadcastIdentifier = broadcastIdentifier;
     }
 
-    static void broadcastAction(@NonNull final Context context, final long broadcastIdentifier,
+    public static void broadcastAction(@NonNull final Context context, final long broadcastIdentifier,
             @NonNull final String action) {
         Preconditions.checkNotNull(context, "context cannot be null");
         Preconditions.checkNotNull(action, "action cannot be null");

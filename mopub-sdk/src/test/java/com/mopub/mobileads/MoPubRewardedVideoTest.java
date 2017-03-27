@@ -68,16 +68,16 @@ public class MoPubRewardedVideoTest {
                 eq(new TreeMap<String, Object>()),
                 eq(new HashMap<String, String>()));
         verifyNoMoreInteractions(mockRewardedVastVideoInterstitial);
-        assertThat(subject.getRewardedVideoCurrencyName()).isEqualTo("");
-        assertThat(subject.getRewardedVideoCurrencyAmount()).isEqualTo(0);
+        assertThat(subject.getRewardedAdCurrencyName()).isEqualTo("");
+        assertThat(subject.getRewardedAdCurrencyAmount()).isEqualTo(0);
     }
 
     @Test
     public void loadWithSdkInitialized_withRewardedVideoCurrencyNameIncorrectType_shouldLoadVastVideoInterstitial_shouldSetCurrencyNameToEmptyString() throws Exception {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         final Map<String, Object> localExtras = new TreeMap<String, Object>();
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_NAME_KEY, new Object());
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_AMOUNT_STRING_KEY, "10");
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, new Object());
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "10");
 
         subject.loadWithSdkInitialized(activity, localExtras, new HashMap<String, String>());
 
@@ -86,16 +86,16 @@ public class MoPubRewardedVideoTest {
                 eq(localExtras),
                 eq(new HashMap<String, String>()));
         verifyNoMoreInteractions(mockRewardedVastVideoInterstitial);
-        assertThat(subject.getRewardedVideoCurrencyName()).isEqualTo("");
-        assertThat(subject.getRewardedVideoCurrencyAmount()).isEqualTo(10);
+        assertThat(subject.getRewardedAdCurrencyName()).isEqualTo("");
+        assertThat(subject.getRewardedAdCurrencyAmount()).isEqualTo(10);
     }
 
     @Test
     public void loadWithSdkInitialized_withRewardedVideoCurrencyAmountIncorrectType_shouldLoadVastVideoInterstitial_shouldSetCurrencyAmountToZero() throws Exception {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         final Map<String, Object> localExtras = new TreeMap<String, Object>();
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_NAME_KEY, "currencyName");
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_AMOUNT_STRING_KEY, new Object());
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "currencyName");
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, new Object());
 
         subject.loadWithSdkInitialized(activity, localExtras, new HashMap<String, String>());
 
@@ -104,16 +104,16 @@ public class MoPubRewardedVideoTest {
                 eq(localExtras),
                 eq(new HashMap<String, String>()));
         verifyNoMoreInteractions(mockRewardedVastVideoInterstitial);
-        assertThat(subject.getRewardedVideoCurrencyName()).isEqualTo("currencyName");
-        assertThat(subject.getRewardedVideoCurrencyAmount()).isEqualTo(0);
+        assertThat(subject.getRewardedAdCurrencyName()).isEqualTo("currencyName");
+        assertThat(subject.getRewardedAdCurrencyAmount()).isEqualTo(0);
     }
 
     @Test
     public void loadWithSdkInitialized_withRewardedVideoCurrencyAmountNotInteger_shouldLoadVastVideoInterstitial_shouldSetCurrencyAmountToZero() throws Exception {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         final Map<String, Object> localExtras = new TreeMap<String, Object>();
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_NAME_KEY, "currencyName");
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_AMOUNT_STRING_KEY, "foo");
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "currencyName");
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "foo");
 
         subject.loadWithSdkInitialized(activity, localExtras, new HashMap<String, String>());
 
@@ -122,16 +122,16 @@ public class MoPubRewardedVideoTest {
                 eq(localExtras),
                 eq(new HashMap<String, String>()));
         verifyNoMoreInteractions(mockRewardedVastVideoInterstitial);
-        assertThat(subject.getRewardedVideoCurrencyName()).isEqualTo("currencyName");
-        assertThat(subject.getRewardedVideoCurrencyAmount()).isEqualTo(0);
+        assertThat(subject.getRewardedAdCurrencyName()).isEqualTo("currencyName");
+        assertThat(subject.getRewardedAdCurrencyAmount()).isEqualTo(0);
     }
 
     @Test
     public void loadWithSdkInitialized_withRewardedVideoCurrencyAmountNegative_shouldLoadVastVideoInterstitial_shouldSetCurrencyAmountToZero() throws Exception {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         final Map<String, Object> localExtras = new TreeMap<String, Object>();
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_NAME_KEY, "currencyName");
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_AMOUNT_STRING_KEY, "-42");
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "currencyName");
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "-42");
 
         subject.loadWithSdkInitialized(activity, localExtras, new HashMap<String, String>());
 
@@ -140,8 +140,8 @@ public class MoPubRewardedVideoTest {
                 eq(localExtras),
                 eq(new HashMap<String, String>()));
         verifyNoMoreInteractions(mockRewardedVastVideoInterstitial);
-        assertThat(subject.getRewardedVideoCurrencyName()).isEqualTo("currencyName");
-        assertThat(subject.getRewardedVideoCurrencyAmount()).isEqualTo(0);
+        assertThat(subject.getRewardedAdCurrencyName()).isEqualTo("currencyName");
+        assertThat(subject.getRewardedAdCurrencyAmount()).isEqualTo(0);
     }
 
     @Test
@@ -149,8 +149,8 @@ public class MoPubRewardedVideoTest {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         final Map<String, Object> localExtras = new TreeMap<String, Object>();
         final Map<String, String> serverExtras = new HashMap<String, String>();
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_NAME_KEY, "currencyName");
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_AMOUNT_STRING_KEY, "10");
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "currencyName");
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "10");
 
         subject.loadWithSdkInitialized(activity, localExtras, serverExtras);
 
@@ -158,8 +158,8 @@ public class MoPubRewardedVideoTest {
                 any(CustomEventInterstitial.CustomEventInterstitialListener.class), eq(localExtras),
                 eq(serverExtras));
         verifyNoMoreInteractions(mockRewardedVastVideoInterstitial);
-        assertThat(subject.getRewardedVideoCurrencyName()).isEqualTo("currencyName");
-        assertThat(subject.getRewardedVideoCurrencyAmount()).isEqualTo(10);
+        assertThat(subject.getRewardedAdCurrencyName()).isEqualTo("currencyName");
+        assertThat(subject.getRewardedAdCurrencyAmount()).isEqualTo(10);
     }
 
     @Test
@@ -169,8 +169,8 @@ public class MoPubRewardedVideoTest {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         final Map<String, Object> localExtras = new TreeMap<String, Object>();
         final Map<String, String> serverExtras = new HashMap<String, String>();
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_NAME_KEY, "");
-        localExtras.put(DataKeys.REWARDED_VIDEO_CURRENCY_AMOUNT_STRING_KEY, "-10");
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "");
+        localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "-10");
 
         subject.loadWithSdkInitialized(activity, localExtras, serverExtras);
 
@@ -178,8 +178,8 @@ public class MoPubRewardedVideoTest {
                 any(CustomEventInterstitial.CustomEventInterstitialListener.class), eq(localExtras),
                 eq(serverExtras));
         verifyNoMoreInteractions(mockRewardedVastVideoInterstitial);
-        assertThat(subject.getRewardedVideoCurrencyName()).isEqualTo("");
-        assertThat(subject.getRewardedVideoCurrencyAmount()).isEqualTo(0);
+        assertThat(subject.getRewardedAdCurrencyName()).isEqualTo("");
+        assertThat(subject.getRewardedAdCurrencyAmount()).isEqualTo(0);
     }
 
     @Test
@@ -187,7 +187,7 @@ public class MoPubRewardedVideoTest {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         subject.setIsLoaded(true);
 
-        subject.showVideo();
+        subject.show();
 
         verify(mockRewardedVastVideoInterstitial).showInterstitial();
         verifyNoMoreInteractions(mockRewardedVastVideoInterstitial);
@@ -198,7 +198,7 @@ public class MoPubRewardedVideoTest {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         subject.setIsLoaded(false);
 
-        subject.showVideo();
+        subject.show();
 
         verifyZeroInteractions(mockRewardedVastVideoInterstitial);
     }

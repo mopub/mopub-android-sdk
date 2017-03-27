@@ -1,12 +1,10 @@
 package com.mopub.nativeads;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.Handler;
 import android.view.Surface;
 import android.view.TextureView;
@@ -36,7 +34,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
-import org.robolectric.util.ReflectionHelpers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +43,6 @@ import static com.mopub.nativeads.NativeVideoController.STATE_BUFFERING;
 import static com.mopub.nativeads.NativeVideoController.STATE_CLEARED;
 import static com.mopub.nativeads.NativeVideoController.STATE_ENDED;
 import static com.mopub.nativeads.NativeVideoController.STATE_IDLE;
-import static com.mopub.nativeads.NativeVideoController.STATE_PREPARING;
 import static com.mopub.nativeads.NativeVideoController.STATE_READY;
 import static com.mopub.nativeads.NativeVideoController.createForId;
 import static com.mopub.nativeads.NativeVideoController.getForId;
@@ -63,7 +59,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class NativeVideoControllerTest {
@@ -89,8 +84,6 @@ public class NativeVideoControllerTest {
     @Before
     public void setUp() {
         activity = Robolectric.buildActivity(Activity.class).create().get();
-        ReflectionHelpers.setStaticField(
-                Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN);
         visibilityTrackingEvents = new ArrayList<VisibilityTrackingEvent>();
 
         VisibilityTrackingEvent visibilityTrackingEvent = new VisibilityTrackingEvent();

@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build.VERSION_CODES;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -202,24 +201,13 @@ public class MraidActivityTest {
         assertThat(actualLayoutParams.height).isEqualTo(FrameLayout.LayoutParams.MATCH_PARENT);
     }
 
-    @Config(sdk = VERSION_CODES.ICE_CREAM_SANDWICH)
     @Ignore("Mraid 2.0")
     @Test
-    public void onCreate_atLeastIcs_shouldSetHardwareAcceleratedFlag() throws Exception {
+    public void onCreate_shouldSetHardwareAcceleratedFlag() throws Exception {
         subject.onCreate(null);
 
         boolean hardwareAccelerated = Shadows.shadowOf(subject.getWindow()).getFlag(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         assertThat(hardwareAccelerated).isTrue();
-    }
-
-    @Config(sdk = VERSION_CODES.HONEYCOMB_MR2)
-    @Ignore("Mraid 2.0")
-    @Test
-    public void onCreate_beforeIcs_shouldNotSetHardwareAcceleratedFlag() throws Exception {
-        subject.onCreate(null);
-
-        boolean hardwareAccelerated = Shadows.shadowOf(subject.getWindow()).getFlag(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-        assertThat(hardwareAccelerated).isFalse();
     }
 
     @Ignore("Mraid 2.0")

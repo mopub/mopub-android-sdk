@@ -1,14 +1,12 @@
 package com.mopub.mraid;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.os.Build;
 import android.os.Environment;
 import android.provider.CalendarContract;
 import android.support.annotation.NonNull;
@@ -17,7 +15,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
-import com.mopub.TestSdkHelper;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.ShadowAsyncTasks;
 import com.mopub.common.util.test.support.ShadowMoPubHttpUrlConnection;
@@ -321,9 +318,8 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
-    public void createCalendarEvent_withMinimumValidParams_atLeastICS_shouldCreateEventIntent() throws Exception {
+    public void createCalendarEvent_withMinimumValidParams_shouldCreateEventIntent() throws Exception {
         setupCalendarParams();
 
         subject.createCalendarEvent(context, params);
@@ -339,9 +335,8 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
-    public void createCalendarEvent_withoutSecondsOnStartDate_atLeastICS_shouldCreateEventIntent() throws Exception {
+    public void createCalendarEvent_withoutSecondsOnStartDate_shouldCreateEventIntent() throws Exception {
         setupCalendarParams();
         params.put("start", "2012-12-21T00:00-0500");
 
@@ -358,7 +353,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withDailyRecurrence_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -373,7 +367,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withDailyRecurrence_withInterval_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -387,7 +380,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withWeeklyRecurrence_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -400,7 +392,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withWeeklyRecurrence_withInterval_withOutWeekday_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -414,7 +405,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withWeeklyRecurrence_onAllWeekDays_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -428,7 +418,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withWeeklyRecurrence_onDuplicateWeekDays_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -442,7 +431,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withWeeklyRecurrence_withInterval_withWeekDay_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -457,7 +445,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withDailyRecurrence_withWeeklyRecurrence_withMonthlyOccurence_shouldCreateDailyCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -474,7 +461,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withMonthlyRecurrence_withOutInterval_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -487,7 +473,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withMonthlyRecurrence_withInterval_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -501,7 +486,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void createCalendarEvent_withMonthlyRecurrence_withOutInterval_withDaysOfMonth_shouldCreateCalendarIntent() throws Exception {
         setupCalendarParams();
@@ -545,15 +529,6 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.HONEYCOMB_MR2)
-    @Test
-    public void createCalendarEvent_beforeIcs_shouldFireErrorEvent() throws Exception {
-        subject.createCalendarEvent(context, params);
-
-        verify(mockMraidCommandFailureListener).onFailure(any(MraidCommandException.class));
-    }
-
-    @Ignore("Mraid 2.0")
     @Test
     public void createCalendarEvent_withInvalidDate_shouldFireErrorEvent() throws Exception {
         params.put("start", "2013-08-14T09:00.-08:00");
@@ -587,10 +562,9 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Ignore("Mraid 2.0")
-    @Config(sdk = Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Test
     public void
-    createCalendarEvent_withValidParamsAllExceptRecurrence_atLeastICS_shouldCreateEventIntent() throws Exception {
+    createCalendarEvent_withValidParamsAllExceptRecurrence_shouldCreateEventIntent() throws Exception {
         setupCalendarParams();
         params.put("location", "my house");
         params.put("end", "2013-08-14T22:01:01-0000");
@@ -664,30 +638,20 @@ public class MraidNativeCommandHandlerTest {
     }
 
     @Test
-    public void isCalendarAvailable_atLeastIcs_shouldReturnTrue() throws Exception {
-        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
+    public void isCalendarAvailable_shouldReturnTrue() throws Exception {
         context = createMockContextWithSpecificIntentData(null, null, ANDROID_CALENDAR_CONTENT_TYPE, "android.intent.action.INSERT");
         assertThat(subject.isCalendarAvailable(context)).isTrue();
     }
 
     @Test
-    public void isCalendarAvailable_beforeIcs_shouldReturnFalse() throws Exception {
-        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.HONEYCOMB_MR2);
-        context = createMockContextWithSpecificIntentData(null, null, ANDROID_CALENDAR_CONTENT_TYPE, "android.intent.action.INSERT");
-        assertThat(subject.isCalendarAvailable(context)).isFalse();
-    }
-
-    @Test
-    public void isCalendarAvailable_atLeastIcs_butCanNotAcceptIntent_shouldReturnFalse() throws
+    public void isCalendarAvailable_butCanNotAcceptIntent_shouldReturnFalse() throws
             Exception {
-        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
         context = createMockContextWithSpecificIntentData(null, null, "vnd.android.cursor.item/NOPE", "android.intent.action.INSERT");
         assertThat(subject.isCalendarAvailable(context)).isFalse();
     }
 
-    @TargetApi(11)
     @Test
-    public void isInlineVideoAvailable_whenViewsAreHardwareAccelerated_whenWindowIsHardwareAccelerated_whenApiLevelIsAtLeastHoneycombMR1_shouldReturnTrue() throws Exception {
+    public void isInlineVideoAvailable_whenViewsAreHardwareAccelerated_whenWindowIsHardwareAccelerated_shouldReturnTrue() throws Exception {
         Activity activity = Robolectric.buildActivity(Activity.class).create().get();
         activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 
@@ -698,9 +662,8 @@ public class MraidNativeCommandHandlerTest {
         assertThat(subject.isInlineVideoAvailable(activity, mockView)).isTrue();
     }
 
-    @TargetApi(11)
     @Test
-    public void isInlineVideoAvailable_whenViewsAreHardwareAccelerated_whenWindowIsNotHardwareAccelerated_whenApiLevelIsAtLeastHoneycombMR1_shouldReturnFalse() throws Exception {
+    public void isInlineVideoAvailable_whenViewsAreHardwareAccelerated_whenWindowIsNotHardwareAccelerated_shouldReturnFalse() throws Exception {
         Activity activity = Robolectric.buildActivity(Activity.class).create().get();
 
         View mockView = mock(View.class);
@@ -710,24 +673,8 @@ public class MraidNativeCommandHandlerTest {
         assertThat(subject.isInlineVideoAvailable(activity, mockView)).isFalse();
     }
 
-    @TargetApi(11)
     @Test
-    public void isInlineVideoAvailable_whenViewsAreHardwareAccelerated_whenWindowIsHardwareAccelerated_whenApiLevelIsLessThanHoneycombMR1_shouldReturnFalse() throws Exception {
-        Activity activity = Robolectric.buildActivity(Activity.class).create().get();
-        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-
-        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.HONEYCOMB);
-
-        View mockView = mock(View.class);
-        when(mockView.isHardwareAccelerated()).thenReturn(true);
-        when(mockView.getLayerType()).thenReturn(View.LAYER_TYPE_HARDWARE);
-
-        assertThat(subject.isInlineVideoAvailable(activity, mockView)).isFalse();
-    }
-
-    @TargetApi(11)
-    @Test
-    public void isInlineVideoAvailable_whenViewsAreNotHardwareAccelerated_whenWindowIsHardwareAccelerated_whenApiLevelIsAtLeastHoneycombMR1_shouldReturnFalse() throws Exception {
+    public void isInlineVideoAvailable_whenViewsAreNotHardwareAccelerated_whenWindowIsHardwareAccelerated_shouldReturnFalse() throws Exception {
         Activity activity = Robolectric.buildActivity(Activity.class).create().get();
         activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 
@@ -738,9 +685,8 @@ public class MraidNativeCommandHandlerTest {
         assertThat(subject.isInlineVideoAvailable(activity, mockView)).isFalse();
     }
 
-    @TargetApi(11)
     @Test
-    public void isInlineVideoAvailable_whenViewParentIsNotHardwareAccelerated_whenWindowIsHardwareAccelerated_whenApiLevelIsAtLeastHoneycombMR1_shouldReturnFalse() throws Exception {
+    public void isInlineVideoAvailable_whenViewParentIsNotHardwareAccelerated_whenWindowIsHardwareAccelerated_shouldReturnFalse() throws Exception {
         Activity activity = Robolectric.buildActivity(Activity.class).create().get();
         activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 

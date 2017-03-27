@@ -133,6 +133,12 @@ class AdUnitDataSource {
                         .build());
         adUnitList.add(
                 new MoPubSampleAdUnit
+                        .Builder(mContext.getString(R.string.ad_unit_id_rewarded_rich_media),
+                        REWARDED_VIDEO)
+                        .description("MoPub Rewarded Rich Media Sample")
+                        .build());
+        adUnitList.add(
+                new MoPubSampleAdUnit
                         .Builder(mContext.getString(R.string.ad_unit_id_native), LIST_VIEW)
                         .description("MoPub Ad Placer Sample")
                         .build());

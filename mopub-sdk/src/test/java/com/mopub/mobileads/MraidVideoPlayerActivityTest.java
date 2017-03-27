@@ -1,12 +1,10 @@
 package com.mopub.mobileads;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.TextureView;
 import android.view.View;
@@ -218,7 +216,6 @@ public class MraidVideoPlayerActivityTest {
                 .get();
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void initializeSubjectForNative() {
         intent.putExtra(BaseVideoPlayerActivity.VIDEO_CLASS_EXTRAS_KEY, "native");
 

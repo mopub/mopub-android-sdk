@@ -1,3 +1,28 @@
+## Version 4.13.0 (March 23, 2017)
+
+- Updated AdColony Custom Events.
+- Updated Unity Custom Events.
+- Added AdMob Custom Events:
+  - Native: `GooglePlayServicesAdRenderer` and `GooglePlayServicesNative`
+  - Rewarded Video: `GooglePlayServicesRewardedVideo`
+- Bug fixes.
+
+## Version 4.12.0 (February 9, 2017)
+
+- Updated minimum supported Android API version to 16+ (Jelly Bean).
+- New required Activity declaration in `AndroidManifest`, please add:
+
+```
+<activity android:name="com.mopub.mobileads.RewardedMraidActivity"
+          android:configChanges="keyboardHidden|orientation|screenSize"/>
+```
+- Added support for **rich media in rewarded video** inventory.
+- Bug fixes:
+    - Fixed incorrectly forwarded lifecycle events `onStop()` and `onDestroy()` in `MoPubLifeCycleManager` for rewarded rich media ads.
+    - Prevented MoPub-related crashes due to system-level WebView updates while the app is running.
+    - Allow video playback in `reverseLandscape` orientation (in addition to previously supported `landscape` orientation).
+    - Fixed crash caused by invalid VAST absolute tracker values.
+
 ## Version 4.11.0 (November 10, 2016)
 - Added a workaround for an Android bug where Lollipop devices (Android 5.1.1, API level 22) and lower incorrectly handle SSL connections using Server Name Identification.
 - Rewarded video `load()` calls now do not load another rewarded video with the same ad unit id while one is already loading or loaded.

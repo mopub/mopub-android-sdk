@@ -3,6 +3,7 @@ package com.mopub.common;
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -47,6 +48,29 @@ public class LocationService {
         }
     }
 
+    private static volatile LocationService sInstance;
+    @VisibleForTesting @Nullable Location mLastKnownLocation;
+    @VisibleForTesting long mLocationLastUpdatedMillis;
+
+    private LocationService() {
+    }
+
+    @VisibleForTesting
+    @NonNull
+    static LocationService getInstance() {
+        LocationService locationService = sInstance;
+        if (locationService == null) {
+            synchronized (LocationService.class) {
+                locationService = sInstance;
+                if (locationService == null) {
+                    locationService = new LocationService();
+                    sInstance = locationService;
+                }
+            }
+        }
+        return locationService;
+    }
+
     public enum ValidLocationProvider {
         NETWORK(LocationManager.NETWORK_PROVIDER),
         GPS(LocationManager.GPS_PROVIDER);
@@ -75,12 +99,17 @@ public class LocationService {
         }
     }
 
-    /*
+    /**
      * Returns the last known location of the device using its GPS and network location providers.
-     * May be null if:
-     * - Location permissions are not requested in the Android manifest file
-     * - The location providers don't exist
-     * - Location awareness is disabled in the parent MoPubView
+     * This only checks Android location providers as often as
+     * {@link MoPub#getMinimumLocationRefreshTimeMillis()} says to, in milliseconds.
+     * <p>
+     * May be {@code null} if:
+     * <ul>
+     * <li> Location permissions are not requested in the Android manifest file
+     * <li> The location providers don't exist
+     * <li> Location awareness is disabled in the parent MoPubView
+     * </ul>
      */
     @Nullable
     public static Location getLastKnownLocation(@NonNull final Context context,
@@ -93,6 +122,12 @@ public class LocationService {
             return null;
         }
 
+        final LocationService locationService = getInstance();
+
+        if (isLocationFreshEnough()) {
+            return locationService.mLastKnownLocation;
+        }
+
         final Location gpsLocation = getLocationFromProvider(context, ValidLocationProvider.GPS);
         final Location networkLocation = getLocationFromProvider(context, ValidLocationProvider.NETWORK);
         final Location result = getMostRecentValidLocation(gpsLocation, networkLocation);
@@ -102,6 +137,8 @@ public class LocationService {
             truncateLocationLatLon(result, locationPrecision);
         }
 
+        locationService.mLastKnownLocation = result;
+        locationService.mLocationLastUpdatedMillis = SystemClock.elapsedRealtime();
         return result;
     }
 
@@ -151,7 +188,6 @@ public class LocationService {
     }
 
     @VisibleForTesting
-    @Nullable
     static void truncateLocationLatLon(@Nullable final Location location,
             final int precision) {
         if (location == null || precision < 0) {
@@ -169,5 +205,20 @@ public class LocationService {
                 .setScale(precision, BigDecimal.ROUND_HALF_DOWN)
                 .doubleValue();
         location.setLongitude(truncatedLon);
+    }
+
+    private static boolean isLocationFreshEnough() {
+        final LocationService locationService = LocationService.getInstance();
+        if (locationService.mLastKnownLocation == null) {
+            return false;
+        }
+        return SystemClock.elapsedRealtime() - locationService.mLocationLastUpdatedMillis <=
+                MoPub.getMinimumLocationRefreshTimeMillis();
+    }
+
+    @Deprecated
+    @VisibleForTesting
+    public static void clearLastKnownLocation() {
+        getInstance().mLastKnownLocation = null;
     }
 }

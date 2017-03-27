@@ -1,8 +1,6 @@
 package com.mopub.nativeads;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
-import android.os.Build;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -56,7 +54,6 @@ public class NativeClickHandlerTest {
         relativeLayout2.addView(relativeLayout);
     }
 
-    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
     @Test
     public void setOnClickListener_shouldSetClickListenerOnViewHierarchy() {
         subject.setOnClickListener(relativeLayout2, mockClickInterface);
@@ -70,7 +67,6 @@ public class NativeClickHandlerTest {
         verify(mockClickInterface).handleClick(relativeLayout2);
     }
 
-    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
     @Test
     public void clearOnClickListener_shouldClearClickListenerFromViewHierarchy() throws Exception {
         subject.setOnClickListener(relativeLayout2, mockClickInterface);

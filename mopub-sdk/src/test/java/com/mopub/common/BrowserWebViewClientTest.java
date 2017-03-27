@@ -9,6 +9,7 @@ import android.webkit.WebView;
 
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
+import com.mopub.network.Networking;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -49,6 +50,7 @@ public class BrowserWebViewClientTest {
 
         mockMoPubBrowser.setWebView(mockWebView);
         subject = new BrowserWebViewClient(mockMoPubBrowser);
+        Networking.setUserAgentForTesting("user_agent");
     }
 
     @Test

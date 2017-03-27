@@ -31,8 +31,6 @@ import java.net.SocketException;
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
 import static android.Manifest.permission.INTERNET;
 import static com.mopub.common.util.Reflection.MethodBuilder;
-import static com.mopub.common.util.VersionCode.HONEYCOMB;
-import static com.mopub.common.util.VersionCode.currentApiLevel;
 
 public class DeviceUtils {
     private static final int MAX_MEMORY_CACHE_SIZE = 30 * 1024 * 1024; // 30 MB
@@ -98,15 +96,13 @@ public class DeviceUtils {
         final ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         long memoryClass = activityManager.getMemoryClass();
 
-        if (currentApiLevel().isAtLeast(HONEYCOMB)) {
-            try {
-                final int flagLargeHeap = ApplicationInfo.class.getDeclaredField("FLAG_LARGE_HEAP").getInt(null);
-                if (Utils.bitMaskContainsFlag(context.getApplicationInfo().flags, flagLargeHeap)) {
-                    memoryClass = (Integer) new MethodBuilder(activityManager, "getLargeMemoryClass").execute();
-                }
-            } catch (Exception e) {
-                MoPubLog.d("Unable to reflectively determine large heap size on Honeycomb and above.");
+        try {
+            final int flagLargeHeap = ApplicationInfo.class.getDeclaredField("FLAG_LARGE_HEAP").getInt(null);
+            if (Utils.bitMaskContainsFlag(context.getApplicationInfo().flags, flagLargeHeap)) {
+                memoryClass = (Integer) new MethodBuilder(activityManager, "getLargeMemoryClass").execute();
             }
+        } catch (Exception e) {
+            MoPubLog.d("Unable to reflectively determine large heap size.");
         }
 
         long result = Math.min(MAX_MEMORY_CACHE_SIZE, memoryClass / 8 * 1024 * 1024);
@@ -217,26 +213,24 @@ public class DeviceUtils {
         Integer bestWidthPixels = null;
         Integer bestHeightPixels = null;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            final WindowManager windowManager = (WindowManager) context.getSystemService(
-                    Context.WINDOW_SERVICE);
-            final Display display = windowManager.getDefaultDisplay();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                final Point screenSize = new Point();
-                display.getRealSize(screenSize);
-                bestWidthPixels = screenSize.x;
-                bestHeightPixels = screenSize.y;
-            } else {
-                try {
-                    bestWidthPixels = (Integer) new MethodBuilder(display,
-                            "getRawWidth").execute();
-                    bestHeightPixels = (Integer) new MethodBuilder(display,
-                            "getRawHeight").execute();
-                } catch (Exception e) {
-                    // Best effort. If this fails, just get the height and width normally,
-                    // which may not capture the pixels used in the notification bar.
-                    MoPubLog.v("Display#getRawWidth/Height failed.", e);
-                }
+        final WindowManager windowManager = (WindowManager) context.getSystemService(
+                Context.WINDOW_SERVICE);
+        final Display display = windowManager.getDefaultDisplay();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            final Point screenSize = new Point();
+            display.getRealSize(screenSize);
+            bestWidthPixels = screenSize.x;
+            bestHeightPixels = screenSize.y;
+        } else {
+            try {
+                bestWidthPixels = (Integer) new MethodBuilder(display,
+                        "getRawWidth").execute();
+                bestHeightPixels = (Integer) new MethodBuilder(display,
+                        "getRawHeight").execute();
+            } catch (Exception e) {
+                // Best effort. If this fails, just get the height and width normally,
+                // which may not capture the pixels used in the notification bar.
+                MoPubLog.v("Display#getRawWidth/Height failed.", e);
             }
         }
 

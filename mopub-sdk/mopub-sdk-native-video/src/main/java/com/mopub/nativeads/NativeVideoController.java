@@ -1,6 +1,5 @@
 package com.mopub.nativeads;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -8,7 +7,6 @@ import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaCodec;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -50,7 +48,6 @@ import java.util.Map;
  * Wrapper class around the {@link ExoPlayer} to provide a nice interface into the player along
  * with some helper methods. This class is not thread safe.
  */
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusChangeListener {
 
     public interface Listener {

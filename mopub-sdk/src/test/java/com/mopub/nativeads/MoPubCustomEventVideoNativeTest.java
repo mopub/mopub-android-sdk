@@ -1,8 +1,6 @@
 package com.mopub.nativeads;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
-import android.os.Build;
 
 import com.mopub.common.DataKeys;
 import com.mopub.common.test.support.SdkTestRunner;
@@ -31,7 +29,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class MoPubCustomEventVideoNativeTest {
@@ -65,6 +62,21 @@ public class MoPubCustomEventVideoNativeTest {
         serverExtras.put("Impression-Min-Visible-Percent", "15");
         serverExtras.put("Impression-Visible-Ms", "100");
         serverExtras.put("Max-Buffer-Ms", "20");
+        serverExtras.put("Video-Trackers", "{" +
+                "urls: [" +
+                    "\"http://mopub.com/%%VIDEO_EVENT%%/foo\"," +
+                    "\"http://mopub.com/%%VIDEO_EVENT%%/bar\"" +
+                "]," +
+                "events: [" +
+                    "\"start\"," +
+                    "\"firstQuartile\"," +
+                    "\"midpoint\"," +
+                    "\"thirdQuartile\"," +
+                    "\"complete\"," +
+                    "\"companionAdView\"," +
+                    "\"companionAdClick\"" +
+                "]" +
+            "}");
 
     }
 
@@ -149,7 +161,30 @@ public class MoPubCustomEventVideoNativeTest {
     }
 
     @Test
-    public void VideoResponseHeaders_constructor_withInvalidNumberString_shouldSetHeadersAreValidToFalse() {
+    public void VideoResponseHeaders_constructor_withValidJson_shouldSetVideoTrackersToJsonObject() throws Exception {
+        VideoResponseHeaders videoResponseHeaders = new VideoResponseHeaders(serverExtras);
+        JSONObject expectedVideoTrackers = new JSONObject("{" +
+                "urls: [" +
+                    "\"http://mopub.com/%%VIDEO_EVENT%%/foo\"," +
+                    "\"http://mopub.com/%%VIDEO_EVENT%%/bar\"" +
+                "]," +
+                "events: [" +
+                    "\"start\"," +
+                    "\"firstQuartile\"," +
+                    "\"midpoint\"," +
+                    "\"thirdQuartile\"," +
+                    "\"complete\"," +
+                    "\"companionAdView\"," +
+                    "\"companionAdClick\"" +
+                "]" +
+            "}");
+
+        assertThat(videoResponseHeaders.getVideoTrackers().toString())
+                .isEqualTo(expectedVideoTrackers.toString());
+    }
+
+    @Test
+    public void VideoResponseHeaders_constructor_withInvalidNumberString_withInvalidJson_shouldSetHeadersAreValidToFalse() {
         serverExtras.put("Play-Visible-Percent", "not_a_number");
         VideoResponseHeaders videoResponseHeaders = new VideoResponseHeaders(serverExtras);
         assertThat(videoResponseHeaders.hasValidHeaders()).isFalse();
@@ -177,5 +212,13 @@ public class MoPubCustomEventVideoNativeTest {
         serverExtras.put("Max-Buffer-Ms", "20");
         videoResponseHeaders = new VideoResponseHeaders(serverExtras);
         assertThat(videoResponseHeaders.hasValidHeaders()).isTrue();
+    }
+
+    @Test
+    public void VideoResponseHeaders_constructor_withInvalidJson_shouldSetVideoTrackersToNull() throws Exception {
+        serverExtras.put("Video-Trackers", "not_a_json_object");
+        VideoResponseHeaders videoResponseHeaders = new VideoResponseHeaders(serverExtras);
+
+        assertThat(videoResponseHeaders.getVideoTrackers()).isNull();
     }
 }

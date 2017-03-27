@@ -3,7 +3,6 @@ package com.mopub.network;
 import android.content.Context;
 import android.location.Location;
 import android.net.Uri;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -231,12 +230,6 @@ public class AdRequest extends Request<AdResponse> {
             serverExtras.put(DataKeys.CREATIVE_ORIENTATION_KEY, extractHeader(headers, ResponseHeader.ORIENTATION));
         }
         if (AdType.VIDEO_NATIVE.equals(adTypeString)) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-                return Response.error(new MoPubNetworkError("Native Video ads are only supported" +
-                        " for Android API Level 16 (JellyBean) and above.",
-                        MoPubNetworkError.Reason.UNSPECIFIED));
-
-            }
             serverExtras.put(DataKeys.PLAY_VISIBLE_PERCENT,
                     extractPercentHeaderString(headers, ResponseHeader.PLAY_VISIBLE_PERCENT));
             serverExtras.put(DataKeys.PAUSE_VISIBLE_PERCENT,
@@ -266,18 +259,35 @@ public class AdRequest extends Request<AdResponse> {
                             .build()
             );
         }
+
+        // Extract internal video trackers, if available
+        final String videoTrackers = extractHeader(headers, ResponseHeader.VIDEO_TRACKERS);
+        if (videoTrackers != null) {
+            serverExtras.put(DataKeys.VIDEO_TRACKERS_KEY, videoTrackers);
+        }
+
         builder.setServerExtras(serverExtras);
 
-        if (AdType.REWARDED_VIDEO.equals(adTypeString) || AdType.CUSTOM.equals(adTypeString)) {
+        if (AdType.REWARDED_VIDEO.equals(adTypeString) || AdType.CUSTOM.equals(adTypeString) ||
+                AdType.REWARDED_PLAYABLE.equals(adTypeString)) {
             final String rewardedVideoCurrencyName = extractHeader(headers,
                     ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME);
             final String rewardedVideoCurrencyAmount = extractHeader(headers,
                     ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT);
+            final String rewardedCurrencies = extractHeader(headers,
+                    ResponseHeader.REWARDED_CURRENCIES);
             final String rewardedVideoCompletionUrl = extractHeader(headers,
                     ResponseHeader.REWARDED_VIDEO_COMPLETION_URL);
+            final Integer rewardedDuration = extractIntegerHeader(headers,
+                    ResponseHeader.REWARDED_DURATION);
+            final boolean shouldRewardOnClick = extractBooleanHeader(headers,
+                    ResponseHeader.SHOULD_REWARD_ON_CLICK, false);
             builder.setRewardedVideoCurrencyName(rewardedVideoCurrencyName);
             builder.setRewardedVideoCurrencyAmount(rewardedVideoCurrencyAmount);
+            builder.setRewardedCurrencies(rewardedCurrencies);
             builder.setRewardedVideoCompletionUrl(rewardedVideoCompletionUrl);
+            builder.setRewardedDuration(rewardedDuration);
+            builder.setShouldRewardOnClick(shouldRewardOnClick);
         }
 
         AdResponse adResponse = builder.build();
@@ -291,7 +301,8 @@ public class AdRequest extends Request<AdResponse> {
             @Nullable String fullAdType) {
         return AdType.MRAID.equals(adType) || AdType.HTML.equals(adType) ||
                 (AdType.INTERSTITIAL.equals(adType) && FullAdType.VAST.equals(fullAdType)) ||
-                (AdType.REWARDED_VIDEO.equals(adType) && FullAdType.VAST.equals(fullAdType));
+                (AdType.REWARDED_VIDEO.equals(adType) && FullAdType.VAST.equals(fullAdType)) ||
+                AdType.REWARDED_PLAYABLE.equals(adType);
     }
 
     // Based on Volley's StringResponse class.

@@ -43,19 +43,4 @@ public class ImageUtils {
         mutableBitmap.setPixels(pixels, 0, w, 0, 0, w, h);
         return mutableBitmap;
     }
-
-    /**
-     * Sets the alpha value of the ImageView.
-     * API Level < 16: https://developer.android.com/reference/android/widget/ImageView.html#setAlpha(int)
-     * API Level >= 16: https://developer.android.com/reference/android/widget/ImageView.html#setImageAlpha(int)
-     * @param imageView the ImageView
-     * @param alpha the alpha value being applied to the ImageView
-     */
-    public static void setImageViewAlpha(@NonNull ImageView imageView, int alpha) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            imageView.setImageAlpha(alpha);
-        } else {
-            imageView.setAlpha(alpha);
-        }
-    }
 }

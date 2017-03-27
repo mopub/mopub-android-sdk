@@ -58,8 +58,8 @@ public class VastWebViewTest {
     }
 
     @Test
-    public void pluginState_atLeastIcsButBelowJellybeanMr2_shouldDefaultToOn_shouldAllowToggling() {
-        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.ICE_CREAM_SANDWICH);
+    public void pluginState_BelowJellybeanMr2_shouldDefaultToOn_shouldAllowToggling() {
+        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.JELLY_BEAN);
         subject = new VastWebView(context);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(WebSettings.PluginState.ON);
 
@@ -68,19 +68,6 @@ public class VastWebViewTest {
 
         subject.enablePlugins(true);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(WebSettings.PluginState.ON);
-    }
-
-    @Test
-    public void pluginState_beforeIcs_shouldDefaultToOff_shouldAllowToggling() {
-        TestSdkHelper.setReportedSdkLevel(Build.VERSION_CODES.GINGERBREAD_MR1);
-        subject = new VastWebView(context);
-        assertThat(subject.getSettings().getPluginState()).isEqualTo(WebSettings.PluginState.OFF);
-
-        subject.enablePlugins(true);
-        assertThat(subject.getSettings().getPluginState()).isEqualTo(WebSettings.PluginState.ON);
-
-        subject.enablePlugins(false);
-        assertThat(subject.getSettings().getPluginState()).isEqualTo(WebSettings.PluginState.OFF);
     }
 
     @Test

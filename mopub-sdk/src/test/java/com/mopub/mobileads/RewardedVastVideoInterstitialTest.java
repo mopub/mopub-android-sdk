@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 public class RewardedVastVideoInterstitialTest {
 
     private Context context;
-    private RewardedVastVideoInterstitial.CustomEventRewardedVideoInterstitialListener customEventRewardedVideoInterstitialListener;
+    private RewardedVastVideoInterstitial.RewardedVideoInterstitialListener mRewardedVideoInterstitialListener;
     private Map<String, Object> localExtras;
     private Map<String, String> serverExtras;
     private RewardedVastVideoInterstitial subject;
@@ -43,8 +43,8 @@ public class RewardedVastVideoInterstitialTest {
         final String expectedResponse = "<VAST>hello</VAST>";
 
         context = Robolectric.buildActivity(Activity.class).create().get();
-        customEventRewardedVideoInterstitialListener = mock(
-                RewardedVastVideoInterstitial.CustomEventRewardedVideoInterstitialListener.class);
+        mRewardedVideoInterstitialListener = mock(
+                RewardedVastVideoInterstitial.RewardedVideoInterstitialListener.class);
         localExtras = new HashMap<String, Object>();
         serverExtras = new HashMap<String, String>();
         serverExtras.put(DataKeys.HTML_RESPONSE_BODY_KEY, expectedResponse);
@@ -57,7 +57,7 @@ public class RewardedVastVideoInterstitialTest {
 
     @Test
     public void loadInterstitial_withCustomEventRewardedVideoInterstitialListener_shouldRegisterRewardedVideoBroadcastReceiver() {
-        subject.loadInterstitial(context, customEventRewardedVideoInterstitialListener, localExtras,
+        subject.loadInterstitial(context, mRewardedVideoInterstitialListener, localExtras,
                 serverExtras);
 
         assertThat(subject.getRewardedVideoBroadcastReceiver()).isNotNull();
@@ -65,7 +65,7 @@ public class RewardedVastVideoInterstitialTest {
 
     @Test
     public void onVastVideoConfigurationPrepared_withProperVastConfig_shouldSetRewardedVideoFlag() {
-        subject.loadInterstitial(context, customEventRewardedVideoInterstitialListener, localExtras,
+        subject.loadInterstitial(context, mRewardedVideoInterstitialListener, localExtras,
                 serverExtras);
         final VastVideoConfig mockVastVideoConfig = mock(VastVideoConfig.class);
 

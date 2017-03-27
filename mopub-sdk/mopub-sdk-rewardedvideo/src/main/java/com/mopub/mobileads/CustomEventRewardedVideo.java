@@ -1,126 +1,49 @@
 package com.mopub.mobileads;
 
-import android.app.Activity;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.mopub.common.DataKeys;
-import com.mopub.common.LifecycleListener;
-import com.mopub.common.MoPubLifecycleManager;
-import com.mopub.common.VisibleForTesting;
-import com.mopub.common.logging.MoPubLog;
-
-import java.util.Map;
-
 /**
- *
+ * Extend this class to mediate 3rd party rewarded videos.
  */
-public abstract class CustomEventRewardedVideo {
+public abstract class CustomEventRewardedVideo extends CustomEventRewardedAd {
 
-    /**
-     * This marker interface is used to indicate that an object is a listener for a 3rd party SDKs
-     * rewarded video system.
-     */
-    @VisibleForTesting
-    protected static interface CustomEventRewardedVideoListener {}
+    @Deprecated
+    protected interface CustomEventRewardedVideoListener {
+    }
 
-    /**
-     * Called by the {@link MoPubRewardedVideoManager} after loading the custom event.
-     */
+    @Deprecated
     @Nullable
-    @VisibleForTesting
-    protected abstract CustomEventRewardedVideoListener getVideoListenerForSdk();
-
     /**
-     * Provides a {@link LifecycleListener} if the custom event's ad network wishes to be notified of
-     * activity lifecycle events in the application.
-     *
-     * @return a LifecycleListener. May be null.
+     * This is no longer used. Implementing this does not do anything.
      */
-    @Nullable
-    @VisibleForTesting
-    protected abstract LifecycleListener getLifecycleListener();
-
-    /**
-     * Called by the {@link MoPubRewardedVideoManager} after loading the custom event.
-     * This should return the "ad unit id", "zone id" or similar identifier for the network.
-     * May be empty if the network does not have anything more specific than an application ID.
-     *
-     * @return the id string for this ad unit with the ad network.
-     */
-    @NonNull
-    protected abstract String getAdNetworkId();
-
-    /**
-     * Called to when the custom event is no longer used. Implementers should cancel any
-     * pending requests. The initialized SDK may be reused by another CustomEvent instance
-     * and should not be shut down or cleaned up.
-     */
-    protected abstract void onInvalidate();
-
-    /**
-     * The MoPub ad loading system calls this after MoPub indicates that this custom event should
-     * be loaded.
-     *
-     * @param launcherActivity the "main activity" of the app. Useful for initializing sdks.
-     * @param localExtras a map containing additional custom data set in app
-     * @param serverExtras a map containing additional custom data configurable on the mopub website
-     */
-    final void loadCustomEvent(@NonNull Activity launcherActivity,
-            @NonNull Map<String, Object> localExtras,
-            @NonNull Map<String, String> serverExtras) {
-        try {
-            if (checkAndInitializeSdk(launcherActivity, localExtras, serverExtras)) {
-                MoPubLifecycleManager.getInstance(launcherActivity).addLifecycleListener(getLifecycleListener());
-            }
-            loadWithSdkInitialized(launcherActivity, localExtras, serverExtras);
-        } catch (Exception e) {
-            MoPubLog.e(e.getMessage());
-        }
+    protected CustomEventRewardedVideoListener getVideoListenerForSdk() {
+        return null;
     }
 
     /**
-     * Sets up the 3rd party ads SDK if it needs configuration. Extenders should use this
-     * to do any static initialization the first time this method is run by any class instance.
-     * From then on, the SDK should be reused without initialization.
-     *
-     * @return true if the SDK performed initialization, false if the SDK was already initialized.
+     * Legacy proxy for {@link CustomEventRewardedAd#isReady}. Implementers should query the 3rd
+     * party SDK for whether there is a video available for the 3rd party SDK & ID represented by
+     * the custom event. This has been deprecated in favor of isReady(), but isReady() will call
+     * hasVideoAvailable() if not overridden.
      */
-    protected abstract boolean checkAndInitializeSdk(@NonNull Activity launcherActivity,
-            @NonNull Map<String, Object> localExtras,
-            @NonNull Map<String, String> serverExtras)
-            throws Exception;
-
-    /**
-     * Runs the ad-loading logic for the 3rd party SDK. localExtras & serverExtras should together
-     * contain all the data needed to load an ad.
-     *
-     * Implementers should also use this method (or checkAndInitializeSdk)
-     * to register a listener for their SDK, wrap it in a
-     * {@link com.mopub.mobileads.CustomEventRewardedVideo.CustomEventRewardedVideoListener}
-     *
-     * This method should not call any {@link MoPubRewardedVideoManager} event methods directly
-     * (onAdLoadSuccess, etc). Instead the SDK delegate/listener should call these methods.
-     *
-     * @param activity the "main activity" of the app. Useful for initializing sdks.
-     * @param localExtras a map containing additional custom data set in app
-     * @param serverExtras a map containing additional custom data configurable on the mopub website
-     */
-    protected abstract void loadWithSdkInitialized(@NonNull Activity activity,
-            @NonNull Map<String, Object> localExtras,
-            @NonNull Map<String, String> serverExtras)
-            throws Exception;
-
-    /**
-     * Implementers should query the 3rd party SDK for whether there is a video available for the
-     * 3rd party SDK & ID represented by the custom event.
-     *
-     * @return true iff a video is available to play.
-     */
+    @Deprecated
     protected abstract boolean hasVideoAvailable();
 
     /**
-     * Implementers should now play the rewarded video for this custom event.
+     * Legacy proxy for {@link CustomEventRewardedAd#show}. Implementers should now play the
+     * rewarded video for this custom event. This has been deprecated in favor of show(), but
+     * show() will call showVideo() if not overridden.
      */
+    @Deprecated
     protected abstract void showVideo();
+
+    @Override
+    protected boolean isReady() {
+        return hasVideoAvailable();
+    }
+
+    @Override
+    protected void show() {
+        showVideo();
+    }
 }

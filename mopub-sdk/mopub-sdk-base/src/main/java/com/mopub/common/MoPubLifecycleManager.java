@@ -87,14 +87,14 @@ public class MoPubLifecycleManager implements LifecycleListener {
     @Override
     public void onStop(@NonNull final Activity activity) {
         for (LifecycleListener lifecycleListener : mLifecycleListeners) {
-            lifecycleListener.onRestart(activity);
+            lifecycleListener.onStop(activity);
         }
     }
 
     @Override
     public void onDestroy(@NonNull final Activity activity) {
         for (LifecycleListener lifecycleListener : mLifecycleListeners) {
-            lifecycleListener.onRestart(activity);
+            lifecycleListener.onDestroy(activity);
         }
     }
 

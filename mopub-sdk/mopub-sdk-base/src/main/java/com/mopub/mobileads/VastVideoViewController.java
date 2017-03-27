@@ -33,8 +33,8 @@ import com.mopub.mobileads.resource.DrawableConstants;
 import java.io.Serializable;
 import java.util.Map;
 
-import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
 import static com.mopub.common.MoPubBrowser.MOPUB_BROWSER_REQUEST_CODE;
 import static com.mopub.mobileads.VastXmlManagerAggregator.ADS_BY_AD_SLOT_ID;
 import static com.mopub.mobileads.VastXmlManagerAggregator.SOCIAL_ACTIONS_AD_SLOT_ID;
@@ -252,7 +252,7 @@ public class VastVideoViewController extends BaseVideoViewController {
                 getBaseVideoViewControllerListener().onSetRequestedOrientation(SCREEN_ORIENTATION_PORTRAIT);
                 break;
             case FORCE_LANDSCAPE:
-                getBaseVideoViewControllerListener().onSetRequestedOrientation(SCREEN_ORIENTATION_LANDSCAPE);
+                getBaseVideoViewControllerListener().onSetRequestedOrientation(SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
                 break;
             case DEVICE_ORIENTATION:
                 break;  // don't do anything
@@ -446,20 +446,15 @@ public class VastVideoViewController extends BaseVideoViewController {
         videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
             @Override
             public boolean onError(final MediaPlayer mediaPlayer, final int what, final int extra) {
-                if (videoView.retryMediaPlayer(mediaPlayer, what, extra,
-                        mVastVideoConfig.getDiskMediaFileUrl())) {
-                    return true;
-                } else {
-                    stopRunnables();
-                    makeVideoInteractable();
-                    videoError(false);
-                    mVideoError = true;
+                stopRunnables();
+                makeVideoInteractable();
+                videoError(false);
+                mVideoError = true;
 
-                    mVastVideoConfig.handleError(getContext(),
-                            VastErrorCode.GENERAL_LINEAR_AD_ERROR, getCurrentPosition());
+                mVastVideoConfig.handleError(getContext(),
+                        VastErrorCode.GENERAL_LINEAR_AD_ERROR, getCurrentPosition());
 
-                    return false;
-                }
+                return false;
             }
         });
 
