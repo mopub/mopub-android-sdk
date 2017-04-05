@@ -1,8 +1,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.novoda.bintray-release'
 
-def siteUrl = 'https://github.com/mopub/mopub-android-sdk'
-def gitUrl = 'https://github.com/mopub/mopub-android-sdk.git'
+def siteUrl = 'https://github.com/plain-vanilla-games/mopub-android-sdk'
+def gitUrl = 'https://github.com/plain-vanilla-games/mopub-android-sdk.git'
 def bintrayRepo = 'mopub-android-sdk'
 def bintrayUserOrg = 'mopub'
 // Put your credentials (bintray.user, bintray.apikey) in ~/.gradle/gradle.properties
