@@ -11,7 +11,7 @@ import com.facebook.ads.InterstitialAdListener;
 import java.util.Map;
 
 /**
- * Tested with Facebook SDK 4.15.0.
+ * Tested with Facebook SDK 4.22.0.
  */
 public class FacebookInterstitial extends CustomEventInterstitial implements InterstitialAdListener {
     public static final String PLACEMENT_ID_KEY = "placement_id";
@@ -103,6 +103,11 @@ public class FacebookInterstitial extends CustomEventInterstitial implements Int
     public void onInterstitialDismissed(final Ad ad) {
         Log.d("MoPub", "Facebook interstitial ad dismissed.");
         mInterstitialListener.onInterstitialDismissed();
+    }
+
+    @Override
+    public void onLoggingImpression(Ad ad) {
+        Log.d("MoPub", "Facebook interstitial ad impression.");
     }
 
     private boolean extrasAreValid(final Map<String, String> serverExtras) {
