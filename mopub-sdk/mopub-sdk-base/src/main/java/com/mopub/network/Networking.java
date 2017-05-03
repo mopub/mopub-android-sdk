@@ -130,7 +130,15 @@ public class Networking {
                 userAgent = sUserAgent;
                 if (userAgent == null) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                        userAgent = WebSettings.getDefaultUserAgent(context);
+                        // Catch AndroidRuntimeException that could be raised by the
+                        // WebSettings.getDefaultUserAgent() in some custom ROMs (e.g. OPPO,
+                        // HTC, Sony, ASUS, Xiaomi ...). If anything goes wrong with getting a
+                        // user agent, use the system-specific user agent.
+                        try {
+                            userAgent = WebSettings.getDefaultUserAgent(context);
+                        } catch (Exception e) {
+                            userAgent = DEFAULT_USER_AGENT;
+                        }
                     } else if (Looper.myLooper() == Looper.getMainLooper()){
                         // WebViews may only be instantiated on the UI thread. If anything goes
                         // wrong with getting a user agent, use the system-specific user agent.
