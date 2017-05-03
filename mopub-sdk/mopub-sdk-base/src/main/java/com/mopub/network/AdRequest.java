@@ -274,6 +274,8 @@ public class AdRequest extends Request<AdResponse> {
                     ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME);
             final String rewardedVideoCurrencyAmount = extractHeader(headers,
                     ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT);
+            final String rewardedCurrencies = extractHeader(headers,
+                    ResponseHeader.REWARDED_CURRENCIES);
             final String rewardedVideoCompletionUrl = extractHeader(headers,
                     ResponseHeader.REWARDED_VIDEO_COMPLETION_URL);
             final Integer rewardedDuration = extractIntegerHeader(headers,
@@ -282,6 +284,7 @@ public class AdRequest extends Request<AdResponse> {
                     ResponseHeader.SHOULD_REWARD_ON_CLICK, false);
             builder.setRewardedVideoCurrencyName(rewardedVideoCurrencyName);
             builder.setRewardedVideoCurrencyAmount(rewardedVideoCurrencyAmount);
+            builder.setRewardedCurrencies(rewardedCurrencies);
             builder.setRewardedVideoCompletionUrl(rewardedVideoCompletionUrl);
             builder.setRewardedDuration(rewardedDuration);
             builder.setShouldRewardOnClick(shouldRewardOnClick);

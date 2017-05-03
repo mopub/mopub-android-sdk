@@ -233,7 +233,7 @@ public class MoPubView extends FrameLayout {
         }
 
         if (Visibility.isScreenVisible(visibility)) {
-            mAdViewController.unpauseRefresh();
+            mAdViewController.resumeRefresh();
         } else {
             mAdViewController.pauseRefresh();
         }
@@ -335,12 +335,12 @@ public class MoPubView extends FrameLayout {
 
     public void setAutorefreshEnabled(boolean enabled) {
         if (mAdViewController != null) {
-            mAdViewController.forceSetAutorefreshEnabled(enabled);
+            mAdViewController.setShouldAllowAutoRefresh(enabled);
         }
     }
 
     public boolean getAutorefreshEnabled() {
-        if (mAdViewController != null) return mAdViewController.getAutorefreshEnabled();
+        if (mAdViewController != null) return mAdViewController.getCurrentAutoRefreshStatus();
         else {
             MoPubLog.d("Can't get autorefresh status for destroyed MoPubView. " +
                     "Returning false.");

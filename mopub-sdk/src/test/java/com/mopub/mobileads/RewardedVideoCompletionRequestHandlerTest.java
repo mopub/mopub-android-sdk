@@ -35,23 +35,64 @@ public class RewardedVideoCompletionRequestHandlerTest {
     private MoPubRequestQueue mockRequestQueue;
     private Context context;
     private String url;
+    private String customerId;
+    private String rewardName;
+    private String rewardAmount;
 
     @Before
     public void setup() {
         context = Robolectric.buildActivity(Activity.class).create().get();
         url = "testUrl";
+        customerId = "customer id";
+        rewardName = "gold coins";
+        rewardAmount = "25";
         Networking.setRequestQueueForTesting(mockRequestQueue);
     }
 
     @Test
     public void makeRewardedVideoCompletionRequest_shouldAddMacros_shouldMakeVideoCompletionRequest() throws Exception {
         RewardedVideoCompletionRequestHandler.makeRewardedVideoCompletionRequest(context, url,
-                "customer id");
+                customerId, rewardName, rewardAmount);
 
         verify(mockRequestQueue).add(argThat(isUrl(
-                "testUrl&customer_id=customer%20id&nv=" +
-                        Uri.encode(MoPub.SDK_VERSION) + "&v=" +
-                        MoPubRewardedVideoManager.API_VERSION)));
+                "testUrl&customer_id=customer%20id&rcn=gold%20coins&rca=25"
+                        + "&nv=" + Uri.encode(MoPub.SDK_VERSION)
+                        + "&v=" + MoPubRewardedVideoManager.API_VERSION)));
+    }
+
+    @Test
+    public void makeRewardedVideoCompletionRequest_withNullContext_shouldNotMakeVideoCompletionRequest() throws Exception {
+        RewardedVideoCompletionRequestHandler.makeRewardedVideoCompletionRequest(null, url,
+                customerId, rewardName, rewardAmount);
+        verifyZeroInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void makeRewardedVideoCompletionRequest_withNullUrl_shouldNotMakeVideoCompletionRequest() throws Exception {
+        RewardedVideoCompletionRequestHandler.makeRewardedVideoCompletionRequest(context, null,
+                customerId, rewardName, rewardAmount);
+        verifyZeroInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void makeRewardedVideoCompletionRequest_withEmptyUrl_shouldNotMakeVideoCompletionRequest() throws Exception {
+        RewardedVideoCompletionRequestHandler.makeRewardedVideoCompletionRequest(context, "",
+                customerId, rewardName, rewardAmount);
+        verifyZeroInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void makeRewardedVideoCompletionRequest_withNullRewardName_shouldNotMakeVideoCompletionRequest() throws Exception {
+        RewardedVideoCompletionRequestHandler.makeRewardedVideoCompletionRequest(context, url,
+                customerId, null, rewardAmount);
+        verifyZeroInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void makeRewardedVideoCompletionRequest_withNullRewardAmount_shouldNotMakeVideoCompletionRequest() throws Exception {
+        RewardedVideoCompletionRequestHandler.makeRewardedVideoCompletionRequest(context, url,
+                customerId, rewardName, null);
+        verifyZeroInteractions(mockRequestQueue);
     }
 
     @Test
@@ -82,30 +123,30 @@ public class RewardedVideoCompletionRequestHandlerTest {
     @Test
     public void onErrorResponse_shouldSetShouldStopToTrueWhenResponseNot500To599() {
         RewardedVideoCompletionRequestHandler subject =
-                new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+                new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
 
         assertThat(subject.getShouldStop()).isEqualTo(false);
 
         subject.onErrorResponse(new VolleyError(new NetworkResponse(500, null, null, true)));
         assertThat(subject.getShouldStop()).isEqualTo(false);
 
-        subject = new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+        subject = new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
         subject.onErrorResponse(new VolleyError(new NetworkResponse(501, null, null, true)));
         assertThat(subject.getShouldStop()).isEqualTo(false);
 
-        subject = new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+        subject = new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
         subject.onErrorResponse(new VolleyError(new NetworkResponse(599, null, null, true)));
         assertThat(subject.getShouldStop()).isEqualTo(false);
 
-        subject = new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+        subject = new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
         subject.onErrorResponse(new VolleyError(new NetworkResponse(200, null, null, true)));
         assertThat(subject.getShouldStop()).isEqualTo(true);
 
-        subject = new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+        subject = new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
         subject.onErrorResponse(new VolleyError(new NetworkResponse(499, null, null, true)));
         assertThat(subject.getShouldStop()).isEqualTo(true);
 
-        subject = new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+        subject = new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
         subject.onErrorResponse(new VolleyError(new NetworkResponse(600, null, null, true)));
         assertThat(subject.getShouldStop()).isEqualTo(true);
     }
@@ -113,30 +154,30 @@ public class RewardedVideoCompletionRequestHandlerTest {
     @Test
     public void onResponse_shouldSetShouldStopToTrueWhenResponseNot500To599() {
         RewardedVideoCompletionRequestHandler subject =
-                new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+                new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
 
         assertThat(subject.getShouldStop()).isEqualTo(false);
 
         subject.onResponse(500);
         assertThat(subject.getShouldStop()).isEqualTo(false);
 
-        subject = new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+        subject = new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
         subject.onResponse(501);
         assertThat(subject.getShouldStop()).isEqualTo(false);
 
-        subject = new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+        subject = new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
         subject.onResponse(599);
         assertThat(subject.getShouldStop()).isEqualTo(false);
 
-        subject = new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+        subject = new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
         subject.onResponse(200);
         assertThat(subject.getShouldStop()).isEqualTo(true);
 
-        subject = new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+        subject = new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
         subject.onResponse(499);
         assertThat(subject.getShouldStop()).isEqualTo(true);
 
-        subject = new RewardedVideoCompletionRequestHandler(context, "url", "customer_id");
+        subject = new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount);
         subject.onResponse(600);
         assertThat(subject.getShouldStop()).isEqualTo(true);
     }
@@ -145,8 +186,7 @@ public class RewardedVideoCompletionRequestHandlerTest {
     public void makeRewardedVideoCompletionRequest_shouldRetry() {
         Handler mockHandler = mock(Handler.class);
         RewardedVideoCompletionRequestHandler subject =
-                new RewardedVideoCompletionRequestHandler(context, "url", "customer_id",
-                        mockHandler);
+                new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount, mockHandler);
 
         subject.makeRewardedVideoCompletionRequest();
 
@@ -159,8 +199,7 @@ public class RewardedVideoCompletionRequestHandlerTest {
     public void makeRewardedVideoCompletionRequest_shouldNotRetryIfShouldStopIsSetToTrue() {
         Handler mockHandler = mock(Handler.class);
         RewardedVideoCompletionRequestHandler subject =
-                new RewardedVideoCompletionRequestHandler(context, "url", "customer_id",
-                        mockHandler);
+                new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount, mockHandler);
         // This should set shouldStop to true.
         subject.onResponse(200);
 
@@ -174,8 +213,7 @@ public class RewardedVideoCompletionRequestHandlerTest {
     public void makeRewardedVideoCompletionRequest_shouldNotRetryIfMaxRetriesReached() {
         Handler mockHandler = mock(Handler.class);
         RewardedVideoCompletionRequestHandler subject =
-                new RewardedVideoCompletionRequestHandler(context, "url", "customer_id",
-                        mockHandler);
+                new RewardedVideoCompletionRequestHandler(context, url, customerId, rewardName, rewardAmount, mockHandler);
         subject.setRetryCount(RewardedVideoCompletionRequestHandler.MAX_RETRIES);
 
         subject.makeRewardedVideoCompletionRequest();

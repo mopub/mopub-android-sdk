@@ -21,6 +21,7 @@ import android.view.WindowManager;
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.GpsHelper;
 import com.mopub.common.GpsHelperTest;
+import com.mopub.common.LocationService;
 import com.mopub.common.MoPub;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Reflection.MethodBuilder;
@@ -127,6 +128,8 @@ public class WebViewAdUrlGeneratorTest {
         shadowTelephonyManager = (MoPubShadowTelephonyManager) Shadows.shadowOf((TelephonyManager) RuntimeEnvironment.application.getSystemService(Context.TELEPHONY_SERVICE));
         shadowConnectivityManager = Shadows.shadowOf((ConnectivityManager) RuntimeEnvironment.application.getSystemService(Context.CONNECTIVITY_SERVICE));
         methodBuilder = TestMethodBuilderFactory.getSingletonMock();
+
+        LocationService.clearLastKnownLocation();
     }
 
     @After

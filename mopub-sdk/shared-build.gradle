@@ -9,7 +9,7 @@ repositories {
 }
 
 project.group = 'com.mopub'
-project.version = '4.12.0'
+project.version = '4.13.0'
 
 android {
     compileSdkVersion 23
@@ -18,7 +18,7 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        versionCode 49
+        versionCode 50
         versionName version
         minSdkVersion 16
         targetSdkVersion 23

@@ -326,6 +326,15 @@ public class AdRequestTest {
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.REWARDED_VIDEO);
         defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME.getKey(), "currencyName");
         defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT.getKey(), "25");
+
+        final String rewardedCurrenciesJson = "{\"rewards\": ["
+                + "{\"name\": \"Coins\", \"amount\": 8},"
+                + "{\"name\": \"Diamonds\", \"amount\": 1},"
+                + "{\"name\": \"Diamonds\", \"amount\": 10 },"
+                + "{\"name\": \"Energy\", \"amount\": 20}"
+                + "]}";
+        defaultHeaders.put(ResponseHeader.REWARDED_CURRENCIES.getKey(), rewardedCurrenciesJson);
+
         defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_COMPLETION_URL.getKey(),
                 "http://completionUrl");
         defaultHeaders.put(ResponseHeader.REWARDED_DURATION.getKey(), "15000");
@@ -338,6 +347,7 @@ public class AdRequestTest {
         assertThat(response.result.getAdType()).isEqualTo(AdType.REWARDED_VIDEO);
         assertThat(response.result.getRewardedVideoCurrencyName()).isEqualTo("currencyName");
         assertThat(response.result.getRewardedVideoCurrencyAmount()).isEqualTo("25");
+        assertThat(response.result.getRewardedCurrencies()).isEqualTo(rewardedCurrenciesJson);
         assertThat(response.result.getRewardedVideoCompletionUrl()).isEqualTo(
                 "http://completionUrl");
         assertThat(response.result.getRewardedDuration()).isEqualTo(15000);

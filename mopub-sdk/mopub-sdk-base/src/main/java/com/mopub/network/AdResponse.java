@@ -31,6 +31,8 @@ public class AdResponse implements Serializable {
     @Nullable
     private final String mRewardedVideoCurrencyAmount;
     @Nullable
+    private final String mRewardedCurrencies;
+    @Nullable
     private final String mRewardedVideoCompletionUrl;
     @Nullable
     private final Integer mRewardedDuration;
@@ -84,6 +86,7 @@ public class AdResponse implements Serializable {
 
         mRewardedVideoCurrencyName = builder.rewardedVideoCurrencyName;
         mRewardedVideoCurrencyAmount = builder.rewardedVideoCurrencyAmount;
+        mRewardedCurrencies = builder.rewardedCurrencies;
         mRewardedVideoCompletionUrl = builder.rewardedVideoCompletionUrl;
         mRewardedDuration = builder.rewardedDuration;
         mShouldRewardOnClick = builder.shouldRewardOnClick;
@@ -154,6 +157,11 @@ public class AdResponse implements Serializable {
     @Nullable
     public String getRewardedVideoCurrencyAmount() {
         return mRewardedVideoCurrencyAmount;
+    }
+
+    @Nullable
+    public String getRewardedCurrencies() {
+        return mRewardedCurrencies;
     }
 
     @Nullable
@@ -245,6 +253,7 @@ public class AdResponse implements Serializable {
                 .setNetworkType(mNetworkType)
                 .setRewardedVideoCurrencyName(mRewardedVideoCurrencyName)
                 .setRewardedVideoCurrencyAmount(mRewardedVideoCurrencyAmount)
+                .setRewardedCurrencies(mRewardedCurrencies)
                 .setRewardedVideoCompletionUrl(mRewardedVideoCompletionUrl)
                 .setRewardedDuration(mRewardedDuration)
                 .setShouldRewardOnClick(mShouldRewardOnClick)
@@ -272,6 +281,7 @@ public class AdResponse implements Serializable {
 
         private String rewardedVideoCurrencyName;
         private String rewardedVideoCurrencyAmount;
+        private String rewardedCurrencies;
         private String rewardedVideoCompletionUrl;
         private Integer rewardedDuration;
         private boolean shouldRewardOnClick;
@@ -327,6 +337,11 @@ public class AdResponse implements Serializable {
         public Builder setRewardedVideoCurrencyAmount(
                 @Nullable final String rewardedVideoCurrencyAmount) {
             this.rewardedVideoCurrencyAmount = rewardedVideoCurrencyAmount;
+            return this;
+        }
+
+        public Builder setRewardedCurrencies(@Nullable final String rewardedCurrencies) {
+            this.rewardedCurrencies = rewardedCurrencies;
             return this;
         }
 

@@ -884,5 +884,5 @@ public class MraidJavascript {
             "      }\n" +
             "    }\n" +
             "  };\n" +
-            "}());\n";
+            "}());\n".replaceAll("(?m)^\\s+", "").replaceAll("(?m)^//.*(?=\\n)", "");
 }

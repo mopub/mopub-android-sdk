@@ -11,7 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class MoPub {
-    public static final String SDK_VERSION = "4.12.0";
+    public static final String SDK_VERSION = "4.13.0";
 
     public enum LocationAwareness { NORMAL, TRUNCATED, DISABLED }
 
@@ -25,8 +25,10 @@ public class MoPub {
             "com.mopub.mobileads.MoPubRewardedVideoManager$RequestParameters";
 
     private static final int DEFAULT_LOCATION_PRECISION = 6;
+    private static final long DEFAULT_LOCATION_REFRESH_TIME_MILLIS = 60 * 1000;
     private static volatile LocationAwareness sLocationLocationAwareness = LocationAwareness.NORMAL;
     private static volatile int sLocationPrecision = DEFAULT_LOCATION_PRECISION;
+    private static volatile long sMinimumLocationRefreshTimeMillis = DEFAULT_LOCATION_REFRESH_TIME_MILLIS;
     private static boolean sSearchedForUpdateActivityMethod = false;
     @Nullable private static Method sUpdateActivityMethod;
 
@@ -48,6 +50,15 @@ public class MoPub {
      */
     public static void setLocationPrecision(int precision) {
         sLocationPrecision = Math.min(Math.max(0, precision), DEFAULT_LOCATION_PRECISION);
+    }
+
+    public static void setMinimumLocationRefreshTimeMillis(
+            final long minimumLocationRefreshTimeMillis) {
+        sMinimumLocationRefreshTimeMillis = minimumLocationRefreshTimeMillis;
+    }
+
+    public static long getMinimumLocationRefreshTimeMillis() {
+        return sMinimumLocationRefreshTimeMillis;
     }
 
 

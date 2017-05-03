@@ -36,6 +36,7 @@ public enum ResponseHeader {
     // Rewarded Ad fields
     REWARDED_VIDEO_CURRENCY_NAME("X-Rewarded-Video-Currency-Name"),
     REWARDED_VIDEO_CURRENCY_AMOUNT("X-Rewarded-Video-Currency-Amount"),
+    REWARDED_CURRENCIES("X-Rewarded-Currencies"),
     REWARDED_VIDEO_COMPLETION_URL("X-Rewarded-Video-Completion-Url"),
     REWARDED_DURATION("X-Rewarded-Duration"),
     SHOULD_REWARD_ON_CLICK("X-Should-Reward-On-Click"),

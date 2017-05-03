@@ -14,6 +14,7 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.mopub.common.LocationService;
 import com.mopub.common.MoPub;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
@@ -92,6 +93,8 @@ public class NativeUrlGeneratorTest {
             when(spyApplicationContext.getSystemService(Context.WINDOW_SERVICE)).thenReturn(mockWindowManager);
             when(context.getApplicationContext()).thenReturn(spyApplicationContext);
         }
+
+        LocationService.clearLastKnownLocation();
     }
 
     @Test

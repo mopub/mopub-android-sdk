@@ -20,6 +20,9 @@ public enum MoPubErrorCode {
     VIDEO_NOT_AVAILABLE("No video loaded for ad unit."),
     VIDEO_PLAYBACK_ERROR("Error playing a video."),
 
+    REWARDED_CURRENCIES_PARSING_ERROR("Error parsing rewarded currencies JSON header."),
+    REWARD_NOT_SELECTED("Reward not selected for rewarded ad."),
+
     UNSPECIFIED("Unspecified error.");
 
     private final String message;
