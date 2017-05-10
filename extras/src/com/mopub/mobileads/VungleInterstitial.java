@@ -7,11 +7,13 @@ import android.util.Log;
 
 import com.vungle.publisher.EventListener;
 import com.vungle.publisher.VunglePub;
+import com.vungle.publisher.env.WrapperFramework;
+import com.vungle.publisher.inject.Injector;
 
 import java.util.Map;
 
 /*
- * Tested with Vungle SDK 4.0.2
+ * Tested with Vungle SDK 4.0.3
  */
 public class VungleInterstitial extends CustomEventInterstitial implements EventListener {
 
@@ -22,6 +24,9 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
      */
     public static final String APP_ID_KEY = "appId";
 
+    // Version of the adapter, intended for Vungle internal use.
+    private static final String VERSION = "1.0.0";
+
     private final VunglePub mVunglePub;
     private final Handler mHandler;
     private CustomEventInterstitialListener mCustomEventInterstitialListener;
@@ -29,6 +34,9 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
     public VungleInterstitial() {
         mHandler = new Handler(Looper.getMainLooper());
         mVunglePub = VunglePub.getInstance();
+        Injector injector = Injector.getInstance();
+        injector.setWrapperFramework(WrapperFramework.mopub);
+        injector.setWrapperFrameworkVersion(VERSION.replace('.', '_'));
     }
 
     @Override
@@ -56,7 +64,6 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
 
         // init clears the event listener.
         mVunglePub.init(context, appId);
-        mVunglePub.setEventListeners(this);
         if (mVunglePub.isAdPlayable()) {
             Log.d("MoPub", "Vungle interstitial ad successfully loaded.");
             mCustomEventInterstitialListener.onInterstitialLoaded();
@@ -69,6 +76,7 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
     @Override
     protected void showInterstitial() {
         if (mVunglePub.isAdPlayable()) {
+            mVunglePub.setEventListeners(this);
             mVunglePub.playAd();
         } else {
             Log.d("MoPub", "Tried to show a Vungle interstitial ad before it finished loading. Please try again.");
@@ -77,7 +85,7 @@ public class VungleInterstitial extends CustomEventInterstitial implements Event
 
     @Override
     protected void onInvalidate() {
-        mVunglePub.clearEventListeners();
+        mVunglePub.removeEventListeners(this);
     }
 
     private boolean extrasAreValid(Map<String, String> serverExtras) {

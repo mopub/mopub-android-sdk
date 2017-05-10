@@ -14,6 +14,8 @@ import com.mopub.common.logging.MoPubLog;
 import com.vungle.publisher.AdConfig;
 import com.vungle.publisher.EventListener;
 import com.vungle.publisher.VunglePub;
+import com.vungle.publisher.env.WrapperFramework;
+import com.vungle.publisher.inject.Injector;
 
 import java.util.Locale;
 import java.util.Map;
@@ -21,7 +23,7 @@ import java.util.Map;
 /**
  * A custom event for showing Vungle rewarded videos.
  *
- * Certified with Vungle 4.0.2
+ * Certified with Vungle 4.0.3
  */
 public class VungleRewardedVideo extends CustomEventRewardedVideo {
 
@@ -32,6 +34,9 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
      */
     public static final String APP_ID_KEY = "appId";
     public static final String VUNGLE_AD_NETWORK_CONSTANT = "vngl_id";
+
+    // Version of the adapter, intended for Vungle internal use.
+    private static final String VERSION = "1.0.0";
 
     // This has to be reinitialized every time the CE loads to avoid conflict with the interstitials.
     private static VunglePub sVunglePub;
@@ -82,6 +87,9 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
                 @NonNull final Map<String, String> serverExtras) throws Exception {
         synchronized (VungleRewardedVideo.class) {
             if (!sInitialized) {
+                Injector injector = Injector.getInstance();
+                injector.setWrapperFramework(WrapperFramework.mopub);
+                injector.setWrapperFrameworkVersion(VERSION.replace('.', '_'));
                 sVunglePub = VunglePub.getInstance();
                 sInitialized = true;
                 return true;
@@ -94,7 +102,6 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
     protected void loadWithSdkInitialized(@NonNull final Activity activity, @NonNull final Map<String, Object> localExtras, @NonNull final Map<String, String> serverExtras) throws Exception {
         String appId = serverExtras.containsKey(APP_ID_KEY) ? serverExtras.get(APP_ID_KEY) : DEFAULT_VUNGLE_APP_ID;
         sVunglePub.init(activity, appId);
-        sVunglePub.setEventListeners(sVungleListener);
         Object adUnitObject = localExtras.get(DataKeys.AD_UNIT_ID_KEY);
         if (adUnitObject instanceof String) {
             mAdUnitId = (String) adUnitObject;
@@ -126,6 +133,7 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         final AdConfig adConfig = new AdConfig();
         adConfig.setIncentivized(true);
         setUpMediationSettingsForRequest(adConfig);
+        sVunglePub.setEventListeners(sVungleListener);
         sVunglePub.playAd(adConfig);
     }
 
