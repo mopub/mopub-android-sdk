@@ -15,6 +15,10 @@ import com.mopub.common.BaseLifecycleListener;
 import com.mopub.common.LifecycleListener;
 import com.mopub.common.MoPubReward;
 
+import java.util.concurrent.CountDownLatch;
+import java.lang.InterruptedException;
+import java.util.concurrent.TimeUnit;
+
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -54,6 +58,11 @@ public class GooglePlayServicesRewardedVideo extends CustomEventRewardedVideo im
      * The Google Rewarded Video Ad instance.
      */
     private RewardedVideoAd mRewardedVideoAd;
+    
+    /**
+     *    Activity used for UI threading.
+     */
+    private Activity mOwnerActivity;
 
     /**
      * A {@link LifecycleListener} used to forward the activity lifecycle events from MoPub SDK to
@@ -127,10 +136,12 @@ public class GooglePlayServicesRewardedVideo extends CustomEventRewardedVideo im
                 return false;
             }
 
+            mOwnerActivity = launcherActivity;
             mAdUnitId = serverExtras.get(KEY_EXTRA_AD_UNIT_ID);
 
             mRewardedVideoAd = MobileAds.getRewardedVideoAdInstance(launcherActivity);
             mRewardedVideoAd.setRewardedVideoAdListener(GooglePlayServicesRewardedVideo.this);
+            
             return true;
         }
 
@@ -169,7 +180,25 @@ public class GooglePlayServicesRewardedVideo extends CustomEventRewardedVideo im
 
     @Override
     protected boolean hasVideoAvailable() {
-        return mRewardedVideoAd != null && mRewardedVideoAd.isLoaded();
+        if (mRewardedVideoAd == null || mOwnerActivity == null){
+            return false;
+        }
+        
+        final boolean[] hasAds = {false};
+        try {            
+            final CountDownLatch latch = new CountDownLatch(1);
+            mOwnerActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    hasAds[0] = mRewardedVideoAd.isLoaded();
+                    latch.countDown();
+                }
+            });
+            latch.await(500, TimeUnit.MILLISECONDS); // wait for result - but no longer than 0.5s
+        } catch (InterruptedException e){
+        }
+        
+        return hasAds[0];
     }
 
     @Override
