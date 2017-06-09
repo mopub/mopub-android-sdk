@@ -391,6 +391,18 @@ public class GooglePlayServicesNative extends CustomEventNative {
                         }
                     }).withAdListener(new AdListener() {
                         @Override
+                        public void onAdClicked() {
+                            super.onAdClicked();
+                            GooglePlayServicesNativeAd.this.notifyAdClicked();
+                        }
+
+                        @Override
+                        public void onAdImpression() {
+                            super.onAdImpression();
+                            GooglePlayServicesNativeAd.this.notifyAdImpressed();
+                        }
+
+                        @Override
                         public void onAdFailedToLoad(int errorCode) {
                             super.onAdFailedToLoad(errorCode);
                             switch (errorCode) {

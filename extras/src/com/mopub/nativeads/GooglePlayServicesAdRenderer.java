@@ -201,6 +201,10 @@ public class GooglePlayServicesAdRenderer implements MoPubAdRenderer<GooglePlayS
                     ((ViewGroup) adView).removeView(actualNativeView);
                     outerView.addView(actualNativeView, index);
                 }
+
+                if (adView instanceof NativeAdView) {
+                    ((NativeAdView) adView).destroy();
+                }
             }
         }
     }
