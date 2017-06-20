@@ -18,7 +18,8 @@ import static com.mopub.mobileads.MoPubErrorCode.NETWORK_NO_FILL;
 import static com.mopub.mobileads.MoPubErrorCode.UNSPECIFIED;
 
 /**
- * Tested with Flurry 6.5.0
+ * Please reference the Supported Mediation Partner page at http://bit.ly/2mqsuFH for the
+ * latest version and ad format certifications.
  */
 class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
     private static final String LOG_TAG = FlurryCustomEventBanner.class.getSimpleName();
@@ -96,7 +97,9 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
     }
 
     private boolean validateExtras(final Map<String, String> serverExtras) {
-        if (serverExtras == null) { return false; }
+        if (serverExtras == null) {
+            return false;
+        }
 
         final String flurryApiKey = serverExtras.get(FlurryAgentWrapper.PARAM_API_KEY);
         final String flurryAdSpace = serverExtras.get(FlurryAgentWrapper.PARAM_AD_SPACE_NAME);
@@ -150,10 +153,6 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
         @Override
         public void onAppExit(FlurryAdBanner adBanner) {
             Log.d(LOG_TAG, "onAppExit: Flurry banner ad exited app");
-
-            if (mListener != null) {
-                mListener.onLeaveApplication();
-            }
         }
 
         @Override
@@ -179,7 +178,7 @@ class FlurryCustomEventBanner extends com.mopub.mobileads.CustomEventBanner {
                     "Error type: %s. Error code: %s", adErrorType.toString(), errorCode));
 
             if (mListener != null) {
-                switch(adErrorType) {
+                switch (adErrorType) {
                     case FETCH:
                         mListener.onBannerFailed(NETWORK_NO_FILL);
                         return;

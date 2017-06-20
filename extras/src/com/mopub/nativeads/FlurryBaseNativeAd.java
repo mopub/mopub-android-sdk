@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Tested with Flurry 6.5.0
+ * Please reference the Supported Mediation Partner page at http://bit.ly/2mqsuFH for the
+ * latest version and ad format certifications.
  */
 public interface FlurryBaseNativeAd {
 
