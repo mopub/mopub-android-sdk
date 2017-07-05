@@ -14,8 +14,7 @@ import java.util.WeakHashMap;
  * specified in the FlurryNativeViewHolder.videoView to show a video. If a video is not available,
  * this will still use the mainImageView.
  *
- * Please reference the Supported Mediation Partner page at http://bit.ly/2mqsuFH for the
- * latest version and ad format certifications.
+ * Certified with Flurry 7.0.0
  */
 public class FlurryNativeAdRenderer implements
         MoPubAdRenderer<FlurryCustomEventNative.FlurryVideoEnabledNativeAd> {

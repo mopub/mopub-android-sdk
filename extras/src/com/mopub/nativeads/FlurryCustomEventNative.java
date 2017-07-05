@@ -22,8 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Please reference the Supported Mediation Partner page at http://bit.ly/2mqsuFH for the
- * latest version and ad format certifications.
+ * Certified with Flurry 7.0.0
  */
 public final class FlurryCustomEventNative extends CustomEventNative {
 
