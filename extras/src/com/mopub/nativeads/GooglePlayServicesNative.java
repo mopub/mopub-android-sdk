@@ -467,8 +467,9 @@ public class GooglePlayServicesNative extends CustomEventNative {
          */
         private boolean isValidContentAd(NativeContentAd contentAd) {
             return (contentAd.getHeadline() != null && contentAd.getBody() != null
-                    && contentAd.getImages() != null && contentAd.getImages().get(0) != null
-                    && contentAd.getLogo() != null && contentAd.getCallToAction() != null);
+                    && contentAd.getImages() != null && contentAd.getImages().size() > 0
+                    && contentAd.getImages().get(0) != null && contentAd.getLogo() != null
+                    && contentAd.getCallToAction() != null);
         }
 
         /**
@@ -482,8 +483,9 @@ public class GooglePlayServicesNative extends CustomEventNative {
          */
         private boolean isValidAppInstallAd(NativeAppInstallAd appInstallAd) {
             return (appInstallAd.getHeadline() != null && appInstallAd.getBody() != null
-                    && appInstallAd.getImages() != null && appInstallAd.getImages().get(0) != null
-                    && appInstallAd.getIcon() != null && appInstallAd.getCallToAction() != null);
+                    && appInstallAd.getImages() != null && appInstallAd.getImages().size() > 0
+                    && appInstallAd.getImages().get(0) != null && appInstallAd.getIcon() != null
+                    && appInstallAd.getCallToAction() != null);
         }
 
         @Override
