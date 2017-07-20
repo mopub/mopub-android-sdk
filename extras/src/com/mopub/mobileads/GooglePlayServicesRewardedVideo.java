@@ -253,6 +253,8 @@ public class GooglePlayServicesRewardedVideo extends CustomEventRewardedVideo im
                 errorCode = MoPubErrorCode.NO_CONNECTION;
                 break;
             case AdRequest.ERROR_CODE_NO_FILL:
+                errorCode = MoPubErrorCode.NO_FILL;
+                break;
             default:
                 errorCode = MoPubErrorCode.UNSPECIFIED;
         }

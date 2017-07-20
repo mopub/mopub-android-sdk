@@ -126,7 +126,7 @@ class GooglePlayServicesBanner extends CustomEventBanner {
         public void onAdFailedToLoad(int errorCode) {
             Log.d("MoPub", "Google Play Services banner ad failed to load.");
             if (mBannerListener != null) {
-                mBannerListener.onBannerFailed(MoPubErrorCode.NETWORK_NO_FILL);
+                mBannerListener.onBannerFailed(getMoPubErrorCode(errorCode));
             }
         }
 
@@ -149,6 +149,34 @@ class GooglePlayServicesBanner extends CustomEventBanner {
             if (mBannerListener != null) {
                 mBannerListener.onBannerClicked();
             }
+        }
+
+        /**
+         * Converts a given Google Mobile Ads SDK error code into {@link MoPubErrorCode}.
+         *
+         * @param error Google Mobile Ads SDK error code.
+         * @return an equivalent MoPub SDK error code for the given Google Mobile Ads SDK error
+         * code.
+         */
+        private MoPubErrorCode getMoPubErrorCode(int error) {
+            MoPubErrorCode errorCode;
+            switch (error) {
+                case AdRequest.ERROR_CODE_INTERNAL_ERROR:
+                    errorCode = MoPubErrorCode.INTERNAL_ERROR;
+                    break;
+                case AdRequest.ERROR_CODE_INVALID_REQUEST:
+                    errorCode = MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR;
+                    break;
+                case AdRequest.ERROR_CODE_NETWORK_ERROR:
+                    errorCode = MoPubErrorCode.NO_CONNECTION;
+                    break;
+                case AdRequest.ERROR_CODE_NO_FILL:
+                    errorCode = MoPubErrorCode.NO_FILL;
+                    break;
+                default:
+                    errorCode = MoPubErrorCode.UNSPECIFIED;
+            }
+            return errorCode;
         }
     }
 
