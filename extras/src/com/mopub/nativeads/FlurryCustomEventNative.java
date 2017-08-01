@@ -315,7 +315,7 @@ public final class FlurryCustomEventNative extends CustomEventNative {
             }
 
             final String privacyUrl = getPrivacyInformationIconImageUrl();
-            if (iconUrl != null) {
+            if (privacyUrl != null) {
                 imageUrls.add(privacyUrl);
                 Log.d(LOG_TAG, "Flurry Native Ad privacy information icon image found.");
             }
@@ -489,7 +489,7 @@ public final class FlurryCustomEventNative extends CustomEventNative {
             }
 
             final String privacyUrl = getPrivacyInformationIconImageUrl();
-            if (iconUrl != null) {
+            if (privacyUrl != null) {
                 imageUrls.add(privacyUrl);
                 Log.d(LOG_TAG, "Flurry Native Ad privacy information icon image found.");
             }
