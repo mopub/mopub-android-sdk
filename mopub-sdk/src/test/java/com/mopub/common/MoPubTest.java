@@ -2,6 +2,7 @@ package com.mopub.common;
 
 import android.app.Activity;
 
+import com.mopub.common.MoPub.BrowserAgent;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Reflection;
 import com.mopub.mobileads.BuildConfig;
@@ -53,6 +54,47 @@ public class MoPubTest {
         mockRequestParameters = mock(MoPubRewardedVideoManager.RequestParameters.class);
 
         mockStatic(MoPubRewardedVideoManager.class);
+
+        MoPub.resetBrowserAgent();
+    }
+
+    @Test
+    public void setBrowserAgent_withDefaultValue_shouldNotChangeBrowserAgent_shouldSetOverriddenFlag() {
+        MoPub.setBrowserAgent(BrowserAgent.IN_APP);
+        assertThat(MoPub.getBrowserAgent()).isEqualTo(BrowserAgent.IN_APP);
+        assertThat(MoPub.isBrowserAgentOverriddenByClient()).isTrue();
+    }
+
+    @Test
+    public void setBrowserAgent_withNonDefaultValue_shouldChangeBrowserAgent_shouldSetOverriddenFlag() {
+        MoPub.setBrowserAgent(BrowserAgent.NATIVE);
+        assertThat(MoPub.getBrowserAgent()).isEqualTo(BrowserAgent.NATIVE);
+        assertThat(MoPub.isBrowserAgentOverriddenByClient()).isTrue();
+    }
+
+    @Test
+    public void setBrowserAgentFromAdServer_whenNotAlreadyOverriddenByClient_shouldSetBrowserAgentFromAdServer() {
+        MoPub.setBrowserAgentFromAdServer(BrowserAgent.NATIVE);
+        assertThat(MoPub.getBrowserAgent()).isEqualTo(BrowserAgent.NATIVE);
+        assertThat(MoPub.isBrowserAgentOverriddenByClient()).isFalse();
+    }
+
+    @Test
+    public void setBrowserAgentFromAdServer_whenAlreadyOverriddenByClient_shouldNotChangeBrowserAgent() {
+        MoPub.setBrowserAgent(BrowserAgent.NATIVE);
+        MoPub.setBrowserAgentFromAdServer(BrowserAgent.IN_APP);
+        assertThat(MoPub.getBrowserAgent()).isEqualTo(BrowserAgent.NATIVE);
+        assertThat(MoPub.isBrowserAgentOverriddenByClient()).isTrue();
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void setBrowserAgent_withNullValue_shouldThrowException() {
+        MoPub.setBrowserAgent(null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void setBrowserAgentFromAdServer_withNullValue_shouldThrowException() {
+        MoPub.setBrowserAgentFromAdServer(null);
     }
 
     @Test

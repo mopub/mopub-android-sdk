@@ -1,5 +1,6 @@
 package com.mopub.common;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -11,6 +12,7 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DeviceUtils;
@@ -36,6 +38,7 @@ public class ClientMetadata {
     private static final String IFA_PREFIX = "ifa:";
     private static final String SHA_PREFIX = "sha:";
     private static final int UNKNOWN_NETWORK = -1;
+    private static final int MISSING_VALUE = -1;
 
     private String mNetworkOperatorForUrl;
     private final String mNetworkOperator;
@@ -184,8 +187,28 @@ public class ClientMetadata {
             mSimOperatorName = null;
         }
 
-        // Get the device ID. This will be replaced later when the Play Services callbacks complete.
-        mUdid = getDeviceIdFromContext(mContext);
+        setAmazonAdvertisingInfo();
+        if (!mAdvertisingInfoSet) {
+            // Amazon ad info is not supported on this device, so get the device ID.
+            // This will be replaced later when the Play Services callbacks complete.
+            mUdid = getDeviceIdFromContext(mContext);
+        }
+
+    }
+
+    // For Amazon tablets running Fire OS 5.1+ and TV devices running Fire OS 5.2.1.1+, the
+    // advertising info is available as System Settings.
+    // See https://developer.amazon.com/public/solutions/devices/fire-tv/docs/fire-tv-advertising-id
+    @VisibleForTesting
+    protected void setAmazonAdvertisingInfo() {
+        ContentResolver resolver = mContext.getContentResolver();
+        int limitAdTracking = Settings.Secure.getInt(resolver, "limit_ad_tracking", MISSING_VALUE);
+        String advertisingId = Settings.Secure.getString(resolver, "advertising_id");
+
+        if (limitAdTracking != MISSING_VALUE && !TextUtils.isEmpty(advertisingId)) {
+            boolean doNotTrack = limitAdTracking != 0;
+            setAdvertisingInfo(advertisingId, doNotTrack);
+        }
     }
 
     private static String getAppVersionFromContext(Context context) {

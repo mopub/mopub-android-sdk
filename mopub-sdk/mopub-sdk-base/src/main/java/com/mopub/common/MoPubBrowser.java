@@ -200,6 +200,7 @@ public class MoPubBrowser extends Activity {
                 .build());
     }
 
+    @SuppressWarnings("ResourceType") // Using XML resources causes issues in Unity
     private View getMoPubBrowserView() {
         LinearLayout moPubBrowserView = new LinearLayout(this);
         LinearLayout.LayoutParams browserLayoutParams = new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT);

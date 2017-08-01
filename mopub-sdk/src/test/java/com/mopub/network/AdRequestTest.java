@@ -6,6 +6,7 @@ import android.location.Location;
 import com.mopub.common.AdFormat;
 import com.mopub.common.AdType;
 import com.mopub.common.DataKeys;
+import com.mopub.common.MoPub.BrowserAgent;
 import com.mopub.common.event.BaseEvent;
 import com.mopub.common.event.EventDispatcher;
 import com.mopub.common.event.MoPubEvents;
@@ -326,6 +327,15 @@ public class AdRequestTest {
         defaultHeaders.put(ResponseHeader.AD_TYPE.getKey(), AdType.REWARDED_VIDEO);
         defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME.getKey(), "currencyName");
         defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT.getKey(), "25");
+
+        final String rewardedCurrenciesJson = "{\"rewards\": ["
+                + "{\"name\": \"Coins\", \"amount\": 8},"
+                + "{\"name\": \"Diamonds\", \"amount\": 1},"
+                + "{\"name\": \"Diamonds\", \"amount\": 10 },"
+                + "{\"name\": \"Energy\", \"amount\": 20}"
+                + "]}";
+        defaultHeaders.put(ResponseHeader.REWARDED_CURRENCIES.getKey(), rewardedCurrenciesJson);
+
         defaultHeaders.put(ResponseHeader.REWARDED_VIDEO_COMPLETION_URL.getKey(),
                 "http://completionUrl");
         defaultHeaders.put(ResponseHeader.REWARDED_DURATION.getKey(), "15000");
@@ -338,10 +348,55 @@ public class AdRequestTest {
         assertThat(response.result.getAdType()).isEqualTo(AdType.REWARDED_VIDEO);
         assertThat(response.result.getRewardedVideoCurrencyName()).isEqualTo("currencyName");
         assertThat(response.result.getRewardedVideoCurrencyAmount()).isEqualTo("25");
+        assertThat(response.result.getRewardedCurrencies()).isEqualTo(rewardedCurrenciesJson);
         assertThat(response.result.getRewardedVideoCompletionUrl()).isEqualTo(
                 "http://completionUrl");
         assertThat(response.result.getRewardedDuration()).isEqualTo(15000);
         assertThat(response.result.shouldRewardOnClick()).isTrue();
+    }
+
+    @Test
+    public void parseNetworkResponse_withInAppBrowserAgent_shouldSucceed() {
+        defaultHeaders.put(ResponseHeader.BROWSER_AGENT.getKey(), "0");
+
+        NetworkResponse testResponse =
+                new NetworkResponse(200, "abc".getBytes(Charset.defaultCharset()), defaultHeaders, false);
+
+        final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
+        assertThat(response.result.getBrowserAgent()).isEqualTo(BrowserAgent.IN_APP);
+    }
+
+    @Test
+    public void parseNetworkResponse_withNativeBrowserAgent_shouldSucceed() {
+        defaultHeaders.put(ResponseHeader.BROWSER_AGENT.getKey(), "1");
+
+        NetworkResponse testResponse =
+                new NetworkResponse(200, "abc".getBytes(Charset.defaultCharset()), defaultHeaders, false);
+
+        final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
+        assertThat(response.result.getBrowserAgent()).isEqualTo(BrowserAgent.NATIVE);
+    }
+
+    @Test
+    public void parseNetworkResponse_withNullBrowserAgent_shouldDefaultToInApp() {
+        defaultHeaders.put(ResponseHeader.BROWSER_AGENT.getKey(), null);
+
+        NetworkResponse testResponse =
+                new NetworkResponse(200, "abc".getBytes(Charset.defaultCharset()), defaultHeaders, false);
+
+        final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
+        assertThat(response.result.getBrowserAgent()).isEqualTo(BrowserAgent.IN_APP);
+    }
+
+    @Test
+    public void parseNetworkResponse_withUndefinedBrowserAgent_shouldDefaultToInApp() {
+        defaultHeaders.put(ResponseHeader.BROWSER_AGENT.getKey(), "foo");
+
+        NetworkResponse testResponse =
+                new NetworkResponse(200, "abc".getBytes(Charset.defaultCharset()), defaultHeaders, false);
+
+        final Response<AdResponse> response = subject.parseNetworkResponse(testResponse);
+        assertThat(response.result.getBrowserAgent()).isEqualTo(BrowserAgent.IN_APP);
     }
 
     @Test

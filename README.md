@@ -27,7 +27,7 @@ The MoPub SDK is available via:
     }
 
     dependencies {
-        compile('com.mopub:mopub-sdk:4.12.0@aar') {
+        compile('com.mopub:mopub-sdk:4.15.0@aar') {
             transitive = true
         }
     }
@@ -48,27 +48,27 @@ The MoPub SDK is available via:
         // ... other project dependencies
 
         // For banners
-        compile('com.mopub:mopub-sdk-banner:4.12.0@aar') {
+        compile('com.mopub:mopub-sdk-banner:4.15.0@aar') {
             transitive = true
         }
         
         // For interstitials
-        compile('com.mopub:mopub-sdk-interstitial:4.12.0@aar') {
+        compile('com.mopub:mopub-sdk-interstitial:4.15.0@aar') {
             transitive = true
         }
 
         // For rewarded videos. This will automatically also include interstitials
-        compile('com.mopub:mopub-sdk-rewardedvideo:4.12.0@aar') {
+        compile('com.mopub:mopub-sdk-rewardedvideo:4.15.0@aar') {
             transitive = true
         }
 
         // For native static (images).
-        compile('com.mopub:mopub-sdk-native-static:4.12.0@aar') {
+        compile('com.mopub:mopub-sdk-native-static:4.15.0@aar') {
             transitive = true
         }
 
         // For native video. This will automatically also include native static
-        compile('com.mopub:mopub-sdk-native-video:4.12.0@aar') {
+        compile('com.mopub:mopub-sdk-native-video:4.15.0@aar') {
             transitive = true
         }
     }
@@ -96,14 +96,8 @@ The MoPub SDK is available via:
 ## New in this Version
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-- Updated minimum supported Android API version to 16+ (Jelly Bean).
-- New required Activity declaration in `AndroidManifest`, please add:
-
-   ```
-<activity android:name="com.mopub.mobileads.RewardedMraidActivity"
-          android:configChanges="keyboardHidden|orientation|screenSize"/>
-    ```
-- Added support for **rich media in rewarded video** inventory.
+- The SDK now sends Advertising ID on Amazon devices when appropriate.
+- Fixed issue with Charles proxy in sample app for API 24+.
 - Bug fixes.
 
 ## Requirements

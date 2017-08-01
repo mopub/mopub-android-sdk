@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
 import com.mopub.common.AdReport;
 import com.mopub.common.Constants;
@@ -20,6 +19,7 @@ import com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListen
 import com.mopub.mraid.MraidController;
 import com.mopub.mraid.MraidController.MraidListener;
 import com.mopub.mraid.MraidController.UseCustomCloseListener;
+import com.mopub.mraid.MraidWebViewClient;
 import com.mopub.mraid.MraidWebViewDebugListener;
 import com.mopub.mraid.PlacementType;
 import com.mopub.network.Networking;
@@ -52,15 +52,20 @@ public class MraidActivity extends BaseInterstitialActivity {
         dummyWebView.enablePlugins(false);
         dummyWebView.enableJavascriptCaching();
 
-        dummyWebView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(final WebView view, final String url) {
-                customEventInterstitialListener.onInterstitialLoaded();
-            }
-
+        dummyWebView.setWebViewClient(new MraidWebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 return true;
+            }
+
+            @Override
+            public void onPageFinished(final WebView view, final String url) {
+                customEventInterstitialListener.onInterstitialLoaded();
+
+                // can't reuse MraidBridge methods because MraidController is not initialized yet
+                dummyWebView.loadUrl("javascript:mraidbridge.setState('default');");
+                dummyWebView.loadUrl("javascript:mraidbridge.notifyReadyEvent();");
+
             }
 
             @Override

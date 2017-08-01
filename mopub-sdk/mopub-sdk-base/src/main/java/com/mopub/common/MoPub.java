@@ -11,9 +11,40 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class MoPub {
-    public static final String SDK_VERSION = "4.12.0";
+    public static final String SDK_VERSION = "4.15.0";
 
     public enum LocationAwareness { NORMAL, TRUNCATED, DISABLED }
+
+    /**
+     * Browser agent to handle URIs with scheme HTTP or HTTPS
+     */
+    public enum BrowserAgent {
+        /**
+         * MoPub's in-app browser
+         */
+        IN_APP,
+
+        /**
+         * Default browser application on device
+         */
+        NATIVE;
+
+        /**
+         * Maps header value from MoPub's AdServer to browser agent:
+         * 0 is MoPub's in-app browser (IN_APP), and 1 is device's default browser (NATIVE).
+         * For null or all other undefined values, returns default browser agent IN_APP.
+         * @param browserAgent Integer header value from MoPub's AdServer.
+         * @return IN_APP for 0, NATIVE for 1, and IN_APP for null or all other undefined values.
+         */
+        @NonNull
+        public static BrowserAgent fromHeader(@Nullable final Integer browserAgent) {
+            if (browserAgent == null) {
+                return IN_APP;
+            }
+
+            return browserAgent == 1 ? NATIVE : IN_APP;
+        }
+    }
 
     private static final String MOPUB_REWARDED_VIDEOS =
             "com.mopub.mobileads.MoPubRewardedVideos";
@@ -25,17 +56,27 @@ public class MoPub {
             "com.mopub.mobileads.MoPubRewardedVideoManager$RequestParameters";
 
     private static final int DEFAULT_LOCATION_PRECISION = 6;
-    private static volatile LocationAwareness sLocationLocationAwareness = LocationAwareness.NORMAL;
+    private static final long DEFAULT_LOCATION_REFRESH_TIME_MILLIS = 60 * 1000;
+
+    @NonNull private static volatile LocationAwareness sLocationAwareness = LocationAwareness.NORMAL;
     private static volatile int sLocationPrecision = DEFAULT_LOCATION_PRECISION;
+    private static volatile long sMinimumLocationRefreshTimeMillis = DEFAULT_LOCATION_REFRESH_TIME_MILLIS;
+    @NonNull private static volatile BrowserAgent sBrowserAgent = BrowserAgent.IN_APP;
+    private static volatile boolean sIsBrowserAgentOverriddenByClient = false;
     private static boolean sSearchedForUpdateActivityMethod = false;
     @Nullable private static Method sUpdateActivityMethod;
 
+    @NonNull
     public static LocationAwareness getLocationAwareness() {
-        return sLocationLocationAwareness;
+        Preconditions.checkNotNull(sLocationAwareness);
+
+        return sLocationAwareness;
     }
 
-    public static void setLocationAwareness(LocationAwareness locationAwareness) {
-        sLocationLocationAwareness = locationAwareness;
+    public static void setLocationAwareness(@NonNull final LocationAwareness locationAwareness) {
+        Preconditions.checkNotNull(locationAwareness);
+
+        sLocationAwareness = locationAwareness;
     }
 
     public static int getLocationPrecision() {
@@ -50,6 +91,51 @@ public class MoPub {
         sLocationPrecision = Math.min(Math.max(0, precision), DEFAULT_LOCATION_PRECISION);
     }
 
+    public static void setMinimumLocationRefreshTimeMillis(
+            final long minimumLocationRefreshTimeMillis) {
+        sMinimumLocationRefreshTimeMillis = minimumLocationRefreshTimeMillis;
+    }
+
+    public static long getMinimumLocationRefreshTimeMillis() {
+        return sMinimumLocationRefreshTimeMillis;
+    }
+
+    public static void setBrowserAgent(@NonNull final BrowserAgent browserAgent) {
+        Preconditions.checkNotNull(browserAgent);
+
+        sBrowserAgent = browserAgent;
+        sIsBrowserAgentOverriddenByClient = true;
+    }
+
+    public static void setBrowserAgentFromAdServer(
+            @NonNull final BrowserAgent adServerBrowserAgent) {
+        Preconditions.checkNotNull(adServerBrowserAgent);
+
+        if (sIsBrowserAgentOverriddenByClient) {
+            MoPubLog.w("Browser agent already overridden by client with value " + sBrowserAgent);
+        } else {
+            sBrowserAgent = adServerBrowserAgent;
+        }
+    }
+
+    @NonNull
+    public static BrowserAgent getBrowserAgent() {
+        Preconditions.checkNotNull(sBrowserAgent);
+
+        return sBrowserAgent;
+    }
+
+    @VisibleForTesting
+    static boolean isBrowserAgentOverriddenByClient() {
+        return sIsBrowserAgentOverriddenByClient;
+    }
+
+    @VisibleForTesting
+    @Deprecated
+    public static void resetBrowserAgent() {
+        sBrowserAgent = BrowserAgent.IN_APP;
+        sIsBrowserAgentOverriddenByClient = false;
+    }
 
     //////// MoPub LifecycleListener messages ////////
 

@@ -74,6 +74,7 @@ public class InterstitialDetailFragment extends Fragment implements Interstitial
 
     @Override
     public void onInterstitialFailed(MoPubInterstitial interstitial, MoPubErrorCode errorCode) {
+        mShowButton.setEnabled(false);
         final String errorMessage = (errorCode != null) ? errorCode.toString() : "";
         logToast(getActivity(), "Interstitial failed to load: " + errorMessage);
     }

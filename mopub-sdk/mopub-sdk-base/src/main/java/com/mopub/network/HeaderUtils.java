@@ -68,6 +68,14 @@ public class HeaderUtils {
     }
 
     private static Integer formatIntHeader(String headerValue) {
+        try {
+            return Integer.parseInt(headerValue);
+        } catch (Exception e) {
+            // Continue below if we can't parse it quickly
+        }
+
+        // The number format way of parsing integers is way slower than Integer.parseInt, but
+        // for numbers like 3.14, we would like to return 3, not null.
         NumberFormat numberFormat = NumberFormat.getInstance(Locale.US);
         numberFormat.setParseIntegerOnly(true);
 

@@ -3,6 +3,7 @@ package com.mopub.network;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.mopub.common.MoPub.BrowserAgent;
 import com.mopub.common.event.EventDetails;
 import com.mopub.common.util.DateAndTime;
 
@@ -30,6 +31,8 @@ public class AdResponse implements Serializable {
     private final String mRewardedVideoCurrencyName;
     @Nullable
     private final String mRewardedVideoCurrencyAmount;
+    @Nullable
+    private final String mRewardedCurrencies;
     @Nullable
     private final String mRewardedVideoCompletionUrl;
     @Nullable
@@ -70,6 +73,8 @@ public class AdResponse implements Serializable {
 
     @Nullable
     private final String mCustomEventClassName;
+    @Nullable
+    private final BrowserAgent mBrowserAgent;
     @NonNull
     private final Map<String, String> mServerExtras;
 
@@ -84,6 +89,7 @@ public class AdResponse implements Serializable {
 
         mRewardedVideoCurrencyName = builder.rewardedVideoCurrencyName;
         mRewardedVideoCurrencyAmount = builder.rewardedVideoCurrencyAmount;
+        mRewardedCurrencies = builder.rewardedCurrencies;
         mRewardedVideoCompletionUrl = builder.rewardedVideoCompletionUrl;
         mRewardedDuration = builder.rewardedDuration;
         mShouldRewardOnClick = builder.shouldRewardOnClick;
@@ -103,6 +109,7 @@ public class AdResponse implements Serializable {
         mJsonBody = builder.jsonBody;
         mEventDetails = builder.eventDetails;
         mCustomEventClassName = builder.customEventClassName;
+        mBrowserAgent = builder.mBrowserAgent;
         mServerExtras = builder.serverExtras;
         mTimestamp = DateAndTime.now().getTime();
     }
@@ -154,6 +161,11 @@ public class AdResponse implements Serializable {
     @Nullable
     public String getRewardedVideoCurrencyAmount() {
         return mRewardedVideoCurrencyAmount;
+    }
+
+    @Nullable
+    public String getRewardedCurrencies() {
+        return mRewardedCurrencies;
     }
 
     @Nullable
@@ -229,6 +241,9 @@ public class AdResponse implements Serializable {
         return mCustomEventClassName;
     }
 
+    @Nullable
+    public BrowserAgent getBrowserAgent() { return mBrowserAgent; }
+
     @NonNull
     public Map<String, String> getServerExtras() {
         // Strings are immutable, so this works as a "deep" copy.
@@ -245,6 +260,7 @@ public class AdResponse implements Serializable {
                 .setNetworkType(mNetworkType)
                 .setRewardedVideoCurrencyName(mRewardedVideoCurrencyName)
                 .setRewardedVideoCurrencyAmount(mRewardedVideoCurrencyAmount)
+                .setRewardedCurrencies(mRewardedCurrencies)
                 .setRewardedVideoCompletionUrl(mRewardedVideoCompletionUrl)
                 .setRewardedDuration(mRewardedDuration)
                 .setShouldRewardOnClick(mShouldRewardOnClick)
@@ -261,6 +277,7 @@ public class AdResponse implements Serializable {
                 .setJsonBody(mJsonBody)
                 .setEventDetails(mEventDetails)
                 .setCustomEventClassName(mCustomEventClassName)
+                .setBrowserAgent(mBrowserAgent)
                 .setServerExtras(mServerExtras);
     }
 
@@ -272,6 +289,7 @@ public class AdResponse implements Serializable {
 
         private String rewardedVideoCurrencyName;
         private String rewardedVideoCurrencyAmount;
+        private String rewardedCurrencies;
         private String rewardedVideoCompletionUrl;
         private Integer rewardedDuration;
         private boolean shouldRewardOnClick;
@@ -296,6 +314,7 @@ public class AdResponse implements Serializable {
         private EventDetails eventDetails;
 
         private String customEventClassName;
+        private BrowserAgent mBrowserAgent;
         private Map<String, String> serverExtras = new TreeMap<String, String>();
 
         public Builder setAdType(@Nullable final String adType) {
@@ -327,6 +346,11 @@ public class AdResponse implements Serializable {
         public Builder setRewardedVideoCurrencyAmount(
                 @Nullable final String rewardedVideoCurrencyAmount) {
             this.rewardedVideoCurrencyAmount = rewardedVideoCurrencyAmount;
+            return this;
+        }
+
+        public Builder setRewardedCurrencies(@Nullable final String rewardedCurrencies) {
+            this.rewardedCurrencies = rewardedCurrencies;
             return this;
         }
 
@@ -415,6 +439,11 @@ public class AdResponse implements Serializable {
 
         public Builder setCustomEventClassName(@Nullable final String customEventClassName) {
             this.customEventClassName = customEventClassName;
+            return this;
+        }
+
+        public Builder setBrowserAgent(@Nullable final BrowserAgent browserAgent) {
+            this.mBrowserAgent = browserAgent;
             return this;
         }
 

@@ -306,6 +306,19 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                     mVideoResponseHeaders.getImpressionVisibleMs();
             visibilityTrackingEvents.add(visibilityTrackingEvent);
 
+            // VAST impression trackers
+            for (final VastTracker vastTracker : vastVideoConfig.getImpressionTrackers()) {
+                final VisibilityTrackingEvent vastImpressionTrackingEvent =
+                        new VisibilityTrackingEvent();
+                vastImpressionTrackingEvent.strategy = new PayloadVisibilityStrategy(mContext,
+                        vastTracker.getTrackingUrl());
+                vastImpressionTrackingEvent.minimumPercentageVisible =
+                        mVideoResponseHeaders.getImpressionMinVisiblePercent();
+                vastImpressionTrackingEvent.totalRequiredPlayTimeMs =
+                        mVideoResponseHeaders.getImpressionVisibleMs();
+                visibilityTrackingEvents.add(vastImpressionTrackingEvent);
+            }
+
             // Visibility tracking event from http response Vast payload
             mVastVideoConfig = vastVideoConfig;
             final VideoViewabilityTracker vastVideoViewabilityTracker =

@@ -35,7 +35,7 @@ public final class MoPubReward {
 
     @NonNull
     public static MoPubReward failure() {
-        return new MoPubReward(false, NO_REWARD_LABEL, 0);
+        return new MoPubReward(false, NO_REWARD_LABEL, DEFAULT_REWARD_AMOUNT);
     }
 
     @NonNull

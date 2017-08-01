@@ -5,8 +5,11 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.mopub.common.MediationSettings;
+import com.mopub.common.MoPubReward;
 import com.mopub.common.Preconditions;
 import com.mopub.common.util.ReflectionTarget;
+
+import java.util.Set;
 
 /**
  * MoPubRewardedVideos is a utility class that holds controller methods for other MoPub rewarded
@@ -56,5 +59,20 @@ public class MoPubRewardedVideos {
         Preconditions.checkNotNull(adUnitId);
 
         MoPubRewardedVideoManager.showVideo(adUnitId);
+    }
+
+    @ReflectionTarget
+    public static Set<MoPubReward> getAvailableRewards(@NonNull String adUnitId) {
+        Preconditions.checkNotNull(adUnitId);
+
+        return MoPubRewardedVideoManager.getAvailableRewards(adUnitId);
+    }
+
+    @ReflectionTarget
+    public static void selectReward(@NonNull String adUnitId, @NonNull MoPubReward selectedReward) {
+        Preconditions.checkNotNull(adUnitId);
+        Preconditions.checkNotNull(selectedReward);
+
+        MoPubRewardedVideoManager.selectReward(adUnitId, selectedReward);
     }
 }

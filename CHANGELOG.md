@@ -1,12 +1,37 @@
+## Version 4.15.0 (June 19, 2017)
+- The SDK now sends Advertising ID on Amazon devices when appropriate.
+- Fixed issue with Charles proxy in sample app for API 24+.
+- Bug fixes.
+
+## Version 4.14.0 (May 10, 2017)
+- Rewarded Ad reward callback `onRewardedVideoCompleted(Set<String>, MoPubReward)` is also triggered now on the client for server-side rewarding.
+- Added click callback for Rewarded Ads.
+  - Any implementors of `MoPubRewardedVideoListener` will now need to also implement `MoPubRewardedVideoListener#onRewardedVideoClicked(String)`.
+- MoPub Ads now expire after 4 hours of being unused.
+  - Interstitial and Rewarded ads served by MoPub will expire 4 hours after successfully loading, triggering a load failure with the new `EXPIRED` `MoPubErrorCode`.
+  - Cached Native Ad Placer ads now also expire in 4 hours.
+- Improved logging when attempting to show an ad that is not ready.
+- Updated build tools version to 25.0.2.
+- Bug fixes.
+
+## Version 4.13.0 (March 23, 2017)
+
+- Updated AdColony Custom Events.
+- Updated Unity Custom Events.
+- Added AdMob Custom Events:
+  - Native: `GooglePlayServicesAdRenderer` and `GooglePlayServicesNative`
+  - Rewarded Video: `GooglePlayServicesRewardedVideo`
+- Bug fixes.
+
 ## Version 4.12.0 (February 9, 2017)
 
 - Updated minimum supported Android API version to 16+ (Jelly Bean).
 - New required Activity declaration in `AndroidManifest`, please add:
 
-   ```
+```
 <activity android:name="com.mopub.mobileads.RewardedMraidActivity"
           android:configChanges="keyboardHidden|orientation|screenSize"/>
-    ```
+```
 - Added support for **rich media in rewarded video** inventory.
 - Bug fixes:
     - Fixed incorrectly forwarded lifecycle events `onStop()` and `onDestroy()` in `MoPubLifeCycleManager` for rewarded rich media ads.

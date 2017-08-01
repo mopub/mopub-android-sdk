@@ -6,7 +6,6 @@ import android.view.View;
 import com.facebook.ads.Ad;
 import com.facebook.ads.AdError;
 import com.facebook.ads.AdListener;
-import com.facebook.ads.ImpressionListener;
 import com.facebook.ads.MediaView;
 import com.facebook.ads.NativeAd;
 import com.facebook.ads.NativeAd.Rating;
@@ -21,10 +20,12 @@ import java.util.Map;
 import static com.mopub.nativeads.NativeImageHelper.preCacheImages;
 
 /**
- * Tested with Facebook SDK 4.15.0. FacebookAdRenderer is also necessary in order to show video ads.
+ * FacebookAdRenderer is also necessary in order to show video ads.
  * Video ads will only be shown if VIDEO_ENABLED is set to true or a server configuration
  * "video_enabled" flag is set to true. The server configuration will override the local
  * configuration.
+ * Please reference the Supported Mediation Partner page at http://bit.ly/2mqsuFH for the
+ * latest version and ad format certifications.
  */
 public class FacebookNative extends CustomEventNative {
     private static final String PLACEMENT_ID_KEY = "placement_id";
@@ -126,7 +127,7 @@ public class FacebookNative extends CustomEventNative {
         return (placementId != null && placementId.length() > 0);
     }
 
-    static class FacebookStaticNativeAd extends StaticNativeAd implements AdListener, ImpressionListener {
+    static class FacebookStaticNativeAd extends StaticNativeAd implements AdListener {
         private static final String SOCIAL_CONTEXT_FOR_AD = "socialContextForAd";
 
         private final Context mContext;
@@ -143,7 +144,6 @@ public class FacebookNative extends CustomEventNative {
 
         void loadAd() {
             mNativeAd.setAdListener(this);
-            mNativeAd.setImpressionListener(this);
             mNativeAd.loadAd();
         }
 
@@ -221,7 +221,6 @@ public class FacebookNative extends CustomEventNative {
             notifyAdClicked();
         }
 
-        // ImpressionListener
         @Override
         public void onLoggingImpression(final Ad ad) {
             notifyAdImpressed();
@@ -253,7 +252,7 @@ public class FacebookNative extends CustomEventNative {
     }
 
 
-    static class FacebookVideoEnabledNativeAd extends BaseNativeAd implements AdListener, ImpressionListener {
+    static class FacebookVideoEnabledNativeAd extends BaseNativeAd implements AdListener {
         private static final String SOCIAL_CONTEXT_FOR_AD = "socialContextForAd";
 
         static final double MIN_STAR_RATING = 0;
@@ -278,7 +277,6 @@ public class FacebookNative extends CustomEventNative {
 
         void loadAd() {
             mNativeAd.setAdListener(this);
-            mNativeAd.setImpressionListener(this);
             mNativeAd.loadAd();
         }
 
@@ -407,7 +405,6 @@ public class FacebookNative extends CustomEventNative {
             notifyAdClicked();
         }
 
-        // ImpressionListener
         @Override
         public void onLoggingImpression(final Ad ad) {
             notifyAdImpressed();
@@ -450,7 +447,7 @@ public class FacebookNative extends CustomEventNative {
             return new HashMap<String, Object>(mExtras);
         }
 
-        final public void addExtra( final String key, final Object value) {
+        final public void addExtra(final String key, final Object value) {
             if (!Preconditions.NoThrow.checkNotNull(key, "addExtra key is not allowed to be null")) {
                 return;
             }

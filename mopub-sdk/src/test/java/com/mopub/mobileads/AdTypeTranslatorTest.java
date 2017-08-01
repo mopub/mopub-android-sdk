@@ -147,4 +147,32 @@ public class AdTypeTranslatorTest {
 
         assertThat(customEventName).isEqualTo("com.mopub.mobileads.MoPubRewardedPlayable");
     }
+
+    @Test
+    public void isMoPubSpecific_withMoPubInterstitialClassNames_shouldBeTrue() {
+        assertThat(AdTypeTranslator.CustomEventType
+                .isMoPubSpecific("com.mopub.mraid.MraidInterstitial")).isTrue();
+        assertThat(AdTypeTranslator.CustomEventType
+                .isMoPubSpecific("com.mopub.mobileads.HtmlInterstitial")).isTrue();
+        assertThat(AdTypeTranslator.CustomEventType
+                .isMoPubSpecific("com.mopub.mobileads.VastVideoInterstitial")).isTrue();
+    }
+
+    @Test
+    public void isMoPubSpecific_withMoPubRewardedClassNames_shouldBeTrue() {
+        assertThat(AdTypeTranslator.CustomEventType
+                .isMoPubSpecific("com.mopub.mobileads.MoPubRewardedVideo")).isTrue();
+        assertThat(AdTypeTranslator.CustomEventType
+                .isMoPubSpecific("com.mopub.mobileads.MoPubRewardedPlayable")).isTrue();
+    }
+
+    @Test
+    public void isMoPubSpecific_withNonMoPubClassNames_shouldBeFalse() {
+        assertThat(AdTypeTranslator.CustomEventType
+                .isMoPubSpecific("com.mopub.mobileads.GooglePlayServicesBanner")).isFalse();
+        assertThat(AdTypeTranslator.CustomEventType
+                .isMoPubSpecific("com.whatever.ads.SomeRandomAdFormat")).isFalse();
+        assertThat(AdTypeTranslator.CustomEventType
+                .isMoPubSpecific(null)).isFalse();
+    }
 }

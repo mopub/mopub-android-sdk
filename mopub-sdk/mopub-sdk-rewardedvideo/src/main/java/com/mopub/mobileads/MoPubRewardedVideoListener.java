@@ -35,6 +35,11 @@ public interface MoPubRewardedVideoListener {
     public void onRewardedVideoPlaybackError(@NonNull String adUnitId, @NonNull MoPubErrorCode errorCode);
 
     /**
+     * Called when a rewarded video is clicked.
+     */
+    public void onRewardedVideoClicked(@NonNull String adUnitId);
+
+    /**
      * Called when a rewarded video is closed. At this point your application should resume.
      */
     public void onRewardedVideoClosed(@NonNull String adUnitId);

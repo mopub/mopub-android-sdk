@@ -29,6 +29,7 @@ import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -204,9 +205,13 @@ public class ServerPositioningSourceTest {
 
         verify(mockPositioningListener).onFailed();
 
-        final List<ShadowLog.LogItem> allLogMessages = ShadowLog.getLogs();
-        final ShadowLog.LogItem latestLogMessage = allLogMessages.get(allLogMessages.size() - 2);
-        // All log messages end with a newline character.
-        assertThat(latestLogMessage.msg.trim()).isEqualTo(MoPubErrorCode.NO_CONNECTION.toString());
+        final List<ShadowLog.LogItem> allLogItems = ShadowLog.getLogs();
+        HashSet<String> allLogMessages = new HashSet<>(allLogItems.size());
+
+        for (ShadowLog.LogItem logItem : allLogItems) {
+            allLogMessages.add(logItem.msg.trim());
+        }
+
+        assertThat(allLogMessages).contains(MoPubErrorCode.NO_CONNECTION.toString());
     }
 }

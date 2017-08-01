@@ -8,6 +8,8 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 
+import com.mopub.common.MoPub;
+import com.mopub.common.MoPub.BrowserAgent;
 import com.mopub.common.MoPubBrowser;
 import com.mopub.exceptions.IntentNotResolvableException;
 import com.mopub.exceptions.UrlParseException;
@@ -38,6 +40,7 @@ public class IntentsTest {
     public void setUp() {
         activityContext = Robolectric.buildActivity(Activity.class).create().get();
         applicationContext = activityContext.getApplicationContext();
+        MoPub.resetBrowserAgent();
     }
 
     @Test
@@ -149,6 +152,53 @@ public class IntentsTest {
     @Test(expected = UrlParseException.class)
     public void intentForNativeBrowserScheme_whenUrlParameterMissing_shouldThrowException() throws UrlParseException {
         Intents.intentForNativeBrowserScheme(Uri.parse("mopubnativebrowser://navigate"));
+    }
+
+    @Test
+    public void intentForNativeBrowserScheme_whenBrowserAgentSetToNative_whenSchemeIsMoPubNativeBrowser_shouldProperlyHandleEncodedUrls() throws UrlParseException {
+        MoPub.setBrowserAgent(BrowserAgent.NATIVE);
+
+        intentForNativeBrowserScheme_shouldProperlyHandleEncodedUrls();
+    }
+
+    @Test(expected = UrlParseException.class)
+    public void intentForNativeBrowserScheme_whenBrowserAgentSetToNative_whenSchemeIsMoPubNativeBrowser_whenHostIsNotNavigate_shouldThrowException() throws UrlParseException {
+        MoPub.setBrowserAgent(BrowserAgent.NATIVE);
+
+        intentForNativeBrowserScheme_whenNotNavigate_shouldThrowException();
+    }
+
+    @Test(expected = UrlParseException.class)
+    public void intentForNativeBrowserScheme_whenBrowserAgentSetToNative_whenSchemeIsMoPubNativeBrowserButUrlParameterMissing_shouldThrowException() throws UrlParseException {
+        MoPub.setBrowserAgent(BrowserAgent.NATIVE);
+
+        intentForNativeBrowserScheme_whenUrlParameterMissing_shouldThrowException();
+    }
+
+    @Test
+    public void intentForNativeBrowserScheme_whenBrowserAgentSetToNative_whenSchemeIsHttpOrHttps_shouldProperlyHandleEncodedUrls() throws UrlParseException {
+        MoPub.setBrowserAgent(BrowserAgent.NATIVE);
+
+        Intent intent;
+
+        intent = Intents.intentForNativeBrowserScheme(Uri.parse("http://www.example.com"));
+        assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
+        assertThat(intent.getDataString()).isEqualTo("http://www.example.com");
+
+        intent = Intents.intentForNativeBrowserScheme(Uri.parse("https://www.example.com/?query=1&two=2"));
+        assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
+        assertThat(intent.getDataString()).isEqualTo("https://www.example.com/?query=1&two=2");
+
+        intent = Intents.intentForNativeBrowserScheme(Uri.parse("https://www.example.com/?query=1%26two%3D2"));
+        assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
+        assertThat(intent.getDataString()).isEqualTo("https://www.example.com/?query=1%26two%3D2");
+    }
+
+    @Test(expected = UrlParseException.class)
+    public void intentForNativeBrowserScheme_whenBrowserAgentSetToNative_whenSchemeNotMoPubNativeBrowserOrHttpOrHttps_shouldThrowException() throws UrlParseException {
+        MoPub.setBrowserAgent(BrowserAgent.NATIVE);
+
+        Intents.intentForNativeBrowserScheme(Uri.parse("foo://www.example.com"));
     }
 
     @Test

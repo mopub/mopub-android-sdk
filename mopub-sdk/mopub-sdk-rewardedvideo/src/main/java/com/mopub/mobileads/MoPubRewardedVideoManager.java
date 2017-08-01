@@ -20,6 +20,7 @@ import com.mopub.common.MoPubReward;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.common.util.Json;
 import com.mopub.common.util.MoPubCollections;
 import com.mopub.common.util.Reflection;
 import com.mopub.common.util.ReflectionTarget;
@@ -32,13 +33,18 @@ import com.mopub.network.TrackingRequest;
 import com.mopub.volley.RequestQueue;
 import com.mopub.volley.VolleyError;
 
+import org.json.JSONException;
+
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import static com.mopub.mobileads.MoPubErrorCode.EXPIRED;
 
 /**
  * Handles requesting Rewarded ads and mapping Rewarded Ad SDK settings to the CustomEvent
@@ -47,6 +53,9 @@ import java.util.TreeMap;
 public class MoPubRewardedVideoManager {
     private static MoPubRewardedVideoManager sInstance;
     private static final int DEFAULT_LOAD_TIMEOUT = Constants.THIRTY_SECONDS_MILLIS;
+    private static final String CURRENCIES_JSON_REWARDS_MAP_KEY = "rewards";
+    private static final String CURRENCIES_JSON_REWARD_NAME_KEY = "name";
+    private static final String CURRENCIES_JSON_REWARD_AMOUNT_KEY = "amount";
 
     /**
      * This must an integer because the backend only supports int types for api version.
@@ -224,6 +233,8 @@ public class MoPubRewardedVideoManager {
     public static void loadVideo(@NonNull final String adUnitId,
             @Nullable final RequestParameters requestParameters,
             @Nullable final MediationSettings... mediationSettings) {
+        Preconditions.checkNotNull(adUnitId);
+
         if (sInstance == null) {
             logErrorNotInitialized();
             return;
@@ -231,7 +242,7 @@ public class MoPubRewardedVideoManager {
 
         final String currentlyShowingAdUnitId =
                 sInstance.mRewardedAdData.getCurrentlyShowingAdUnitId();
-        if (!TextUtils.isEmpty(currentlyShowingAdUnitId)) {
+        if (adUnitId.equals(currentlyShowingAdUnitId)) {
             MoPubLog.d(String.format(Locale.US, "Did not queue rewarded ad request for ad " +
                     "unit %s. The ad is already showing.", adUnitId));
             return;
@@ -296,6 +307,8 @@ public class MoPubRewardedVideoManager {
         final RequestQueue requestQueue = Networking.getRequestQueue(sInstance.mContext);
         requestQueue.add(request);
         sInstance.mAdRequestStatus.markLoading(adUnitId);
+        MoPubLog.d(String.format(Locale.US,
+                "Loading rewarded ad request for ad unit %s with URL %s", adUnitId, adUrlString));
     }
 
     public static boolean hasVideo(@NonNull String adUnitId) {
@@ -312,6 +325,13 @@ public class MoPubRewardedVideoManager {
         if (sInstance != null) {
             final CustomEventRewardedAd customEvent = sInstance.mRewardedAdData.getCustomEvent(adUnitId);
             if (isPlayable(adUnitId, customEvent)) {
+                // If there are rewards available but no reward is selected, fail over.
+                if (!sInstance.mRewardedAdData.getAvailableRewards(adUnitId).isEmpty()
+                        && sInstance.mRewardedAdData.getMoPubReward(adUnitId) == null) {
+                    sInstance.failover(adUnitId, MoPubErrorCode.REWARD_NOT_SELECTED);
+                    return;
+                }
+
                 sInstance.mRewardedAdData.updateCustomEventLastShownRewardMapping(
                         customEvent.getClass(),
                         sInstance.mRewardedAdData.getMoPubReward(adUnitId));
@@ -319,6 +339,12 @@ public class MoPubRewardedVideoManager {
                 sInstance.mAdRequestStatus.markPlayed(adUnitId);
                 customEvent.show();
             } else {
+                if (sInstance.mAdRequestStatus.isLoading(adUnitId)) {
+                    MoPubLog.d("Rewarded ad is not ready to be shown yet.");
+                } else {
+                    MoPubLog.d("No rewarded ad loading or loaded.");
+                }
+
                 sInstance.failover(adUnitId, MoPubErrorCode.VIDEO_NOT_AVAILABLE);
             }
         } else {
@@ -331,6 +357,36 @@ public class MoPubRewardedVideoManager {
                 && sInstance.mAdRequestStatus.canPlay(adUnitId)
                 && customEvent != null
                 && customEvent.isReady());
+    }
+
+    /**
+     * Retrieves the set of available {@link MoPubReward} instance(s) for this AdUnit.
+     * @param adUnitId MoPub adUnitId String
+     * @return a set of {@link MoPubReward} instance(s) if available, else an empty set.
+     */
+    @NonNull
+    public static Set<MoPubReward> getAvailableRewards(@NonNull String adUnitId) {
+        if (sInstance != null) {
+            return sInstance.mRewardedAdData.getAvailableRewards(adUnitId);
+        } else {
+            logErrorNotInitialized();
+            return Collections.<MoPubReward>emptySet();
+        }
+    }
+
+    /**
+     * Selects the reward for this AdUnit from available {@link MoPubReward} instances.
+     * If this AdUnit does not have any rewards, or if the selected reward is not available
+     * for this AdUnit, then no reward will be selected for this AdUnit.
+     * @param adUnitId MoPub adUnitId String
+     * @param selectedReward selected {@link MoPubReward}
+     */
+    public static void selectReward(@NonNull String adUnitId, @NonNull MoPubReward selectedReward) {
+        if (sInstance != null) {
+            sInstance.mRewardedAdData.selectReward(adUnitId, selectedReward);
+        } else {
+            logErrorNotInitialized();
+        }
     }
 
     ///// Ad Request / Response methods /////
@@ -385,9 +441,29 @@ public class MoPubRewardedVideoManager {
 
             localExtras.put(DataKeys.REWARDED_AD_CUSTOMER_ID_KEY,
                     mRewardedAdData.getCustomerId());
-            mRewardedAdData.updateAdUnitRewardMapping(adUnitId,
-                    adResponse.getRewardedVideoCurrencyName(),
-                    adResponse.getRewardedVideoCurrencyAmount());
+
+            // Check for new multi-currency header X-Rewarded-Currencies.
+            final String rewardedCurrencies = adResponse.getRewardedCurrencies();
+
+            // Clear any available rewards for this AdUnit.
+            mRewardedAdData.resetAvailableRewards(adUnitId);
+
+            // If the new multi-currency header doesn't exist, fallback to parsing legacy headers
+            // X-Rewarded-Video-Currency-Name and X-Rewarded-Video-Currency-Amount.
+            if (TextUtils.isEmpty(rewardedCurrencies)) {
+                mRewardedAdData.updateAdUnitRewardMapping(adUnitId,
+                        adResponse.getRewardedVideoCurrencyName(),
+                        adResponse.getRewardedVideoCurrencyAmount());
+            } else {
+                try {
+                    parseMultiCurrencyJson(adUnitId, rewardedCurrencies);
+                } catch (Exception e) {
+                    MoPubLog.e("Error parsing rewarded currencies JSON header: " + rewardedCurrencies);
+                    failover(adUnitId, MoPubErrorCode.REWARDED_CURRENCIES_PARSING_ERROR);
+                    return;
+                }
+            }
+
             mRewardedAdData.updateAdUnitToServerCompletionUrlMapping(adUnitId,
                     adResponse.getRewardedVideoCompletionUrl());
 
@@ -416,6 +492,8 @@ public class MoPubRewardedVideoManager {
             mTimeoutMap.put(adUnitId, timeout);
 
             // Load custom event
+            MoPubLog.d(String.format(Locale.US,
+                    "Loading custom event with class name %s", customEventClassName));
             customEvent.loadCustomEvent(mainActivity, localExtras, adResponse.getServerExtras());
 
             final String adNetworkId = customEvent.getAdNetworkId();
@@ -447,14 +525,53 @@ public class MoPubRewardedVideoManager {
         failover(adUnitId, errorCode);
     }
 
+    private void parseMultiCurrencyJson(@NonNull String adUnitId,
+            @NonNull String rewardedCurrencies) throws JSONException {
+        /* Parse multi-currency JSON string, an example below:
+            {
+                "rewards": [
+                    { "name": "Coins", "amount": 8 },
+                    { "name": "Diamonds", "amount": 1 },
+                    { "name": "Diamonds", "amount": 10 },
+                    { "name": "Energy", "amount": 20 }
+                ]
+            }
+         */
+
+        final Map<String, String> rewardsMap = Json.jsonStringToMap(rewardedCurrencies);
+        final String[] rewardsArray =
+                Json.jsonArrayToStringArray(rewardsMap.get(CURRENCIES_JSON_REWARDS_MAP_KEY));
+
+        // If there's only one reward, update adunit-to-reward mapping now
+        if (rewardsArray.length == 1) {
+            Map<String, String> rewardData = Json.jsonStringToMap(rewardsArray[0]);
+            mRewardedAdData.updateAdUnitRewardMapping(
+                    adUnitId,
+                    rewardData.get(CURRENCIES_JSON_REWARD_NAME_KEY),
+                    rewardData.get(CURRENCIES_JSON_REWARD_AMOUNT_KEY));
+        }
+
+        // Loop through awards array and create a set of available reward(s) for this adunit
+        for (String rewardDataStr : rewardsArray) {
+            Map<String, String> rewardData = Json.jsonStringToMap(rewardDataStr);
+            mRewardedAdData.addAvailableReward(
+                    adUnitId,
+                    rewardData.get(CURRENCIES_JSON_REWARD_NAME_KEY),
+                    rewardData.get(CURRENCIES_JSON_REWARD_AMOUNT_KEY));
+        }
+    }
+
     private void failover(@NonNull final String adUnitId, @NonNull final MoPubErrorCode errorCode) {
+        Preconditions.checkNotNull(adUnitId);
+        Preconditions.checkNotNull(errorCode);
+
         final String failoverUrl = mAdRequestStatus.getFailoverUrl(adUnitId);
         mAdRequestStatus.markFail(adUnitId);
 
-        if (failoverUrl != null) {
+        if (failoverUrl != null && !errorCode.equals(EXPIRED)) {
             loadVideo(adUnitId, failoverUrl);
-        } else if (mVideoListener != null) {
-            mVideoListener.onRewardedVideoLoadFailure(adUnitId, errorCode);
+        } else if (sInstance.mVideoListener != null) {
+            sInstance.mVideoListener.onRewardedVideoLoadFailure(adUnitId, errorCode);
         }
     }
 
@@ -584,6 +701,11 @@ public class MoPubRewardedVideoManager {
 
     private static void onRewardedVideoClickedAction(@NonNull final String adUnitId) {
         Preconditions.checkNotNull(adUnitId);
+
+        if (sInstance.mVideoListener != null) {
+            sInstance.mVideoListener.onRewardedVideoClicked(adUnitId);
+        }
+
         TrackingRequest.makeTrackingHttpRequest(
                 sInstance.mAdRequestStatus.getClickTrackerUrlString(adUnitId),
                 sInstance.mContext);
@@ -620,48 +742,72 @@ public class MoPubRewardedVideoManager {
     }
 
     public static <T extends CustomEventRewardedAd>
-    void onRewardedVideoCompleted(@NonNull final Class<T> customEventClass, final String thirdPartyId, @NonNull final MoPubReward moPubReward) {
-        // Unlike other callbacks in this class, only call the listener once with all the MoPubIds in the matching set.
+    void onRewardedVideoCompleted(@NonNull final Class<T> customEventClass,
+            final String thirdPartyId, @NonNull final MoPubReward moPubReward) {
+        // Unlike other callbacks in this class, only call the listener once with all the MoPubIds
+        // in the matching set.
         final String currentlyShowingAdUnitId =
                 sInstance.mRewardedAdData.getCurrentlyShowingAdUnitId();
+
+        rewardOnClient(customEventClass, thirdPartyId, moPubReward, currentlyShowingAdUnitId);
+        rewardOnServer(currentlyShowingAdUnitId);
+    }
+
+    private static void rewardOnServer(final String currentlyShowingAdUnitId) {
         final String serverCompletionUrl = sInstance.mRewardedAdData.getServerCompletionUrl(
                 currentlyShowingAdUnitId);
-        if (TextUtils.isEmpty(serverCompletionUrl)) {
+        if (!TextUtils.isEmpty(serverCompletionUrl)) {
             postToInstance(new Runnable() {
                 @Override
                 public void run() {
-                    final MoPubReward chosenReward = chooseReward(
-                            sInstance.mRewardedAdData.getLastShownMoPubReward(customEventClass),
-                            moPubReward);
+                    final MoPubReward reward
+                            = sInstance.mRewardedAdData.getMoPubReward(currentlyShowingAdUnitId);
 
-                    Set<String> rewardedIds = new HashSet<String>();
-                    if (TextUtils.isEmpty(currentlyShowingAdUnitId)) {
-                        final Set<String> moPubIds = sInstance.mRewardedAdData.getMoPubIdsForAdNetwork(
-                                customEventClass, thirdPartyId);
-                        rewardedIds.addAll(moPubIds);
-                    } else {
-                        // If we know which ad unit is showing, only reward the currently showing
-                        // ad unit.
-                        rewardedIds.add(currentlyShowingAdUnitId);
-                    }
+                    final String rewardName = (reward == null)
+                            ? MoPubReward.NO_REWARD_LABEL
+                            : reward.getLabel();
+                    final String rewardAmount = (reward == null)
+                            ? Integer.toString(MoPubReward.DEFAULT_REWARD_AMOUNT)
+                            : Integer.toString(reward.getAmount());
 
-                    if (sInstance.mVideoListener != null) {
-                        sInstance.mVideoListener.onRewardedVideoCompleted(rewardedIds,
-                                chosenReward);
-                    }
-                }
-            });
-        } else {
-            postToInstance(new Runnable() {
-                @Override
-                public void run() {
                     RewardedVideoCompletionRequestHandler.makeRewardedVideoCompletionRequest(
                             sInstance.mContext,
                             serverCompletionUrl,
-                            sInstance.mRewardedAdData.getCustomerId());
+                            sInstance.mRewardedAdData.getCustomerId(),
+                            rewardName,
+                            rewardAmount);
                 }
             });
         }
+    }
+
+    private static <T extends CustomEventRewardedAd> void rewardOnClient(
+            @NonNull final Class<T> customEventClass, final String thirdPartyId,
+            @NonNull final MoPubReward moPubReward, final String currentlyShowingAdUnitId) {
+        postToInstance(new Runnable() {
+            @Override
+            public void run() {
+                final MoPubReward chosenReward = chooseReward(
+                        sInstance.mRewardedAdData.getLastShownMoPubReward(customEventClass),
+                        moPubReward);
+
+                Set<String> rewardedIds = new HashSet<String>();
+                if (TextUtils.isEmpty(currentlyShowingAdUnitId)) {
+                    final Set<String> moPubIds = sInstance.mRewardedAdData.getMoPubIdsForAdNetwork(
+                            customEventClass, thirdPartyId);
+                    rewardedIds.addAll(moPubIds);
+                } else {
+                    // If we know which ad unit is showing, only reward the currently showing
+                    // ad unit.
+                    rewardedIds.add(currentlyShowingAdUnitId);
+                }
+
+                if (sInstance.mVideoListener != null) {
+                    sInstance.mVideoListener.onRewardedVideoCompleted(rewardedIds,
+                            chosenReward);
+                }
+            }
+        });
     }
 
     @VisibleForTesting

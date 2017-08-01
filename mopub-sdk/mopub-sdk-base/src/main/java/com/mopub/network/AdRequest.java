@@ -13,6 +13,7 @@ import com.mopub.common.DataKeys;
 import com.mopub.common.FullAdType;
 import com.mopub.common.LocationService;
 import com.mopub.common.MoPub;
+import com.mopub.common.MoPub.BrowserAgent;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.event.BaseEvent;
@@ -198,6 +199,12 @@ public class AdRequest extends Request<AdResponse> {
                 fullAdTypeString, headers);
         builder.setCustomEventClassName(customEventClassName);
 
+        // Default browser agent from X-Browser-Agent header
+        BrowserAgent browserAgent = BrowserAgent.fromHeader(
+                extractIntegerHeader(headers, ResponseHeader.BROWSER_AGENT));
+        MoPub.setBrowserAgentFromAdServer(browserAgent);
+        builder.setBrowserAgent(browserAgent);
+
         // Process server extras if they are present:
         String customEventData = extractHeader(headers, ResponseHeader.CUSTOM_EVENT_DATA);
 
@@ -274,6 +281,8 @@ public class AdRequest extends Request<AdResponse> {
                     ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME);
             final String rewardedVideoCurrencyAmount = extractHeader(headers,
                     ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT);
+            final String rewardedCurrencies = extractHeader(headers,
+                    ResponseHeader.REWARDED_CURRENCIES);
             final String rewardedVideoCompletionUrl = extractHeader(headers,
                     ResponseHeader.REWARDED_VIDEO_COMPLETION_URL);
             final Integer rewardedDuration = extractIntegerHeader(headers,
@@ -282,6 +291,7 @@ public class AdRequest extends Request<AdResponse> {
                     ResponseHeader.SHOULD_REWARD_ON_CLICK, false);
             builder.setRewardedVideoCurrencyName(rewardedVideoCurrencyName);
             builder.setRewardedVideoCurrencyAmount(rewardedVideoCurrencyAmount);
+            builder.setRewardedCurrencies(rewardedCurrencies);
             builder.setRewardedVideoCompletionUrl(rewardedVideoCompletionUrl);
             builder.setRewardedDuration(rewardedDuration);
             builder.setShouldRewardOnClick(shouldRewardOnClick);

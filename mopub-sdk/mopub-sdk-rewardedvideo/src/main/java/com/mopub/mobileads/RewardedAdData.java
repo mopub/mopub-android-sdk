@@ -8,11 +8,13 @@ import android.util.Pair;
 import com.mopub.common.MoPubReward;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
+import com.mopub.common.logging.MoPubLog;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -25,6 +27,8 @@ class RewardedAdData {
     private final Map<String, CustomEventRewardedAd> mAdUnitToCustomEventMap;
     @NonNull
     private final Map<String, MoPubReward> mAdUnitToRewardMap;
+    @NonNull
+    private final Map<String, Set<MoPubReward>> mAdUnitToAvailableRewardsMap;
     @NonNull
     private final Map<String, String> mAdUnitToServerCompletionUrlMap;
     @NonNull
@@ -40,6 +44,7 @@ class RewardedAdData {
     RewardedAdData() {
         mAdUnitToCustomEventMap = new TreeMap<String, CustomEventRewardedAd>();
         mAdUnitToRewardMap = new TreeMap<String, MoPubReward>();
+        mAdUnitToAvailableRewardsMap = new TreeMap<String, Set<MoPubReward>>();
         mAdUnitToServerCompletionUrlMap = new TreeMap<String, String>();
         mCustomEventToRewardMap = new HashMap<Class<? extends CustomEventRewardedAd>, MoPubReward>();
         mCustomEventToMoPubIdMap = new HashMap<TwoPartKey, Set<String>>();
@@ -53,6 +58,78 @@ class RewardedAdData {
     @Nullable
     MoPubReward getMoPubReward(@Nullable String moPubId) {
         return mAdUnitToRewardMap.get(moPubId);
+    }
+
+    void addAvailableReward(
+            @NonNull String moPubId,
+            @Nullable String currencyName,
+            @Nullable String currencyAmount) {
+        Preconditions.checkNotNull(moPubId);
+        if (currencyName == null || currencyAmount == null) {
+            MoPubLog.e(String.format(Locale.US, "Currency name and amount cannot be null: " +
+                    "name = %s, amount = %s", currencyName, currencyAmount));
+            return;
+        }
+
+        int intCurrencyAmount;
+        try {
+            intCurrencyAmount = Integer.parseInt(currencyAmount);
+        } catch(NumberFormatException e) {
+            MoPubLog.e(String.format(Locale.US, "Currency amount must be an integer: %s",
+                    currencyAmount));
+            return;
+        }
+
+        if (intCurrencyAmount < 0) {
+            MoPubLog.e(String.format(Locale.US, "Currency amount cannot be negative: %s",
+                    currencyAmount));
+            return;
+        }
+
+        if (mAdUnitToAvailableRewardsMap.containsKey(moPubId)) {
+            mAdUnitToAvailableRewardsMap.get(moPubId)
+                    .add(MoPubReward.success(currencyName, intCurrencyAmount));
+        } else {
+            HashSet<MoPubReward> availableRewards = new HashSet<>();
+            availableRewards.add(MoPubReward.success(currencyName, intCurrencyAmount));
+            mAdUnitToAvailableRewardsMap.put(moPubId, availableRewards);
+        }
+    }
+
+    @NonNull
+    Set<MoPubReward> getAvailableRewards(@NonNull String moPubId) {
+        Preconditions.checkNotNull(moPubId);
+        Set<MoPubReward> availableRewards = mAdUnitToAvailableRewardsMap.get(moPubId);
+        return (availableRewards == null) ? Collections.<MoPubReward>emptySet() : availableRewards;
+    }
+
+    void selectReward(@NonNull String moPubId, @NonNull MoPubReward selectedReward) {
+        Preconditions.checkNotNull(moPubId);
+        Preconditions.checkNotNull(selectedReward);
+
+        Set<MoPubReward> availableRewards = mAdUnitToAvailableRewardsMap.get(moPubId);
+        if (availableRewards == null || availableRewards.isEmpty()) {
+            MoPubLog.e(String.format(
+                    Locale.US, "AdUnit %s does not have any rewards.", moPubId));
+            return;
+        }
+
+        if (!availableRewards.contains(selectedReward)) {
+            MoPubLog.e(String.format(
+                    Locale.US, "Selected reward is invalid for AdUnit %s.", moPubId));
+            return;
+        }
+
+        updateAdUnitRewardMapping(moPubId, selectedReward.getLabel(),
+                Integer.toString(selectedReward.getAmount()));
+    }
+
+    void resetAvailableRewards(@NonNull String moPubId) {
+        Preconditions.checkNotNull(moPubId);
+        Set<MoPubReward> availableRewards = mAdUnitToAvailableRewardsMap.get(moPubId);
+        if (availableRewards != null && !availableRewards.isEmpty()) {
+            availableRewards.clear();
+        }
     }
 
     @Nullable
@@ -112,10 +189,14 @@ class RewardedAdData {
         try {
             intCurrencyAmount = Integer.parseInt(currencyAmount);
         } catch(NumberFormatException e) {
+            MoPubLog.e(String.format(Locale.US, "Currency amount must be an integer: %s",
+                    currencyAmount));
             return;
         }
 
         if (intCurrencyAmount < 0) {
+            MoPubLog.e(String.format(Locale.US, "Currency amount cannot be negative: %s",
+                    currencyAmount));
             return;
         }
 
@@ -135,7 +216,7 @@ class RewardedAdData {
      * is shown.
      *
      * @param customEventClass the rewarded ad custom event class
-     * @param moPubReward the reward from teh MoPub ad server returned in HTTP headers
+     * @param moPubReward the reward from the MoPub ad server returned in HTTP headers
      */
     void updateCustomEventLastShownRewardMapping(
             @NonNull final Class<? extends CustomEventRewardedAd> customEventClass,
@@ -202,11 +283,34 @@ class RewardedAdData {
     void clear() {
         mAdUnitToCustomEventMap.clear();
         mAdUnitToRewardMap.clear();
+        mAdUnitToAvailableRewardsMap.clear();
         mAdUnitToServerCompletionUrlMap.clear();
         mCustomEventToRewardMap.clear();
         mCustomEventToMoPubIdMap.clear();
         mCurrentlyShowingAdUnitId = null;
         mCustomerId = null;
+    }
+
+    @VisibleForTesting
+    @Deprecated
+    /**
+     * This method is purely used as a helper method in unit tests. Note that calling
+     * {@link MoPubReward#success(String, int)} creates a new instance, even with the same reward
+     * label and amount as an existing reward. Therefore, existence of a reward cannot be asserted
+     * simply by comparing objects in the unit tests.
+     */
+    boolean existsInAvailableRewards(@NonNull String moPubId, @NonNull String currencyName,
+            int currencyAmount) {
+        Preconditions.checkNotNull(moPubId);
+        Preconditions.checkNotNull(currencyName);
+
+        for (MoPubReward reward : getAvailableRewards(moPubId)) {
+            if (reward.getLabel().equals(currencyName) && reward.getAmount() == currencyAmount) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static class TwoPartKey extends Pair<Class<? extends CustomEventRewardedAd>, String> {

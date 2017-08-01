@@ -14,35 +14,63 @@ import static com.mopub.network.HeaderUtils.extractHeader;
 public class AdTypeTranslator {
     public enum CustomEventType {
         // "Special" custom events that we let people choose in the UI.
-        GOOGLE_PLAY_SERVICES_BANNER("admob_native_banner", "com.mopub.mobileads.GooglePlayServicesBanner"),
-        GOOGLE_PLAY_SERVICES_INTERSTITIAL("admob_full_interstitial", "com.mopub.mobileads.GooglePlayServicesInterstitial"),
-        MILLENNIAL_BANNER("millennial_native_banner", "com.mopub.mobileads.MillennialBanner"),
-        MILLENNIAL_INTERSTITIAL("millennial_full_interstitial", "com.mopub.mobileads.MillennialInterstitial"),
+        GOOGLE_PLAY_SERVICES_BANNER("admob_native_banner",
+                "com.mopub.mobileads.GooglePlayServicesBanner", false),
+        GOOGLE_PLAY_SERVICES_INTERSTITIAL("admob_full_interstitial",
+                "com.mopub.mobileads.GooglePlayServicesInterstitial", false),
+        MILLENNIAL_BANNER("millennial_native_banner",
+                "com.mopub.mobileads.MillennialBanner", false),
+        MILLENNIAL_INTERSTITIAL("millennial_full_interstitial",
+                "com.mopub.mobileads.MillennialInterstitial", false),
 
         // MoPub-specific custom events.
-        MRAID_BANNER("mraid_banner", "com.mopub.mraid.MraidBanner"),
-        MRAID_INTERSTITIAL("mraid_interstitial", "com.mopub.mraid.MraidInterstitial"),
-        HTML_BANNER("html_banner", "com.mopub.mobileads.HtmlBanner"),
-        HTML_INTERSTITIAL("html_interstitial", "com.mopub.mobileads.HtmlInterstitial"),
-        VAST_VIDEO_INTERSTITIAL("vast_interstitial", "com.mopub.mobileads.VastVideoInterstitial"),
-        MOPUB_NATIVE("mopub_native", "com.mopub.nativeads.MoPubCustomEventNative"),
-        MOPUB_VIDEO_NATIVE("mopub_video_native", "com.mopub.nativeads.MoPubCustomEventVideoNative"),
-        MOPUB_REWARDED_VIDEO("rewarded_video", "com.mopub.mobileads.MoPubRewardedVideo"),
-        MOPUB_REWARDED_PLAYABLE("rewarded_playable", "com.mopub.mobileads.MoPubRewardedPlayable"),
+        MRAID_BANNER("mraid_banner",
+                "com.mopub.mraid.MraidBanner", true),
+        MRAID_INTERSTITIAL("mraid_interstitial",
+                "com.mopub.mraid.MraidInterstitial", true),
+        HTML_BANNER("html_banner",
+                "com.mopub.mobileads.HtmlBanner", true),
+        HTML_INTERSTITIAL("html_interstitial",
+                "com.mopub.mobileads.HtmlInterstitial", true),
+        VAST_VIDEO_INTERSTITIAL("vast_interstitial",
+                "com.mopub.mobileads.VastVideoInterstitial", true),
+        MOPUB_NATIVE("mopub_native",
+                "com.mopub.nativeads.MoPubCustomEventNative", true),
+        MOPUB_VIDEO_NATIVE("mopub_video_native",
+                "com.mopub.nativeads.MoPubCustomEventVideoNative", true),
+        MOPUB_REWARDED_VIDEO("rewarded_video",
+                "com.mopub.mobileads.MoPubRewardedVideo", true),
+        MOPUB_REWARDED_PLAYABLE("rewarded_playable",
+                "com.mopub.mobileads.MoPubRewardedPlayable", true),
 
-        UNSPECIFIED("", null);
+        UNSPECIFIED("", null, false);
 
+        @NonNull
         private final String mKey;
+        @Nullable
         private final String mClassName;
+        private final boolean mIsMoPubSpecific;
 
-        private CustomEventType(String key, String className) {
+        private CustomEventType(String key, String className, boolean isMoPubSpecific) {
             mKey = key;
             mClassName = className;
+            mIsMoPubSpecific = isMoPubSpecific;
         }
 
-        private static CustomEventType fromString(String key) {
+        private static CustomEventType fromString(@Nullable final String key) {
             for (CustomEventType customEventType : values()) {
                 if (customEventType.mKey.equals(key)) {
+                    return customEventType;
+                }
+            }
+
+            return UNSPECIFIED;
+        }
+
+        private static CustomEventType fromClassName(@Nullable final String className) {
+            for (CustomEventType customEventType : values()) {
+                if (customEventType.mClassName != null
+                        && customEventType.mClassName.equals(className)) {
                     return customEventType;
                 }
             }
@@ -53,6 +81,10 @@ public class AdTypeTranslator {
         @Override
         public String toString() {
             return mClassName;
+        }
+
+        public static boolean isMoPubSpecific(@Nullable final String className) {
+            return fromClassName(className).mIsMoPubSpecific;
         }
     }
 
@@ -70,7 +102,7 @@ public class AdTypeTranslator {
             @NonNull Map<String, String> headers) {
         if (AdType.CUSTOM.equalsIgnoreCase(adType)) {
             return extractHeader(headers, ResponseHeader.CUSTOM_EVENT_NAME);
-        } else if (AdType.STATIC_NATIVE.equalsIgnoreCase(adType)){
+        } else if (AdType.STATIC_NATIVE.equalsIgnoreCase(adType)) {
             return CustomEventType.MOPUB_NATIVE.toString();
         } else if (AdType.VIDEO_NATIVE.equalsIgnoreCase(adType)) {
             return CustomEventType.MOPUB_VIDEO_NATIVE.toString();

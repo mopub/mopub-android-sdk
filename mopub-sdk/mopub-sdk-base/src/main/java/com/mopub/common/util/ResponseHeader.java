@@ -25,6 +25,7 @@ public enum ResponseHeader {
     LOCATION("Location"),
     USER_AGENT("User-Agent"),
     ACCEPT_LANGUAGE("Accept-Language"),
+    BROWSER_AGENT("X-Browser-Agent"),
 
     // Native Video fields
     PLAY_VISIBLE_PERCENT("X-Play-Visible-Percent"),
@@ -36,6 +37,7 @@ public enum ResponseHeader {
     // Rewarded Ad fields
     REWARDED_VIDEO_CURRENCY_NAME("X-Rewarded-Video-Currency-Name"),
     REWARDED_VIDEO_CURRENCY_AMOUNT("X-Rewarded-Video-Currency-Amount"),
+    REWARDED_CURRENCIES("X-Rewarded-Currencies"),
     REWARDED_VIDEO_COMPLETION_URL("X-Rewarded-Video-Completion-Url"),
     REWARDED_DURATION("X-Rewarded-Duration"),
     SHOULD_REWARD_ON_CLICK("X-Should-Reward-On-Click"),
