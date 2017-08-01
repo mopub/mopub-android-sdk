@@ -58,6 +58,7 @@ public class AdViewController {
     @Nullable private WebViewAdUrlGenerator mUrlGenerator;
 
     @Nullable private AdResponse mAdResponse;
+    @Nullable private String mCustomEventClassName;
     private final Runnable mRefreshRunnable;
     @NonNull private final AdRequest.Listener mAdListener;
 
@@ -138,6 +139,7 @@ public class AdViewController {
     void onAdLoadSuccess(@NonNull final AdResponse adResponse) {
         mBackoffPower = 1;
         mAdResponse = adResponse;
+        mCustomEventClassName = adResponse.getCustomEventClassName();
         // Do other ad loading setup. See AdFetcher & AdLoadTask.
         mTimeoutMilliseconds = mAdResponse.getAdTimeoutMillis() == null
                 ? mTimeoutMilliseconds
@@ -319,6 +321,11 @@ public class AdViewController {
 
     public String getAdUnitId() {
         return mAdUnitId;
+    }
+
+    @Nullable
+    public String getCustomEventClassName() {
+        return mCustomEventClassName;
     }
 
     public void setAdUnitId(@NonNull String adUnitId) {

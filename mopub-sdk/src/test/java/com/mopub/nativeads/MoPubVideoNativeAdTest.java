@@ -125,6 +125,12 @@ public class MoPubVideoNativeAdTest {
         when(mockVastVideoConfig.getVideoViewabilityTracker())
                 .thenReturn(new VideoViewabilityTracker(98, 76, "viewabilityTracker"));
 
+        List<VastTracker> vastTrackers = new ArrayList<VastTracker>();
+        vastTrackers.add(new VastTracker("vastimpression1"));
+        vastTrackers.add(new VastTracker("vastimpression2"));
+
+        when(mockVastVideoConfig.getImpressionTrackers()).thenReturn(vastTrackers);
+
         subject = new MoPubVideoNativeAd(
                 activity, jsonObject, mockCustomEventNativeListener, videoResponseHeaders,
                 mockVisibilityTracker, mockNativeVideoControllerFactory, null,
@@ -236,9 +242,18 @@ public class MoPubVideoNativeAdTest {
         assertThat(visibilityTrackingEvents.get(0).totalRequiredPlayTimeMs).isEqualTo(100);
 
         assertThat(visibilityTrackingEvents.get(1).strategy).isInstanceOf(PayloadVisibilityStrategy.class);
-        assertThat(visibilityTrackingEvents.get(1).minimumPercentageVisible).isEqualTo(76);
-        assertThat(visibilityTrackingEvents.get(1).totalRequiredPlayTimeMs).isEqualTo(98);
+        assertThat(visibilityTrackingEvents.get(1).minimumPercentageVisible).isEqualTo(15);
+        assertThat(visibilityTrackingEvents.get(1).totalRequiredPlayTimeMs).isEqualTo(100);
 
+        assertThat(visibilityTrackingEvents.get(2).strategy).isInstanceOf(PayloadVisibilityStrategy.class);
+        assertThat(visibilityTrackingEvents.get(2).minimumPercentageVisible).isEqualTo(15);
+        assertThat(visibilityTrackingEvents.get(2).totalRequiredPlayTimeMs).isEqualTo(100);
+
+        assertThat(visibilityTrackingEvents.get(3).strategy).isInstanceOf(PayloadVisibilityStrategy.class);
+        assertThat(visibilityTrackingEvents.get(3).minimumPercentageVisible).isEqualTo(76);
+        assertThat(visibilityTrackingEvents.get(3).totalRequiredPlayTimeMs).isEqualTo(98);
+
+        verify(mockVastVideoConfig).getImpressionTrackers();
         verify(mockVastVideoConfig).addClickTrackers(any(List.class));
         verify(mockVastVideoConfig).setClickThroughUrl("clk");
         verify(mockCustomEventNativeListener).onNativeAdLoaded(subject);

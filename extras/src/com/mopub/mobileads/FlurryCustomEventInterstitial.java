@@ -17,7 +17,7 @@ import static com.mopub.mobileads.MoPubErrorCode.NETWORK_NO_FILL;
 import static com.mopub.mobileads.MoPubErrorCode.UNSPECIFIED;
 
 /**
- * Tested with Flurry 6.5.0
+ * Certified with Flurry 7.0.0
  */
 class FlurryCustomEventInterstitial extends com.mopub.mobileads.CustomEventInterstitial {
     private static final String LOG_TAG = FlurryCustomEventInterstitial.class.getSimpleName();
@@ -102,7 +102,9 @@ class FlurryCustomEventInterstitial extends com.mopub.mobileads.CustomEventInter
     }
 
     private boolean validateExtras(final Map<String, String> serverExtras) {
-        if (serverExtras == null) { return false; }
+        if (serverExtras == null) {
+            return false;
+        }
 
         final String flurryApiKey = serverExtras.get(FlurryAgentWrapper.PARAM_API_KEY);
         final String flurryAdSpace = serverExtras.get(FlurryAgentWrapper.PARAM_AD_SPACE_NAME);
@@ -154,10 +156,6 @@ class FlurryCustomEventInterstitial extends com.mopub.mobileads.CustomEventInter
         @Override
         public void onAppExit(FlurryAdInterstitial adInterstitial) {
             Log.d(LOG_TAG, "onAppExit: Flurry interstitial ad exited app");
-
-            if (mListener != null) {
-                mListener.onLeaveApplication();
-            }
         }
 
         @Override
@@ -183,7 +181,7 @@ class FlurryCustomEventInterstitial extends com.mopub.mobileads.CustomEventInter
                     "Error type: %s. Error code: %s", adErrorType.toString(), errorCode));
 
             if (mListener != null) {
-                switch(adErrorType) {
+                switch (adErrorType) {
                     case FETCH:
                         mListener.onInterstitialFailed(NETWORK_NO_FILL);
                         return;

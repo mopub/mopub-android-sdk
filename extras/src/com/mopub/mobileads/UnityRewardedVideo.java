@@ -16,6 +16,9 @@ import java.util.Map;
 
 /**
  * A custom event for showing Unity rewarded videos.
+ *
+ * Please reference the Supported Mediation Partner page at http://bit.ly/2mqsuFH for the
+ * latest version and ad format certifications.
  */
 public class UnityRewardedVideo extends CustomEventRewardedVideo {
     private static final String GAME_ID_KEY = "gameId";
@@ -145,6 +148,7 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
 
         @Override
         public void onUnityAdsFinish(String placementId, UnityAds.FinishState finishState) {
+            MoPubLog.d("Unity rewarded video finished with finish state " + finishState);
             if (finishState == UnityAds.FinishState.ERROR) {
                 MoPubRewardedVideoManager.onRewardedVideoPlaybackError(
                         UnityRewardedVideo.class,
@@ -157,12 +161,8 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
                         sPlacementId,
                         MoPubReward.success(MoPubReward.NO_REWARD_LABEL, MoPubReward.NO_REWARD_AMOUNT));
                 MoPubLog.d("Unity rewarded video completed for placement " + placementId);
-            } else {
-                MoPubRewardedVideoManager.onRewardedVideoCompleted(
-                        UnityRewardedVideo.class,
-                        placementId,
-                        MoPubReward.failure());
-                MoPubLog.d("Unity rewarded video skipped for placement " + placementId);
+            } else if (finishState == UnityAds.FinishState.SKIPPED) {
+                MoPubLog.d("Unity rewarded video was skipped; no reward will be given");
             }
             MoPubRewardedVideoManager.onRewardedVideoClosed(UnityRewardedVideo.class, sPlacementId);
             UnityAds.setListener(null);

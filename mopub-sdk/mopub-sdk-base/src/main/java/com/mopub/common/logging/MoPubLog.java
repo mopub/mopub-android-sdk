@@ -127,7 +127,7 @@ public class MoPubLog {
         }
 
         @Override
-        @SuppressLint("LogTagMismatch")
+        @SuppressWarnings({"LogTagMismatch", "WrongConstant"})
         public void publish(final LogRecord logRecord) {
             if (isLoggable(logRecord)) {
                 final int priority;

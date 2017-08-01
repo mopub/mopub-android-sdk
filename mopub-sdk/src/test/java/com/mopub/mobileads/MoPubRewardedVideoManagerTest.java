@@ -158,6 +158,22 @@ public class
     }
 
     @Test
+    public void loadVideo_withDifferentVideoAlreadyShowing_shouldLoadVideo() {
+        // To simulate that a video is showing
+        MoPubRewardedVideoManager.getRewardedAdData().setCurrentlyShowingAdUnitId("testAdUnit");
+
+        // Robolectric executes its handlers immediately, so if we want the async behavior we see
+        // in an actual app we have to pause the main looper until we're done successfully loading the ad.
+        ShadowLooper.pauseMainLooper();
+
+        MoPubRewardedVideoManager.loadVideo("anotherTestAdUnit", null);
+
+        ShadowLooper.unPauseMainLooper();
+
+        verify(mockRequestQueue).add(any(AdRequest.class));
+    }
+
+    @Test
     public void callbackMethods_withNullListener_shouldNotError() {
         // Clients can set RVM null.
         MoPubRewardedVideoManager.setVideoListener(null);
@@ -855,7 +871,7 @@ public class
     }
 
     @Test
-    public void onRewardedVideoCompleted_withServerCompletionUrl_shouldMakeRewardedVideoCompletionRequest() {
+    public void onRewardedVideoCompleted_withServerCompletionUrl_shouldMakeRewardedVideoCompletionRequest_shouldNotifyRewardedVideoCompleted() {
         MoPubReward moPubReward = MoPubReward.success(MOPUB_REWARD, 123);
         RewardedAdData rewardedVideoData = MoPubRewardedVideoManager.getRewardedAdData();
         rewardedVideoData.setCurrentlyShowingAdUnitId("testAdUnit1");
@@ -875,6 +891,10 @@ public class
         assertThat(rewardedVideoCompletionRequest.getUrl()).contains("testUrl");
         assertThat(rewardedVideoCompletionRequest.getUrl()).contains("&rcn=server-side%20currency");
         assertThat(rewardedVideoCompletionRequest.getUrl()).contains("&rca=777");
+        ArgumentCaptor<Set<String>> rewardedIdsCaptor = ArgumentCaptor.forClass((Class) Set.class);
+        verify(mockVideoListener).onRewardedVideoCompleted(rewardedIdsCaptor.capture(),
+                eq(moPubReward));
+        assertThat(rewardedIdsCaptor.getValue()).containsOnly("testAdUnit1");
     }
 
     @Test
@@ -898,6 +918,27 @@ public class
         assertThat(rewardedVideoCompletionRequest.getUrl()).contains("testUrl");
         // Default reward values
         assertThat(rewardedVideoCompletionRequest.getUrl()).contains("&rcn=&rca=0");
+    }
+
+    @Test
+    public void onRewardedVideoLoadFailure_withExpirationErrorCode_shouldCallFailCallback_shouldNotLoadFailUrl() {
+        AdResponse testResponse = new AdResponse.Builder()
+                .setAdType(AdType.CUSTOM)
+                .setCustomEventClassName(
+                        "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent")
+                .setFailoverUrl("fail.url")
+                .build();
+
+        MoPubRewardedVideoManager.loadVideo("testAdUnit", null);
+        requestListener.onSuccess(testResponse);
+        MoPubRewardedVideoManager.onRewardedVideoLoadFailure(TestCustomEvent.class,
+                TestCustomEvent.AD_NETWORK_ID, MoPubErrorCode.EXPIRED);
+
+        verify(mockVideoListener).onRewardedVideoLoadFailure(eq("testAdUnit"),
+                eq(MoPubErrorCode.EXPIRED));
+        verifyNoMoreInteractions(mockVideoListener);
+        verify(mockRequestQueue).add(any(AdRequest.class));
+        verifyNoMoreInteractions(mockRequestQueue);
     }
 
     public static class TestCustomEvent extends CustomEventRewardedVideo {

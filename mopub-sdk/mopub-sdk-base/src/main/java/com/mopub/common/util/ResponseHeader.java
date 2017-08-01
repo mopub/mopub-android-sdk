@@ -25,6 +25,7 @@ public enum ResponseHeader {
     LOCATION("Location"),
     USER_AGENT("User-Agent"),
     ACCEPT_LANGUAGE("Accept-Language"),
+    BROWSER_AGENT("X-Browser-Agent"),
 
     // Native Video fields
     PLAY_VISIBLE_PERCENT("X-Play-Visible-Percent"),

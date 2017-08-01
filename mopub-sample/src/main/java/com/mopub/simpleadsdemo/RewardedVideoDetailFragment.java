@@ -160,6 +160,13 @@ public class RewardedVideoDetailFragment extends Fragment implements MoPubReward
     }
 
     @Override
+    public void onRewardedVideoClicked(@NonNull final String adUnitId) {
+        if (adUnitId.equals(mAdUnitId)) {
+            logToast(getActivity(), "Rewarded video clicked.");
+        }
+    }
+
+    @Override
     public void onRewardedVideoClosed(@NonNull final String adUnitId) {
         if (adUnitId.equals(mAdUnitId)) {
             logToast(getActivity(), "Rewarded video closed.");

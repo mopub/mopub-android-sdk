@@ -4,27 +4,34 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.mopub.common.MoPub.BrowserAgent;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
+import static com.mopub.common.UrlAction.FOLLOW_DEEP_LINK;
+import static com.mopub.common.UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK;
 import static com.mopub.common.UrlAction.HANDLE_MOPUB_SCHEME;
-import static com.mopub.common.UrlAction.IGNORE_ABOUT_SCHEME;
 import static com.mopub.common.UrlAction.HANDLE_PHONE_SCHEME;
-import static com.mopub.common.UrlAction.OPEN_NATIVE_BROWSER;
+import static com.mopub.common.UrlAction.HANDLE_SHARE_TWEET;
+import static com.mopub.common.UrlAction.IGNORE_ABOUT_SCHEME;
 import static com.mopub.common.UrlAction.OPEN_APP_MARKET;
 import static com.mopub.common.UrlAction.OPEN_IN_APP_BROWSER;
-import static com.mopub.common.UrlAction.HANDLE_SHARE_TWEET;
-import static com.mopub.common.UrlAction.FOLLOW_DEEP_LINK_WITH_FALLBACK;
-import static com.mopub.common.UrlAction.FOLLOW_DEEP_LINK;
+import static com.mopub.common.UrlAction.OPEN_NATIVE_BROWSER;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class UrlActionTest {
+
+    @Before
+    public void setUp() {
+        MoPub.resetBrowserAgent();
+    }
 
     @Test
     public void handleMopubScheme_shouldBeCaseInsensitive() throws Exception {
@@ -59,6 +66,21 @@ public class UrlActionTest {
     public void openNativeBrowser_shouldBeCaseInsensitive() throws Exception {
         assertUrlActionMatching(OPEN_NATIVE_BROWSER, "mopubnativebrowser:", true);
         assertUrlActionMatching(OPEN_NATIVE_BROWSER, "MoPuBnAtIvEbRoWsEr:", true);
+        assertUrlActionMatching(OPEN_NATIVE_BROWSER, "http:", false);
+        assertUrlActionMatching(OPEN_NATIVE_BROWSER, "HtTp:", false);
+        assertUrlActionMatching(OPEN_NATIVE_BROWSER, "https:", false);
+        assertUrlActionMatching(OPEN_NATIVE_BROWSER, "HtTpS:", false);
+    }
+
+    @Test
+    public void openNativeBrowser_withNativeBrowserAgent_shouldAlsoMatchHttpSchemes() throws Exception {
+        MoPub.setBrowserAgent(BrowserAgent.NATIVE);
+        assertUrlActionMatching(OPEN_NATIVE_BROWSER, "mopubnativebrowser:", true);
+        assertUrlActionMatching(OPEN_NATIVE_BROWSER, "MoPuBnAtIvEbRoWsEr:", true);
+        assertUrlActionMatching(OPEN_NATIVE_BROWSER, "http:", true);
+        assertUrlActionMatching(OPEN_NATIVE_BROWSER, "HtTp:", true);
+        assertUrlActionMatching(OPEN_NATIVE_BROWSER, "https:", true);
+        assertUrlActionMatching(OPEN_NATIVE_BROWSER, "HtTpS:", true);
     }
 
     @Test

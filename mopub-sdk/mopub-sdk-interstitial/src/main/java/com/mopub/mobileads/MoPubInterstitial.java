@@ -3,6 +3,7 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
@@ -15,12 +16,14 @@ import com.mopub.mobileads.factories.CustomEventInterstitialAdapterFactory;
 
 import java.util.Map;
 
+import static com.mopub.common.Constants.AD_EXPIRATION_DELAY;
 import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_NOT_FOUND;
+import static com.mopub.mobileads.MoPubErrorCode.EXPIRED;
+import static com.mopub.mobileads.MoPubInterstitial.InterstitialState.DESTROYED;
 import static com.mopub.mobileads.MoPubInterstitial.InterstitialState.IDLE;
 import static com.mopub.mobileads.MoPubInterstitial.InterstitialState.LOADING;
 import static com.mopub.mobileads.MoPubInterstitial.InterstitialState.READY;
 import static com.mopub.mobileads.MoPubInterstitial.InterstitialState.SHOWING;
-import static com.mopub.mobileads.MoPubInterstitial.InterstitialState.DESTROYED;
 
 public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomEventInterstitialAdapterListener {
     @VisibleForTesting
@@ -55,6 +58,8 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
     @Nullable private CustomEventInterstitialAdapter mCustomEventInterstitialAdapter;
     @Nullable private InterstitialAdListener mInterstitialAdListener;
     @NonNull private Activity mActivity;
+    @NonNull private Handler mHandler;
+    @NonNull private final Runnable mAdExpiration;
     @NonNull private volatile InterstitialState mCurrentInterstitialState;
 
     public interface InterstitialAdListener {
@@ -72,6 +77,21 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         mInterstitialView.setAdUnitId(adUnitId);
 
         mCurrentInterstitialState = IDLE;
+
+        mHandler = new Handler();
+        mAdExpiration = new Runnable() {
+            @Override
+            public void run() {
+                MoPubLog.d("Expiring unused Interstitial ad.");
+                attemptStateTransition(IDLE, true);
+                if (!SHOWING.equals(mCurrentInterstitialState) &&
+                        !DESTROYED.equals(mCurrentInterstitialState)) {
+                    // double-check the state in case the runnable fires right after the state
+                    // transition but before it's cancelled
+                    mInterstitialView.adFailed(EXPIRED);
+                }
+            }
+        };
     }
 
     private boolean attemptStateTransition(@NonNull final InterstitialState endState) {
@@ -83,14 +103,14 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
      * Other methods should not be modifying mCurrentInterstitialState.
      *
      * @param endState     The desired end state.
-     * @param forceRefresh Whether or not this is part of a forceRefresh transition. Force
-     *                     refresh can happen from IDLE, LOADING, or READY. It will ignore
+     * @param force Whether or not this is part of a force transition. Force transitions
+     *                     can happen from IDLE, LOADING, or READY. It will ignore
      *                     the currently loading or loaded ad and attempt to load another.
      * @return {@code true} if a state change happened, {@code false} if no state change happened.
      */
     @VisibleForTesting
     synchronized boolean attemptStateTransition(@NonNull final InterstitialState endState,
-            boolean forceRefresh) {
+            boolean force) {
         Preconditions.checkNotNull(endState);
 
         final InterstitialState startState = mCurrentInterstitialState;
@@ -110,7 +130,7 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
                         // Going from IDLE to LOADING is the usual load case
                         invalidateInterstitialAdapter();
                         mCurrentInterstitialState = LOADING;
-                        if (forceRefresh) {
+                        if (force) {
                             // Force-load means a pub-initiated force refresh.
                             mInterstitialView.forceRefresh();
                         } else {
@@ -137,7 +157,7 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
                         mCurrentInterstitialState = IDLE;
                         return true;
                     case LOADING:
-                        if (!forceRefresh) {
+                        if (!force) {
                             // Cannot load more than one interstitial at a time
                             MoPubLog.d("Already loading an interstitial.");
                         }
@@ -145,6 +165,11 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
                     case READY:
                         // This is the usual load finished transition
                         mCurrentInterstitialState = READY;
+                        // Expire MoPub ads to synchronize with MoPub Ad Server tracking window
+                        if (AdTypeTranslator.CustomEventType
+                                .isMoPubSpecific(mInterstitialView.getCustomEventClassName())) {
+                            mHandler.postDelayed(mAdExpiration, AD_EXPIRATION_DELAY);
+                        }
                         return true;
                     case SHOWING:
                         MoPubLog.d("Interstitial is not ready to be shown yet.");
@@ -158,8 +183,8 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
             case READY:
                 switch (endState) {
                     case IDLE:
-                        if (forceRefresh) {
-                            // This happens on a force refresh
+                        if (force) {
+                            // This happens on a force refresh or an ad expiration
                             invalidateInterstitialAdapter();
                             mCurrentInterstitialState = IDLE;
                             return true;
@@ -177,6 +202,7 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
                         // This is the usual transition from ready to showing
                         showCustomEventInterstitial();
                         mCurrentInterstitialState = SHOWING;
+                        mHandler.removeCallbacks(mAdExpiration);
                         return true;
                     case DESTROYED:
                         setInterstitialStateDestroyed();
@@ -187,7 +213,7 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
             case SHOWING:
                 switch(endState) {
                     case IDLE:
-                        if (forceRefresh) {
+                        if (force) {
                             MoPubLog.d("Cannot force refresh while showing an interstitial.");
                             return false;
                         }
@@ -196,7 +222,7 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
                         mCurrentInterstitialState = IDLE;
                         return true;
                     case LOADING:
-                        if (!forceRefresh) {
+                        if (!force) {
                             MoPubLog.d("Interstitial already showing. Not loading another.");
                         }
                         return false;
@@ -225,6 +251,7 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         invalidateInterstitialAdapter();
         mInterstitialView.setBannerAdListener(null);
         mInterstitialView.destroy();
+        mHandler.removeCallbacks(mAdExpiration);
         mCurrentInterstitialState = DESTROYED;
     }
 
@@ -398,6 +425,10 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
             setAutorefreshEnabled(false);
         }
 
+        @Nullable String getCustomEventClassName() {
+            return mAdViewController.getCustomEventClassName();
+        }
+
         @Override
         public AdFormat getAdFormat() {
             return AdFormat.INTERSTITIAL;
@@ -443,6 +474,12 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
                 mInterstitialAdListener.onInterstitialFailed(MoPubInterstitial.this, errorCode);
             }
         }
+    }
+
+    @VisibleForTesting
+    @Deprecated
+    void setHandler(@NonNull final Handler handler) {
+        mHandler = handler;
     }
 
     @VisibleForTesting

@@ -1,6 +1,7 @@
 package com.mopub.mobileads;
 
 import android.app.Activity;
+import android.os.Handler;
 
 import com.mopub.common.DataKeys;
 import com.mopub.common.test.support.SdkTestRunner;
@@ -16,6 +17,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.mopub.common.Constants.FOUR_HOURS_MILLIS;
+import static com.mopub.mobileads.MoPubErrorCode.EXPIRED;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -29,8 +32,10 @@ public class MoPubRewardedVideoTest {
 
     private Activity activity;
     private MoPubRewardedVideo subject;
+    private MoPubRewardedAd.MoPubRewardedAdListener listener;
 
     @Mock private RewardedVastVideoInterstitial mockRewardedVastVideoInterstitial;
+    @Mock private Handler mockHandler;
 
     @Before
     public void setup() {
@@ -201,5 +206,55 @@ public class MoPubRewardedVideoTest {
         subject.show();
 
         verifyZeroInteractions(mockRewardedVastVideoInterstitial);
+    }
+
+    @Test
+    public void moPubRewardedAdListener_onInterstitialLoaded_withMoPubRewardedVideo_shouldPostExpirationRunnable() {
+        listener = subject.createListener(MoPubRewardedVideo.class);
+        listener.setHandler(mockHandler);
+
+        listener.onInterstitialLoaded();
+
+        verify(mockHandler).postDelayed(any(Runnable.class), eq((long) FOUR_HOURS_MILLIS));
+    }
+
+    @Test
+    public void moPubRewardedAdListener_onInterstitialLoaded_withMoPubRewardedPlayable_shouldPostExpirationRunnable() {
+        listener = subject.createListener(MoPubRewardedPlayable.class);
+        listener.setHandler(mockHandler);
+
+        listener.onInterstitialLoaded();
+
+        verify(mockHandler).postDelayed(any(Runnable.class), eq((long) FOUR_HOURS_MILLIS));
+    }
+
+    @Test
+    public void moPubRewardedAdListener_onInterstitialLoaded_withOtherCustomEvents_shouldNotPostExpirationRunnable() {
+        listener = subject.createListener(MoPubRewardedAd.class);
+        listener.setHandler(mockHandler);
+
+        listener.onInterstitialLoaded();
+
+        verifyNoMoreInteractions(mockHandler);
+    }
+
+    @Test
+    public void moPubRewardedAdListener_onInterstitialFailed_shouldRemoveExpirationRunnable() {
+        listener = subject.createListener(MoPubRewardedVideo.class);
+        listener.setHandler(mockHandler);
+
+        listener.onInterstitialFailed(EXPIRED);
+
+        verify(mockHandler).removeCallbacks(any(Runnable.class));
+    }
+
+    @Test
+    public void moPubRewardedAdListener_onInterstitialShown_shouldRemoveExpirationRunnable() {
+        listener = subject.createListener(MoPubRewardedVideo.class);
+        listener.setHandler(mockHandler);
+
+        listener.onInterstitialShown();
+
+        verify(mockHandler).removeCallbacks(any(Runnable.class));
     }
 }

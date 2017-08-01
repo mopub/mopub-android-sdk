@@ -1,6 +1,7 @@
 package com.mopub.mobileads;
 
 import android.app.Activity;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -12,6 +13,9 @@ import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 
 import java.util.Map;
+
+import static com.mopub.common.Constants.AD_EXPIRATION_DELAY;
+import static com.mopub.mobileads.MoPubErrorCode.EXPIRED;
 
 /**
  * Contains the common logic for rewarded ads.
@@ -96,22 +100,40 @@ public abstract class MoPubRewardedAd extends CustomEventRewardedAd {
 
         @NonNull final Class<? extends MoPubRewardedAd>  mCustomEventClass;
 
+        @NonNull private final Runnable mAdExpiration;
+        @NonNull private Handler mHandler;
+
         public MoPubRewardedAdListener(@NonNull final Class<? extends MoPubRewardedAd>
                 customEventClass) {
             Preconditions.checkNotNull(customEventClass);
 
             mCustomEventClass = customEventClass;
+
+            mHandler = new Handler();
+            mAdExpiration = new Runnable() {
+                @Override
+                public void run() {
+                    MoPubLog.d("Expiring unused Rewarded ad.");
+                    onInterstitialFailed(EXPIRED);
+                }
+            };
+
         }
 
         @Override
         public void onInterstitialLoaded() {
             mIsLoaded = true;
+            // Expire MoPub ads to synchronize with MoPub Ad Server tracking window
+            if (AdTypeTranslator.CustomEventType.isMoPubSpecific(mCustomEventClass.getName())) {
+                mHandler.postDelayed(mAdExpiration, AD_EXPIRATION_DELAY);
+            }
             MoPubRewardedVideoManager.onRewardedVideoLoadSuccess(mCustomEventClass,
                     getAdNetworkId());
         }
 
         @Override
         public void onInterstitialFailed(final MoPubErrorCode errorCode) {
+            mHandler.removeCallbacks(mAdExpiration);
             switch (errorCode) {
                 case VIDEO_PLAYBACK_ERROR:
                     MoPubRewardedVideoManager.onRewardedVideoPlaybackError(mCustomEventClass,
@@ -125,6 +147,7 @@ public abstract class MoPubRewardedAd extends CustomEventRewardedAd {
 
         @Override
         public void onInterstitialShown() {
+            mHandler.removeCallbacks(mAdExpiration);
             MoPubRewardedVideoManager.onRewardedVideoStarted(mCustomEventClass, getAdNetworkId());
         }
 
@@ -141,6 +164,12 @@ public abstract class MoPubRewardedAd extends CustomEventRewardedAd {
         public void onInterstitialDismissed() {
             MoPubRewardedVideoManager.onRewardedVideoClosed(mCustomEventClass, getAdNetworkId());
         }
+
+        @Deprecated
+        @VisibleForTesting
+        void setHandler(@NonNull final Handler handler) {
+            mHandler = handler;
+        }
     }
 
     @Nullable
@@ -156,6 +185,13 @@ public abstract class MoPubRewardedAd extends CustomEventRewardedAd {
     @VisibleForTesting
     void setIsLoaded(final boolean isLoaded) {
         mIsLoaded = isLoaded;
+    }
+
+    @Deprecated
+    @VisibleForTesting
+    MoPubRewardedAdListener createListener(@NonNull final Class<? extends MoPubRewardedAd>
+            customEventClass) {
+        return new MoPubRewardedAdListener(customEventClass);
     }
 
 }

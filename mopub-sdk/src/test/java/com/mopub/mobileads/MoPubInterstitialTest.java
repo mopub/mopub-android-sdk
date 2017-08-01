@@ -1,6 +1,7 @@
 package com.mopub.mobileads;
 
 import android.app.Activity;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 
 import com.mopub.common.test.support.SdkTestRunner;
@@ -11,6 +12,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 
@@ -18,6 +20,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mopub.common.Constants.FOUR_HOURS_MILLIS;
 import static com.mopub.common.util.ResponseHeader.CUSTOM_EVENT_DATA;
 import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_NOT_FOUND;
 import static com.mopub.mobileads.MoPubErrorCode.CANCELLED;
@@ -29,12 +32,15 @@ import static com.mopub.mobileads.MoPubInterstitial.InterstitialState.LOADING;
 import static com.mopub.mobileads.MoPubInterstitial.InterstitialState.READY;
 import static com.mopub.mobileads.MoPubInterstitial.InterstitialState.SHOWING;
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class MoPubInterstitialTest {
@@ -51,6 +57,7 @@ public class MoPubInterstitialTest {
     private MoPubInterstitial.MoPubInterstitialView interstitialView;
     private AdViewController adViewController;
     private String customEventClassName;
+    @Mock private Handler mockHandler;
 
     @Before
     public void setUp() throws Exception {
@@ -58,6 +65,7 @@ public class MoPubInterstitialTest {
         subject = new MoPubInterstitial(activity, AD_UNIT_ID_VALUE);
         interstitialAdListener = mock(MoPubInterstitial.InterstitialAdListener.class);
         subject.setInterstitialAdListener(interstitialAdListener);
+        subject.setHandler(mockHandler);
 
         interstitialView = mock(MoPubInterstitial.MoPubInterstitialView.class);
 
@@ -422,6 +430,7 @@ public class MoPubInterstitialTest {
 
         subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
         subject.setCurrentInterstitialState(LOADING);
+        subject.setInterstitialView(interstitialView);
         boolean stateDidChange = subject.attemptStateTransition(IDLE, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(IDLE);
@@ -446,10 +455,13 @@ public class MoPubInterstitialTest {
         verifyZeroInteractions(customEventInterstitialAdapter);
 
         resetMoPubInterstitial(LOADING);
+        when(interstitialView.getCustomEventClassName())
+                .thenReturn(AdTypeTranslator.CustomEventType.HTML_INTERSTITIAL.toString());
         stateDidChange = subject.attemptStateTransition(READY, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(READY);
         verifyZeroInteractions(customEventInterstitialAdapter);
+        verify(mockHandler).postDelayed(any(Runnable.class), eq((long) FOUR_HOURS_MILLIS));
 
         resetMoPubInterstitial(LOADING);
         stateDidChange = subject.attemptStateTransition(READY, true);
@@ -533,18 +545,23 @@ public class MoPubInterstitialTest {
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(SHOWING);
         verify(customEventInterstitialAdapter).showInterstitial();
+        verify(mockHandler).removeCallbacks(any(Runnable.class));
+        reset(mockHandler);
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(SHOWING, true);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(SHOWING);
         verify(customEventInterstitialAdapter).showInterstitial();
+        verify(mockHandler).removeCallbacks(any(Runnable.class));
+        reset(mockHandler);
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(DESTROYED, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
         verify(customEventInterstitialAdapter).invalidate();
+        verify(mockHandler).removeCallbacks(any(Runnable.class));
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(DESTROYED, true);
@@ -683,6 +700,43 @@ public class MoPubInterstitialTest {
         stateDidChange = subject.attemptStateTransition(DESTROYED, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
+    }
+
+    @Test
+    public void attemptStateTransition_withLoadingStartState_withReadyEndState_withMoPubCustomEvent_shouldExpireAd() {
+        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
+        subject.setCurrentInterstitialState(LOADING);
+        subject.setInterstitialView(interstitialView);
+
+        when(interstitialView.getCustomEventClassName())
+                .thenReturn(AdTypeTranslator.CustomEventType.MRAID_INTERSTITIAL.toString());
+        subject.attemptStateTransition(READY, false);
+        verify(mockHandler).postDelayed(any(Runnable.class), eq((long) FOUR_HOURS_MILLIS));
+        reset(mockHandler);
+
+        resetMoPubInterstitial(LOADING);
+        when(interstitialView.getCustomEventClassName())
+                .thenReturn(AdTypeTranslator.CustomEventType.HTML_INTERSTITIAL.toString());
+        subject.attemptStateTransition(READY, false);
+        verify(mockHandler).postDelayed(any(Runnable.class), eq((long) FOUR_HOURS_MILLIS));
+        reset(mockHandler);
+
+        resetMoPubInterstitial(LOADING);
+        when(interstitialView.getCustomEventClassName())
+                .thenReturn(AdTypeTranslator.CustomEventType.VAST_VIDEO_INTERSTITIAL.toString());
+        subject.attemptStateTransition(READY, false);
+        verify(mockHandler).postDelayed(any(Runnable.class), eq((long) FOUR_HOURS_MILLIS));
+    }
+
+    @Test
+    public void attemptStateTransition_withLoadingStartState_withReadyEndState_withNonMoPubCustomEvent_shouldNotExpireAd() {
+        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
+        subject.setCurrentInterstitialState(LOADING);
+        subject.setInterstitialView(interstitialView);
+
+        when(interstitialView.getCustomEventClassName()).thenReturn("thirdPartyAd");
+        subject.attemptStateTransition(READY, false);
+        verifyZeroInteractions(mockHandler);
     }
 
     private void loadCustomEvent() {

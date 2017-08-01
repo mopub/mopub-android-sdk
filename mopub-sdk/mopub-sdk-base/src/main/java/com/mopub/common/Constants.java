@@ -17,6 +17,9 @@ public class Constants {
 
     public static final int TEN_SECONDS_MILLIS = 10 * 1000;
     public static final int THIRTY_SECONDS_MILLIS = 30 * 1000;
+    public static final int FOUR_HOURS_MILLIS = 4 * 60 * 60 * 1000;
+
+    public static final int AD_EXPIRATION_DELAY = FOUR_HOURS_MILLIS;
 
     public static final int TEN_MB = 10 * 1024 * 1024;
 

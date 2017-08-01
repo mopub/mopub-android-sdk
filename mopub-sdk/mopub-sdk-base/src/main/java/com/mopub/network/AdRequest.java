@@ -13,6 +13,7 @@ import com.mopub.common.DataKeys;
 import com.mopub.common.FullAdType;
 import com.mopub.common.LocationService;
 import com.mopub.common.MoPub;
+import com.mopub.common.MoPub.BrowserAgent;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.event.BaseEvent;
@@ -197,6 +198,12 @@ public class AdRequest extends Request<AdResponse> {
         String customEventClassName = AdTypeTranslator.getCustomEventName(mAdFormat, adTypeString,
                 fullAdTypeString, headers);
         builder.setCustomEventClassName(customEventClassName);
+
+        // Default browser agent from X-Browser-Agent header
+        BrowserAgent browserAgent = BrowserAgent.fromHeader(
+                extractIntegerHeader(headers, ResponseHeader.BROWSER_AGENT));
+        MoPub.setBrowserAgentFromAdServer(browserAgent);
+        builder.setBrowserAgent(browserAgent);
 
         // Process server extras if they are present:
         String customEventData = extractHeader(headers, ResponseHeader.CUSTOM_EVENT_DATA);

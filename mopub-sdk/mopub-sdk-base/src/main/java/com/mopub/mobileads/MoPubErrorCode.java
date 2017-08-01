@@ -8,6 +8,9 @@ public enum MoPubErrorCode {
     CANCELLED("Ad request was cancelled."),
     NO_CONNECTION("No internet connection detected."),
 
+    /** see {@link com.mopub.common.Constants#AD_EXPIRATION_DELAY } */
+    EXPIRED("Ad expired since it was not shown within 4 hours."),
+
     ADAPTER_NOT_FOUND("Unable to find Native Network or Custom Event adapter."),
     ADAPTER_CONFIGURATION_ERROR("Native Network or Custom Event adapter was configured incorrectly."),
     NETWORK_TIMEOUT("Third-party network failed to respond in a timely manner."),

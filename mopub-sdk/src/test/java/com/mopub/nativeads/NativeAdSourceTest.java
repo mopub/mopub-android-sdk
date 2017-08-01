@@ -188,7 +188,7 @@ public class NativeAdSourceTest {
 
         TimestampWrapper<NativeAd> timestampWrapper = new TimestampWrapper<NativeAd>(
                 mMockNativeAd);
-        timestampWrapper.mCreatedTimestamp = SystemClock.uptimeMillis() - (15*60*1000+1);
+        timestampWrapper.mCreatedTimestamp = SystemClock.uptimeMillis() - (4*60*60*1000+1);
         nativeAdCache.add(timestampWrapper);
 
         assertThat(subject.dequeueAd()).isNull();
