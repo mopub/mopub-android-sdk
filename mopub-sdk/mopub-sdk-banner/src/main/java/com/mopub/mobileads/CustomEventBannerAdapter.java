@@ -98,6 +98,10 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
 
     @ReflectionTarget
     void invalidate() {
+        if (isInvalidated()) {
+            return;
+        }
+
         cancelTimeout();
 
         if (mCustomEventBanner != null) {
