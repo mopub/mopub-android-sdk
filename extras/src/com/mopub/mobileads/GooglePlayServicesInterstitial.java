@@ -10,7 +10,7 @@ import com.google.android.gms.ads.InterstitialAd;
 import java.util.Map;
 
 /*
- * Compatible with version 9.4.0 of the Google Play Services SDK.
+ * Compatible with version 11.0.2 of the Google Play Services SDK.
  */
 
 // Note: AdMob ads will now use this class as Google has deprecated the AdMob SDK.
@@ -93,7 +93,7 @@ public class GooglePlayServicesInterstitial extends CustomEventInterstitial {
         public void onAdFailedToLoad(int errorCode) {
             Log.d("MoPub", "Google Play Services interstitial ad failed to load.");
             if (mInterstitialListener != null) {
-                mInterstitialListener.onInterstitialFailed(MoPubErrorCode.NETWORK_NO_FILL);
+                mInterstitialListener.onInterstitialFailed(getMoPubErrorCode(errorCode));
             }
         }
 
@@ -119,6 +119,34 @@ public class GooglePlayServicesInterstitial extends CustomEventInterstitial {
             if (mInterstitialListener != null) {
                 mInterstitialListener.onInterstitialShown();
             }
+        }
+
+        /**
+         * Converts a given Google Mobile Ads SDK error code into {@link MoPubErrorCode}.
+         *
+         * @param error Google Mobile Ads SDK error code.
+         * @return an equivalent MoPub SDK error code for the given Google Mobile Ads SDK error
+         * code.
+         */
+        private MoPubErrorCode getMoPubErrorCode(int error) {
+            MoPubErrorCode errorCode;
+            switch (error) {
+                case AdRequest.ERROR_CODE_INTERNAL_ERROR:
+                    errorCode = MoPubErrorCode.INTERNAL_ERROR;
+                    break;
+                case AdRequest.ERROR_CODE_INVALID_REQUEST:
+                    errorCode = MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR;
+                    break;
+                case AdRequest.ERROR_CODE_NETWORK_ERROR:
+                    errorCode = MoPubErrorCode.NO_CONNECTION;
+                    break;
+                case AdRequest.ERROR_CODE_NO_FILL:
+                    errorCode = MoPubErrorCode.NO_FILL;
+                    break;
+                default:
+                    errorCode = MoPubErrorCode.UNSPECIFIED;
+            }
+            return errorCode;
         }
     }
 

@@ -83,6 +83,8 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         synchronized (VungleRewardedVideo.class) {
             if (!sInitialized) {
                 sVunglePub = VunglePub.getInstance();
+                String appId = serverExtras.containsKey(APP_ID_KEY) ? serverExtras.get(APP_ID_KEY) : DEFAULT_VUNGLE_APP_ID;
+                sVunglePub.init(launcherActivity, appId);
                 sInitialized = true;
                 return true;
             }

@@ -26,6 +26,8 @@ import java.util.WeakHashMap;
 /**
  * The {@link GooglePlayServicesAdRenderer} class is used to render
  * GooglePlayServicesStaticNativeAds.
+ *
+ * Compatible with version 11.0.2 of the Google Play Services SDK.
  */
 public class GooglePlayServicesAdRenderer implements MoPubAdRenderer<GooglePlayServicesNativeAd> {
 
@@ -96,7 +98,7 @@ public class GooglePlayServicesAdRenderer implements MoPubAdRenderer<GooglePlayS
 
     @Override
     public void renderAdView(@NonNull View view,
-                             @NonNull GooglePlayServicesNativeAd nativeAd) {
+            @NonNull GooglePlayServicesNativeAd nativeAd) {
         GoogleStaticNativeViewHolder viewHolder = mViewHolderMap.get(view);
         if (viewHolder == null) {
             viewHolder = GoogleStaticNativeViewHolder.fromViewBinder(view, mViewBinder);
@@ -133,8 +135,8 @@ public class GooglePlayServicesAdRenderer implements MoPubAdRenderer<GooglePlayS
      *                           otherwise.
      */
     private static void insertGoogleNativeAdView(NativeAdView googleNativeAdView,
-                                                 View moPubNativeAdView,
-                                                 boolean swapMargins) {
+            View moPubNativeAdView,
+            boolean swapMargins) {
         if (moPubNativeAdView instanceof FrameLayout
                 && moPubNativeAdView.getId() == ID_WRAPPING_FRAME) {
             googleNativeAdView.setId(ID_GOOGLE_NATIVE_VIEW);
@@ -201,6 +203,10 @@ public class GooglePlayServicesAdRenderer implements MoPubAdRenderer<GooglePlayS
                     ((ViewGroup) adView).removeView(actualNativeView);
                     outerView.addView(actualNativeView, index);
                 }
+
+                if (adView instanceof NativeAdView) {
+                    ((NativeAdView) adView).destroy();
+                }
             }
         }
     }
@@ -216,8 +222,8 @@ public class GooglePlayServicesAdRenderer implements MoPubAdRenderer<GooglePlayS
      * @param contentAdView          the Google native content ad view in the view hierarchy.
      */
     private void updateContentAdView(GooglePlayServicesNativeAd staticNativeAd,
-                                     GoogleStaticNativeViewHolder staticNativeViewHolder,
-                                     NativeContentAdView contentAdView) {
+            GoogleStaticNativeViewHolder staticNativeViewHolder,
+            NativeContentAdView contentAdView) {
         NativeRendererHelper.addTextView(
                 staticNativeViewHolder.mTitleView, staticNativeAd.getTitle());
         contentAdView.setHeadlineView(staticNativeViewHolder.mTitleView);
@@ -266,8 +272,8 @@ public class GooglePlayServicesAdRenderer implements MoPubAdRenderer<GooglePlayS
      * @param appInstallAdView       the Google native app install ad view in the view hierarchy.
      */
     private void updateAppInstallAdView(GooglePlayServicesNativeAd staticNativeAd,
-                                        GoogleStaticNativeViewHolder staticNativeViewHolder,
-                                        NativeAppInstallAdView appInstallAdView) {
+            GoogleStaticNativeViewHolder staticNativeViewHolder,
+            NativeAppInstallAdView appInstallAdView) {
 
         NativeRendererHelper.addTextView(
                 staticNativeViewHolder.mTitleView, staticNativeAd.getTitle());
@@ -353,7 +359,7 @@ public class GooglePlayServicesAdRenderer implements MoPubAdRenderer<GooglePlayS
 
         @NonNull
         public static GoogleStaticNativeViewHolder fromViewBinder(@NonNull View view,
-                                                                  @NonNull ViewBinder viewBinder) {
+                @NonNull ViewBinder viewBinder) {
             final GoogleStaticNativeViewHolder viewHolder = new GoogleStaticNativeViewHolder();
             viewHolder.mMainView = view;
             try {

@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A {@link CustomEventRewardedVideo} used to load rewarded video Google rewarded video ads.
+ *
+ * Compatible with version 11.0.2 of the Google Play Services SDK.
  */
 public class GooglePlayServicesRewardedVideo extends CustomEventRewardedVideo implements
         RewardedVideoAdListener {
@@ -105,8 +107,8 @@ public class GooglePlayServicesRewardedVideo extends CustomEventRewardedVideo im
 
     @Override
     protected boolean checkAndInitializeSdk(@NonNull Activity launcherActivity,
-                                            @NonNull Map<String, Object> localExtras,
-                                            @NonNull Map<String, String> serverExtras)
+            @NonNull Map<String, Object> localExtras,
+            @NonNull Map<String, String> serverExtras)
             throws Exception {
         if (!sIsInitialized.getAndSet(true)) {
             Log.i(TAG, "Adapter version - " + ADAPTER_VERSION);
@@ -139,8 +141,8 @@ public class GooglePlayServicesRewardedVideo extends CustomEventRewardedVideo im
 
     @Override
     protected void loadWithSdkInitialized(@NonNull Activity activity,
-                                          @NonNull Map<String, Object> localExtras,
-                                          @NonNull Map<String, String> serverExtras)
+            @NonNull Map<String, Object> localExtras,
+            @NonNull Map<String, String> serverExtras)
             throws Exception {
         if (TextUtils.isEmpty(serverExtras.get(KEY_EXTRA_AD_UNIT_ID))) {
             // Using class name as the network ID for this callback since the ad unit ID is
@@ -253,6 +255,8 @@ public class GooglePlayServicesRewardedVideo extends CustomEventRewardedVideo im
                 errorCode = MoPubErrorCode.NO_CONNECTION;
                 break;
             case AdRequest.ERROR_CODE_NO_FILL:
+                errorCode = MoPubErrorCode.NO_FILL;
+                break;
             default:
                 errorCode = MoPubErrorCode.UNSPECIFIED;
         }

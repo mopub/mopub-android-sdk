@@ -21,6 +21,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The {@link GooglePlayServicesNative} class is used to load native Google mobile ads.
+ *
+ * Compatible with version 11.0.2 of the Google Play Services SDK.
  */
 public class GooglePlayServicesNative extends CustomEventNative {
     protected static final String TAG = "MoPubToAdMobNative";
@@ -62,9 +64,9 @@ public class GooglePlayServicesNative extends CustomEventNative {
 
     @Override
     protected void loadNativeAd(@NonNull final Context context,
-                                @NonNull final CustomEventNativeListener customEventNativeListener,
-                                @NonNull Map<String, Object> localExtras,
-                                @NonNull Map<String, String> serverExtras) {
+            @NonNull final CustomEventNativeListener customEventNativeListener,
+            @NonNull Map<String, Object> localExtras,
+            @NonNull Map<String, String> serverExtras) {
         if (!sIsInitialized.getAndSet(true)) {
             Log.i(TAG, "Adapter version - " + ADAPTER_VERSION);
             if (serverExtras.containsKey(KEY_EXTRA_APPLICATION_ID)
@@ -296,7 +298,7 @@ public class GooglePlayServicesNative extends CustomEventNative {
          * @param adUnitId Google's AdMob Ad Unit ID.
          */
         public void loadAd(final Context context, String adUnitId,
-                           Map<String, Object> localExtras) {
+                Map<String, Object> localExtras) {
             AdLoader.Builder builder = new AdLoader.Builder(context, adUnitId);
 
             // Get the experimental swap margins extra.
@@ -391,6 +393,18 @@ public class GooglePlayServicesNative extends CustomEventNative {
                         }
                     }).withAdListener(new AdListener() {
                         @Override
+                        public void onAdClicked() {
+                            super.onAdClicked();
+                            GooglePlayServicesNativeAd.this.notifyAdClicked();
+                        }
+
+                        @Override
+                        public void onAdImpression() {
+                            super.onAdImpression();
+                            GooglePlayServicesNativeAd.this.notifyAdImpressed();
+                        }
+
+                        @Override
                         public void onAdFailedToLoad(int errorCode) {
                             super.onAdFailedToLoad(errorCode);
                             switch (errorCode) {
@@ -467,8 +481,9 @@ public class GooglePlayServicesNative extends CustomEventNative {
          */
         private boolean isValidContentAd(NativeContentAd contentAd) {
             return (contentAd.getHeadline() != null && contentAd.getBody() != null
-                    && contentAd.getImages() != null && contentAd.getImages().get(0) != null
-                    && contentAd.getLogo() != null && contentAd.getCallToAction() != null);
+                    && contentAd.getImages() != null && contentAd.getImages().size() > 0
+                    && contentAd.getImages().get(0) != null && contentAd.getLogo() != null
+                    && contentAd.getCallToAction() != null);
         }
 
         /**
@@ -482,8 +497,9 @@ public class GooglePlayServicesNative extends CustomEventNative {
          */
         private boolean isValidAppInstallAd(NativeAppInstallAd appInstallAd) {
             return (appInstallAd.getHeadline() != null && appInstallAd.getBody() != null
-                    && appInstallAd.getImages() != null && appInstallAd.getImages().get(0) != null
-                    && appInstallAd.getIcon() != null && appInstallAd.getCallToAction() != null);
+                    && appInstallAd.getImages() != null && appInstallAd.getImages().size() > 0
+                    && appInstallAd.getImages().get(0) != null && appInstallAd.getIcon() != null
+                    && appInstallAd.getCallToAction() != null);
         }
 
         @Override
