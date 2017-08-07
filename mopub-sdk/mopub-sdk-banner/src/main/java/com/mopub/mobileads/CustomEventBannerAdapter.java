@@ -98,6 +98,8 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
 
     @ReflectionTarget
     void invalidate() {
+        cancelTimeout();
+
         if (mCustomEventBanner != null) {
             // Custom event classes can be developed by any third party and may not be tested.
             // We catch all exceptions here to prevent crashes from untested code.
