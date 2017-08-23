@@ -1,5 +1,7 @@
 package com.mopub.mobileads;
+
 import java.util.Arrays;
+
 import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
@@ -17,7 +19,7 @@ import com.ironsource.mediationsdk.sdk.InterstitialListener;
 
 import java.util.Map;
 
-public class IronSourceInterstitial extends CustomEventInterstitial implements InterstitialListener , LifecycleListener {
+public class IronSourceInterstitial extends CustomEventInterstitial implements InterstitialListener, LifecycleListener {
 
     private static final String TAG = IronSourceInterstitial.class.getSimpleName();
 
@@ -29,7 +31,7 @@ public class IronSourceInterstitial extends CustomEventInterstitial implements I
     private static boolean isTestEnabled;
 
     /**
-     * This is the placement name used inside ironsource SDK
+     * This is the placement name used inside ironSource SDK
      */
     private String placementName = null;
 
@@ -53,8 +55,7 @@ public class IronSourceInterstitial extends CustomEventInterstitial implements I
                 String applicationKey = "";
                 if (serverExtras.get("applicationKey") != null) {
                     applicationKey = serverExtras.get("applicationKey");
-                }
-                else if (serverExtras.get("appKey") != null) {
+                } else if (serverExtras.get("appKey") != null) {
                     //try appKey if applicationKey doesn't exists (fallback)
                     applicationKey = serverExtras.get("appKey");
                 }
@@ -63,16 +64,16 @@ public class IronSourceInterstitial extends CustomEventInterstitial implements I
                     isTestEnabled = Boolean.valueOf(serverExtras.get("isTestEnabled"));
                 }
 
-                if(serverExtras.get("placementName") != null) {
+                if (serverExtras.get("placementName") != null) {
                     placementName = serverExtras.get("placementName");
                 }
 
                 onLog("server extras: " + Arrays.toString(serverExtras.entrySet().toArray()));
 
-                if(!TextUtils.isEmpty(applicationKey)) {
-                    initISIronSourceSDK(((Activity) context),applicationKey);
+                if (!TextUtils.isEmpty(applicationKey)) {
+                    initISIronSourceSDK(((Activity) context), applicationKey);
                     //Load ad unit
-                    if(initState == INIT_SUCCEEDED) {
+                    if (initState == INIT_SUCCEEDED) {
                         loadISIronSourceSDK();
                     }
                 }
@@ -104,7 +105,7 @@ public class IronSourceInterstitial extends CustomEventInterstitial implements I
     protected void showInterstitial() {
         onLog("showInterstitial " + placementName);
         try {
-            if(TextUtils.isEmpty(placementName)){
+            if (TextUtils.isEmpty(placementName)) {
                 IronSource.showInterstitial();
             } else {
                 IronSource.showInterstitial(placementName);
@@ -217,13 +218,13 @@ public class IronSourceInterstitial extends CustomEventInterstitial implements I
 
     @Override
     public void onInterstitialAdShowSucceeded() {
-        //not in use in Mopub mediation (we use the onInterstitialAdOpened for saying that the ad was shown)
+        // not in use in Mopub mediation (we use the onInterstitialAdOpened for saying that the ad was shown)
     }
 
     @Override
     public void onInterstitialAdShowFailed(IronSourceError ironSourceError) {
         onLog("onInterstitialAdShowFailed:" + ironSourceError.getErrorMessage());
-        //do nothing
+        // do nothing
     }
 
     @Override
@@ -244,15 +245,15 @@ public class IronSourceInterstitial extends CustomEventInterstitial implements I
         }
     }
 
-    //Mopub life circle events
+    // Mopub life cycle events
     @Override
     public void onCreate(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
     @Override
     public void onStart(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
     @Override
@@ -267,22 +268,22 @@ public class IronSourceInterstitial extends CustomEventInterstitial implements I
 
     @Override
     public void onRestart(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
     @Override
     public void onStop(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
     @Override
     public void onDestroy(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
     @Override
     public void onBackPressed(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
 }

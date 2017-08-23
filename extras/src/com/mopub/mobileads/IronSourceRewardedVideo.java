@@ -1,5 +1,7 @@
 package com.mopub.mobileads;
+
 import java.util.Arrays;
+
 import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -24,7 +26,7 @@ import static com.mopub.mobileads.MoPubRewardedVideoManager.onRewardedVideoLoadS
 import static com.mopub.mobileads.MoPubRewardedVideoManager.onRewardedVideoPlaybackError;
 import static com.mopub.mobileads.MoPubRewardedVideoManager.onRewardedVideoStarted;
 
-public class IronSourceRewardedVideo extends CustomEventRewardedAd implements LifecycleListener  {
+public class IronSourceRewardedVideo extends CustomEventRewardedAd implements LifecycleListener {
 
     /**
      * private vars
@@ -39,14 +41,14 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
     private String placementName;
     private boolean isTestEnabled;
 
-    private static ironSourceRewardedVideoListener sIronSrcRvListener;
+    private static IronSourceRewardedVideoListener sIronSrcRvListener;
 
     private int rewardAmount;
     private String rewardName;
     private static boolean isSDKRVInitSuccess;
 
     IronSourceRewardedVideo() {
-        sIronSrcRvListener = new ironSourceRewardedVideoListener();
+        sIronSrcRvListener = new IronSourceRewardedVideoListener();
     }
 
     /**
@@ -93,7 +95,6 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
 
     @Override
     protected boolean checkAndInitializeSdk(@NonNull Activity launcherActivity, @NonNull Map<String, Object> localExtras, @NonNull Map<String, String> serverExtras) throws Exception {
-
         if (serverExtras.get("applicationKey") != null) {
             applicationKey = serverExtras.get("applicationKey");
         } else if (serverExtras.get("appKey") != null) {
@@ -134,7 +135,7 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
         }
     }
 
-    //****************************Mopub lifeCircle*******************************
+    //**************************** Mopub life cycle *******************************
 
     @Override
     public void onCreate(@NonNull Activity activity) {
@@ -143,7 +144,7 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
 
     @Override
     public void onStart(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
     @Override
@@ -158,27 +159,27 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
 
     @Override
     public void onRestart(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
     @Override
     public void onStop(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
     @Override
     public void onDestroy(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
     @Override
     public void onBackPressed(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
-    //****************************IronSource RewardedVideoListener Start*******************************
+    //**************************** IronSource RewardedVideoListener Start *******************************
 
-    private class ironSourceRewardedVideoListener implements RewardedVideoListener {
+    private class IronSourceRewardedVideoListener implements RewardedVideoListener {
 
         //Invoked when the RewardedVideo ad view has opened.
         @Override
@@ -276,5 +277,5 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
         }
     }
 
-    //****************************IronSource RewardedVideoListener End*******************************
+    //**************************** IronSource RewardedVideoListener End *******************************
 }
