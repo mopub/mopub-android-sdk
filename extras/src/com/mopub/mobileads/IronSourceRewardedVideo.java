@@ -139,7 +139,7 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
 
     @Override
     public void onCreate(@NonNull Activity activity) {
-
+        // not used for ironSource sdk
     }
 
     @Override
@@ -211,13 +211,11 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
             onLog("onVideoAvailabilityChanged");
         }
 
-        //Invoked when the video ad starts playing. (Available for: AdColony, Vungle, AppLovin, UnityAds)
         @Override
         public void onRewardedVideoAdStarted() {
             onLog("onVideoStart");
         }
 
-        //Invoked when the video ad finishes playing. (Available for: AdColony, Flurry, Vungle, AppLovin, UnityAds)
         @Override
         public void onRewardedVideoAdEnded() {
             onLog("onVideoEnd");
