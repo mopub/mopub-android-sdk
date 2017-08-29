@@ -8,7 +8,7 @@ Sign up for an account at [http://app.mopub.com/](http://app.mopub.com/).
 
 You can find integration documentation on our [wiki](https://github.com/mopub/mopub-android-sdk/wiki/Getting-Started) and additional help documentation on our [developer help site](http://dev.twitter.com/mopub).
 
-To file an issue with our team visit the [MoPub Forum](https://twittercommunity.com/c/fabric/mopub) or email [support@mopub.com](mailto:support@mopub.com).
+To file an issue with our team visit the [MoPub Forum](https://twittercommunity.com/c/mopub) or email [support@mopub.com](mailto:support@mopub.com).
 
 **Please Note: We no longer accept GitHub Issues.**
 
