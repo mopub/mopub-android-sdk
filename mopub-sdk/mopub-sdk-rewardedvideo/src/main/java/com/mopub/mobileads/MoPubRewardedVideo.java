@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.mopub.common.MoPubReward;
 import com.mopub.common.VisibleForTesting;
@@ -16,8 +17,7 @@ public class MoPubRewardedVideo extends MoPubRewardedAd {
 
     @NonNull private static final String MOPUB_REWARDED_VIDEO_ID = "mopub_rewarded_video_id";
 
-    @NonNull private RewardedVastVideoInterstitial mRewardedVastVideoInterstitial;
-
+    @Nullable private RewardedVastVideoInterstitial mRewardedVastVideoInterstitial;
 
     public MoPubRewardedVideo() {
         mRewardedVastVideoInterstitial = new RewardedVastVideoInterstitial();
@@ -31,7 +31,10 @@ public class MoPubRewardedVideo extends MoPubRewardedAd {
 
     @Override
     protected void onInvalidate() {
-        mRewardedVastVideoInterstitial.onInvalidate();
+        if (mRewardedVastVideoInterstitial != null) {
+            mRewardedVastVideoInterstitial.onInvalidate();
+        }
+        mRewardedVastVideoInterstitial = null;
         super.onInvalidate();
     }
 
@@ -41,13 +44,18 @@ public class MoPubRewardedVideo extends MoPubRewardedAd {
             @NonNull final Map<String, String> serverExtras) throws Exception {
         super.loadWithSdkInitialized(activity, localExtras, serverExtras);
 
-        mRewardedVastVideoInterstitial.loadInterstitial(activity, new MoPubRewardedVideoListener(),
-                localExtras, serverExtras);
+        if (mRewardedVastVideoInterstitial == null) {
+            MoPubLog.w("mRewardedVastVideoInterstitial is null. Has this class been invalidated?");
+            return;
+        }
+        mRewardedVastVideoInterstitial.loadInterstitial(activity,
+                    new MoPubRewardedVideoListener(),
+                    localExtras, serverExtras);
     }
 
     @Override
     protected void show() {
-        if (isReady()) {
+        if (isReady() && mRewardedVastVideoInterstitial != null) {
             MoPubLog.d("Showing MoPub rewarded video.");
             mRewardedVastVideoInterstitial.showInterstitial();
         } else {
@@ -78,7 +86,14 @@ public class MoPubRewardedVideo extends MoPubRewardedAd {
     @Deprecated
     @VisibleForTesting
     void setRewardedVastVideoInterstitial(
-            @NonNull final RewardedVastVideoInterstitial rewardedVastVideoInterstitial) {
+            @Nullable final RewardedVastVideoInterstitial rewardedVastVideoInterstitial) {
         mRewardedVastVideoInterstitial = rewardedVastVideoInterstitial;
+    }
+
+    @Deprecated
+    @VisibleForTesting
+    @Nullable
+    RewardedVastVideoInterstitial getRewardedVastVideoInterstitial() {
+        return mRewardedVastVideoInterstitial;
     }
 }

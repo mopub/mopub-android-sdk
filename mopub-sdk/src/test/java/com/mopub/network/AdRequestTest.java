@@ -474,8 +474,6 @@ public class AdRequestTest {
         activity.getResources().getConfiguration().locale = new Locale(" ");
 
         assertThat(subject.getHeaders()).isEqualTo(expectedHeaders);
-
-
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.mopub.nativeads.factories;
 
+import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
 import com.mopub.nativeads.CustomEventNative;
 
@@ -14,7 +15,7 @@ import static org.junit.Assert.fail;
 
 
 @Config(constants = BuildConfig.class)
-@RunWith(RobolectricGradleTestRunner.class)
+@RunWith(SdkTestRunner.class)
 public class CustomEventNativeFactoryTest {
 
     @Before

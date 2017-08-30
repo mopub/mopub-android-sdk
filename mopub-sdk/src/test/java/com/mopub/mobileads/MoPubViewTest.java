@@ -48,11 +48,6 @@ public class MoPubViewTest {
         adViewController = TestAdViewControllerFactory.getSingletonMock();
     }
 
-    @After
-    public void tearDown() {
-        ShadowReflection.reset();
-    }
-
     @Test
     public void screenStateBroadcastReceiver_withActionUserPresent_shouldUnpauseRefresh() throws Exception {
         broadcastIntent(new Intent(Intent.ACTION_USER_PRESENT));

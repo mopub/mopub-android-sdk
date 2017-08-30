@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.support.annotation.Nullable;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -34,13 +35,17 @@ public class BaseHtmlWebView extends BaseWebView implements UserClickListener {
     }
 
     @Override
-    public void loadUrl(String url) {
-        if (url == null) return;
+    public void loadUrl(@Nullable final String url) {
+        if (url == null) {
+            return;
+        }
 
-        MoPubLog.d("Loading url: " + url);
         if (url.startsWith("javascript:")) {
             super.loadUrl(url);
+            return;
         }
+
+        MoPubLog.d("Loading url: " + url);
     }
 
     private void disableScrollingAndZoom() {

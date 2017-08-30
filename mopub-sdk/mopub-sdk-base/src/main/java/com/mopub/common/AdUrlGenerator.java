@@ -2,6 +2,7 @@ package com.mopub.common;
 
 import android.content.Context;
 import android.location.Location;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
@@ -100,6 +101,15 @@ public abstract class AdUrlGenerator extends BaseUrlGenerator {
      * Bundle ID, as in package name.
      */
     private static final String BUNDLE_ID_KEY = "bundle";
+
+    /**
+     * Whether or not this ad is using third-party viewability tracking.
+     * 0: Moat disabled, Avid disabled
+     * 1: Moat disabled, Avid enabled
+     * 2: Moat enabled, Avid disabled
+     * 3: Moat enabled, Avid enabled
+     */
+    private static final String VIEWABILITY_KEY = "vv";
 
     protected Context mContext;
     protected String mAdUnitId;
@@ -204,6 +214,12 @@ public abstract class AdUrlGenerator extends BaseUrlGenerator {
         if (!TextUtils.isEmpty(bundleId)) {
             addParam(BUNDLE_ID_KEY, bundleId);
         }
+    }
+
+    protected void enableViewability(@NonNull final String vendorKey) {
+        Preconditions.checkNotNull(vendorKey);
+
+        addParam(VIEWABILITY_KEY, vendorKey);
     }
 
     protected void addBaseParams(final ClientMetadata clientMetadata) {

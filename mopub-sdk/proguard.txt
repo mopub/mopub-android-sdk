@@ -16,6 +16,12 @@
 # Keep methods that are accessed via reflection
 -keepclassmembers class ** { @com.mopub.common.util.ReflectionTarget *; }
 
+# Viewability support
+-keepclassmembers class com.integralads.avid.library.mopub.** { public *; }
+-keep public class com.integralads.avid.library.mopub.**
+-keepclassmembers class com.moat.analytics.mobile.mpub.** { public *; }
+-keep public class com.moat.analytics.mobile.mpub.**
+
 # Support for Android Advertiser ID.
 -keep class com.google.android.gms.common.GooglePlayServicesUtil {*;}
 -keep class com.google.android.gms.ads.identifier.AdvertisingIdClient {*;}

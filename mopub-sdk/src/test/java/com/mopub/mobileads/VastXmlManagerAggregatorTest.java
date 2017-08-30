@@ -1620,7 +1620,7 @@ public class VastXmlManagerAggregatorTest {
         VideoViewabilityTracker tracker = vastVideoConfig.getVideoViewabilityTracker();
         assertThat(tracker.getPercentViewable()).isEqualTo(70);
         assertThat(tracker.getViewablePlaytimeMS()).isEqualTo(3500);
-        assertThat(tracker.getTrackingUrl()).isEqualTo("https://ad.server.com/impression/dot.png");
+        assertThat(tracker.getContent()).isEqualTo("https://ad.server.com/impression/dot.png");
     }
 
     @Test
@@ -1632,7 +1632,7 @@ public class VastXmlManagerAggregatorTest {
         VideoViewabilityTracker tracker = vastVideoConfig.getVideoViewabilityTracker();
         assertThat(tracker.getPercentViewable()).isEqualTo(50);
         assertThat(tracker.getViewablePlaytimeMS()).isEqualTo(2500);
-        assertThat(tracker.getTrackingUrl()).isEqualTo("https://ad.server.com/impression/dot.gif");
+        assertThat(tracker.getContent()).isEqualTo("https://ad.server.com/impression/dot.gif");
     }
 
     @Test
@@ -1645,7 +1645,7 @@ public class VastXmlManagerAggregatorTest {
         VideoViewabilityTracker tracker = vastVideoConfig.getVideoViewabilityTracker();
         assertThat(tracker.getPercentViewable()).isEqualTo(70);
         assertThat(tracker.getViewablePlaytimeMS()).isEqualTo(3500);
-        assertThat(tracker.getTrackingUrl()).isEqualTo("https://ad.server.com/impression/dot.png");
+        assertThat(tracker.getContent()).isEqualTo("https://ad.server.com/impression/dot.png");
     }
 
     @Test

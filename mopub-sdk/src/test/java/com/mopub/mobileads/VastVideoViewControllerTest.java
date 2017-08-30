@@ -18,6 +18,7 @@ import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.VideoView;
 
+import com.mopub.common.ExternalViewabilitySession;
 import com.mopub.common.MoPubBrowser;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.DeviceUtils.ForceOrientation;
@@ -1237,6 +1238,7 @@ public class VastVideoViewControllerTest {
 
         initializeSubject();
         testTracker.setTracked();
+        setViewabilityTrackersTracked(vastVideoConfig);
         spyOnVideoView();
         setVideoViewParams(15000, 15000);
 
@@ -2251,5 +2253,18 @@ public class VastVideoViewControllerTest {
 
     private ShadowVastVideoView getShadowVideoView() {
         return (ShadowVastVideoView) ShadowExtractor.extract(subject.getVastVideoView());
+    }
+
+    private void setViewabilityTrackersTracked(VastVideoConfig vastVideoConfig) {
+        for (VastFractionalProgressTracker tracker : vastVideoConfig.getFractionalTrackers()) {
+            final String content = tracker.getContent();
+            try {
+                // Only mark trackers that match with viewability's VideoEvent enum
+                Enum.valueOf(ExternalViewabilitySession.VideoEvent.class, content);
+                tracker.setTracked();
+            } catch (IllegalArgumentException e) {
+                // pass
+            }
+        }
     }
 }

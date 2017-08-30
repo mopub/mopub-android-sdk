@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import com.mopub.common.MoPubBrowser;
@@ -71,11 +72,17 @@ public class HtmlWebViewClientTest {
     }
 
     @Test
-    public void shouldOverrideUrlLoading_withMoPubFailLoad_shouldCallLoadFailUrl() throws Exception {
+    public void shouldOverrideUrlLoading_withMoPubFailLoad_shouldCallLoadFailUrl_shouldStopCurrentLoad_shouldStopAndRestartJavascriptExecution() throws Exception {
+        WebSettings webSettings = mock(WebSettings.class);
+        when(htmlWebView.getSettings()).thenReturn(webSettings);
+
         boolean didOverrideUrl = subject.shouldOverrideUrlLoading(htmlWebView, "mopub://failLoad");
 
         assertThat(didOverrideUrl).isTrue();
         verify(htmlWebViewListener).onFailed(UNSPECIFIED);
+        verify(htmlWebView).stopLoading();
+        verify(webSettings).setJavaScriptEnabled(false);
+        verify(webSettings).setJavaScriptEnabled(true);
     }
 
     @Test

@@ -3,7 +3,9 @@ package com.mopub.mobileads;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 
+import com.mopub.common.ExternalViewabilitySession.VideoEvent;
 import com.mopub.common.Preconditions;
+import com.mopub.mobileads.VastTracker.MessageType;
 import com.mopub.network.TrackingRequest;
 
 import java.util.ArrayList;
@@ -27,6 +29,21 @@ public class VastVideoViewProgressRunnable extends RepeatingHandlerRunnable {
         Preconditions.checkNotNull(vastVideoConfig);
         mVideoViewController = videoViewController;
         mVastVideoConfig = vastVideoConfig;
+
+        // Keep track of quartile measurement for ExternalViewabilitySessions
+        final List<VastFractionalProgressTracker> trackers =
+                new ArrayList<VastFractionalProgressTracker>();
+        trackers.add(new VastFractionalProgressTracker(MessageType.QUARTILE_EVENT,
+                VideoEvent.AD_STARTED.name(), 0f));
+        trackers.add(new VastFractionalProgressTracker(MessageType.QUARTILE_EVENT,
+                VideoEvent.AD_IMPRESSED.name(), 0f));
+        trackers.add(new VastFractionalProgressTracker(MessageType.QUARTILE_EVENT,
+                VideoEvent.AD_VIDEO_FIRST_QUARTILE.name(), 0.25f));
+        trackers.add(new VastFractionalProgressTracker(MessageType.QUARTILE_EVENT,
+                VideoEvent.AD_VIDEO_MIDPOINT.name(), 0.5f));
+        trackers.add(new VastFractionalProgressTracker(MessageType.QUARTILE_EVENT,
+                VideoEvent.AD_VIDEO_THIRD_QUARTILE.name(), 0.75f));
+        mVastVideoConfig.addFractionalTrackers(trackers);
     }
 
     @Override
@@ -42,7 +59,11 @@ public class VastVideoViewProgressRunnable extends RepeatingHandlerRunnable {
             if (!trackersToTrack.isEmpty()) {
                 final List<String> trackUrls = new ArrayList<String>();
                 for (VastTracker tracker : trackersToTrack) {
-                    trackUrls.add(tracker.getTrackingUrl());
+                    if (tracker.getMessageType() == MessageType.TRACKING_URL) {
+                        trackUrls.add(tracker.getContent());
+                    } else if (tracker.getMessageType() == MessageType.QUARTILE_EVENT) {
+                        mVideoViewController.handleViewabilityQuartileEvent(tracker.getContent());
+                    }
                     tracker.setTracked();
                 }
                 TrackingRequest.makeTrackingHttpRequest(

@@ -14,12 +14,15 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.mopub.common.MoPubReward;
+import com.mopub.mobileads.CustomEventRewardedVideo;
 import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.mobileads.MoPubRewardedVideoListener;
 import com.mopub.mobileads.MoPubRewardedVideoManager.RequestParameters;
 import com.mopub.mobileads.MoPubRewardedVideos;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +33,10 @@ import static com.mopub.simpleadsdemo.Utils.logToast;
 public class RewardedVideoDetailFragment extends Fragment implements MoPubRewardedVideoListener {
 
     private static boolean sRewardedVideoInitialized;
+
+    // Include any custom event rewarded video classes, if available, for initialization.
+    private static final List<Class<? extends CustomEventRewardedVideo>> sNetworksToInit =
+            new LinkedList<>();
 
     @Nullable private Button mShowButton;
     @Nullable private String mAdUnitId;
@@ -46,7 +53,7 @@ public class RewardedVideoDetailFragment extends Fragment implements MoPubReward
         hideSoftKeyboard(views.mKeywordsField);
 
         if (!sRewardedVideoInitialized) {
-            MoPubRewardedVideos.initializeRewardedVideo(getActivity());
+            MoPubRewardedVideos.initializeRewardedVideo(getActivity(), sNetworksToInit);
             sRewardedVideoInitialized = true;
         }
         MoPubRewardedVideos.setRewardedVideoListener(this);

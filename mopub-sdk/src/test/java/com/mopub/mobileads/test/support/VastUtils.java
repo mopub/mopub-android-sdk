@@ -33,7 +33,7 @@ public class VastUtils {
     public static List<String> vastTrackersToStrings(List<VastTracker> vastTrackers) {
         List<String> strings = new ArrayList<String>(vastTrackers.size());
         for (VastTracker vastTracker : vastTrackers) {
-            strings.add(vastTracker.getTrackingUrl());
+            strings.add(vastTracker.getContent());
         }
         return strings;
     }

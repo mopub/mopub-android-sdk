@@ -163,6 +163,7 @@ public abstract class MoPubRewardedAd extends CustomEventRewardedAd {
         @Override
         public void onInterstitialDismissed() {
             MoPubRewardedVideoManager.onRewardedVideoClosed(mCustomEventClass, getAdNetworkId());
+            onInvalidate();
         }
 
         @Deprecated

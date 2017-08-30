@@ -44,7 +44,11 @@ import org.mockito.MockitoAnnotations;
 import org.robolectric.DefaultTestLifecycle;
 import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.TestLifecycle;
+import org.robolectric.annotation.Config;
 import org.robolectric.internal.bytecode.InstrumentationConfiguration;
+import org.robolectric.manifest.AndroidManifest;
+import org.robolectric.res.FileFsFile;
+import org.robolectric.res.FsFile;
 import org.robolectric.util.concurrent.RoboExecutorService;
 
 import static com.mopub.common.MoPub.LocationAwareness;
@@ -107,5 +111,27 @@ public class SdkTestRunner extends RobolectricGradleTestRunner {
             AsyncTasks.setExecutor(new RoboExecutorService());
             CacheService.clearAndNullCaches();
         }
+    }
+
+    // custom AppManifest logic adapted from:
+    // https://gist.github.com/venator85/282df3677af9ecac56e5e4b91471cd8f
+    @Override
+    protected AndroidManifest getAppManifest(Config config) {
+        final AndroidManifest appManifest = super.getAppManifest(config);
+
+        if (appManifest.getAndroidManifestFile().exists()) {
+            return appManifest;
+        }
+
+        final FsFile androidManifestFile = FileFsFile.from(getModuleRootPath(config),
+                appManifest.getAndroidManifestFile().getPath()
+                        .replace("manifests/full", "manifests/aapt"));
+        return new AndroidManifest(androidManifestFile, appManifest.getResDirectory(),
+                appManifest.getAssetsDirectory());
+    }
+
+    private String getModuleRootPath(Config config) {
+        final String moduleRoot = config.constants().getResource("").toString().replace("file:", "");
+        return moduleRoot.substring(0, moduleRoot.indexOf("/build"));
     }
 }

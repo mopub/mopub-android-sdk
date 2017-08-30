@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
@@ -48,7 +49,7 @@ public class HtmlBannerTest {
         subject = new HtmlBanner();
         htmlBannerWebView = TestHtmlBannerWebViewFactory.getSingletonMock();
         customEventBannerListener = mock(CustomEventBanner.CustomEventBannerListener.class);
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         localExtras = new HashMap<String, Object>();
         serverExtras = new HashMap<String, String>();
         responseBody = "expected response body";

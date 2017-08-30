@@ -155,7 +155,7 @@ public class BrowserWebViewClientTest {
 
     @Test
     public void shouldOverrideUrlLoading_withNullUrl_shouldReturnFalse_shouldDoNothing() {
-        assertThat(subject.shouldOverrideUrlLoading(MOOT_WEB_VIEW, null)).isFalse();
+        assertThat(subject.shouldOverrideUrlLoading(MOOT_WEB_VIEW, (String) null)).isFalse();
         verify(mockWebView, never()).loadUrl(anyString());
         verify(mockMoPubBrowser, never()).finish();
     }

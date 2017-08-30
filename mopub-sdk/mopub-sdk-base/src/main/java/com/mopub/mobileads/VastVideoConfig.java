@@ -28,13 +28,15 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.mopub.network.TrackingRequest.makeVastTrackingHttpRequest;
 
 public class VastVideoConfig implements Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     @NonNull private final ArrayList<VastTracker> mImpressionTrackers;
     @NonNull private final ArrayList<VastFractionalProgressTracker> mFractionalTrackers;
@@ -46,6 +48,7 @@ public class VastVideoConfig implements Serializable {
     @NonNull private final ArrayList<VastTracker> mSkipTrackers;
     @NonNull private final ArrayList<VastTracker> mClickTrackers;
     @NonNull private final ArrayList<VastTracker> mErrorTrackers;
+
     @Nullable private String mClickThroughUrl;
     @Nullable private String mNetworkMediaFileUrl;
     @Nullable private String mDiskMediaFileUrl;
@@ -62,6 +65,10 @@ public class VastVideoConfig implements Serializable {
     @Nullable private String mCustomCloseIconUrl;
     @NonNull private DeviceUtils.ForceOrientation mCustomForceOrientation = DeviceUtils.ForceOrientation.FORCE_LANDSCAPE; // Default is forcing landscape
     @Nullable private VideoViewabilityTracker mVideoViewabilityTracker;
+    // Viewability
+    @NonNull private final Map<String, String> mExternalViewabilityTrackers;
+    @NonNull private final Set<String> mAvidJavascriptResources;
+    @NonNull private final Set<String> mMoatImpressionPixels;
 
     // MoPub-specific metadata
     private String mDspCreativeId;
@@ -86,6 +93,10 @@ public class VastVideoConfig implements Serializable {
         mErrorTrackers = new ArrayList<VastTracker>();
         mSocialActionsCompanionAds = new HashMap<String, VastCompanionAdConfig>();
         mIsRewardedVideo = false;
+
+        mExternalViewabilityTrackers = new HashMap<String, String>();
+        mAvidJavascriptResources = new HashSet<String>();
+        mMoatImpressionPixels = new HashSet<String>();
     }
 
     /**
@@ -238,6 +249,25 @@ public class VastVideoConfig implements Serializable {
                 default:
                     MoPubLog.d("Encountered unknown video tracking event: " + eventName);
             }
+        }
+    }
+
+    public void addExternalViewabilityTrackers(
+            @Nullable final Map<String, String> externalViewabilityTrackers) {
+        if (externalViewabilityTrackers != null) {
+            mExternalViewabilityTrackers.putAll(externalViewabilityTrackers);
+        }
+    }
+
+    public void addAvidJavascriptResources(@Nullable final Set<String> javascriptResources) {
+        if (javascriptResources != null) {
+            mAvidJavascriptResources.addAll(javascriptResources);
+        }
+    }
+
+    public void addMoatImpressionPixels(@Nullable final Set<String> impressionPixels) {
+        if (impressionPixels != null) {
+            mMoatImpressionPixels.addAll(impressionPixels);
         }
     }
 
@@ -423,6 +453,21 @@ public class VastVideoConfig implements Serializable {
     @Nullable
     public VideoViewabilityTracker getVideoViewabilityTracker() {
         return mVideoViewabilityTracker;
+    }
+
+    @NonNull
+    public Map<String, String> getExternalViewabilityTrackers() {
+        return mExternalViewabilityTrackers;
+    }
+
+    @NonNull
+    public Set<String> getAvidJavascriptResources() {
+        return mAvidJavascriptResources;
+    }
+
+    @NonNull
+    public Set<String> getMoatImpressionPixels() {
+        return mMoatImpressionPixels;
     }
 
     public boolean isCustomForceOrientationSet() {

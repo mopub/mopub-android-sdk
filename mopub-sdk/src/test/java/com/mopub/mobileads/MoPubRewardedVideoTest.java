@@ -57,6 +57,8 @@ public class MoPubRewardedVideoTest {
 
     @Test
     public void onInvalidate_withNullVastVideoInterstitial_shouldNotInvalidateVastVideoInterstitial() {
+        subject.setRewardedVastVideoInterstitial(null);
+
         subject.onInvalidate();
 
         verifyZeroInteractions(mockRewardedVastVideoInterstitial);
@@ -188,7 +190,7 @@ public class MoPubRewardedVideoTest {
     }
 
     @Test
-    public void showVideo_withVideoLoaded_shouldShowVastVideoInterstitial() {
+    public void show_withVideoLoaded_shouldShowVastVideoInterstitial() {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         subject.setIsLoaded(true);
 
@@ -199,13 +201,26 @@ public class MoPubRewardedVideoTest {
     }
 
     @Test
-    public void showVideo_withVideoNotLoaded_shouldDoNothing() {
+    public void show_withVideoNotLoaded_shouldDoNothing() {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         subject.setIsLoaded(false);
 
         subject.show();
 
         verifyZeroInteractions(mockRewardedVastVideoInterstitial);
+    }
+
+    @Test
+    public void show_whenInvalidated_shouldDoNothing() {
+        subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
+        subject.setIsLoaded(true);
+        subject.onInvalidate();
+
+        subject.show();
+
+        verify(mockRewardedVastVideoInterstitial).onInvalidate();
+        verifyNoMoreInteractions(mockRewardedVastVideoInterstitial);
+        assertThat(subject.getRewardedVastVideoInterstitial()).isNull();
     }
 
     @Test

@@ -31,7 +31,8 @@ public class HtmlInterstitial extends ResponseBodyInterstitial {
 
     @Override
     protected void preRenderHtml(CustomEventInterstitialListener customEventInterstitialListener) {
-        MoPubActivity.preRenderHtml(mContext, mAdReport, customEventInterstitialListener, mHtmlData);
+        MoPubActivity.preRenderHtml(this, mContext, mAdReport, customEventInterstitialListener, mHtmlData,
+                mIsScrollable, mRedirectUrl, mClickthroughUrl, mBroadcastIdentifier);
     }
 
     @Override

@@ -23,6 +23,8 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.VideoView;
 
+import com.mopub.common.ExternalViewabilitySession.VideoEvent;
+import com.mopub.common.ExternalViewabilitySessionManager;
 import com.mopub.common.IntentActions;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
@@ -31,6 +33,7 @@ import com.mopub.common.util.Utils;
 import com.mopub.mobileads.resource.DrawableConstants;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Map;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
@@ -63,6 +66,7 @@ public class VastVideoViewController extends BaseVideoViewController {
     private final VastVideoConfig mVastVideoConfig;
 
     @NonNull private final VastVideoView mVideoView;
+    @NonNull private ExternalViewabilitySessionManager mExternalViewabilitySessionManager;
     @NonNull private VastVideoGradientStripWidget mTopGradientStripWidget;
     @NonNull private VastVideoGradientStripWidget mBottomGradientStripWidget;
     @NonNull private ImageView mBlurredLastVideoFrameImageView;
@@ -139,6 +143,8 @@ public class VastVideoViewController extends BaseVideoViewController {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_UP && shouldAllowClickThrough()) {
+                    mExternalViewabilitySessionManager.recordVideoEvent(VideoEvent.AD_CLICK_THRU,
+                            getCurrentPosition());
                     mIsClosing = true;
                     broadcastAction(IntentActions.ACTION_INTERSTITIAL_CLICK);
                     mVastVideoConfig.handleClickForResult(activity,
@@ -161,6 +167,11 @@ public class VastVideoViewController extends BaseVideoViewController {
         // Video view
         mVideoView = createVideoView(activity, View.VISIBLE);
         mVideoView.requestFocus();
+
+        // Viewability measurements
+        mExternalViewabilitySessionManager = new ExternalViewabilitySessionManager(activity);
+        mExternalViewabilitySessionManager.createVideoSession(activity, mVideoView,
+                mVastVideoConfig);
 
         // Companion ad view, set to invisible initially to have it be drawn to calculate size
         mLandscapeCompanionAdView = createCompanionAdView(activity,
@@ -209,6 +220,10 @@ public class VastVideoViewController extends BaseVideoViewController {
         // Close button snapped to top-right corner of screen
         // Always add last to layout since it must be visible above all other views
         addCloseButtonWidget(activity, View.GONE);
+
+        mExternalViewabilitySessionManager.registerVideoObstructions(Arrays.asList(
+                mTopGradientStripWidget, mProgressBarWidget, mBottomGradientStripWidget,
+                mRadialCountdownWidget, mCtaButtonWidget, mSocialActionsView, mCloseButtonWidget));
 
         Handler mainHandler = new Handler(Looper.getMainLooper());
         mProgressCheckerRunnable = new VastVideoViewProgressRunnable(this, mVastVideoConfig,
@@ -271,8 +286,12 @@ public class VastVideoViewController extends BaseVideoViewController {
         startRunnables();
 
         if (mSeekerPositionOnPause > 0) {
+            mExternalViewabilitySessionManager.recordVideoEvent(VideoEvent.AD_PLAYING, mSeekerPositionOnPause);
             mVideoView.seekTo(mSeekerPositionOnPause);
+        } else {
+            mExternalViewabilitySessionManager.recordVideoEvent(VideoEvent.AD_LOADED, getCurrentPosition());
         }
+
         if (!mIsVideoFinishedPlaying) {
             mVideoView.start();
         }
@@ -287,6 +306,7 @@ public class VastVideoViewController extends BaseVideoViewController {
         mSeekerPositionOnPause = getCurrentPosition();
         mVideoView.pause();
         if (!mIsVideoFinishedPlaying && !mIsClosing) {
+            mExternalViewabilitySessionManager.recordVideoEvent(VideoEvent.AD_PAUSED, getCurrentPosition());
             mVastVideoConfig.handlePause(getContext(), mSeekerPositionOnPause);
         }
     }
@@ -294,6 +314,8 @@ public class VastVideoViewController extends BaseVideoViewController {
     @Override
     protected void onDestroy() {
         stopRunnables();
+        mExternalViewabilitySessionManager.recordVideoEvent(VideoEvent.AD_STOPPED, getCurrentPosition());
+        mExternalViewabilitySessionManager.endVideoSession();
         broadcastAction(IntentActions.ACTION_INTERSTITIAL_DISMISS);
 
         mVideoView.onDestroy();
@@ -325,7 +347,11 @@ public class VastVideoViewController extends BaseVideoViewController {
     }
 
     @Override
-    protected void onBackPressed() { }
+    protected void onBackPressed() {
+        if (!mIsVideoFinishedPlaying) {
+            mExternalViewabilitySessionManager.recordVideoEvent(VideoEvent.AD_SKIPPED, getCurrentPosition());
+        }
+    }
 
     // Enable the device's back button when the video close button has been displayed
     @Override
@@ -377,6 +403,7 @@ public class VastVideoViewController extends BaseVideoViewController {
                 // The VideoView duration defaults to -1 when the video is not prepared or playing;
                 // Therefore set it here so that we have access to it at all times
                 mDuration = mVideoView.getDuration();
+                mExternalViewabilitySessionManager.onVideoPrepared(getLayout(), mDuration);
                 adjustSkipOffset();
                 if (mVastCompanionAdConfig == null || mHasSocialActions) {
                     videoView.prepareBlurredLastVideoFrame(mBlurredLastVideoFrameImageView,
@@ -394,7 +421,6 @@ public class VastVideoViewController extends BaseVideoViewController {
             public void onCompletion(MediaPlayer mp) {
                 stopRunnables();
                 makeVideoInteractable();
-
                 videoCompleted(false);
                 mIsVideoFinishedPlaying = true;
                 if (mVastVideoConfig.isRewardedVideo()) {
@@ -404,6 +430,7 @@ public class VastVideoViewController extends BaseVideoViewController {
                 // Only fire the completion tracker if we hit all the progress marks. Some Android implementations
                 // fire the completion event even if the whole video isn't watched.
                 if (!mVideoError && mVastVideoConfig.getRemainingProgressTrackerCount() == 0) {
+                    mExternalViewabilitySessionManager.recordVideoEvent(VideoEvent.AD_COMPLETE, getCurrentPosition());
                     mVastVideoConfig.handleComplete(getContext(), getCurrentPosition());
                 }
 
@@ -446,6 +473,8 @@ public class VastVideoViewController extends BaseVideoViewController {
         videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
             @Override
             public boolean onError(final MediaPlayer mediaPlayer, final int what, final int extra) {
+                mExternalViewabilitySessionManager.recordVideoEvent(VideoEvent.RECORD_AD_ERROR,
+                        getCurrentPosition());
                 stopRunnables();
                 makeVideoInteractable();
                 videoError(false);
@@ -539,6 +568,9 @@ public class VastVideoViewController extends BaseVideoViewController {
                 }
                 if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
                     mIsClosing = true;
+                    if (!mIsVideoFinishedPlaying) {
+                        mExternalViewabilitySessionManager.recordVideoEvent(VideoEvent.AD_SKIPPED, getCurrentPosition());
+                    }
                     mVastVideoConfig.handleClose(getContext(), currentPosition);
                     getBaseVideoViewControllerListener().onFinish();
                 }
@@ -786,6 +818,12 @@ public class VastVideoViewController extends BaseVideoViewController {
         if (currentPosition >= mVastIconConfig.getOffsetMS() + mVastIconConfig.getDurationMS()) {
             mIconView.setVisibility(View.GONE);
         }
+    }
+
+    void handleViewabilityQuartileEvent(@NonNull final String enumValue) {
+        final VideoEvent videoEvent = Enum.valueOf(VideoEvent.class, enumValue);
+
+        mExternalViewabilitySessionManager.recordVideoEvent(videoEvent, getCurrentPosition());
     }
 
     private boolean shouldAllowClickThrough() {

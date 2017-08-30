@@ -50,6 +50,15 @@ public class MoPubRewardedPlayableTest {
     }
 
     @Test
+    public void onInvalidate_withNullRewardedMraidActivity_shouldNotInvalidateRewardedMraidActivity() {
+        subject.setRewardedMraidInterstitial(null);
+
+        subject.onInvalidate();
+
+        verifyZeroInteractions(mockRewardedMraidInterstitial);
+    }
+
+    @Test
     public void loadWithSdkInitialized_withCorrectLocalExtras_shouldLoadVastVideoInterstitial() throws Exception {
         subject.setRewardedMraidInterstitial(mockRewardedMraidInterstitial);
         final Map<String, Object> localExtras = new TreeMap<String, Object>();
@@ -82,12 +91,25 @@ public class MoPubRewardedPlayableTest {
     }
 
     @Test
-    public void showVideo_withVideoNotLoaded_shouldDoNothing() {
+    public void show_withVideoNotLoaded_shouldDoNothing() {
         subject.setRewardedMraidInterstitial(mockRewardedMraidInterstitial);
         subject.setIsLoaded(false);
 
         subject.show();
 
         verifyZeroInteractions(mockRewardedMraidInterstitial);
+    }
+
+    @Test
+    public void show_whenInvalidated_shouldDoNothing() {
+        subject.setRewardedMraidInterstitial(mockRewardedMraidInterstitial);
+        subject.setIsLoaded(true);
+        subject.onInvalidate();
+
+        subject.show();
+
+        verify(mockRewardedMraidInterstitial).onInvalidate();
+        verifyNoMoreInteractions(mockRewardedMraidInterstitial);
+        assertThat(subject.getRewardedMraidInterstitial()).isNull();
     }
 }

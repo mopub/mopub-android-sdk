@@ -732,11 +732,12 @@ public class WebViewAdUrlGeneratorTest {
                     paramIfNotEmpty("iso", countryIso) +
                     paramIfNotEmpty("cn", carrierName) +
                     "&ct=" + networkType +
-                    "&av=" + BuildConfig.VERSION_NAME +
+                    "&av=" + Uri.encode(BuildConfig.VERSION_NAME) +
                     "&udid=" + PlayServicesUrlRewriter.UDID_TEMPLATE +
                     "&dnt=" + PlayServicesUrlRewriter.DO_NOT_TRACK_TEMPLATE +
                     "&mr=1" +
-                    "&android_perms_ext_storage=" + externalStoragePermission;
+                    "&android_perms_ext_storage=" + externalStoragePermission +
+                    "&vv=3";
         }
 
         public AdUrlBuilder withAdUnitId(String adUnitId) {

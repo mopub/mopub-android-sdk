@@ -5,7 +5,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
-import android.media.MediaCodec;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,17 +13,29 @@ import android.support.annotation.Nullable;
 import android.view.Surface;
 import android.view.TextureView;
 
-import com.google.android.exoplayer.ExoPlaybackException;
-import com.google.android.exoplayer.ExoPlayer;
-import com.google.android.exoplayer.MediaCodecAudioTrackRenderer;
-import com.google.android.exoplayer.MediaCodecSelector;
-import com.google.android.exoplayer.MediaCodecVideoTrackRenderer;
-import com.google.android.exoplayer.extractor.Extractor;
-import com.google.android.exoplayer.extractor.ExtractorSampleSource;
-import com.google.android.exoplayer.extractor.mp4.Mp4Extractor;
-import com.google.android.exoplayer.upstream.Allocator;
-import com.google.android.exoplayer.upstream.DataSource;
-import com.google.android.exoplayer.upstream.DefaultAllocator;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Renderer;
+import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
+import com.google.android.exoplayer2.extractor.ExtractorsFactory;
+import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
+import com.google.android.exoplayer2.source.ExtractorMediaSource;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.trackselection.TrackSelector;
+import com.google.android.exoplayer2.upstream.DefaultAllocator;
+import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
+import com.google.android.exoplayer2.extractor.Extractor;
+import com.google.android.exoplayer2.extractor.mp4.Mp4Extractor;
+import com.google.android.exoplayer2.upstream.DataSource;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.event.BaseEvent;
@@ -48,7 +59,7 @@ import java.util.Map;
  * Wrapper class around the {@link ExoPlayer} to provide a nice interface into the player along
  * with some helper methods. This class is not thread safe.
  */
-public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusChangeListener {
+public class NativeVideoController implements ExoPlayer.EventListener, OnAudioFocusChangeListener {
 
     public interface Listener {
         void onStateChanged(boolean playWhenReady, int playbackState);
@@ -61,7 +72,6 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
     public static final int STATE_READY = ExoPlayer.STATE_READY;
     public static final int STATE_BUFFERING = ExoPlayer.STATE_BUFFERING;
     public static final int STATE_IDLE = ExoPlayer.STATE_IDLE;
-    public static final int STATE_PREPARING = ExoPlayer.STATE_PREPARING;
     public static final int STATE_ENDED = ExoPlayer.STATE_ENDED;
     public static final int STATE_CLEARED = ExoPlayer.STATE_ENDED + 1;
 
@@ -72,7 +82,7 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
 
     @NonNull private final Context mContext;
     @NonNull private final Handler mHandler;
-    @NonNull private final ExoPlayerFactory mExoPlayerFactory;
+    @NonNull private final MoPubExoPlayerFactory mMoPubExoPlayerFactory;
     @NonNull private VastVideoConfig mVastVideoConfig;
     @NonNull private NativeVideoProgressRunnable mNativeVideoProgressRunnable;
     @NonNull private AudioManager mAudioManager;
@@ -84,8 +94,8 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
     @Nullable private WeakReference<Object> mOwnerRef;
     @Nullable private volatile ExoPlayer mExoPlayer;
     @Nullable private BitmapDrawable mFinalFrame;
-    @Nullable private MediaCodecAudioTrackRenderer mAudioTrackRenderer;
-    @Nullable private MediaCodecVideoTrackRenderer mVideoTrackRenderer;
+    @Nullable private MediaCodecAudioRenderer mAudioRenderer;
+    @Nullable private MediaCodecVideoRenderer mVideoRenderer;
     @Nullable private EventDetails mEventDetails;
 
     private boolean mPlayWhenReady;
@@ -119,11 +129,11 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
             @NonNull final Context context,
             @NonNull final VastVideoConfig vastVideoConfig,
             @NonNull final NativeVideoProgressRunnable nativeVideoProgressRunnable,
-            @NonNull final ExoPlayerFactory exoPlayerFactory,
+            @NonNull final MoPubExoPlayerFactory moPubExoPlayerFactory,
             @Nullable final EventDetails eventDetails,
             @NonNull final AudioManager audioManager) {
         NativeVideoController nvc = new NativeVideoController(context, vastVideoConfig,
-                nativeVideoProgressRunnable, exoPlayerFactory, eventDetails, audioManager);
+                nativeVideoProgressRunnable, moPubExoPlayerFactory, eventDetails, audioManager);
         sManagerMap.put(id, nvc);
         return nvc;
     }
@@ -153,7 +163,7 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
                         new Handler(Looper.getMainLooper()),
                         visibilityTrackingEvents,
                         vastVideoConfig),
-                new ExoPlayerFactory(),
+                new MoPubExoPlayerFactory(),
                 eventDetails, 
                 (AudioManager) context.getSystemService(Context.AUDIO_SERVICE));
     }
@@ -161,19 +171,19 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
     private NativeVideoController(@NonNull final Context context,
             @NonNull final VastVideoConfig vastVideoConfig,
             @NonNull final NativeVideoProgressRunnable nativeVideoProgressRunnable,
-            @NonNull final ExoPlayerFactory exoPlayerFactory,
+            @NonNull final MoPubExoPlayerFactory moPubExoPlayerFactory,
             @Nullable final EventDetails eventDetails,
             @NonNull final AudioManager audioManager) {
         Preconditions.checkNotNull(context);
         Preconditions.checkNotNull(vastVideoConfig);
-        Preconditions.checkNotNull(exoPlayerFactory);
+        Preconditions.checkNotNull(moPubExoPlayerFactory);
         Preconditions.checkNotNull(audioManager);
 
         mContext = context.getApplicationContext();
         mHandler = new Handler(Looper.getMainLooper());
         mVastVideoConfig = vastVideoConfig;
         mNativeVideoProgressRunnable = nativeVideoProgressRunnable;
-        mExoPlayerFactory = exoPlayerFactory;
+        mMoPubExoPlayerFactory = moPubExoPlayerFactory;
         mEventDetails = eventDetails;
         mAudioManager = audioManager;
     }
@@ -289,6 +299,15 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
     }
 
     @Override
+    public void onTimelineChanged(Timeline timeline, Object manifest) {}
+
+    @Override
+    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {}
+
+    @Override
+    public void onLoadingChanged(boolean isLoading) {}
+
+    @Override
     public void onPlayerStateChanged(final boolean playWhenReady, final int newState) {
         if (newState == STATE_ENDED && mFinalFrame == null) {
             mFinalFrame = new BitmapDrawable(mContext.getResources(), mTextureView.getBitmap());
@@ -343,9 +362,6 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
     }
 
     @Override
-    public void onPlayWhenReadyCommitted() {}
-
-    @Override
     public void onPlayerError(ExoPlaybackException e) {
         if (mListener == null) {
             return;
@@ -360,6 +376,12 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
         mListener.onError(e);
         mNativeVideoProgressRunnable.requestStop();
     }
+
+    @Override
+    public void onPositionDiscontinuity() {}
+
+    @Override
+    public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {}
 
     /**
      * Handles forwarding the user to the specified click through url. Also, fires all unfired
@@ -400,28 +422,43 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
 
     private void preparePlayer() {
         if (mExoPlayer == null) {
-            mExoPlayer = mExoPlayerFactory.newInstance(2, 1000, 5000);
+            mVideoRenderer = new MediaCodecVideoRenderer(mContext,
+                    MediaCodecSelector.DEFAULT, 0, mHandler, null, 10);
+            mAudioRenderer = new MediaCodecAudioRenderer(MediaCodecSelector.DEFAULT);
+            final DefaultAllocator allocator = new DefaultAllocator(true, BUFFER_SEGMENT_SIZE,
+                    BUFFER_SEGMENT_COUNT);
+
+            mExoPlayer = mMoPubExoPlayerFactory.newInstance(
+                    new Renderer[] {mVideoRenderer, mAudioRenderer},
+                    new DefaultTrackSelector(),
+                    new DefaultLoadControl(allocator));
+
             mNativeVideoProgressRunnable.setExoPlayer(mExoPlayer);
             mExoPlayer.addListener(this);
 
-            // Set up data sources
-            final Allocator allocator = new DefaultAllocator(BUFFER_SEGMENT_SIZE);
-            final Extractor extractor = new Mp4Extractor();
+            final DataSource.Factory dataSourceFactory = new DataSource.Factory() {
+                @Override
+                public DataSource createDataSource() {
+                    return new HttpDiskCompositeDataSource(mContext, "exo_demo", mEventDetails);
+                }
+            };
 
-            final DataSource httpSource = new HttpDiskCompositeDataSource(mContext, "exo_demo",
-                    mEventDetails);
+            final ExtractorsFactory extractorsFactory = new ExtractorsFactory() {
+                @Override
+                public Extractor[] createExtractors() {
+                    return new Extractor[] {new Mp4Extractor()};
+                }
+            };
 
-            final String videoUrl = mVastVideoConfig.getNetworkMediaFileUrl();
+            final MediaSource mediaSource = new ExtractorMediaSource(
+                    Uri.parse(mVastVideoConfig.getNetworkMediaFileUrl()),
+                    dataSourceFactory,
+                    extractorsFactory,
+                    mHandler,
+                    null
+            );
 
-            final ExtractorSampleSource sampleSource = new ExtractorSampleSource(Uri.parse(videoUrl),
-                    httpSource, allocator, BUFFER_SEGMENT_SIZE * BUFFER_SEGMENT_COUNT, extractor);
-            mVideoTrackRenderer = new MediaCodecVideoTrackRenderer(mContext, sampleSource,
-                    MediaCodecSelector.DEFAULT,
-                    MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING, 0, mHandler, null,
-                    10);
-            mAudioTrackRenderer = new MediaCodecAudioTrackRenderer(sampleSource,
-                    MediaCodecSelector.DEFAULT);
-            mExoPlayer.prepare(mAudioTrackRenderer, mVideoTrackRenderer);
+            mExoPlayer.prepare(mediaSource);
             mNativeVideoProgressRunnable.startRepeating(50);
         }
 
@@ -447,8 +484,9 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
             return;
         }
 
-        mExoPlayer.sendMessage(
-                mAudioTrackRenderer, MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, volume);
+        mExoPlayer.sendMessages(
+                new ExoPlayer.ExoPlayerMessage(mAudioRenderer, C.MSG_SET_VOLUME, volume)
+        );
     }
 
     private void setExoSurface(@Nullable final Surface surface) {
@@ -456,17 +494,19 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
             return;
         }
 
-        mExoPlayer.sendMessage(
-                mVideoTrackRenderer, MediaCodecVideoTrackRenderer.MSG_SET_SURFACE, surface);
+        mExoPlayer.sendMessages(
+            new ExoPlayer.ExoPlayerMessage(mVideoRenderer, C.MSG_SET_SURFACE, surface)
+        );
     }
 
     /**
      * Created purely for the purpose of mocking to ease testing.
      */
     @VisibleForTesting
-    static class ExoPlayerFactory {
-        public ExoPlayer newInstance(int rendererCount, int minBufferMs, int minRebufferMs) {
-            return ExoPlayer.Factory.newInstance(rendererCount, minBufferMs, minRebufferMs);
+    static class MoPubExoPlayerFactory {
+        public ExoPlayer newInstance(@NonNull final Renderer[] renderers,
+                @NonNull final TrackSelector trackSelector, @Nullable LoadControl loadControl) {
+            return ExoPlayerFactory.newInstance(renderers, trackSelector, loadControl);
         }
     }
 
@@ -607,7 +647,7 @@ public class NativeVideoController implements ExoPlayer.Listener,OnAudioFocusCha
                     if (tracker.isTracked()) {
                         continue;
                     }
-                    trackingUrls.add(tracker.getTrackingUrl());
+                    trackingUrls.add(tracker.getContent());
                     tracker.setTracked();
                 }
                 TrackingRequest.makeTrackingHttpRequest(trackingUrls, mContext);

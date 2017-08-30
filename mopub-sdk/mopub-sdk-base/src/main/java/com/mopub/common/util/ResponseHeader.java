@@ -45,6 +45,10 @@ public enum ResponseHeader {
     // Internal Video Trackers
     VIDEO_TRACKERS("X-Video-Trackers"),
 
+    // Viewability fields
+    VIDEO_VIEWABILITY_TRACKERS("X-Video-Viewability-Trackers"),
+    DISABLE_VIEWABILITY("X-Disable-Viewability"),
+
     @Deprecated CUSTOM_SELECTOR("X-Customselector");
 
     private final String key;

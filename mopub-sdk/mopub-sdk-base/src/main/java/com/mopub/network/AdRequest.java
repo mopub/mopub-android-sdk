@@ -38,6 +38,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.mopub.common.ExternalViewabilitySessionManager.ViewabilityVendor;
 import static com.mopub.network.HeaderUtils.extractBooleanHeader;
 import static com.mopub.network.HeaderUtils.extractHeader;
 import static com.mopub.network.HeaderUtils.extractIntegerHeader;
@@ -108,6 +109,7 @@ public class AdRequest extends Request<AdResponse> {
         // error listener.
 
         Map<String, String> headers = networkResponse.headers;
+
         if (extractBooleanHeader(headers, ResponseHeader.WARMUP, false)) {
             return Response.error(new MoPubNetworkError("Ad Unit is warming up.", MoPubNetworkError.Reason.WARMING_UP));
         }
@@ -271,6 +273,23 @@ public class AdRequest extends Request<AdResponse> {
         final String videoTrackers = extractHeader(headers, ResponseHeader.VIDEO_TRACKERS);
         if (videoTrackers != null) {
             serverExtras.put(DataKeys.VIDEO_TRACKERS_KEY, videoTrackers);
+        }
+        if (AdType.REWARDED_VIDEO.equals(adTypeString) ||
+                (AdType.INTERSTITIAL.equals(adTypeString) &&
+                        FullAdType.VAST.equals(fullAdTypeString))) {
+            serverExtras.put(DataKeys.EXTERNAL_VIDEO_VIEWABILITY_TRACKERS_KEY,
+                    extractHeader(headers, ResponseHeader.VIDEO_VIEWABILITY_TRACKERS));
+        }
+
+        // Disable viewability vendors, if any
+        final String disabledViewabilityVendors = extractHeader(headers,
+                ResponseHeader.DISABLE_VIEWABILITY);
+        if (!TextUtils.isEmpty(disabledViewabilityVendors)) {
+            final ViewabilityVendor disabledVendors =
+                    ViewabilityVendor.fromKey(disabledViewabilityVendors);
+            if (disabledVendors != null) {
+                disabledVendors.disable();
+            }
         }
 
         builder.setServerExtras(serverExtras);

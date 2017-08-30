@@ -1,9 +1,12 @@
 package com.mopub.mobileads;
 
+import android.app.Activity;
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import com.mopub.common.AdReport;
 import com.mopub.common.DataKeys;
+import com.mopub.common.ExternalViewabilitySessionManager;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.mobileads.factories.HtmlBannerWebViewFactory;
 
@@ -14,8 +17,8 @@ import static com.mopub.mobileads.MoPubErrorCode.INTERNAL_ERROR;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_INVALID_STATE;
 
 public class HtmlBanner extends CustomEventBanner {
-
     private HtmlBannerWebView mHtmlBannerWebView;
+    @Nullable private ExternalViewabilitySessionManager mExternalViewabilitySessionManager;
 
     @Override
     protected void loadBanner(
@@ -48,11 +51,25 @@ public class HtmlBanner extends CustomEventBanner {
 
         mHtmlBannerWebView = HtmlBannerWebViewFactory.create(context, adReport, customEventBannerListener, isScrollable, redirectUrl, clickthroughUrl);
         AdViewController.setShouldHonorServerDimensions(mHtmlBannerWebView);
+
+        if (context instanceof Activity) {
+            final Activity activity = (Activity) context;
+            mExternalViewabilitySessionManager = new ExternalViewabilitySessionManager(activity);
+            mExternalViewabilitySessionManager.createDisplaySession(activity, mHtmlBannerWebView);
+        } else {
+            MoPubLog.d("Unable to start viewability session for HTML banner: Context provided was not an Activity.");
+        }
+
         mHtmlBannerWebView.loadHtmlResponse(htmlData);
     }
 
     @Override
     protected void onInvalidate() {
+        if (mExternalViewabilitySessionManager != null) {
+            mExternalViewabilitySessionManager.endDisplaySession();
+            mExternalViewabilitySessionManager = null;
+        }
+
         if (mHtmlBannerWebView != null) {
             mHtmlBannerWebView.destroy();
         }

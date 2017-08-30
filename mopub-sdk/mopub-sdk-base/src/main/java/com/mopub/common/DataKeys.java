@@ -32,6 +32,9 @@ public class DataKeys {
     public static final String REWARDED_AD_DURATION_KEY = "Rewarded-Ad-Duration";
     public static final String SHOULD_REWARD_ON_CLICK_KEY = "Should-Reward-On-Click";
 
+    // Viewability fields
+    public static final String EXTERNAL_VIDEO_VIEWABILITY_TRACKERS_KEY = "External-Video-Viewability-Trackers";
+
     /**
      * @deprecated as of 4.12, replaced by {@link #REWARDED_AD_CUSTOMER_ID_KEY}
      */

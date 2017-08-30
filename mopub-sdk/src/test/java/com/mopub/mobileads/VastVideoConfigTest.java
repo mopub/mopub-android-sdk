@@ -351,7 +351,7 @@ public class VastVideoConfigTest {
 
         final List<VastAbsoluteProgressTracker> trackers = subject.getAbsoluteTrackers();
         assertThat(trackers.size()).isEqualTo(1);
-        assertThat(trackers.get(0).getTrackingUrl()).isEqualTo("http://mopub.com/start/foo");
+        assertThat(trackers.get(0).getContent()).isEqualTo("http://mopub.com/start/foo");
     }
 
     @Test
@@ -503,18 +503,18 @@ public class VastVideoConfigTest {
 
     private void assertAbsoluteTracker(final VastAbsoluteProgressTracker actualTracker,
             final String expectedUrl, final int expectedMs) {
-        assertThat(actualTracker.getTrackingUrl()).isEqualTo(expectedUrl);
+        assertThat(actualTracker.getContent()).isEqualTo(expectedUrl);
         assertThat(actualTracker.getTrackingMilliseconds()).isEqualTo(expectedMs);
     }
 
     private void assertFractionalTracker(final VastFractionalProgressTracker actualTracker,
             final String expectedUrl, final float expectedFraction) {
-        assertThat(actualTracker.getTrackingUrl()).isEqualTo(expectedUrl);
+        assertThat(actualTracker.getContent()).isEqualTo(expectedUrl);
         assertThat(actualTracker.trackingFraction()).isEqualTo(expectedFraction);
     }
 
     private void assertTracker(final VastTracker actualTracker, final String expectedUrl) {
-        assertThat(actualTracker.getTrackingUrl()).isEqualTo(expectedUrl);
+        assertThat(actualTracker.getContent()).isEqualTo(expectedUrl);
     }
 
     private void addCompanionAds(VastVideoConfig subject) {

@@ -10,8 +10,10 @@ import com.mopub.common.util.Reflection;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import static com.mopub.common.ExternalViewabilitySessionManager.ViewabilityVendor;
+
 public class MoPub {
-    public static final String SDK_VERSION = "4.15.0";
+    public static final String SDK_VERSION = "4.16.0";
 
     public enum LocationAwareness { NORMAL, TRUNCATED, DISABLED }
 
@@ -173,6 +175,12 @@ public class MoPub {
 
     public static void onBackPressed(@NonNull final Activity activity) {
         MoPubLifecycleManager.getInstance(activity).onBackPressed(activity);
+    }
+
+    public static void disableViewability(@NonNull final ViewabilityVendor vendor) {
+        Preconditions.checkNotNull(vendor);
+
+        vendor.disable();
     }
 
     ////////// MoPub RewardedVideoControl methods //////////

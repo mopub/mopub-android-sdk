@@ -82,7 +82,7 @@ public class TrackingRequest extends Request<Void> {
             if (vastTracker.isTracked() && !vastTracker.isRepeatable()) {
                 continue;
             }
-            trackers.add(vastTracker.getTrackingUrl());
+            trackers.add(vastTracker.getContent());
             vastTracker.setTracked();
         }
 

@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.mopub.common.MoPubReward;
 import com.mopub.common.VisibleForTesting;
@@ -16,7 +17,7 @@ import java.util.Map;
 public class MoPubRewardedPlayable extends MoPubRewardedAd {
 
     @NonNull private static final String MOPUB_REWARDED_PLAYABLE_ID = "mopub_rewarded_playable_id";
-    @NonNull private RewardedMraidInterstitial mRewardedMraidInterstitial;
+    @Nullable private RewardedMraidInterstitial mRewardedMraidInterstitial;
 
     public MoPubRewardedPlayable() {
         mRewardedMraidInterstitial = new RewardedMraidInterstitial();
@@ -28,6 +29,10 @@ public class MoPubRewardedPlayable extends MoPubRewardedAd {
             @NonNull final Map<String, String> serverExtras) throws Exception {
         super.loadWithSdkInitialized(activity, localExtras, serverExtras);
 
+        if (mRewardedMraidInterstitial == null) {
+            MoPubLog.w("mRewardedMraidInterstitial is null. Has this class been invalidated?");
+            return;
+        }
         mRewardedMraidInterstitial.loadInterstitial(activity, new MoPubRewardedPlayableListener(),
                 localExtras, serverExtras);
     }
@@ -40,13 +45,16 @@ public class MoPubRewardedPlayable extends MoPubRewardedAd {
 
     @Override
     protected void onInvalidate() {
-        mRewardedMraidInterstitial.onInvalidate();
+        if (mRewardedMraidInterstitial != null) {
+            mRewardedMraidInterstitial.onInvalidate();
+        }
+        mRewardedMraidInterstitial = null;
         super.onInvalidate();
     }
 
     @Override
     protected void show() {
-        if (isReady()) {
+        if (isReady() && mRewardedMraidInterstitial != null) {
             MoPubLog.d("Showing MoPub rewarded playable.");
             mRewardedMraidInterstitial.showInterstitial();
         } else {
@@ -78,5 +86,12 @@ public class MoPubRewardedPlayable extends MoPubRewardedAd {
     void setRewardedMraidInterstitial(
             @NonNull final RewardedMraidInterstitial rewardedMraidInterstitial) {
         mRewardedMraidInterstitial = rewardedMraidInterstitial;
+    }
+
+    @Deprecated
+    @VisibleForTesting
+    @Nullable
+    RewardedMraidInterstitial getRewardedMraidInterstitial() {
+        return mRewardedMraidInterstitial;
     }
 }

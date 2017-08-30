@@ -132,6 +132,13 @@ class RewardedAdData {
         }
     }
 
+    void resetSelectedReward(@NonNull String moPubId) {
+        Preconditions.checkNotNull(moPubId);
+
+        // Clear any reward previously selected for this AdUnit
+        updateAdUnitRewardMapping(moPubId, null, null);
+    }
+
     @Nullable
     String getServerCompletionUrl(@Nullable final String moPubId) {
         if (TextUtils.isEmpty(moPubId)) {

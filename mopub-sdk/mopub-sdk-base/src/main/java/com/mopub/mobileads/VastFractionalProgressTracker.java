@@ -15,10 +15,15 @@ public class VastFractionalProgressTracker extends VastTracker implements Compar
     private static final long serialVersionUID = 0L;
     private final float mFraction;
 
-    public VastFractionalProgressTracker(@NonNull final String trackingUrl, float trackingFraction) {
-        super(trackingUrl);
+    public VastFractionalProgressTracker(@NonNull final MessageType messageType,
+            @NonNull final String content, float trackingFraction) {
+        super(messageType, content);
         Preconditions.checkArgument(trackingFraction >= 0);
         mFraction = trackingFraction;
+    }
+
+    public VastFractionalProgressTracker(@NonNull final String trackingUrl, float trackingFraction) {
+        this(MessageType.TRACKING_URL, trackingUrl, trackingFraction);
     }
 
     public float trackingFraction() {
@@ -35,6 +40,6 @@ public class VastFractionalProgressTracker extends VastTracker implements Compar
 
     @Override
     public String toString() {
-        return String.format(Locale.US, "%2f: %s", mFraction, mTrackingUrl);
+        return String.format(Locale.US, "%2f: %s", mFraction, getContent());
     }
 }

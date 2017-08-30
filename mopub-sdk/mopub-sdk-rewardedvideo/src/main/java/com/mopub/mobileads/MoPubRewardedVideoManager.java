@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
@@ -18,6 +19,7 @@ import com.mopub.common.DataKeys;
 import com.mopub.common.MediationSettings;
 import com.mopub.common.MoPubReward;
 import com.mopub.common.Preconditions;
+import com.mopub.common.SharedPreferencesHelper;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Json;
@@ -34,11 +36,15 @@ import com.mopub.volley.RequestQueue;
 import com.mopub.volley.VolleyError;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +58,8 @@ import static com.mopub.mobileads.MoPubErrorCode.EXPIRED;
  */
 public class MoPubRewardedVideoManager {
     private static MoPubRewardedVideoManager sInstance;
+    @NonNull private static SharedPreferences sCustomEventSharedPrefs;
+    private static final String CUSTOM_EVENT_PREF_NAME = "mopubCustomEventSettings";
     private static final int DEFAULT_LOAD_TIMEOUT = Constants.THIRTY_SECONDS_MILLIS;
     private static final String CURRENCIES_JSON_REWARDS_MAP_KEY = "rewards";
     private static final String CURRENCIES_JSON_REWARD_NAME_KEY = "name";
@@ -130,6 +138,68 @@ public class MoPubRewardedVideoManager {
         mTimeoutMap = new HashMap<String, Runnable>();
 
         mAdRequestStatus = new AdRequestStatusMapping();
+
+        sCustomEventSharedPrefs =
+                SharedPreferencesHelper.getSharedPreferences(mContext, CUSTOM_EVENT_PREF_NAME);
+    }
+
+    @NonNull
+    public static synchronized List<CustomEventRewardedVideo> initNetworks(
+            @NonNull final Activity mainActivity,
+            @NonNull final List<Class<? extends CustomEventRewardedVideo>> networksToInit) {
+        Preconditions.checkNotNull(mainActivity);
+        Preconditions.checkNotNull(networksToInit);
+
+        if (sInstance == null) {
+            logErrorNotInitialized();
+            return Collections.emptyList();
+        }
+
+        // List of networks that end up getting initialized.
+        List<CustomEventRewardedVideo> initializedNetworksList = new LinkedList<>();
+
+        // Fetch saved network init settings from SharedPrefs.
+        final Map<String, ?> networkInitSettings = sCustomEventSharedPrefs.getAll();
+        MoPubLog.d(String.format(Locale.US, "fetched init settings for %s networks: %s",
+                networkInitSettings.size(), networkInitSettings.keySet()));
+
+        // Dedupe array of networks to init.
+        final LinkedHashSet<Class<? extends CustomEventRewardedVideo>> uniqueNetworksToInit =
+                new LinkedHashSet<>(networksToInit);
+
+        for (Class<? extends CustomEventRewardedVideo> networkClass : uniqueNetworksToInit) {
+            final String networkClassName = networkClass.getName();
+            if (networkInitSettings.containsKey(networkClassName)) {
+                try {
+                    final String networkInitParamsJsonString =
+                            (String) networkInitSettings.get(networkClassName);
+
+                    final Map<String, String> networkInitParamsMap =
+                            Json.jsonStringToMap(networkInitParamsJsonString);
+
+                    final CustomEventRewardedVideo customEvent =
+                            Reflection.instantiateClassWithEmptyConstructor(
+                                    networkClassName,
+                                    CustomEventRewardedVideo.class);
+
+                    MoPubLog.d(String.format(Locale.US, "Initializing %s with params %s",
+                            networkClassName, networkInitParamsMap));
+
+                    customEvent.checkAndInitializeSdk(
+                            mainActivity,
+                            Collections.<String, Object>emptyMap(),
+                            networkInitParamsMap);
+
+                    initializedNetworksList.add(customEvent);
+                } catch (Exception e) {
+                    MoPubLog.e("Error fetching init settings for network " + networkClassName);
+                }
+            } else {
+                MoPubLog.d("Init settings not found for " + networkClassName);
+            }
+        }
+
+        return initializedNetworksList;
     }
 
     public static synchronized void init(@NonNull Activity mainActivity, MediationSettings... mediationSettings) {
@@ -448,6 +518,9 @@ public class MoPubRewardedVideoManager {
             // Clear any available rewards for this AdUnit.
             mRewardedAdData.resetAvailableRewards(adUnitId);
 
+            // Clear any reward previously selected for this AdUnit.
+            mRewardedAdData.resetSelectedReward(adUnitId);
+
             // If the new multi-currency header doesn't exist, fallback to parsing legacy headers
             // X-Rewarded-Video-Currency-Name and X-Rewarded-Video-Currency-Amount.
             if (TextUtils.isEmpty(rewardedCurrencies)) {
@@ -491,15 +564,35 @@ public class MoPubRewardedVideoManager {
             mCustomEventTimeoutHandler.postDelayed(timeout, timeoutMillis);
             mTimeoutMap.put(adUnitId, timeout);
 
+            // Fetch the server extras mappings.
+            final Map<String, String> serverExtras = adResponse.getServerExtras();
+
+            // If the custom event is a third-party rewarded video, the server extras mappings
+            // contain init parameters for this custom event class. Serialize the mappings into a
+            // JSON string, then update SharedPreferences keying on the custom event class name.
+            if (customEvent instanceof CustomEventRewardedVideo) {
+                final String serverExtrasJsonString = (new JSONObject(serverExtras)).toString();
+
+                MoPubLog.d(String.format(Locale.US,
+                        "Updating init settings for custom event %s with params %s",
+                        customEventClassName, serverExtrasJsonString));
+
+                sCustomEventSharedPrefs
+                        .edit()
+                        .putString(customEventClassName, serverExtrasJsonString)
+                        .apply();
+            }
+
             // Load custom event
             MoPubLog.d(String.format(Locale.US,
                     "Loading custom event with class name %s", customEventClassName));
-            customEvent.loadCustomEvent(mainActivity, localExtras, adResponse.getServerExtras());
+            customEvent.loadCustomEvent(mainActivity, localExtras, serverExtras);
 
             final String adNetworkId = customEvent.getAdNetworkId();
             mRewardedAdData.updateAdUnitCustomEventMapping(adUnitId, customEvent, adNetworkId);
         } catch (Exception e) {
-            MoPubLog.e(String.format(Locale.US, "Couldn't create custom event with class name %s", customEventClassName));
+            MoPubLog.e(String.format(Locale.US,
+                    "Couldn't create custom event with class name %s", customEventClassName));
             failover(adUnitId, MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
         }
     }
@@ -882,5 +975,13 @@ public class MoPubRewardedVideoManager {
             return sInstance.mAdRequestStatus;
         }
         return null;
+    }
+
+    @Deprecated
+    @VisibleForTesting
+    static void setCustomEventSharedPrefs(@NonNull SharedPreferences sharedPrefs) {
+        Preconditions.checkNotNull(sharedPrefs);
+
+        sCustomEventSharedPrefs = sharedPrefs;
     }
 }

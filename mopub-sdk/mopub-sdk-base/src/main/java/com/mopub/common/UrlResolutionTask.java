@@ -59,6 +59,11 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
                     return locationUrl;
                 }
 
+                // Do not resolve redirects if native browser will handle the URL.
+                if (UrlAction.OPEN_NATIVE_BROWSER.shouldTryHandlingUrl(Uri.parse(locationUrl))) {
+                    return locationUrl;
+                }
+
                 previousUrl = locationUrl;
                 locationUrl = getRedirectLocation(locationUrl);
                 redirectCount++;

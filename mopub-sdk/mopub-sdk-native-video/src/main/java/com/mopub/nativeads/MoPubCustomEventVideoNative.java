@@ -311,7 +311,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                 final VisibilityTrackingEvent vastImpressionTrackingEvent =
                         new VisibilityTrackingEvent();
                 vastImpressionTrackingEvent.strategy = new PayloadVisibilityStrategy(mContext,
-                        vastTracker.getTrackingUrl());
+                        vastTracker.getContent());
                 vastImpressionTrackingEvent.minimumPercentageVisible =
                         mVideoResponseHeaders.getImpressionMinVisiblePercent();
                 vastImpressionTrackingEvent.totalRequiredPlayTimeMs =
@@ -328,7 +328,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                         new VisibilityTrackingEvent();
                 vastVisibilityTrackingEvent.strategy =
                         new PayloadVisibilityStrategy(mContext,
-                                vastVideoViewabilityTracker.getTrackingUrl());
+                                vastVideoViewabilityTracker.getContent());
                 vastVisibilityTrackingEvent.minimumPercentageVisible =
                         vastVideoViewabilityTracker.getPercentViewable();
                 vastVisibilityTrackingEvent.totalRequiredPlayTimeMs =
@@ -622,8 +622,7 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
             } else if (mEnded) {
                 newState = VideoState.ENDED;
             } else {
-                if (mLatestVideoControllerState == NativeVideoController.STATE_PREPARING
-                        || mLatestVideoControllerState == NativeVideoController.STATE_IDLE) {
+                if (mLatestVideoControllerState == NativeVideoController.STATE_IDLE) {
                     newState = VideoState.LOADING;
                 } else if (mLatestVideoControllerState == NativeVideoController.STATE_BUFFERING) {
                     newState = VideoState.BUFFERING;

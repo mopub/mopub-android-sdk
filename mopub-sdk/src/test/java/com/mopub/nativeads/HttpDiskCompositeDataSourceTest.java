@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
 
-import com.google.android.exoplayer.upstream.DataSpec;
-import com.google.android.exoplayer.upstream.HttpDataSource;
+import com.google.android.exoplayer2.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.mopub.common.CacheService;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;

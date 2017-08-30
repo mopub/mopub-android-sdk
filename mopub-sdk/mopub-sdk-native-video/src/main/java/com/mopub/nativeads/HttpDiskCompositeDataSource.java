@@ -1,14 +1,15 @@
 package com.mopub.nativeads;
 
 import android.content.Context;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
-import com.google.android.exoplayer.upstream.DataSource;
-import com.google.android.exoplayer.upstream.DataSpec;
-import com.google.android.exoplayer.upstream.DefaultHttpDataSource;
-import com.google.android.exoplayer.upstream.HttpDataSource;
+import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.mopub.common.CacheService;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
@@ -135,11 +136,7 @@ public class HttpDiskCompositeDataSource implements DataSource {
 
     public HttpDiskCompositeDataSource(@NonNull final Context context,
             @NonNull final String userAgent, @Nullable final EventDetails eventDetails) {
-        this(context, userAgent, eventDetails,
-                new DefaultHttpDataSource(userAgent, null, null,
-                        DefaultHttpDataSource.DEFAULT_CONNECT_TIMEOUT_MILLIS,
-                        DefaultHttpDataSource.DEFAULT_READ_TIMEOUT_MILLIS,
-                        false));
+        this(context, userAgent, eventDetails, new DefaultHttpDataSource(userAgent, null));
     }
 
     @VisibleForTesting
@@ -277,6 +274,11 @@ public class HttpDiskCompositeDataSource implements DataSource {
             }
         }
         return null;
+    }
+
+    @Override
+    public Uri getUri() {
+        return mDataSpec != null ? mDataSpec.uri : null;
     }
 
     @Override

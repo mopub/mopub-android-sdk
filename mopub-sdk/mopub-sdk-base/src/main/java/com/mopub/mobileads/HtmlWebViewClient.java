@@ -7,8 +7,8 @@ import android.support.annotation.NonNull;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.mopub.common.UrlHandler;
 import com.mopub.common.UrlAction;
+import com.mopub.common.UrlHandler;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Intents;
 import com.mopub.exceptions.IntentNotResolvableException;
@@ -83,7 +83,10 @@ class HtmlWebViewClient extends WebViewClient {
 
                     @Override
                     public void onFailLoad() {
+                        mHtmlWebView.getSettings().setJavaScriptEnabled(false);
+                        mHtmlWebView.stopLoading();
                         mHtmlWebViewListener.onFailed(UNSPECIFIED);
+                        mHtmlWebView.getSettings().setJavaScriptEnabled(true);
                     }
                 })
                 .build().handleUrl(mContext, url, mHtmlWebView.wasClicked());

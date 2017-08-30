@@ -241,8 +241,7 @@ public class NativeVideoViewController extends BaseVideoViewController implement
         } else if (mEnded) {
             newState = VideoState.ENDED;
         } else {
-            if (mLatestVideoControllerState == NativeVideoController.STATE_PREPARING
-                    || mLatestVideoControllerState == NativeVideoController.STATE_IDLE) {
+            if (mLatestVideoControllerState == NativeVideoController.STATE_IDLE) {
                 newState = VideoState.LOADING;
             } else if (mLatestVideoControllerState == NativeVideoController.STATE_BUFFERING) {
                 newState = VideoState.BUFFERING;

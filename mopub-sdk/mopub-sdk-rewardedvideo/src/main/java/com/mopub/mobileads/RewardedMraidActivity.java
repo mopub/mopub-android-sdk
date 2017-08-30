@@ -120,7 +120,7 @@ public class RewardedMraidActivity extends MraidActivity {
             }
         });
 
-        mRewardedMraidController.loadContent(htmlData);
+        mRewardedMraidController.fillContent(getBroadcastIdentifier(), htmlData, null);
         return mRewardedMraidController.getAdContainer();
     }
 

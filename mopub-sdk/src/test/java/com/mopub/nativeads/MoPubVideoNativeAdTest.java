@@ -273,9 +273,9 @@ public class MoPubVideoNativeAdTest {
         assertThat(actualClickTrackers.size()).isEqualTo(2);
         final VastTracker headerClickTracker = actualClickTrackers.get(0);
         final VastTracker jsonClickTracker = actualClickTrackers.get(1);
-        assertThat(headerClickTracker.getTrackingUrl()).isEqualTo("header click tracker");
+        assertThat(headerClickTracker.getContent()).isEqualTo("header click tracker");
         assertThat(headerClickTracker.isRepeatable()).isFalse();
-        assertThat(jsonClickTracker.getTrackingUrl()).isEqualTo("json click tracker");
+        assertThat(jsonClickTracker.getContent()).isEqualTo("json click tracker");
         assertThat(jsonClickTracker.isRepeatable()).isFalse();
     }
 
@@ -293,7 +293,7 @@ public class MoPubVideoNativeAdTest {
         final List<VastTracker> actualClickTrackers = (List<VastTracker>) argumentCaptor.getValue();
         assertThat(actualClickTrackers.size()).isEqualTo(1);
         final VastTracker clickTracker = actualClickTrackers.get(0);
-        assertThat(clickTracker.getTrackingUrl()).isEqualTo("header click tracker");
+        assertThat(clickTracker.getContent()).isEqualTo("header click tracker");
         assertThat(clickTracker.isRepeatable()).isFalse();
     }
 
@@ -315,11 +315,11 @@ public class MoPubVideoNativeAdTest {
         final VastTracker jsonClickTracker1 = actualClickTrackers.get(0);
         final VastTracker jsonClickTracker2 = actualClickTrackers.get(1);
         final VastTracker headerClickTracker = actualClickTrackers.get(2);
-        assertThat(jsonClickTracker1.getTrackingUrl()).isEqualTo("json click tracker 1");
+        assertThat(jsonClickTracker1.getContent()).isEqualTo("json click tracker 1");
         assertThat(jsonClickTracker1.isRepeatable()).isFalse();
-        assertThat(jsonClickTracker2.getTrackingUrl()).isEqualTo("json click tracker 2");
+        assertThat(jsonClickTracker2.getContent()).isEqualTo("json click tracker 2");
         assertThat(jsonClickTracker2.isRepeatable()).isFalse();
-        assertThat(headerClickTracker.getTrackingUrl()).isEqualTo("header click tracker");
+        assertThat(headerClickTracker.getContent()).isEqualTo("header click tracker");
         assertThat(headerClickTracker.isRepeatable()).isFalse();
     }
 
@@ -340,9 +340,9 @@ public class MoPubVideoNativeAdTest {
         assertThat(actualClickTrackers.size()).isEqualTo(2);
         final VastTracker headerClickTracker = actualClickTrackers.get(0);
         final VastTracker jsonClickTracker = actualClickTrackers.get(1);
-        assertThat(headerClickTracker.getTrackingUrl()).isEqualTo("header click tracker");
+        assertThat(headerClickTracker.getContent()).isEqualTo("header click tracker");
         assertThat(headerClickTracker.isRepeatable()).isFalse();
-        assertThat(jsonClickTracker.getTrackingUrl()).isEqualTo("json click tracker");
+        assertThat(jsonClickTracker.getContent()).isEqualTo("json click tracker");
         assertThat(jsonClickTracker.isRepeatable()).isFalse();
     }
 
@@ -631,9 +631,6 @@ public class MoPubVideoNativeAdTest {
         subject.onVastVideoConfigurationPrepared(mockVastVideoConfig);
         subject.prepare(mockRootView);
         subject.render(mockMediaLayout);
-
-        subject.onStateChanged(true, NativeVideoController.STATE_PREPARING);
-        assertThat(subject.getVideoState()).isEqualTo(VideoState.LOADING);
 
         subject.onStateChanged(true, NativeVideoController.STATE_IDLE);
         assertThat(subject.getVideoState()).isEqualTo(VideoState.LOADING);
