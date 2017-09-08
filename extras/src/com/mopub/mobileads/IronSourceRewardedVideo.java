@@ -1,7 +1,5 @@
 package com.mopub.mobileads;
 
-import java.util.Arrays;
-
 import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,6 +15,7 @@ import com.mopub.common.LifecycleListener;
 import com.mopub.common.MoPub;
 import com.mopub.common.MoPubReward;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import static com.mopub.mobileads.MoPubRewardedVideoManager.onRewardedVideoClosed;
@@ -26,14 +25,14 @@ import static com.mopub.mobileads.MoPubRewardedVideoManager.onRewardedVideoLoadS
 import static com.mopub.mobileads.MoPubRewardedVideoManager.onRewardedVideoPlaybackError;
 import static com.mopub.mobileads.MoPubRewardedVideoManager.onRewardedVideoStarted;
 
-public class IronSourceRewardedVideo extends CustomEventRewardedAd implements LifecycleListener {
+public class IronSourceRewardedVideo extends CustomEventRewardedVideo {
 
     /**
      * private vars
      */
-    private static final String TAG = IronSourceRewardedVideo.class.getSimpleName();
+    private static final String TAG = "MoPub";
 
-    private static final String ADAPTER_VERSION = "2.5.2";
+    private static final String ADAPTER_VERSION = "2.5.3";
     private static final String ADAPTER_NAME = "Mopub";
     private static final String IRON_SOURCE_AD_NETWORK_ID = "ironsrc_id";
 
@@ -51,6 +50,26 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
         sIronSrcRvListener = new IronSourceRewardedVideoListener();
     }
 
+    @Nullable
+    @Override
+    protected LifecycleListener getLifecycleListener() {
+        return null;
+    }
+
+    @Override
+    protected boolean hasVideoAvailable() {
+        return IronSource.isRewardedVideoAvailable();
+    }
+
+    @Override
+    protected void showVideo() {
+        if (TextUtils.isEmpty(placementName)) {
+            IronSource.showRewardedVideo();
+        } else {
+            IronSource.showRewardedVideo(placementName);
+        }
+    }
+
     /**
      * Activity Lifecycle Helper Methods
      **/
@@ -60,12 +79,6 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
 
     public static void onActivityResumed(Activity activity) {
         IronSource.onResume(activity);
-    }
-
-    @Nullable
-    @Override
-    protected LifecycleListener getLifecycleListener() {
-        return this;
     }
 
     @NonNull
@@ -135,48 +148,6 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
         }
     }
 
-    //**************************** Mopub life cycle *******************************
-
-    @Override
-    public void onCreate(@NonNull Activity activity) {
-        // not used for ironSource sdk
-    }
-
-    @Override
-    public void onStart(@NonNull Activity activity) {
-        // not used for ironSource sdk
-    }
-
-    @Override
-    public void onPause(@NonNull Activity activity) {
-        IronSource.onPause(activity);
-    }
-
-    @Override
-    public void onResume(@NonNull Activity activity) {
-        IronSource.onResume(activity);
-    }
-
-    @Override
-    public void onRestart(@NonNull Activity activity) {
-        // not used for ironSource sdk
-    }
-
-    @Override
-    public void onStop(@NonNull Activity activity) {
-        // not used for ironSource sdk
-    }
-
-    @Override
-    public void onDestroy(@NonNull Activity activity) {
-        // not used for ironSource sdk
-    }
-
-    @Override
-    public void onBackPressed(@NonNull Activity activity) {
-        // not used for ironSource sdk
-    }
-
     //**************************** IronSource RewardedVideoListener Start *******************************
 
     private class IronSourceRewardedVideoListener implements RewardedVideoListener {
@@ -185,8 +156,6 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
         @Override
         public void onRewardedVideoAdOpened() {
             onLog("onRewardedVideoAdOpened");
-            rewardName = MoPubReward.NO_REWARD_LABEL;
-            rewardAmount = 0;
             onRewardedVideoStarted(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID);
         }
 
@@ -211,11 +180,13 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
             onLog("onVideoAvailabilityChanged");
         }
 
+        //Invoked when the video ad starts playing. (Available for: AdColony, Vungle, AppLovin, UnityAds)
         @Override
         public void onRewardedVideoAdStarted() {
             onLog("onVideoStart");
         }
 
+        //Invoked when the video ad finishes playing. (Available for: AdColony, Flurry, Vungle, AppLovin, UnityAds)
         @Override
         public void onRewardedVideoAdEnded() {
             onLog("onVideoEnd");
@@ -237,11 +208,16 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
         //Invoked when an Ad failed to display.
         @Override
         public void onRewardedVideoAdShowFailed(IronSourceError ironSourceError) {
-            setMopubErrorMessage(ironSourceError);
             onLog("onRewardedVideoShowFail");
+
+            onRewardedVideoPlaybackError(IronSourceRewardedVideo.class,
+                    IRON_SOURCE_AD_NETWORK_ID,
+                    getMoPubErrorMessage(ironSourceError));
         }
 
     }
+
+    //**************************** IronSource RewardedVideoListener End *******************************
 
     private void onLog(String message) {
         if (isTestEnabled) {
@@ -249,31 +225,26 @@ public class IronSourceRewardedVideo extends CustomEventRewardedAd implements Li
         }
     }
 
-    private void setMopubErrorMessage(IronSourceError ironSourceError) {
+    private MoPubErrorCode getMoPubErrorMessage(IronSourceError ironSourceError) {
+        if (ironSourceError == null) {
+            return MoPubErrorCode.INTERNAL_ERROR;
+        }
         switch (ironSourceError.getErrorCode()) {
             case IronSourceError.ERROR_CODE_NO_CONFIGURATION_AVAILABLE:
             case IronSourceError.ERROR_CODE_KEY_NOT_SET:
             case IronSourceError.ERROR_CODE_INVALID_KEY_VALUE:
             case IronSourceError.ERROR_CODE_INIT_FAILED:
-                onRewardedVideoPlaybackError(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID, MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
-                break;
+                return MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR;
             case IronSourceError.ERROR_CODE_USING_CACHED_CONFIGURATION:
-                onRewardedVideoPlaybackError(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID, MoPubErrorCode.VIDEO_CACHE_ERROR);
-                break;
+                return MoPubErrorCode.VIDEO_CACHE_ERROR;
             case IronSourceError.ERROR_CODE_NO_ADS_TO_SHOW:
-                onRewardedVideoPlaybackError(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID, MoPubErrorCode.NETWORK_NO_FILL);
-                break;
+                return MoPubErrorCode.NETWORK_NO_FILL;
             case IronSourceError.ERROR_CODE_GENERIC:
-                onRewardedVideoPlaybackError(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID, MoPubErrorCode.INTERNAL_ERROR);
-                break;
+                return MoPubErrorCode.INTERNAL_ERROR;
             case IronSourceError.ERROR_NO_INTERNET_CONNECTION:
-                onRewardedVideoPlaybackError(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID, MoPubErrorCode.NO_CONNECTION);
-                break;
+                return MoPubErrorCode.NO_CONNECTION;
             default:
-                onRewardedVideoPlaybackError(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID, MoPubErrorCode.NETWORK_TIMEOUT);
-                break;
+                return MoPubErrorCode.NETWORK_TIMEOUT;
         }
     }
-
-    //**************************** IronSource RewardedVideoListener End *******************************
 }
