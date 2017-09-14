@@ -174,16 +174,6 @@ public class AdColonyInterstitial extends CustomEventInterstitial {
                 }
 
                 @Override
-                public void onLeftApplication(@NonNull com.adcolony.sdk.AdColonyInterstitial ad) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mCustomEventInterstitialListener.onLeaveApplication();
-                        }
-                    });
-                }
-
-                @Override
                 public void onClicked(@NonNull com.adcolony.sdk.AdColonyInterstitial ad) {
                     mCustomEventInterstitialListener.onInterstitialClicked();
                 }
