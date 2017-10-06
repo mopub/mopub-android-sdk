@@ -60,6 +60,8 @@ public class Streams {
 
         try {
             stream.close();
+        } catch (java.lang.IllegalStateException e) {
+            // Unable to close the stream
         } catch (IOException e) {
             // Unable to close the stream
         }
