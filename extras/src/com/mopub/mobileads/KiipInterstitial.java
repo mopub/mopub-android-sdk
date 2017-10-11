@@ -20,7 +20,6 @@ import me.kiip.sdk.Poptart;
 public class KiipInterstitial extends CustomEventInterstitial {
 
     private CustomEventInterstitialListener mInterstitialListener;
-    private Kiip mKiipInst;
     private Context mAppContext;
     private Poptart mPoptart;
 
@@ -59,21 +58,32 @@ public class KiipInterstitial extends CustomEventInterstitial {
         mInterstitialListener = interstitialListener;
         mAppContext = context;
 
-        if (mKiipInst == null) {
+        if (Kiip.getInstance() == null) {
             if (serverExtras.containsKey("appKey") && serverExtras.containsKey("appSecret")) {
-                mKiipInst = Kiip.init((Application) context.getApplicationContext(),
+                Kiip.init((Application) context.getApplicationContext(),
                         serverExtras.get("appKey"),
                         serverExtras.get("appSecret"));
-                Kiip.setInstance(mKiipInst);
             }
         }
 
-        if (mKiipInst != null) {
+        if (Kiip.getInstance() != null) {
             if (serverExtras.containsKey("testMode")) {
-                mKiipInst.setTestMode(Boolean.getBoolean(serverExtras.get("testMode")));
+                Kiip.getInstance().setTestMode(Boolean.getBoolean(serverExtras.get("testMode")));
+            }
+            if (serverExtras.containsKey("email")) {
+                Kiip.getInstance().setEmail(serverExtras.get("email"));
+            }
+            if (serverExtras.containsKey("gender")) {
+                Kiip.getInstance().setEmail(serverExtras.get("gender"));
+            }
+            if (serverExtras.containsKey("birthday")) {
+                Kiip.getInstance().setEmail(serverExtras.get("birthday"));
+            }
+            if (serverExtras.containsKey("userId")) {
+                Kiip.getInstance().setUserId(serverExtras.get("userId"));
             }
             if (serverExtras.containsKey("momentId")) {
-                mKiipInst.saveMoment(serverExtras.get("momentId"), new Kiip.Callback() {
+                Kiip.getInstance().saveMoment(serverExtras.get("momentId"), new Kiip.Callback() {
                     @Override
                     public void onFailed(Kiip kiip, Exception e) {
                         Log.d("MoPub", "Kiip poptart failed to load.");
@@ -112,8 +122,7 @@ public class KiipInterstitial extends CustomEventInterstitial {
 
     @Override
     protected void onInvalidate() {
-        if (mKiipInst != null) {
-            mKiipInst = null;
+        if (Kiip.getInstance() != null) {
             mPoptart = null;
         }
     }
