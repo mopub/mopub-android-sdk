@@ -44,7 +44,7 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
         mHandler = new Handler();
         mMoPubInterstitial = moPubInterstitial;
         mBroadcastIdentifier = broadcastIdentifier;
-        mContext = mMoPubInterstitial.getActivity();
+        mContext = mMoPubInterstitial.getContext();
         mTimeout = new Runnable() {
             @Override
             public void run() {
