@@ -1,6 +1,7 @@
 package com.mopub.mobileads;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 
 import com.facebook.ads.Ad;
@@ -16,8 +17,26 @@ import java.util.Map;
 public class FacebookInterstitial extends CustomEventInterstitial implements InterstitialAdListener {
     public static final String PLACEMENT_ID_KEY = "placement_id";
 
+    private static final int TIMEOUT_BEFORE_EXPIRE = 59 * 60 * 1000; // 59 minutes (in milliseconds)
+
     private InterstitialAd mFacebookInterstitial;
     private CustomEventInterstitialListener mInterstitialListener;
+
+    private Handler mHandler;
+    private Runnable mExpireAtTimeout;
+
+    public FacebookInterstitial() {
+        mHandler = new Handler();
+        mExpireAtTimeout = new Runnable() {
+            @Override
+            public void run() {
+                if (mInterstitialListener != null) {
+                    Log.d("MoPub", "Going to expire Facebook interstitial ad because it will soon be too old to be considered for revenue generation purposes.");
+                    mInterstitialListener.onInterstitialFailed(MoPubErrorCode.EXPIRED);
+                }
+            }
+        };
+    }
 
     /**
      * CustomEventInterstitial implementation
@@ -43,9 +62,14 @@ public class FacebookInterstitial extends CustomEventInterstitial implements Int
         mFacebookInterstitial.loadAd();
     }
 
+    private void cancelExpiration() {
+        mHandler.removeCallbacks(mExpireAtTimeout);
+    }
+
     @Override
     protected void showInterstitial() {
         if (mFacebookInterstitial != null && mFacebookInterstitial.isAdLoaded()) {
+            cancelExpiration();
             mFacebookInterstitial.show();
         } else {
             Log.d("MoPub", "Tried to show a Facebook interstitial ad before it finished loading. Please try again.");
@@ -59,6 +83,7 @@ public class FacebookInterstitial extends CustomEventInterstitial implements Int
 
     @Override
     protected void onInvalidate() {
+        cancelExpiration();
         if (mFacebookInterstitial != null) {
             mFacebookInterstitial.destroy();
             mFacebookInterstitial = null;
@@ -72,12 +97,20 @@ public class FacebookInterstitial extends CustomEventInterstitial implements Int
     @Override
     public void onAdLoaded(final Ad ad) {
         Log.d("MoPub", "Facebook interstitial ad loaded successfully.");
+
+        // Fail with EXPIRED after TIMEOUT_BEFORE_EXPIRE:
+        // "Any ads shown after 60 minutes will not be considered for revenue generation purposes."
+        // Source: https://www.facebook.com/audiencenetwork/news-and-insights/required-changes-for-audience-network-publishers
+        cancelExpiration(); // Defensive call, in case this method is triggered more than once in a row
+        mHandler.postDelayed(mExpireAtTimeout, TIMEOUT_BEFORE_EXPIRE);
+
         mInterstitialListener.onInterstitialLoaded();
     }
 
     @Override
     public void onError(final Ad ad, final AdError error) {
         Log.d("MoPub", "Facebook interstitial ad failed to load.");
+        cancelExpiration();
         if (error == AdError.NO_FILL) {
             mInterstitialListener.onInterstitialFailed(MoPubErrorCode.NETWORK_NO_FILL);
         } else if (error == AdError.INTERNAL_ERROR) {
@@ -90,23 +123,27 @@ public class FacebookInterstitial extends CustomEventInterstitial implements Int
     @Override
     public void onInterstitialDisplayed(final Ad ad) {
         Log.d("MoPub", "Showing Facebook interstitial ad.");
+        cancelExpiration();
         mInterstitialListener.onInterstitialShown();
     }
 
     @Override
     public void onAdClicked(final Ad ad) {
         Log.d("MoPub", "Facebook interstitial ad clicked.");
+        cancelExpiration();
         mInterstitialListener.onInterstitialClicked();
     }
 
     @Override
     public void onLoggingImpression(Ad ad) {
         Log.d("MoPub", "Facebook interstitial ad logged impression.");
+        cancelExpiration();
     }
 
     @Override
     public void onInterstitialDismissed(final Ad ad) {
         Log.d("MoPub", "Facebook interstitial ad dismissed.");
+        cancelExpiration();
         mInterstitialListener.onInterstitialDismissed();
     }
 
