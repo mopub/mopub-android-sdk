@@ -4,11 +4,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.mopub.common.Preconditions;
 import com.mopub.common.UrlAction;
 import com.mopub.common.UrlHandler;
 import com.mopub.common.logging.MoPubLog;
@@ -85,8 +83,12 @@ class HtmlWebViewClient extends WebViewClient {
 
                     @Override
                     public void onFailLoad() {
-                        mHtmlWebView.stopLoading();
-                        mHtmlWebViewListener.onFailed(UNSPECIFIED);
+                        if (mHtmlWebView != null) {
+                            mHtmlWebView.stopLoading();
+                        }
+                        if (mHtmlWebViewListener != null) {
+                            mHtmlWebViewListener.onFailed(UNSPECIFIED);
+                        }
                     }
                 })
                 .build().handleUrl(mContext, url, mHtmlWebView.wasClicked());

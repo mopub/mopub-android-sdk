@@ -27,9 +27,7 @@ import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.mopub.common.event.BaseEvent.*;
 import static com.mopub.common.util.Drawables.BACKGROUND;
 import static com.mopub.common.util.Drawables.CLOSE;
-import static com.mopub.common.util.Drawables.LEFT_ARROW;
 import static com.mopub.common.util.Drawables.REFRESH;
-import static com.mopub.common.util.Drawables.RIGHT_ARROW;
 import static com.mopub.common.util.Drawables.UNLEFT_ARROW;
 import static com.mopub.common.util.Drawables.UNRIGHT_ARROW;
 
@@ -113,10 +111,12 @@ public class MoPubBrowser extends Activity {
 
         mWebView.setWebChromeClient(new WebChromeClient() {
             public void onProgressChanged(WebView webView, int progress) {
-                setTitle("Loading...");
-                setProgress(progress * 100);
-                if (progress == 100) {
-                    setTitle(webView.getUrl());
+                if (getWindow() != null && !isFinishing()) {
+                    setTitle("Loading...");
+                    setProgress(progress * 100);
+                    if (progress == 100) {
+                        setTitle(webView.getUrl());
+                    }
                 }
             }
         });
