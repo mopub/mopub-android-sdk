@@ -16,7 +16,7 @@ import com.mopub.common.util.Views;
 import java.util.Map;
 
 /**
- * Certified with Facebook Audience Network 4.26.0
+ * Certified with Facebook Audience Network 4.26.1
  */
 public class FacebookBanner extends CustomEventBanner implements AdListener {
     public static final String PLACEMENT_ID_KEY = "placement_id";

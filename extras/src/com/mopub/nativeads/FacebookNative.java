@@ -25,7 +25,7 @@ import static com.mopub.nativeads.NativeImageHelper.preCacheImages;
  * Video ads will only be shown if VIDEO_ENABLED is set to true or a server configuration
  * "video_enabled" flag is set to true. The server configuration will override the local
  * configuration.
- * Certified with Facebook Audience Network 4.26.0
+ * Certified with Facebook Audience Network 4.26.1
  */
 public class FacebookNative extends CustomEventNative {
     private static final String PLACEMENT_ID_KEY = "placement_id";

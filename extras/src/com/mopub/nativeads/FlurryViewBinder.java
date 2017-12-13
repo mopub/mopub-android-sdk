@@ -3,7 +3,7 @@ package com.mopub.nativeads;
 import android.support.annotation.NonNull;
 
 /**
- * Certified with Flurry 7.2.0
+ * Certified with Flurry 8.1.0
  */
 public class FlurryViewBinder {
     ViewBinder staticViewBinder;
