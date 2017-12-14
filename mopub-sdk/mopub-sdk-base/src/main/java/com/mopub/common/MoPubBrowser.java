@@ -113,10 +113,12 @@ public class MoPubBrowser extends Activity {
 
         mWebView.setWebChromeClient(new WebChromeClient() {
             public void onProgressChanged(WebView webView, int progress) {
-                setTitle("Loading...");
-                setProgress(progress * 100);
-                if (progress == 100) {
-                    setTitle(webView.getUrl());
+                if (getWindow() != null && !isFinishing()) {
+                    setTitle("Loading...");
+                    setProgress(progress * 100);
+                    if (progress == 100) {
+                        setTitle(webView.getUrl());
+                    }
                 }
             }
         });

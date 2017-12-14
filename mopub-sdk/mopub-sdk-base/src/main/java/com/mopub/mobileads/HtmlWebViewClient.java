@@ -83,8 +83,12 @@ class HtmlWebViewClient extends WebViewClient {
 
                     @Override
                     public void onFailLoad() {
-                        mHtmlWebView.stopLoading();
-                        mHtmlWebViewListener.onFailed(UNSPECIFIED);
+                        if (mHtmlWebView != null) {
+                            mHtmlWebView.stopLoading();
+                        }
+                        if (mHtmlWebViewListener != null) {
+                            mHtmlWebViewListener.onFailed(UNSPECIFIED);
+                        }
                     }
                 })
                 .build().handleUrl(mContext, url, mHtmlWebView.wasClicked());
