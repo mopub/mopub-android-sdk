@@ -6,13 +6,14 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 
 import com.mopub.common.logging.MoPubLog;
+import com.vungle.publisher.AdConfig;
 
 import java.util.Map;
 
 /**
  * A custom event for showing Vungle Interstitial.
  * <p>
- * Certified with Vungle SDK 5.3.0
+ * Certified with Vungle SDK 5.3.2
  */
 public class VungleInterstitial extends CustomEventInterstitial {
 
@@ -25,6 +26,14 @@ public class VungleInterstitial extends CustomEventInterstitial {
     public static final String PLACEMENT_ID_KEY = "pid";
     public static final String PLACEMENT_IDS_KEY = "pids";
 
+    /*
+     * These keys can be used with MoPubInterstitial.setLocalExtras()
+     * to pass additional parameters to the SDK.
+     */
+    public static final String SOUND_ENABLED_KEY = "vungleSoundEnabled";
+    public static final String FLEX_VIEW_CLOSE_TIME_KEY = "vungleFlexViewCloseTimeInSec";
+    public static final String ORDINAL_VIEW_COUNT_KEY = "vungleOrdinalViewCount";
+
     private static VungleRouter sVungleRouter;
     private final Handler mHandler;
     private CustomEventInterstitialListener mCustomEventInterstitialListener;
@@ -32,6 +41,7 @@ public class VungleInterstitial extends CustomEventInterstitial {
     private String mAppId;
     private String mPlacementId;
     private String[] mPlacementIds;
+    private AdConfig mAdConfig;
     private boolean mIsPlaying;
 
 
@@ -78,13 +88,26 @@ public class VungleInterstitial extends CustomEventInterstitial {
             sVungleRouter.initVungle(context, mAppId, mPlacementIds);
         }
 
+        if (localExtras != null) {
+            mAdConfig = new AdConfig();
+            Object isSoundEnabled = localExtras.get(SOUND_ENABLED_KEY);
+            if (isSoundEnabled instanceof Boolean)
+                mAdConfig.setSoundEnabled((Boolean) isSoundEnabled);
+            Object flexViewCloseTimeInSec = localExtras.get(FLEX_VIEW_CLOSE_TIME_KEY);
+            if (flexViewCloseTimeInSec instanceof Integer)
+                mAdConfig.setFlexViewCloseTimeInSec((Integer) flexViewCloseTimeInSec);
+            Object ordinalViewCount = localExtras.get(ORDINAL_VIEW_COUNT_KEY);
+            if (ordinalViewCount instanceof Integer)
+                mAdConfig.setOrdinalViewCount((Integer) ordinalViewCount);
+        }
+
         sVungleRouter.loadAdForPlacement(mPlacementId, mVungleRouterListener);
     }
 
     @Override
     protected void showInterstitial() {
         if (sVungleRouter.isAdPlayableForPlacement(mPlacementId)) {
-            sVungleRouter.playAdForPlacement(mPlacementId, null);
+            sVungleRouter.playAdForPlacement(mPlacementId, mAdConfig);
             mIsPlaying = true;
         } else {
             MoPubLog.d(INTERSTITIAL_TAG + "SDK tried to show a Vungle interstitial ad before it finished loading. Please try again.");
@@ -97,6 +120,7 @@ public class VungleInterstitial extends CustomEventInterstitial {
         MoPubLog.d(INTERSTITIAL_TAG + "onInvalidate is called for Placement ID:" + mPlacementId);
         sVungleRouter.removeRouterListener(mPlacementId);
         mVungleRouterListener = null;
+        mAdConfig = null;
     }
 
     // private functions

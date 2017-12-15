@@ -20,14 +20,14 @@ import java.util.Map;
 
 
 /**
- * Certified with Vungle SDK 5.3.0
+ * Certified with Vungle SDK 5.3.2
  */
 public class VungleRouter {
 
     private static final String ROUTER_TAG = "Vungle Router: ";
 
     // Version of the adapter, intended for Vungle internal use.
-    private static final String VERSION = "5.3.0";
+    private static final String VERSION = "5.3.2";
 
     private static VungleRouter instance = new VungleRouter();
     private enum SDKInitState {
