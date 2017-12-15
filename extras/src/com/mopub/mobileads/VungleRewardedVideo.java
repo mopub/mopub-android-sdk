@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * A custom event for showing Vungle rewarded videos.
  *
- * Certified with Vungle SDK 5.3.0
+ * Certified with Vungle SDK 5.3.2
  */
 public class VungleRewardedVideo extends CustomEventRewardedVideo {
 
@@ -230,6 +230,9 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         } else if (!TextUtils.isEmpty(mediationSettings.userId)) {
             adConfig.setIncentivizedUserId(mediationSettings.userId);
         }
+        adConfig.setSoundEnabled(mediationSettings.isSoundEnabled);
+        adConfig.setFlexViewCloseTimeInSec(mediationSettings.flexViewCloseTimeInSec);
+        adConfig.setOrdinalViewCount(mediationSettings.ordinalViewCount);
     }
 
 
@@ -315,6 +318,9 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
         @Nullable private final String body;
         @Nullable private final String closeButtonText;
         @Nullable private final String keepWatchingButtonText;
+        private final boolean isSoundEnabled;
+        private final int flexViewCloseTimeInSec;
+        private final int ordinalViewCount;
 
         public static class Builder {
             @Nullable private String userId;
@@ -322,6 +328,9 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
             @Nullable private String body;
             @Nullable private String closeButtonText;
             @Nullable private String keepWatchingButtonText;
+            private boolean isSoundEnabled = true;
+            private int flexViewCloseTimeInSec = 0;
+            private int ordinalViewCount = 0;
 
             public Builder withUserId(@NonNull final String userId) {
                 this.userId = userId;
@@ -348,6 +357,21 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
                 return this;
             }
 
+            public Builder withSoundEnabled(boolean isSoundEnabled) {
+                this.isSoundEnabled = isSoundEnabled;
+                return this;
+            }
+
+            public Builder withFlexViewCloseTimeInSec(int flexViewCloseTimeInSec) {
+                this.flexViewCloseTimeInSec = flexViewCloseTimeInSec;
+                return this;
+            }
+
+            public Builder withOrdinalViewCount(int ordinalViewCount) {
+                this.ordinalViewCount = ordinalViewCount;
+                return this;
+            }
+
             public VungleMediationSettings build() {
                 return new VungleMediationSettings(this);
             }
@@ -359,6 +383,9 @@ public class VungleRewardedVideo extends CustomEventRewardedVideo {
             this.body = builder.body;
             this.closeButtonText = builder.closeButtonText;
             this.keepWatchingButtonText = builder.keepWatchingButtonText;
+            this.isSoundEnabled = builder.isSoundEnabled;
+            this.flexViewCloseTimeInSec = builder.flexViewCloseTimeInSec;
+            this.ordinalViewCount = builder.ordinalViewCount;
         }
     }
 }
