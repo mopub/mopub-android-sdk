@@ -65,8 +65,12 @@ public class FlurryNativeAdRenderer implements
                 viewHolder.staticNativeViewHolder.iconImageView);
 
         if (ad.isVideoAd()) {
+            viewHolder.videoView.setVisibility(View.VISIBLE);
+            viewHolder.staticNativeViewHolder.mainImageView.setVisibility(View.GONE);
             ad.loadVideoIntoView(viewHolder.videoView);
         } else {
+            viewHolder.videoView.setVisibility(View.GONE);
+            viewHolder.staticNativeViewHolder.mainImageView.setVisibility(View.VISIBLE);
             NativeImageHelper.loadImageView(ad.getMainImageUrl(),
                     viewHolder.staticNativeViewHolder.mainImageView);
         }
