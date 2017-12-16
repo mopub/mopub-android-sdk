@@ -5,6 +5,7 @@ import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -248,8 +249,11 @@ public class GooglePlayServicesAdRenderer implements MoPubAdRenderer<GooglePlayS
         // Add the AdChoices icon to the container if one is provided by the publisher.
         if (staticNativeViewHolder.mAdChoicesIconContainer != null) {
             AdChoicesView adChoicesView = new AdChoicesView(contentAdView.getContext());
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.CENTER);
             staticNativeViewHolder.mAdChoicesIconContainer.removeAllViews();
-            staticNativeViewHolder.mAdChoicesIconContainer.addView(adChoicesView);
+            staticNativeViewHolder.mAdChoicesIconContainer.addView(adChoicesView, layoutParams);
             contentAdView.setAdChoicesView(adChoicesView);
         }
 
@@ -315,8 +319,11 @@ public class GooglePlayServicesAdRenderer implements MoPubAdRenderer<GooglePlayS
         // Add the AdChoices icon to the container if one is provided by the publisher.
         if (staticNativeViewHolder.mAdChoicesIconContainer != null) {
             AdChoicesView adChoicesView = new AdChoicesView(appInstallAdView.getContext());
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.CENTER);
             staticNativeViewHolder.mAdChoicesIconContainer.removeAllViews();
-            staticNativeViewHolder.mAdChoicesIconContainer.addView(adChoicesView);
+            staticNativeViewHolder.mAdChoicesIconContainer.addView(adChoicesView, layoutParams);
             appInstallAdView.setAdChoicesView(adChoicesView);
         }
 
