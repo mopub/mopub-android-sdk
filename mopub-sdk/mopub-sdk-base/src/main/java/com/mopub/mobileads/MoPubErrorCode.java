@@ -9,7 +9,7 @@ public enum MoPubErrorCode {
     NO_CONNECTION("No internet connection detected."),
 
     /** see {@link com.mopub.common.Constants#AD_EXPIRATION_DELAY } */
-    EXPIRED("Ad expired since it was not shown within 4 hours."),
+    EXPIRED("Ad expired since it was not shown within the time limit."),
 
     ADAPTER_NOT_FOUND("Unable to find Native Network or Custom Event adapter."),
     ADAPTER_CONFIGURATION_ERROR("Native Network or Custom Event adapter was configured incorrectly."),
