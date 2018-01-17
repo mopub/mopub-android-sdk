@@ -9,6 +9,7 @@ import com.mopub.common.MoPubReward;
 import com.mopub.common.Preconditions;
 import com.mopub.common.util.ReflectionTarget;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -23,6 +24,17 @@ public class MoPubRewardedVideos {
         Preconditions.checkNotNull(activity);
 
         MoPubRewardedVideoManager.init(activity, mediationSettings);
+    }
+
+    @ReflectionTarget
+    public static void initializeRewardedVideo(@NonNull Activity activity,
+            @NonNull List<Class<? extends CustomEventRewardedVideo>> networksToInit,
+            MediationSettings... mediationSettings) {
+        Preconditions.checkNotNull(activity);
+        Preconditions.checkNotNull(networksToInit);
+
+        MoPubRewardedVideoManager.init(activity, mediationSettings);
+        MoPubRewardedVideoManager.initNetworks(activity, networksToInit);
     }
 
     @ReflectionTarget
@@ -59,6 +71,13 @@ public class MoPubRewardedVideos {
         Preconditions.checkNotNull(adUnitId);
 
         MoPubRewardedVideoManager.showVideo(adUnitId);
+    }
+
+    @ReflectionTarget
+    public static void showRewardedVideo(@NonNull String adUnitId, @Nullable String customData) {
+        Preconditions.checkNotNull(adUnitId);
+
+        MoPubRewardedVideoManager.showVideo(adUnitId, customData);
     }
 
     @ReflectionTarget

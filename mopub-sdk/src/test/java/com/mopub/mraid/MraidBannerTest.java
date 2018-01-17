@@ -110,6 +110,16 @@ public class MraidBannerTest {
         verify(mockBannerListener).onBannerCollapsed();
     }
 
+    @Test
+    public void trackMpxAndThirdPartyImpressions_shouldFireJavascriptWebViewDidAppear() {
+        MraidListener mraidListener = captureMraidListener();
+        mraidListener.onLoaded(null);
+        verify(mockBannerListener).onBannerLoaded(any(View.class));
+
+        subject.trackMpxAndThirdPartyImpressions();
+        verify(mockMraidController).loadJavascript(eq("webviewDidAppear();"));
+    }
+
     private MraidListener captureMraidListener() {
         subject.loadBanner(context, mockBannerListener, localExtras, serverExtras);
         ArgumentCaptor<MraidListener> listenerCaptor = ArgumentCaptor.forClass(MraidListener.class);

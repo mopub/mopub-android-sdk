@@ -32,8 +32,8 @@ import static com.mopub.nativeads.BaseNativeAd.NativeEventListener;
  * When you have a {@link NativeAd} instance and wish to show a view you should:
  *
  * 1. Call {@link #createAdView(Context, ViewGroup)} to inflate a {@link View} that can show this ad.
- * 2. Call {@link #renderAdView(View)} with a compatible {@link View} to render the ad data into the view.
- * 3. Just before the ad is shown to the user, call {@link #prepare(View)}.
+ * 2. Just before the ad is shown to the user, call {@link #prepare(View)}.
+ * 3. Call {@link #renderAdView(View)} with a compatible {@link View} to render the ad data into the view.
  * 4. When the ad view is no longer shown to the user, call {@link #clear(View)}. You can later
  *    call {@link #prepare(View)} again if the ad will be shown to users.
  * 5. When the ad will never be shown again, call {@link #destroy()}.

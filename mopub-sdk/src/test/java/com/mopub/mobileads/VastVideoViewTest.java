@@ -15,7 +15,6 @@ import org.mockito.Mock;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 
-import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;

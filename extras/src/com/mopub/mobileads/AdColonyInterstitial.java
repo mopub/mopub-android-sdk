@@ -3,6 +3,8 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.adcolony.sdk.AdColony;
@@ -11,8 +13,12 @@ import com.adcolony.sdk.AdColonyInterstitialListener;
 import com.adcolony.sdk.AdColonyZone;
 import com.mopub.common.util.Json;
 
+import java.util.Arrays;
 import java.util.Map;
 
+/**
+ * Please reference the Supported Mediation Partner page at http://bit.ly/2mqsuFH for the latest version and ad format certifications.
+ */
 public class AdColonyInterstitial extends CustomEventInterstitial {
     private static final String TAG = "AdColonyInterstitial";
     /*
@@ -39,17 +45,21 @@ public class AdColonyInterstitial extends CustomEventInterstitial {
     private AdColonyInterstitialListener mAdColonyInterstitialListener;
     private final Handler mHandler;
     private com.adcolony.sdk.AdColonyInterstitial mAdColonyInterstitial;
+    private static String[] previousAdColonyAllZoneIds;
 
     public AdColonyInterstitial() {
         mHandler = new Handler();
     }
 
     @Override
-    protected void loadInterstitial(Context context,
-                                    CustomEventInterstitialListener customEventInterstitialListener,
-                                    Map<String, Object> localExtras,
-                                    Map<String, String> serverExtras) {
-        if (!(context instanceof Activity)) {
+    protected void loadInterstitial(@NonNull Context context,
+            @NonNull CustomEventInterstitialListener customEventInterstitialListener,
+            @Nullable Map<String, Object> localExtras,
+            @NonNull Map<String, String> serverExtras) {
+        if (context == null
+                || !(context instanceof Activity)
+                || customEventInterstitialListener == null
+                || serverExtras == null) {
             customEventInterstitialListener.onInterstitialFailed(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
             return;
         }
@@ -67,10 +77,15 @@ public class AdColonyInterstitial extends CustomEventInterstitial {
             allZoneIds = extractAllZoneIds(serverExtras);
             zoneId = serverExtras.get(ZONE_ID_KEY);
         }
-
+        AdColonyAppOptions adColonyAppOptions = AdColonyAppOptions.getMoPubAppOptions(clientOptions);
         mAdColonyInterstitialListener = getAdColonyInterstitialListener();
         if (!isAdColonyConfigured()) {
-            AdColony.configure((Activity) context, getAppOptions(clientOptions), appId, allZoneIds);
+            AdColony.configure((Activity) context, adColonyAppOptions, appId, allZoneIds);
+        } else if ((shouldReconfigure(previousAdColonyAllZoneIds, allZoneIds))) {
+            // Need to check the zone IDs sent from the MoPub portal and reconfigure if they are
+            // different than the zones we initially called AdColony.configure() with
+            AdColony.configure((Activity) context, adColonyAppOptions, appId, allZoneIds);
+            previousAdColonyAllZoneIds = allZoneIds;
         }
 
         AdColony.requestInterstitial(zoneId, mAdColonyInterstitialListener);
@@ -101,35 +116,6 @@ public class AdColonyInterstitial extends CustomEventInterstitial {
         }
     }
 
-    private AdColonyAppOptions getAppOptions(String clientOptions) {
-        if (clientOptions == null || clientOptions.isEmpty()) {
-            return null;
-        }
-        AdColonyAppOptions adColonyAppOptions = new AdColonyAppOptions();
-        String[] allOptions = clientOptions.split(",");
-        for (String option : allOptions) {
-            String optionNameAndValue[] = option.split(":");
-            if (optionNameAndValue.length == 2) {
-                switch (optionNameAndValue[0]) {
-                    case "store":
-                        adColonyAppOptions.setOriginStore(optionNameAndValue[1]);
-                        break;
-                    case "version":
-                        adColonyAppOptions.setAppVersion(optionNameAndValue[1]);
-                        break;
-                    default:
-                        Log.e(TAG, "AdColony client options in wrong format - please check your MoPub dashboard");
-                        return null;
-                }
-            } else {
-                Log.e(TAG, "AdColony client options in wrong format - please check your MoPub dashboard");
-                return null;
-            }
-        }
-
-        return adColonyAppOptions;
-    }
-
     private boolean isAdColonyConfigured() {
         return !AdColony.getSDKVersion().isEmpty();
     }
@@ -140,7 +126,7 @@ public class AdColonyInterstitial extends CustomEventInterstitial {
         } else {
             return new AdColonyInterstitialListener() {
                 @Override
-                public void onRequestFilled(com.adcolony.sdk.AdColonyInterstitial adColonyInterstitial) {
+                public void onRequestFilled(@NonNull com.adcolony.sdk.AdColonyInterstitial adColonyInterstitial) {
                     mAdColonyInterstitial = adColonyInterstitial;
                     Log.d(TAG, "AdColony interstitial ad has been successfully loaded.");
                     mHandler.post(new Runnable() {
@@ -152,7 +138,7 @@ public class AdColonyInterstitial extends CustomEventInterstitial {
                 }
 
                 @Override
-                public void onRequestNotFilled(AdColonyZone zone) {
+                public void onRequestNotFilled(@NonNull AdColonyZone zone) {
                     Log.d(TAG, "AdColony interstitial ad has no fill.");
                     mHandler.post(new Runnable() {
                         @Override
@@ -163,7 +149,7 @@ public class AdColonyInterstitial extends CustomEventInterstitial {
                 }
 
                 @Override
-                public void onClosed(com.adcolony.sdk.AdColonyInterstitial ad) {
+                public void onClosed(@NonNull com.adcolony.sdk.AdColonyInterstitial ad) {
                     Log.d(TAG, "AdColony interstitial ad has been dismissed.");
                     mHandler.post(new Runnable() {
                         @Override
@@ -174,7 +160,7 @@ public class AdColonyInterstitial extends CustomEventInterstitial {
                 }
 
                 @Override
-                public void onOpened(com.adcolony.sdk.AdColonyInterstitial ad) {
+                public void onOpened(@NonNull com.adcolony.sdk.AdColonyInterstitial ad) {
                     Log.d(TAG, "AdColony interstitial ad shown: " + ad.getZoneID());
                     mHandler.post(new Runnable() {
                         @Override
@@ -185,23 +171,13 @@ public class AdColonyInterstitial extends CustomEventInterstitial {
                 }
 
                 @Override
-                public void onExpiring(com.adcolony.sdk.AdColonyInterstitial ad) {
+                public void onExpiring(@NonNull com.adcolony.sdk.AdColonyInterstitial ad) {
                     Log.d(TAG, "AdColony interstitial ad is expiring; requesting new ad");
                     AdColony.requestInterstitial(ad.getZoneID(), mAdColonyInterstitialListener);
                 }
 
                 @Override
-                public void onLeftApplication(com.adcolony.sdk.AdColonyInterstitial ad) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mCustomEventInterstitialListener.onLeaveApplication();
-                        }
-                    });
-                }
-
-                @Override
-                public void onClicked(com.adcolony.sdk.AdColonyInterstitial ad) {
+                public void onClicked(@NonNull com.adcolony.sdk.AdColonyInterstitial ad) {
                     mCustomEventInterstitialListener.onInterstitialClicked();
                 }
             };
@@ -209,10 +185,28 @@ public class AdColonyInterstitial extends CustomEventInterstitial {
     }
 
     private boolean extrasAreValid(Map<String, String> extras) {
-        return extras.containsKey(CLIENT_OPTIONS_KEY)
+        return extras != null
+                && extras.containsKey(CLIENT_OPTIONS_KEY)
                 && extras.containsKey(APP_ID_KEY)
                 && extras.containsKey(ALL_ZONE_IDS_KEY)
                 && extras.containsKey(ZONE_ID_KEY);
+    }
+
+    private static boolean shouldReconfigure(String[] previousZones, String[] newZones) {
+        // If AdColony is configured already, but previousZones is null, then that means AdColony
+        // was configured with the AdColonyRewardedVideo adapter so attempt to configure with
+        // the ids in newZones. They will be ignored within the AdColony SDK if the zones are
+        // the same as the zones that the other adapter called AdColony.configure() with.
+        if (previousZones == null) {
+            return true;
+        } else if (newZones == null) {
+            return false;
+        } else if (previousZones.length != newZones.length) {
+            return true;
+        }
+        Arrays.sort(previousZones);
+        Arrays.sort(newZones);
+        return !Arrays.equals(previousZones, newZones);
     }
 
     private String[] extractAllZoneIds(Map<String, String> serverExtras) {
@@ -224,11 +218,5 @@ public class AdColonyInterstitial extends CustomEventInterstitial {
         }
 
         return result;
-    }
-
-    @Deprecated
-    // For testing
-    public static String getAdUnitId(MoPubInterstitial interstitial) {
-        return interstitial.getMoPubInterstitialView().getAdUnitId();
     }
 }

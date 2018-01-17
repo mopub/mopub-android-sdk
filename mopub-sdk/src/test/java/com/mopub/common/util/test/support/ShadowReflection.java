@@ -1,5 +1,7 @@
 package com.mopub.common.util.test.support;
 
+import android.support.annotation.NonNull;
+
 import com.mopub.common.util.Reflection;
 
 import org.robolectric.annotation.Implementation;
@@ -17,7 +19,7 @@ public class ShadowReflection {
     }
 
     @Implementation
-    public static boolean classFound(final String className) throws Exception {
+    public static boolean classFound(@NonNull final String className) {
         if (sNextClassNotFound) {
             sNextClassNotFound = false;
             return false;

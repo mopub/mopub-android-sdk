@@ -254,9 +254,6 @@ public class NativeVideoViewControllerTest {
 
     @Test
     public void onStateChanged_shouldAppropriatelySetVideoState() {
-        subject.onStateChanged(true, NativeVideoController.STATE_PREPARING);
-        assertThat(subject.getVideoState()).isEqualTo(VideoState.LOADING);
-
         subject.onStateChanged(true, NativeVideoController.STATE_IDLE);
         assertThat(subject.getVideoState()).isEqualTo(VideoState.LOADING);
 

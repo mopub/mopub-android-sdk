@@ -342,7 +342,7 @@ public class MoPubAdAdapter extends BaseAdapter {
                     mStreamAdPlacer.getOriginalPosition(position), view, viewGroup);
         }
         mViewPositionMap.put(resultView, position);
-        mVisibilityTracker.addView(resultView, 0);
+        mVisibilityTracker.addView(resultView, 0, null);
 
         return resultView;
     }

@@ -133,10 +133,6 @@ public class MraidVideoViewControllerTest {
     }
 
     @Test
-    public void onCompletionListener_withNullBaseVideoViewControllerListener_shouldNotCallOnFinish() throws Exception {
-    }
-
-    @Test
     public void onErrorListener_shouldReturnFalseAndNotCallBaseVideoControllerListenerOnFinish() throws Exception {
         initializeSubject();
         subject.onCreate();

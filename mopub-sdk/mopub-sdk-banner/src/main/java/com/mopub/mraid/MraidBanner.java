@@ -6,6 +6,7 @@ import android.support.annotation.Nullable;
 import android.view.View;
 
 import com.mopub.common.AdReport;
+import com.mopub.common.ExternalViewabilitySessionManager;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.mobileads.AdViewController;
@@ -17,19 +18,20 @@ import java.util.Map;
 
 import static com.mopub.common.DataKeys.AD_REPORT_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
+import static com.mopub.common.util.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
 import static com.mopub.mobileads.MoPubErrorCode.MRAID_LOAD_ERROR;
 
 class MraidBanner extends CustomEventBanner {
-
     @Nullable private MraidController mMraidController;
     @Nullable private CustomEventBannerListener mBannerListener;
     @Nullable private MraidWebViewDebugListener mDebugListener;
+    @Nullable private ExternalViewabilitySessionManager mExternalViewabilitySessionManager;
 
     @Override
-    protected void loadBanner(@NonNull Context context,
-                    @NonNull CustomEventBannerListener customEventBannerListener,
-                    @NonNull Map<String, Object> localExtras,
-                    @NonNull Map<String, String> serverExtras) {
+    protected void loadBanner(@NonNull final Context context,
+                    @NonNull final CustomEventBannerListener customEventBannerListener,
+                    @NonNull final Map<String, Object> localExtras,
+                    @NonNull final Map<String, String> serverExtras) {
         mBannerListener = customEventBannerListener;
 
         String htmlData;
@@ -80,18 +82,36 @@ class MraidBanner extends CustomEventBanner {
                 mBannerListener.onBannerCollapsed();
             }
         });
-        mMraidController.loadContent(htmlData);
+
+        mMraidController.fillContent(null, htmlData, new MraidController.MraidWebViewCacheListener() {
+            @Override
+            public void onReady(final @NonNull MraidBridge.MraidWebView webView,
+                    final @Nullable ExternalViewabilitySessionManager viewabilityManager) {
+                webView.getSettings().setJavaScriptEnabled(true);
+                mExternalViewabilitySessionManager = new ExternalViewabilitySessionManager(context);
+                mExternalViewabilitySessionManager.createDisplaySession(context, webView);
+            }
+        });
     }
 
     @Override
     protected void onInvalidate() {
+        if (mExternalViewabilitySessionManager != null) {
+            mExternalViewabilitySessionManager.endDisplaySession();
+            mExternalViewabilitySessionManager = null;
+        }
         if (mMraidController != null) {
             mMraidController.setMraidListener(null);
             mMraidController.destroy();
         }
     }
 
-    private boolean extrasAreValid(Map<String, String> serverExtras) {
+    @Override
+    protected void trackMpxAndThirdPartyImpressions() {
+        mMraidController.loadJavascript(WEB_VIEW_DID_APPEAR.getJavascript());
+    }
+
+    private boolean extrasAreValid(@NonNull final Map<String, String> serverExtras) {
         return serverExtras.containsKey(HTML_RESPONSE_BODY_KEY);
     }
 

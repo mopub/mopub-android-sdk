@@ -17,7 +17,7 @@ import static com.mopub.mobileads.MoPubErrorCode.NETWORK_NO_FILL;
 import static com.mopub.mobileads.MoPubErrorCode.UNSPECIFIED;
 
 /**
- * Certified with Flurry 7.2.0
+ * Certified with Flurry 8.1.0
  */
 class FlurryCustomEventInterstitial extends com.mopub.mobileads.CustomEventInterstitial {
     private static final String LOG_TAG = FlurryCustomEventInterstitial.class.getSimpleName();

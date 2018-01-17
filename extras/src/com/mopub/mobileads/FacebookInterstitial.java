@@ -11,8 +11,7 @@ import com.facebook.ads.InterstitialAdListener;
 import java.util.Map;
 
 /**
- * Please reference the Supported Mediation Partner page at http://bit.ly/2mqsuFH for the
- * latest version and ad format certifications.
+ * Certified with Facebook Audience Network 4.26.1
  */
 public class FacebookInterstitial extends CustomEventInterstitial implements InterstitialAdListener {
     public static final String PLACEMENT_ID_KEY = "placement_id";

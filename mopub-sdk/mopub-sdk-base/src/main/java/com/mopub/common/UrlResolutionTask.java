@@ -9,6 +9,7 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -59,6 +60,11 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
                     return locationUrl;
                 }
 
+                // Do not resolve redirects if native browser will handle the URL.
+                if (UrlAction.OPEN_NATIVE_BROWSER.shouldTryHandlingUrl(Uri.parse(locationUrl))) {
+                    return locationUrl;
+                }
+
                 previousUrl = locationUrl;
                 locationUrl = getRedirectLocation(locationUrl);
                 redirectCount++;
@@ -86,6 +92,14 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
             return resolveRedirectLocation(urlString, httpUrlConnection);
         } finally {
             if (httpUrlConnection != null) {
+                final InputStream is = httpUrlConnection.getInputStream();
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        MoPubLog.d("IOException when closing httpUrlConnection. Ignoring.");
+                    }
+                }
                 httpUrlConnection.disconnect();
             }
         }

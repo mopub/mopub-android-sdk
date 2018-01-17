@@ -54,6 +54,12 @@ class VisibilityTracker {
         int mMaxInvisiblePercent;
         long mAccessOrder;
         View mRootView;
+
+        /**
+         * If this number is set, then use this as the minimum amount of the view seen before it is
+         * considered visible. This is in real pixels.
+         */
+        @Nullable Integer mMinVisiblePx;
     }
 
     // Views that are being tracked, mapped to the min viewable percentage
@@ -135,15 +141,19 @@ class VisibilityTracker {
     /**
      * Tracks the given view for visibility.
      */
-    void addView(@NonNull final View view, final int minPercentageViewed) {
-        addView(view, view, minPercentageViewed);
+    void addView(@NonNull final View view, final int minPercentageViewed,
+            @Nullable final Integer minVisiblePx) {
+        addView(view, view, minPercentageViewed, minVisiblePx);
     }
 
-    void addView(@NonNull View rootView, @NonNull final View view, final int minPercentageViewed) {
-      addView(rootView, view, minPercentageViewed, minPercentageViewed);
+    void addView(@NonNull View rootView, @NonNull final View view, final int minPercentageViewed,
+            @Nullable final Integer minVisiblePx) {
+        addView(rootView, view, minPercentageViewed, minPercentageViewed, minVisiblePx);
     }
 
-    void addView(@NonNull View rootView, @NonNull final View view, final int minVisiblePercentageViewed, final int maxInvisiblePercentageViewed) {
+    void addView(@NonNull View rootView, @NonNull final View view,
+            final int minVisiblePercentageViewed, final int maxInvisiblePercentageViewed,
+            @Nullable final Integer minVisiblePx) {
         setViewTreeObserver(view.getContext(), view);
 
         // Find the view if already tracked
@@ -160,6 +170,7 @@ class VisibilityTracker {
         trackingInfo.mMinViewablePercent = minVisiblePercentageViewed;
         trackingInfo.mMaxInvisiblePercent = maxInvisiblePercent;
         trackingInfo.mAccessOrder = mAccessCounter;
+        trackingInfo.mMinVisiblePx = minVisiblePx;
 
         // Trim the number of tracked views to a reasonable number
         mAccessCounter++;
@@ -240,11 +251,14 @@ class VisibilityTracker {
                 final View view = entry.getKey();
                 final int minPercentageViewed = entry.getValue().mMinViewablePercent;
                 final int maxInvisiblePercent = entry.getValue().mMaxInvisiblePercent;
+                final Integer minVisiblePx = entry.getValue().mMinVisiblePx;
                 final View rootView = entry.getValue().mRootView;
 
-                if (mVisibilityChecker.isVisible(rootView, view, minPercentageViewed)) {
+                if (mVisibilityChecker.isVisible(rootView, view, minPercentageViewed,
+                        minVisiblePx)) {
                     mVisibleViews.add(view);
-                } else if (!mVisibilityChecker.isVisible(rootView, view, maxInvisiblePercent)){
+                } else if (!mVisibilityChecker.isVisible(rootView, view, maxInvisiblePercent,
+                        null)) {
                     mInvisibleViews.add(view);
                 }
             }
@@ -271,9 +285,11 @@ class VisibilityTracker {
         }
 
         /**
-         * Whether the view is at least certain % visible
+         * Whether the view is at least certain amount visible. If the min pixel amount is set,
+         * use that. Otherwise, use the min percentage visible.
          */
-        boolean isVisible(@Nullable final View rootView, @Nullable final View view, final int minPercentageViewed) {
+        boolean isVisible(@Nullable final View rootView, @Nullable final View view,
+                final int minPercentageViewed, @Nullable final Integer minVisiblePx) {
             // ListView & GridView both call detachFromParent() for views that can be recycled for
             // new data. This is one of the rare instances where a view will have a null parent for
             // an extended period of time and will not be the main window.
@@ -295,6 +311,10 @@ class VisibilityTracker {
 
             if (totalViewArea <= 0) {
                 return false;
+            }
+
+            if (minVisiblePx != null && minVisiblePx > 0) {
+                return visibleViewArea >= minVisiblePx;
             }
 
             return 100 * visibleViewArea >= minPercentageViewed * totalViewArea;

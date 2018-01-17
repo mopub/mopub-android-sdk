@@ -17,13 +17,13 @@ import java.util.Map;
 /**
  * A custom event for showing Unity rewarded videos.
  *
- * Certified with Unity Ads 2.1.0
+ * Certified with Unity Ads 2.1.1
  */
 public class UnityRewardedVideo extends CustomEventRewardedVideo {
     private static final String GAME_ID_KEY = "gameId";
     private static final LifecycleListener sLifecycleListener = new UnityLifecycleListener();
     private static final UnityAdsListener sUnityAdsListener = new UnityAdsListener();
-    private static String sPlacementId = "rewardedVideo";
+    private static String sPlacementId = "";
 
     @Nullable
     private Activity mLauncherActivity;

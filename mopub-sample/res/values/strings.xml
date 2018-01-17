@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">MoPub Sample App</string>
     <string name="keywords">Keywords (optional)</string>
+    <string name="custom_data">Custom Data (optional)</string>
     <string name="load_ad">Load Ad</string>
     <string name="refresh_ad">Refresh Ad</string>
     <string name="switch_layout">Switch Layout</string>

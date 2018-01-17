@@ -202,4 +202,24 @@ public class RewardedAdDataTest {
     public void resetAvailableRewards_withNullAdUnitId_shouldThrowNPE() throws Exception {
         subject.resetAvailableRewards(null);
     }
+
+    @Test
+    public void resetSelectedReward_shouldClearRewardPreviouslySelectedForAdUnit() {
+        subject.addAvailableReward("mopub_id", "currency1", "123");
+        MoPubReward reward = subject.getAvailableRewards("mopub_id").toArray(new MoPubReward[1])[0];
+        subject.selectReward("mopub_id", reward);
+
+        MoPubReward selectedReward = subject.getMoPubReward("mopub_id");
+        assertThat(selectedReward.getLabel()).isEqualTo("currency1");
+        assertThat(selectedReward.getAmount()).isEqualTo(123);
+
+        // Reset reward previously selected for AdUnit "mopub_id"
+        subject.resetSelectedReward("mopub_id");
+        assertThat(subject.getMoPubReward("mopub_id")).isNull();
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void resetSelectedReward_withNullAdUnitId_shouldThrowNPE() throws Exception {
+        subject.resetSelectedReward(null);
+    }
 }

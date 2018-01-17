@@ -51,7 +51,7 @@ public class BaseWebView extends WebView {
         super.destroy();
     }
 
-    protected void enablePlugins(final boolean enabled) {
+    public void enablePlugins(final boolean enabled) {
         // Android 4.3 and above has no concept of plugin states
         if (VERSION.SDK_INT >= VERSION_CODES.JELLY_BEAN_MR2) {
             return;

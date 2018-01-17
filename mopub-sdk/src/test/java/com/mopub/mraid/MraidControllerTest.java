@@ -7,18 +7,19 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.view.View;
 import android.widget.FrameLayout;
 
-import com.mopub.TestSdkHelper;
 import com.mopub.common.AdReport;
 import com.mopub.common.CloseableLayout.ClosePosition;
+import com.mopub.common.ExternalViewabilitySessionManager;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Utils;
 import com.mopub.mobileads.BaseVideoPlayerActivityTest;
 import com.mopub.mobileads.BuildConfig;
+import com.mopub.mobileads.Interstitial;
 import com.mopub.mobileads.MraidVideoPlayerActivity;
+import com.mopub.mobileads.WebViewCacheService;
 import com.mopub.mraid.MraidBridge.MraidBridgeListener;
 import com.mopub.mraid.MraidBridge.MraidWebView;
 import com.mopub.mraid.MraidController.MraidListener;
@@ -69,6 +70,8 @@ public class MraidControllerTest {
     @Mock private MraidListener mockMraidListener;
     @Mock private UseCustomCloseListener mockUseCustomCloseListener;
     @Mock private OrientationBroadcastReceiver mockOrientationBroadcastReceiver;
+    @Mock private MraidWebView mockWebView;
+    @Mock private ExternalViewabilitySessionManager mockViewabilityManager;
     @Captor private ArgumentCaptor<MraidBridgeListener> bridgeListenerCaptor;
     @Captor private ArgumentCaptor<MraidBridgeListener> twoPartBridgeListenerCaptor;
 
@@ -80,6 +83,7 @@ public class MraidControllerTest {
     @Before
     public void setUp() {
         ShadowApplication.setDisplayMetricsDensity(1.0f);
+        WebViewCacheService.clearAll();
 
         activity = spy(Robolectric.buildActivity(Activity.class).create().get());
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -106,7 +110,7 @@ public class MraidControllerTest {
         subject.setMraidListener(mockMraidListener);
         subject.setOrientationBroadcastReceiver(mockOrientationBroadcastReceiver);
         subject.setRootView(rootView);
-        subject.loadContent("fake_html_data");
+        subject.fillContent(null, "fake_html_data", null);
 
         verify(mockBridge).setMraidBridgeListener(bridgeListenerCaptor.capture());
         verify(mockTwoPartBridge).setMraidBridgeListener(twoPartBridgeListenerCaptor.capture());
@@ -209,7 +213,7 @@ public class MraidControllerTest {
         subject.setRootView(rootView);
 
         // Move to DEFAULT state
-        subject.loadContent("fake_html_data");
+        subject.fillContent(null, "fake_html_data", null);
         subject.handlePageLoad();
 
         subject.handleResize(100, 200, 0, 0, ClosePosition.TOP_RIGHT, true);
@@ -341,7 +345,7 @@ public class MraidControllerTest {
         subject.setRootView(rootView);
 
         // Move to DEFAULT state
-        subject.loadContent("fake_html_data");
+        subject.fillContent(null, "fake_html_data", null);
         subject.handlePageLoad();
 
         subject.handleExpand(null, false);
@@ -557,6 +561,40 @@ public class MraidControllerTest {
         subject.handleOpen(url);
 
         assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
+    }
+
+    @Test
+    public void fillContent_withCacheHit_shouldNotLoadHtmlData_shouldCallMraidListenerOnLoaded() {
+        subject = new MraidController(
+                activity, mockAdReport, PlacementType.INLINE,
+                mockBridge, mockTwoPartBridge, mockScreenMetricsWaiter);
+        subject.setMraidListener(mockMraidListener);
+        reset(mockMraidListener, mockBridge);
+        subject.setOrientationBroadcastReceiver(mockOrientationBroadcastReceiver);
+        subject.setRootView(rootView);
+        WebViewCacheService.storeWebViewConfig(broadcastIdentifier, new Interstitial() {},
+                mockWebView, mockViewabilityManager);
+
+        subject.fillContent(broadcastIdentifier, "fake_html_data", null);
+
+        verify(mockBridge, never()).setContentHtml("fake_html_data");
+        verify(mockMraidListener).onLoaded(subject.getAdContainer());
+    }
+
+    @Test
+    public void fillContent_withCacheMiss_shouldLoadHtmlData() {
+        subject = new MraidController(
+                activity, mockAdReport, PlacementType.INLINE,
+                mockBridge, mockTwoPartBridge, mockScreenMetricsWaiter);
+        subject.setMraidListener(mockMraidListener);
+        reset(mockMraidListener, mockBridge);
+        subject.setOrientationBroadcastReceiver(mockOrientationBroadcastReceiver);
+        subject.setRootView(rootView);
+
+        subject.fillContent(broadcastIdentifier, "fake_html_data", null);
+
+        verify(mockBridge).setContentHtml("fake_html_data");
+        verify(mockMraidListener, never()).onLoaded(any(View.class));
     }
 
     @Test

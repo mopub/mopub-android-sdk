@@ -39,7 +39,7 @@ public class VastExtensionXmlManagerTest {
         assertThat(tracker).isNotNull();
         assertThat(tracker.getViewablePlaytimeMS()).isEqualTo(2500);
         assertThat(tracker.getPercentViewable()).isEqualTo(50);
-        assertThat(tracker.getTrackingUrl()).isEqualTo("https://ad.server.com/impression/dot.gif");
+        assertThat(tracker.getContent()).isEqualTo("https://ad.server.com/impression/dot.gif");
     }
 
     @Test

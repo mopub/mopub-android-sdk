@@ -25,18 +25,20 @@ import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
 import com.mopub.common.AdReport;
+import com.mopub.common.ExternalViewabilitySessionManager;
+import com.mopub.common.UrlHandler;
 import com.mopub.common.CloseableLayout;
 import com.mopub.common.CloseableLayout.ClosePosition;
 import com.mopub.common.CloseableLayout.OnCloseListener;
 import com.mopub.common.Preconditions;
 import com.mopub.common.UrlAction;
-import com.mopub.common.UrlHandler;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.Dips;
 import com.mopub.common.util.Views;
 import com.mopub.mobileads.MraidVideoPlayerActivity;
+import com.mopub.mobileads.WebViewCacheService;
 import com.mopub.mobileads.util.WebViews;
 import com.mopub.mraid.MraidBridge.MraidBridgeListener;
 import com.mopub.mraid.MraidBridge.MraidWebView;
@@ -61,6 +63,10 @@ public class MraidController {
 
     public interface UseCustomCloseListener {
         public void useCustomCloseChanged(boolean useCustomClose);
+    }
+
+    public interface MraidWebViewCacheListener {
+        void onReady(final MraidWebView webView, final ExternalViewabilitySessionManager viewabilityManager);
     }
 
     /**
@@ -326,16 +332,69 @@ public class MraidController {
         mDebugListener = debugListener;
     }
 
-    public void loadContent(@NonNull String htmlData) {
-        Preconditions.checkState(mMraidWebView == null, "loadContent should only be called once");
+    /**
+     * Gets an MraidWebView and fills it with data. In the case that the MraidWebView is retrieved
+     * from the cache, this also notifies that the ad has been loaded. If the broadcast identifier
+     * is null or there is a cache miss, a new MraidWebView is created and is filled with htmlData.
+     * @param broadcastIdentifier The unique identifier of an interstitial. This can be null,
+     *                            especially when there is no interstitial.
+     * @param htmlData            The HTML of the ad. This will only be loaded if a cached WebView
+     *                            is not found.
+     * @param listener            Optional listener that (if non-null) is notified when an
+     *                            MraidWebView is loaded from the cache or created.
+     */
+    public void fillContent(@Nullable final Long broadcastIdentifier,
+            @NonNull final String htmlData,
+            @Nullable final MraidWebViewCacheListener listener) {
+        Preconditions.checkNotNull(htmlData, "htmlData cannot be null");
 
-        mMraidWebView = new MraidWebView(mContext);
+        final boolean cacheHit = hydrateMraidWebView(broadcastIdentifier, listener);
+        Preconditions.NoThrow.checkNotNull(mMraidWebView, "mMraidWebView cannot be null");
+
         mMraidBridge.attachView(mMraidWebView);
         mDefaultAdContainer.addView(mMraidWebView,
                 new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
-        // onPageLoaded gets fired once the html is loaded into the webView
-        mMraidBridge.setContentHtml(htmlData);
+        // If the WebView was retrieved from the cache, notify that the ad is already loaded.
+        if (cacheHit) {
+            handlePageLoad();
+        } else {
+            // Otherwise, load the content into the MraidWebView
+            mMraidBridge.setContentHtml(htmlData);
+        }
+    }
+
+    /**
+     * Gets and sets the MraidWebView. Returns true if the MraidWebView was from the cache, and
+     * false if a new one was created. If the broadcast identifier is {@code null}, then this
+     * will always return false and create a new MraidWebView.
+     *
+     * @param broadcastIdentifier The unique identifier associated with the MraidWebView in the cache.
+     * @param listener            Listener passed in from {@link #fillContent(Long, String, MraidWebViewCacheListener)}
+     * @return {@code true} if there was a cache hit, {@code false} if a new MraidWebView was created.
+     */
+    private boolean hydrateMraidWebView(@Nullable final Long broadcastIdentifier,
+            @Nullable final MraidWebViewCacheListener listener) {
+        if (broadcastIdentifier != null) {
+            final WebViewCacheService.Config config =
+                    WebViewCacheService.popWebViewConfig(broadcastIdentifier);
+            if (config != null && config.getWebView() instanceof MraidWebView) {
+                mMraidWebView = (MraidWebView) config.getWebView();
+                mMraidWebView.enablePlugins(true);
+
+                if (listener != null) {
+                    listener.onReady(mMraidWebView, config.getViewabilityManager());
+                }
+                return true;
+            }
+        }
+        MoPubLog.d("WebView cache miss. Creating a new MraidWebView.");
+        mMraidWebView = new MraidWebView(mContext);
+
+        if (listener != null) {
+            listener.onReady(mMraidWebView, null);
+        }
+        return false;
     }
 
     // onPageLoaded gets fired once the html is loaded into the webView.
@@ -438,7 +497,7 @@ public class MraidController {
     }
 
     @Nullable
-    private View getCurrentWebView() {
+    public MraidWebView getCurrentWebView() {
         return mTwoPartBridge.isAttached() ? mTwoPartWebView : mMraidWebView;
     }
 

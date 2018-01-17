@@ -15,7 +15,6 @@ import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -50,9 +49,18 @@ public class MoPubRewardedPlayableTest {
     }
 
     @Test
+    public void onInvalidate_withNullRewardedMraidActivity_shouldNotInvalidateRewardedMraidActivity() {
+        subject.setRewardedMraidInterstitial(null);
+
+        subject.onInvalidate();
+
+        verifyZeroInteractions(mockRewardedMraidInterstitial);
+    }
+
+    @Test
     public void loadWithSdkInitialized_withCorrectLocalExtras_shouldLoadVastVideoInterstitial() throws Exception {
         subject.setRewardedMraidInterstitial(mockRewardedMraidInterstitial);
-        final Map<String, Object> localExtras = new TreeMap<String, Object>();
+        final Map<String, Object> localExtras = new HashMap<String, Object>();
         final Map<String, String> serverExtras = new HashMap<String, String>();
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "currencyName");
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "10");
@@ -71,6 +79,25 @@ public class MoPubRewardedPlayableTest {
     }
 
     @Test
+    public void loadWithSdkInitialized_withAdUnitId_shouldSetAdNetworkId() throws Exception {
+        final Map<String, Object> localExtras = new HashMap<String, Object>();
+        localExtras.put(DataKeys.AD_UNIT_ID_KEY, "adUnit");
+
+        subject.loadWithSdkInitialized(activity, localExtras, new HashMap<String, String>());
+
+        assertThat(subject.getAdNetworkId()).isEqualTo("adUnit");
+    }
+
+    @Test
+    public void loadWithSdkInitialized_withNoAdUnitId_shouldUseDefaultAdNetworkId() throws Exception {
+        subject.loadWithSdkInitialized(activity, new HashMap<String, Object>(),
+                new HashMap<String, String>());
+
+        assertThat(subject.getAdNetworkId()).isEqualTo(
+                MoPubRewardedPlayable.MOPUB_REWARDED_PLAYABLE_ID);
+    }
+
+    @Test
     public void show_withMraidLoaded_shouldShowRewardedMraidInterstitial() {
         subject.setRewardedMraidInterstitial(mockRewardedMraidInterstitial);
         subject.setIsLoaded(true);
@@ -82,12 +109,25 @@ public class MoPubRewardedPlayableTest {
     }
 
     @Test
-    public void showVideo_withVideoNotLoaded_shouldDoNothing() {
+    public void show_withVideoNotLoaded_shouldDoNothing() {
         subject.setRewardedMraidInterstitial(mockRewardedMraidInterstitial);
         subject.setIsLoaded(false);
 
         subject.show();
 
         verifyZeroInteractions(mockRewardedMraidInterstitial);
+    }
+
+    @Test
+    public void show_whenInvalidated_shouldDoNothing() {
+        subject.setRewardedMraidInterstitial(mockRewardedMraidInterstitial);
+        subject.setIsLoaded(true);
+        subject.onInvalidate();
+
+        subject.show();
+
+        verify(mockRewardedMraidInterstitial).onInvalidate();
+        verifyNoMoreInteractions(mockRewardedMraidInterstitial);
+        assertThat(subject.getRewardedMraidInterstitial()).isNull();
     }
 }

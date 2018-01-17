@@ -14,12 +14,15 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.mopub.common.MoPubReward;
+import com.mopub.mobileads.CustomEventRewardedVideo;
 import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.mobileads.MoPubRewardedVideoListener;
 import com.mopub.mobileads.MoPubRewardedVideoManager.RequestParameters;
 import com.mopub.mobileads.MoPubRewardedVideos;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +33,10 @@ import static com.mopub.simpleadsdemo.Utils.logToast;
 public class RewardedVideoDetailFragment extends Fragment implements MoPubRewardedVideoListener {
 
     private static boolean sRewardedVideoInitialized;
+
+    // Include any custom event rewarded video classes, if available, for initialization.
+    private static final List<Class<? extends CustomEventRewardedVideo>> sNetworksToInit =
+            new LinkedList<>();
 
     @Nullable private Button mShowButton;
     @Nullable private String mAdUnitId;
@@ -43,10 +50,11 @@ public class RewardedVideoDetailFragment extends Fragment implements MoPubReward
                 MoPubSampleAdUnit.fromBundle(getArguments());
         final View view = inflater.inflate(R.layout.interstitial_detail_fragment, container, false);
         final DetailFragmentViewHolder views = DetailFragmentViewHolder.fromView(view);
+        views.mKeywordsField.setText(getArguments().getString(MoPubListFragment.KEYWORDS_KEY, ""));
         hideSoftKeyboard(views.mKeywordsField);
 
         if (!sRewardedVideoInitialized) {
-            MoPubRewardedVideos.initializeRewardedVideo(getActivity());
+            MoPubRewardedVideos.initializeRewardedVideo(getActivity(), sNetworksToInit);
             sRewardedVideoInitialized = true;
         }
         MoPubRewardedVideos.setRewardedVideoListener(this);
@@ -70,7 +78,7 @@ public class RewardedVideoDetailFragment extends Fragment implements MoPubReward
                 }
             }
         });
-        mShowButton = (Button) view.findViewById(R.id.interstitial_show_button);
+        mShowButton = views.mShowButton;
         mShowButton.setEnabled(false);
         mShowButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -78,9 +86,17 @@ public class RewardedVideoDetailFragment extends Fragment implements MoPubReward
                 if (mAdUnitId == null) {
                     return;
                 }
-                MoPubRewardedVideos.showRewardedVideo(mAdUnitId);
+
+                final String customData = (views.mCustomDataField != null)
+                        ? views.mCustomDataField.getText().toString()
+                        : null;
+
+                MoPubRewardedVideos.showRewardedVideo(mAdUnitId, customData);
             }
         });
+        if (views.mCustomDataField != null) {
+            views.mCustomDataField.setVisibility(View.VISIBLE);
+        }
 
         return view;
     }

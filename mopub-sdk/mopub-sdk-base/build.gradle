@@ -1,7 +1,23 @@
 apply from: '../shared-build.gradle'
 
+repositories {
+    flatDir {
+        dirs './libs'
+    }
+    maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
+}
+
 dependencies {
     compile 'com.mopub.volley:mopub-volley:1.1.0'
+
+    def avidEnabled = project.hasProperty("mopub.avidEnabled") ? project.getProperty("mopub.avidEnabled").toBoolean() : true
+    if (avidEnabled) {
+        compile('com.mopub:libAvid-mopub:3.6.4')
+    }
+    def moatEnabled = project.hasProperty("mopub.moatEnabled") ? project.getProperty("mopub.moatEnabled").toBoolean() : true
+    if (moatEnabled) {
+        compile 'com.moat.analytics.mobile.mpub:moat-mobile-app-kit:2.1.0'
+    }
 }
 
 project.description = 'MoPub Android SDK - Base'

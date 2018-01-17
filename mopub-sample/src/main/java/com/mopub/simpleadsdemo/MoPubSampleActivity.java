@@ -1,11 +1,12 @@
 package com.mopub.simpleadsdemo;
 
 import android.annotation.TargetApi;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
 import android.webkit.WebView;
 
 import com.mopub.common.MoPub;
@@ -37,6 +38,9 @@ public class MoPubSampleActivity extends FragmentActivity {
         }
     }
 
+    private MoPubListFragment mMoPubListFragment;
+    private Intent mDeeplinkIntent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,17 +67,35 @@ public class MoPubSampleActivity extends FragmentActivity {
         MoPub.setLocationAwareness(MoPub.LocationAwareness.TRUNCATED);
         MoPub.setLocationPrecision(4);
 
-        if (findViewById(R.id.fragment_container) != null) {
-            final MoPubListFragment listFragment = new MoPubListFragment();
-            listFragment.setArguments(getIntent().getExtras());
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            fragmentManager.beginTransaction()
-                    .add(R.id.fragment_container, listFragment)
-                    .commit();
-        }
+        createMoPubListFragment(getIntent());
 
         // Intercepts all logs including Level.FINEST so we can show a toast
         // that is not normally user-facing. This is only used for native ads.
         LoggingUtils.enableCanaryLogging(this);
+    }
+
+    private void createMoPubListFragment(@NonNull final Intent intent) {
+        if (findViewById(R.id.fragment_container) != null) {
+            mMoPubListFragment = new MoPubListFragment();
+            mMoPubListFragment.setArguments(intent.getExtras());
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, mMoPubListFragment).commit();
+
+            mDeeplinkIntent = intent;
+        }
+    }
+
+    @Override
+    public void onNewIntent(@NonNull final Intent intent) {
+        mDeeplinkIntent = intent;
+    }
+
+    @Override
+    public void onPostResume() {
+        super.onPostResume();
+        if (mMoPubListFragment != null && mDeeplinkIntent != null) {
+            mMoPubListFragment.addAdUnitViaDeeplink(mDeeplinkIntent.getData());
+            mDeeplinkIntent = null;
+        }
     }
 }

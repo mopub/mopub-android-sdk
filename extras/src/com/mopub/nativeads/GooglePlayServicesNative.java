@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * The {@link GooglePlayServicesNative} class is used to load native Google mobile ads.
  *
- * Compatible with version 11.0.2 of the Google Play Services SDK.
+ * Compatible with version 11.4.0 of the Google Play Services SDK.
  */
 public class GooglePlayServicesNative extends CustomEventNative {
     protected static final String TAG = "MoPubToAdMobNative";

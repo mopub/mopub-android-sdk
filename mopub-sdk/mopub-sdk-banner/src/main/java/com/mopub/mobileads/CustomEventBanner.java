@@ -37,7 +37,13 @@ public abstract class CustomEventBanner {
      * Called when a Custom Event is being invalidated or destroyed. Perform any final cleanup here.
      */
     protected abstract void onInvalidate();
-    
+
+    /*
+     * Fire MPX impression trackers and 3rd-party impression trackers from JS.
+     */
+    protected void trackMpxAndThirdPartyImpressions() {
+    }
+
     public interface CustomEventBannerListener {
         /*
          * Your custom event subclass must call this method when it successfully loads an ad and

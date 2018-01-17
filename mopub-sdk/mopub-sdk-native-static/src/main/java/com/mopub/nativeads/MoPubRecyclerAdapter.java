@@ -316,7 +316,6 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
             loadAds(adUnitId, requestParameters);
         } else {
             MoPubLog.w("This LayoutManager can't be refreshed.");
-            return;
         }
     }
 
@@ -420,7 +419,7 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
         }
 
         mViewPositionMap.put(holder.itemView, position);
-        mVisibilityTracker.addView(holder.itemView, 0);
+        mVisibilityTracker.addView(holder.itemView, 0, null);
 
         //noinspection unchecked
         mOriginalAdapter.onBindViewHolder(holder, mStreamAdPlacer.getOriginalPosition(position));

@@ -129,17 +129,19 @@ public class Networking {
             synchronized (Networking.class) {
                 userAgent = sUserAgent;
                 if (userAgent == null) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                        userAgent = WebSettings.getDefaultUserAgent(context);
-                    } else if (Looper.myLooper() == Looper.getMainLooper()){
-                        // WebViews may only be instantiated on the UI thread. If anything goes
-                        // wrong with getting a user agent, use the system-specific user agent.
-                        try {
+                    try {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                            userAgent = WebSettings.getDefaultUserAgent(context);
+                        } else if (Looper.myLooper() == Looper.getMainLooper()) {
+                            // WebViews may only be instantiated on the UI thread. If anything goes
+                            // wrong with getting a user agent, use the system-specific user agent.
                             userAgent = new WebView(context).getSettings().getUserAgentString();
-                        } catch (Exception e) {
+                        } else {
                             userAgent = DEFAULT_USER_AGENT;
                         }
-                    } else {
+                    } catch (Exception e) {
+                        // Some custom ROMs may fail to get a user agent. If that happens, return
+                        // the Android system user agent.
                         userAgent = DEFAULT_USER_AGENT;
                     }
                     sUserAgent = userAgent;

@@ -1,12 +1,9 @@
 package com.mopub.mobileads;
 
-import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
-import android.os.Build;
 import android.widget.ImageView;
 
-import com.mopub.TestSdkHelper;
 import com.mopub.common.test.support.SdkTestRunner;
 
 import org.junit.Before;

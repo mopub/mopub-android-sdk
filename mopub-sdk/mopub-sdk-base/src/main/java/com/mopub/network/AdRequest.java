@@ -38,6 +38,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.mopub.common.ExternalViewabilitySessionManager.ViewabilityVendor;
 import static com.mopub.network.HeaderUtils.extractBooleanHeader;
 import static com.mopub.network.HeaderUtils.extractHeader;
 import static com.mopub.network.HeaderUtils.extractIntegerHeader;
@@ -108,6 +109,7 @@ public class AdRequest extends Request<AdResponse> {
         // error listener.
 
         Map<String, String> headers = networkResponse.headers;
+
         if (extractBooleanHeader(headers, ResponseHeader.WARMUP, false)) {
             return Response.error(new MoPubNetworkError("Ad Unit is warming up.", MoPubNetworkError.Reason.WARMING_UP));
         }
@@ -236,16 +238,29 @@ public class AdRequest extends Request<AdResponse> {
             serverExtras.put(DataKeys.SCROLLABLE_KEY, Boolean.toString(isScrollable));
             serverExtras.put(DataKeys.CREATIVE_ORIENTATION_KEY, extractHeader(headers, ResponseHeader.ORIENTATION));
         }
+        if (AdType.STATIC_NATIVE.equals(adTypeString) || AdType.VIDEO_NATIVE.equals(adTypeString)) {
+            final String impressionMinVisiblePercent = extractPercentHeaderString(headers,
+                    ResponseHeader.IMPRESSION_MIN_VISIBLE_PERCENT);
+            final String impressionVisibleMS = extractHeader(headers,
+                    ResponseHeader.IMPRESSION_VISIBLE_MS);
+            final String impressionMinVisiblePx = extractHeader(headers,
+                    ResponseHeader.IMPRESSION_MIN_VISIBLE_PX);
+            if (!TextUtils.isEmpty(impressionMinVisiblePercent)) {
+                serverExtras.put(DataKeys.IMPRESSION_MIN_VISIBLE_PERCENT,
+                        impressionMinVisiblePercent);
+            }
+            if (!TextUtils.isEmpty(impressionVisibleMS)) {
+                serverExtras.put(DataKeys.IMPRESSION_VISIBLE_MS, impressionVisibleMS);
+            }
+            if (!TextUtils.isEmpty(impressionMinVisiblePx)) {
+                serverExtras.put(DataKeys.IMPRESSION_MIN_VISIBLE_PX, impressionMinVisiblePx);
+            }
+        }
         if (AdType.VIDEO_NATIVE.equals(adTypeString)) {
             serverExtras.put(DataKeys.PLAY_VISIBLE_PERCENT,
                     extractPercentHeaderString(headers, ResponseHeader.PLAY_VISIBLE_PERCENT));
             serverExtras.put(DataKeys.PAUSE_VISIBLE_PERCENT,
                     extractPercentHeaderString(headers, ResponseHeader.PAUSE_VISIBLE_PERCENT));
-            serverExtras.put(DataKeys.IMPRESSION_MIN_VISIBLE_PERCENT,
-                    extractPercentHeaderString(headers,
-                            ResponseHeader.IMPRESSION_MIN_VISIBLE_PERCENT));
-            serverExtras.put(DataKeys.IMPRESSION_VISIBLE_MS, extractHeader(headers,
-                    ResponseHeader.IMPRESSION_VISIBLE_MS));
             serverExtras.put(DataKeys.MAX_BUFFER_MS, extractHeader(headers,
                     ResponseHeader.MAX_BUFFER_MS));
 
@@ -271,6 +286,31 @@ public class AdRequest extends Request<AdResponse> {
         final String videoTrackers = extractHeader(headers, ResponseHeader.VIDEO_TRACKERS);
         if (videoTrackers != null) {
             serverExtras.put(DataKeys.VIDEO_TRACKERS_KEY, videoTrackers);
+        }
+        if (AdType.REWARDED_VIDEO.equals(adTypeString) ||
+                (AdType.INTERSTITIAL.equals(adTypeString) &&
+                        FullAdType.VAST.equals(fullAdTypeString))) {
+            serverExtras.put(DataKeys.EXTERNAL_VIDEO_VIEWABILITY_TRACKERS_KEY,
+                    extractHeader(headers, ResponseHeader.VIDEO_VIEWABILITY_TRACKERS));
+        }
+
+        // Banner imp tracking
+        if (AdFormat.BANNER.equals(mAdFormat)) {
+            serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS,
+                    extractHeader(headers, ResponseHeader.BANNER_IMPRESSION_MIN_VISIBLE_MS));
+            serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS,
+                    extractHeader(headers, ResponseHeader.BANNER_IMPRESSION_MIN_VISIBLE_DIPS));
+        }
+
+        // Disable viewability vendors, if any
+        final String disabledViewabilityVendors = extractHeader(headers,
+                ResponseHeader.DISABLE_VIEWABILITY);
+        if (!TextUtils.isEmpty(disabledViewabilityVendors)) {
+            final ViewabilityVendor disabledVendors =
+                    ViewabilityVendor.fromKey(disabledViewabilityVendors);
+            if (disabledVendors != null) {
+                disabledVendors.disable();
+            }
         }
 
         builder.setServerExtras(serverExtras);

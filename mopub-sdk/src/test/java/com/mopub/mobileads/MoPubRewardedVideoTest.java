@@ -15,7 +15,6 @@ import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import static com.mopub.common.Constants.FOUR_HOURS_MILLIS;
 import static com.mopub.mobileads.MoPubErrorCode.EXPIRED;
@@ -57,6 +56,8 @@ public class MoPubRewardedVideoTest {
 
     @Test
     public void onInvalidate_withNullVastVideoInterstitial_shouldNotInvalidateVastVideoInterstitial() {
+        subject.setRewardedVastVideoInterstitial(null);
+
         subject.onInvalidate();
 
         verifyZeroInteractions(mockRewardedVastVideoInterstitial);
@@ -65,12 +66,12 @@ public class MoPubRewardedVideoTest {
     @Test
     public void loadWithSdkInitialized_withLocalExtrasIncomplete_shouldLoadVastVideoInterstitial() throws Exception {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
-        subject.loadWithSdkInitialized(activity, new TreeMap<String, Object>(),
+        subject.loadWithSdkInitialized(activity, new HashMap<String, Object>(),
                 new HashMap<String, String>());
 
         verify(mockRewardedVastVideoInterstitial).loadInterstitial(eq(activity), any(
                         CustomEventInterstitial.CustomEventInterstitialListener.class),
-                eq(new TreeMap<String, Object>()),
+                eq(new HashMap<String, Object>()),
                 eq(new HashMap<String, String>()));
         verifyNoMoreInteractions(mockRewardedVastVideoInterstitial);
         assertThat(subject.getRewardedAdCurrencyName()).isEqualTo("");
@@ -80,7 +81,7 @@ public class MoPubRewardedVideoTest {
     @Test
     public void loadWithSdkInitialized_withRewardedVideoCurrencyNameIncorrectType_shouldLoadVastVideoInterstitial_shouldSetCurrencyNameToEmptyString() throws Exception {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
-        final Map<String, Object> localExtras = new TreeMap<String, Object>();
+        final Map<String, Object> localExtras = new HashMap<String, Object>();
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, new Object());
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "10");
 
@@ -98,7 +99,7 @@ public class MoPubRewardedVideoTest {
     @Test
     public void loadWithSdkInitialized_withRewardedVideoCurrencyAmountIncorrectType_shouldLoadVastVideoInterstitial_shouldSetCurrencyAmountToZero() throws Exception {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
-        final Map<String, Object> localExtras = new TreeMap<String, Object>();
+        final Map<String, Object> localExtras = new HashMap<String, Object>();
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "currencyName");
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, new Object());
 
@@ -116,7 +117,7 @@ public class MoPubRewardedVideoTest {
     @Test
     public void loadWithSdkInitialized_withRewardedVideoCurrencyAmountNotInteger_shouldLoadVastVideoInterstitial_shouldSetCurrencyAmountToZero() throws Exception {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
-        final Map<String, Object> localExtras = new TreeMap<String, Object>();
+        final Map<String, Object> localExtras = new HashMap<String, Object>();
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "currencyName");
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "foo");
 
@@ -134,7 +135,7 @@ public class MoPubRewardedVideoTest {
     @Test
     public void loadWithSdkInitialized_withRewardedVideoCurrencyAmountNegative_shouldLoadVastVideoInterstitial_shouldSetCurrencyAmountToZero() throws Exception {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
-        final Map<String, Object> localExtras = new TreeMap<String, Object>();
+        final Map<String, Object> localExtras = new HashMap<String, Object>();
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "currencyName");
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "-42");
 
@@ -152,7 +153,7 @@ public class MoPubRewardedVideoTest {
     @Test
     public void loadWithSdkInitialized_withCorrectLocalExtras_shouldLoadVastVideoInterstitial() throws Exception {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
-        final Map<String, Object> localExtras = new TreeMap<String, Object>();
+        final Map<String, Object> localExtras = new HashMap<String, Object>();
         final Map<String, String> serverExtras = new HashMap<String, String>();
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "currencyName");
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "10");
@@ -172,7 +173,7 @@ public class MoPubRewardedVideoTest {
         // We pass whatever was sent to this custom event to the app as long as it exists, but
         // if the currency value is negative, set it to 0
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
-        final Map<String, Object> localExtras = new TreeMap<String, Object>();
+        final Map<String, Object> localExtras = new HashMap<String, Object>();
         final Map<String, String> serverExtras = new HashMap<String, String>();
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "");
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "-10");
@@ -188,7 +189,25 @@ public class MoPubRewardedVideoTest {
     }
 
     @Test
-    public void showVideo_withVideoLoaded_shouldShowVastVideoInterstitial() {
+    public void loadWithSdkInitialized_withAdUnitId_shouldSetAdNetworkId() throws Exception {
+        final Map<String, Object> localExtras = new HashMap<String, Object>();
+        localExtras.put(DataKeys.AD_UNIT_ID_KEY, "adUnit");
+
+        subject.loadWithSdkInitialized(activity, localExtras, new HashMap<String, String>());
+
+        assertThat(subject.getAdNetworkId()).isEqualTo("adUnit");
+    }
+
+    @Test
+    public void loadWithSdkInitialized_withNoAdUnitId_shouldUseDefaultAdNetworkId() throws Exception {
+        subject.loadWithSdkInitialized(activity, new HashMap<String, Object>(),
+                new HashMap<String, String>());
+
+        assertThat(subject.getAdNetworkId()).isEqualTo(MoPubRewardedVideo.MOPUB_REWARDED_VIDEO_ID);
+    }
+
+    @Test
+    public void show_withVideoLoaded_shouldShowVastVideoInterstitial() {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         subject.setIsLoaded(true);
 
@@ -199,13 +218,26 @@ public class MoPubRewardedVideoTest {
     }
 
     @Test
-    public void showVideo_withVideoNotLoaded_shouldDoNothing() {
+    public void show_withVideoNotLoaded_shouldDoNothing() {
         subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
         subject.setIsLoaded(false);
 
         subject.show();
 
         verifyZeroInteractions(mockRewardedVastVideoInterstitial);
+    }
+
+    @Test
+    public void show_whenInvalidated_shouldDoNothing() {
+        subject.setRewardedVastVideoInterstitial(mockRewardedVastVideoInterstitial);
+        subject.setIsLoaded(true);
+        subject.onInvalidate();
+
+        subject.show();
+
+        verify(mockRewardedVastVideoInterstitial).onInvalidate();
+        verifyNoMoreInteractions(mockRewardedVastVideoInterstitial);
+        assertThat(subject.getRewardedVastVideoInterstitial()).isNull();
     }
 
     @Test

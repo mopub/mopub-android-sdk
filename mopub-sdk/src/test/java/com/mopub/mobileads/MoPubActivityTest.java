@@ -64,6 +64,7 @@ public class MoPubActivityTest {
 
     private HtmlInterstitialWebView htmlInterstitialWebView;
     private CustomEventInterstitialListener customEventInterstitialListener;
+    @Mock private HtmlInterstitial htmlInterstitial;
 
     private MoPubActivity subject;
 
@@ -98,7 +99,9 @@ public class MoPubActivityTest {
     @Test
     public void preRenderHtml_shouldPreloadTheHtml() throws Exception {
         String htmlData = "this is nonsense";
-        MoPubActivity.preRenderHtml(subject, mockAdReport, customEventInterstitialListener, htmlData);
+        MoPubActivity.preRenderHtml(htmlInterstitial, subject, mockAdReport,
+                customEventInterstitialListener, htmlData, true, "redirectUrl",
+                "clickthroughUrl", testBroadcastIdentifier);
 
         verify(htmlInterstitialWebView).enablePlugins(eq(false));
         verify(htmlInterstitialWebView).loadHtmlResponse(htmlData);
@@ -106,15 +109,18 @@ public class MoPubActivityTest {
 
     @Test
     public void preRenderHtml_shouldEnableJavascriptCachingForDummyWebView() {
-        MoPubActivity.preRenderHtml(subject, mockAdReport, customEventInterstitialListener,
-                "html_data");
+        MoPubActivity.preRenderHtml(htmlInterstitial, subject, mockAdReport,
+                customEventInterstitialListener, "html_data", true, "redirectUrl",
+                "clickthroughUrl", testBroadcastIdentifier);
 
         verify(htmlInterstitialWebView).enableJavascriptCaching();
     }
 
     @Test
     public void preRenderHtml_shouldHaveAWebViewClientThatForwardsFinishLoad() throws Exception {
-        MoPubActivity.preRenderHtml(subject, mockAdReport, customEventInterstitialListener, null);
+        MoPubActivity.preRenderHtml(htmlInterstitial, subject, mockAdReport,
+                customEventInterstitialListener, null, true, "redirectUrl",
+                "clickthroughUrl", testBroadcastIdentifier);
 
         ArgumentCaptor<WebViewClient> webViewClientCaptor = ArgumentCaptor.forClass(WebViewClient.class);
         verify(htmlInterstitialWebView).setWebViewClient(webViewClientCaptor.capture());
@@ -128,7 +134,9 @@ public class MoPubActivityTest {
 
     @Test
     public void preRenderHtml_shouldHaveAWebViewClientThatForwardsFailLoad() throws Exception {
-        MoPubActivity.preRenderHtml(subject, mockAdReport, customEventInterstitialListener, null);
+        MoPubActivity.preRenderHtml(htmlInterstitial, subject, mockAdReport,
+                customEventInterstitialListener, null, true, "redirectUrl",
+                "clickthroughUrl", testBroadcastIdentifier);
 
         ArgumentCaptor<WebViewClient> webViewClientCaptor = ArgumentCaptor.forClass(WebViewClient.class);
         verify(htmlInterstitialWebView).setWebViewClient(webViewClientCaptor.capture());
@@ -145,18 +153,6 @@ public class MoPubActivityTest {
         // onCreate is called above in #setup
 
         assertThat(getContentView().getChildCount()).isEqualTo(1);
-    }
-
-    @Test
-    public void onCreate_shouldLayoutWebView() throws Exception {
-        // onCreate is called in #setup
-
-        ArgumentCaptor<FrameLayout.LayoutParams> captor = ArgumentCaptor.forClass(FrameLayout.LayoutParams.class);
-        verify(htmlInterstitialWebView).setLayoutParams(captor.capture());
-        FrameLayout.LayoutParams actualLayoutParams = captor.getValue();
-
-        assertThat(actualLayoutParams.width).isEqualTo(FrameLayout.LayoutParams.MATCH_PARENT);
-        assertThat(actualLayoutParams.height).isEqualTo(FrameLayout.LayoutParams.MATCH_PARENT);
     }
 
     @Test
@@ -252,8 +248,9 @@ public class MoPubActivityTest {
     }
 
     @Test
-    public void broadcastingInterstitialListener_onInterstitialLoaded_shouldCallJavascriptWebViewDidAppear() throws Exception {
+    public void broadcastingInterstitialListener_onInterstitialLoaded_withWebViewCacheMiss_shouldCallJavascriptWebViewDidAppear() throws Exception {
         MoPubActivity.BroadcastingInterstitialListener broadcastingInterstitialListener = ((MoPubActivity) subject).new BroadcastingInterstitialListener();
+        WebViewCacheService.clearAll();
 
         broadcastingInterstitialListener.onInterstitialLoaded();
 

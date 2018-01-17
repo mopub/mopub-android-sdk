@@ -71,11 +71,12 @@ public class HtmlWebViewClientTest {
     }
 
     @Test
-    public void shouldOverrideUrlLoading_withMoPubFailLoad_shouldCallLoadFailUrl() throws Exception {
+    public void shouldOverrideUrlLoading_withMoPubFailLoad_shouldCallLoadFailUrl_shouldStopCurrentLoad() throws Exception {
         boolean didOverrideUrl = subject.shouldOverrideUrlLoading(htmlWebView, "mopub://failLoad");
 
         assertThat(didOverrideUrl).isTrue();
         verify(htmlWebViewListener).onFailed(UNSPECIFIED);
+        verify(htmlWebView).stopLoading();
     }
 
     @Test

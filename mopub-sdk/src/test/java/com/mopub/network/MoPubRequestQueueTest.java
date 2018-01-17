@@ -56,8 +56,7 @@ public class MoPubRequestQueueTest {
         final HurlStack.UrlRewriter urlRewriter = new PlayServicesUrlRewriter(clientMetadata.getDeviceId(), activity);
         // No Custom SSL Factory
 
-        final String userAgent = Networking.getUserAgent(activity.getApplicationContext());
-        HttpStack httpStack = new RequestQueueHttpStack(userAgent, urlRewriter);
+        HttpStack httpStack = new RequestQueueHttpStack("test_user_agent", urlRewriter);
 
         Network network = new BasicNetwork(httpStack);
         File volleyCacheDir = new File(activity.getCacheDir().getPath() + File.separator

@@ -18,6 +18,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -331,7 +332,8 @@ public class MoPubAdAdapterTest {
 
         assertThat(view).isEqualTo(mockAdView);
 
-        verify(mockVisibilityTracker).addView(eq(mockAdView), anyInt());
+        verify(mockVisibilityTracker).addView(eq(mockAdView), anyInt(),
+                Matchers.isNull(Integer.class));
     }
 
     @Test
@@ -340,7 +342,8 @@ public class MoPubAdAdapterTest {
 
         assertThat(view).isNotEqualTo(mockAdView);
 
-        verify(mockVisibilityTracker).addView(any(View.class), anyInt());
+        verify(mockVisibilityTracker).addView(any(View.class), anyInt(),
+                Matchers.isNull(Integer.class));
     }
 
     @Test

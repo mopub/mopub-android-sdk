@@ -1,3 +1,76 @@
+## Version 4.19.0 (December 11, 2017)
+- Updated Facebook Audience Network adapters to 4.26.1.
+- Updated Flurry adapters to 8.1.0.
+- Updated Millennial rewarded ads adapters to 6.6.1.
+- Fixed a potential crash for native video ads when attempting to blur the last video frame.
+- Fixed a duplicate on loaded callback for some rewarded ads.
+
+## Version 4.18.0 (November 1, 2017)
+- Updated the SDK compile version to 26. Android API 26 artifacts live in the new Google maven repository `maven { url 'https://maven.google.com' }`. See [this article](https://developer.android.com/about/versions/oreo/android-8.0-migration.html) for more information about using Android API 26.
+- Fixed MoPub in-app browser's back and forward button icons.
+- Updated AdMob adapters to 11.4.0.
+- Updated Chartboost adapters to 7.0.1.
+- Updated Facebook Audience Network adapters to 4.26.0.
+- Updated Millennial to 6.6.1.
+- Updated TapJoy adapters to 11.11.0.
+- Updated Unity Ads adapters to 2.1.1.
+- Updated Vungle adapters to 5.3.0.
+- Bug fixes.
+
+## Version 4.17.0 (September 27, 2017)
+- Rewarded Ads can now send up optional custom data through the server completion url. See `MoPubRewardedVideos#showRewardedVideo(String, String)`.
+- Updated Facebook native adapter to ignore clicks on whitespace as per Facebook policy.
+
+#### Version 4.16.1 (August 24, 2017)
+- Fixed issue where null javascript was being passed to AVID video sessions.
+
+## Version 4.16.0 (August 23, 2017)
+- Added support for viewability measurement from IAS (AVID library) and Moat.  
+  - **Important:** New dependencies were included in this release; please update your `build.gradle`'s repositories block to include `maven { url "https://s3.amazonaws.com/moat-sdk-builds" }`. Note that the AVID library is provided on JCenter, so no additional steps must be taken -- it will be included automatically.
+  - To disable this feature, see note below on [Disabling Viewability Measurement](#disableViewability).
+- Interstitials are now loaded offscreen instead of in a separate WebView.
+- Rewarded Videos have a new init method. See `MoPubRewardedVideos.initializeRewardedVideo(Activity, List<Class<? extends CustomEventRewardedVideo>>, MediationSettings...)`. Pass in a list of networks to initialize, and MoPub will initialize those networks with the settings from the previous ad request, persisted across app close.
+- Upgraded our ExoPlayer dependency to 2.4.4.
+- Bug fixes
+
+#### Disclosures
+MoPub v4.16 SDK integrates technology from our partners Integral Ad Science, Inc. (“IAS”) and Moat, Inc. (“Moat”) in order to support viewability measurement and other proprietary reporting that [IAS](https://integralads.com/capabilities/viewability/) and [Moat](https://moat.com/analytics) provide to their advertiser and publisher clients. You have the option to remove or disable this technology by following the [opt-out instructions](#disableViewability) below.  
+
+If you do not remove or disable IAS's and/or Moat’s technology in accordance with these instructions, you agree that IAS's [privacy policy](https://integralads.com/privacy-policy/) and [license](https://integralads.com/sdk-license-agreement) and Moat’s [privacy policy](https://moat.com/privacy),  [terms](https://moat.com/terms), and [license](https://moat.com/sdklicense.txt), respectively, apply to your integration of these partners' technologies into your application.
+
+#### <a name="disableViewability"></a>Disabling Viewability Measurement
+There are a few options for opting out of viewability measurement:  
+##### Strip out from JCenter Integration
+Normally, to add the MoPub SDK to your app via JCenter, your `build.gradle` would contain:
+
+```	
+dependencies {
+	compile('com.mopub:mopub-sdk:4.16.0@aar') {
+		transitive = true
+	}
+}
+```
+Update to the following to exclude one or both viewability vendors:
+
+```
+dependencies {
+	compile('com.mopub:mopub-sdk:4.16.0@aar') {
+		transitive = true
+		exclude module: 'libAvid-mopub' // To exclude AVID
+		exclude module: 'moat-mobile-app-kit' // To exclude Moat
+    }
+}
+```
+##### Strip out from GitHub integration
+Navigate to the `gradle.properties` file in your home directory (e.g. `~/.gradle/gradle.properties`) and include one or both of these lines to opt out of viewability measurement for AVID and/or Moat.  
+
+```
+mopub.avidEnabled=false
+mopub.moatEnabled=false
+```
+##### Disable via API
+If you would like to opt out of viewability measurement but do not want to modify the MoPub SDK, a function is provided for your convenience. At any point, call `MoPub.disableViewability(vendor);`. This method can can be called with any of the enum values available in `ExternalViewabilitySessionManager.ViewabilityVendor`: `AVID` will disable AVID but leave Moat enabled, `MOAT` will disable Moat but leave AVID enabled, and `ALL` will disable all viewability measurement.
+
 ## Version 4.15.0 (June 19, 2017)
 - The SDK now sends Advertising ID on Amazon devices when appropriate.
 - Fixed issue with Charles proxy in sample app for API 24+.
@@ -547,3 +620,4 @@ To allow users to play videos using the native video player:
   - Added support for custom events
   - Added network connectivity check before loading an ad
   - Added `OnAdPresentedOverlay` listener methods
+  

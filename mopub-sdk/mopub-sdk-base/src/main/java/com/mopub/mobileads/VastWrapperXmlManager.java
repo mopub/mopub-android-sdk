@@ -8,9 +8,6 @@ import com.mopub.mobileads.util.XmlUtils;
 
 import org.w3c.dom.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * This XML manager handles Wrapper nodes. Wrappers redirect to other VAST documents (which may
  * in turn redirect to more wrappers). Wrappers can also contain impression trackers,

@@ -24,7 +24,7 @@ import com.tapjoy.TapjoyLog;
 
 import java.util.Map;
 
-// Tested with Tapjoy SDK 11.8.2
+// Tested with Tapjoy SDK 11.11.0
 public class TapjoyInterstitial extends CustomEventInterstitial implements TJPlacementListener {
     private static final String TAG = TapjoyInterstitial.class.getSimpleName();
     private static final String TJC_MOPUB_NETWORK_CONSTANT = "mopub";

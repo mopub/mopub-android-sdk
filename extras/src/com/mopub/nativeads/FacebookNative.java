@@ -2,6 +2,7 @@ package com.mopub.nativeads;
 
 import android.content.Context;
 import android.view.View;
+import android.view.ViewGroup;
 
 import com.facebook.ads.Ad;
 import com.facebook.ads.AdError;
@@ -24,8 +25,7 @@ import static com.mopub.nativeads.NativeImageHelper.preCacheImages;
  * Video ads will only be shown if VIDEO_ENABLED is set to true or a server configuration
  * "video_enabled" flag is set to true. The server configuration will override the local
  * configuration.
- * Please reference the Supported Mediation Partner page at http://bit.ly/2mqsuFH for the
- * latest version and ad format certifications.
+ * Certified with Facebook Audience Network 4.26.1
  */
 public class FacebookNative extends CustomEventNative {
     private static final String PLACEMENT_ID_KEY = "placement_id";
@@ -125,6 +125,45 @@ public class FacebookNative extends CustomEventNative {
     private boolean extrasAreValid(final Map<String, String> serverExtras) {
         final String placementId = serverExtras.get(PLACEMENT_ID_KEY);
         return (placementId != null && placementId.length() > 0);
+    }
+
+    private static void registerChildViewsForInteraction(final View view, final NativeAd nativeAd) {
+        if (nativeAd == null) {
+            return;
+        }
+
+        final List<View> clickableViews = new ArrayList<>();
+        assembleChildViewsWithLimit(view, clickableViews, 10);
+
+        if (clickableViews.size() == 1) {
+            nativeAd.registerViewForInteraction(view);
+        } else {
+            nativeAd.registerViewForInteraction(view, clickableViews);
+        }
+    }
+
+    private static void assembleChildViewsWithLimit(final View view,
+            final List<View> clickableViews, final int limit) {
+        if (view == null) {
+            MoPubLog.d("View given is null. Ignoring");
+            return;
+        }
+
+        if (limit <= 0) {
+            MoPubLog.d("Depth limit reached; adding this view regardless of its type.");
+            clickableViews.add(view);
+            return;
+        }
+
+        if (view instanceof ViewGroup && ((ViewGroup) view).getChildCount() > 0) {
+            final ViewGroup vg = (ViewGroup) view;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                assembleChildViewsWithLimit(vg.getChildAt(i), clickableViews, limit - 1);
+            }
+            return;
+        }
+
+        clickableViews.add(view);
     }
 
     static class FacebookStaticNativeAd extends StaticNativeAd implements AdListener {
@@ -229,7 +268,7 @@ public class FacebookNative extends CustomEventNative {
         // BaseForwardingNativeAd
         @Override
         public void prepare(final View view) {
-            mNativeAd.registerViewForInteraction(view);
+            registerChildViewsForInteraction(view, mNativeAd);
         }
 
         @Override
@@ -413,7 +452,7 @@ public class FacebookNative extends CustomEventNative {
         // BaseForwardingNativeAd
         @Override
         public void prepare(final View view) {
-            mNativeAd.registerViewForInteraction(view);
+            registerChildViewsForInteraction(view, mNativeAd);
         }
 
         @Override

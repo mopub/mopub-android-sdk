@@ -7,8 +7,8 @@ import android.support.annotation.NonNull;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.mopub.common.UrlHandler;
 import com.mopub.common.UrlAction;
+import com.mopub.common.UrlHandler;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Intents;
 import com.mopub.exceptions.IntentNotResolvableException;
@@ -34,8 +34,8 @@ class HtmlWebViewClient extends WebViewClient {
 
     private final Context mContext;
     private final String mDspCreativeId;
-    private HtmlWebViewListener mHtmlWebViewListener;
-    private BaseHtmlWebView mHtmlWebView;
+    private final HtmlWebViewListener mHtmlWebViewListener;
+    private final BaseHtmlWebView mHtmlWebView;
     private final String mClickthroughUrl;
     private final String mRedirectUrl;
 
@@ -83,6 +83,7 @@ class HtmlWebViewClient extends WebViewClient {
 
                     @Override
                     public void onFailLoad() {
+                        mHtmlWebView.stopLoading();
                         mHtmlWebViewListener.onFailed(UNSPECIFIED);
                     }
                 })

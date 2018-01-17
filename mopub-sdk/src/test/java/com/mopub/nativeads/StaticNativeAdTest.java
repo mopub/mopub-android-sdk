@@ -33,6 +33,7 @@ public class StaticNativeAdTest {
         subject.addExtra("extraImage", "extraImageUrl");
         subject.addImpressionTracker("impressionUrl");
         subject.setImpressionMinTimeViewed(500);
+        subject.setImpressionMinPercentageViewed(10);
     }
 
     @Test
@@ -53,7 +54,7 @@ public class StaticNativeAdTest {
         assertThat(subject.getExtras()).hasSize(2);
         assertThat(subject.getImpressionTrackers()).containsOnly("impressionUrl");
         assertThat(subject.getImpressionMinTimeViewed()).isEqualTo(500);
-        assertThat(subject.getImpressionMinPercentageViewed()).isEqualTo(50);
+        assertThat(subject.getImpressionMinPercentageViewed()).isEqualTo(10);
     }
 
     @Test
@@ -69,6 +70,39 @@ public class StaticNativeAdTest {
 
         subject.setImpressionMinTimeViewed(-1);
         assertThat(subject.getImpressionMinTimeViewed()).isEqualTo(250);
+    }
+
+    @Test
+    public void setImpressionMinTimeViewed_whenTimeIs0_shouldNotSetTime() throws Exception {
+        subject.setImpressionMinTimeViewed(250);
+        assertThat(subject.getImpressionMinTimeViewed()).isEqualTo(250);
+
+        subject.setImpressionMinTimeViewed(0);
+        assertThat(subject.getImpressionMinTimeViewed()).isEqualTo(250);
+    }
+
+    @Test
+    public void setImpressionMinPercentageViewed_whenPercentIsLessThan0_shouldNotSetPercentageViewed() {
+        subject.setImpressionMinPercentageViewed(-1);
+        assertThat(subject.getImpressionMinPercentageViewed()).isEqualTo(10);
+    }
+
+    @Test
+    public void setImpressionMinPercentageViewed_whenPercentIs0_shouldSetPercentageViewed() {
+        subject.setImpressionMinPercentageViewed(0);
+        assertThat(subject.getImpressionMinPercentageViewed()).isEqualTo(0);
+    }
+
+    @Test
+    public void setImpressionMinPercentageViewed_whenPercentIsGreaterThan100_shouldNotSetPercentageViewed() {
+        subject.setImpressionMinPercentageViewed(101);
+        assertThat(subject.getImpressionMinPercentageViewed()).isEqualTo(10);
+    }
+
+    @Test
+    public void setImpressionMinPercentageViewed_whenPercentIsNormal_shouldSetPercentageViewed() {
+        subject.setImpressionMinPercentageViewed(35);
+        assertThat(subject.getImpressionMinPercentageViewed()).isEqualTo(35);
     }
 
     @Test

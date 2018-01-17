@@ -56,8 +56,10 @@ public class ImpressionTrackerTest {
 
         when(impressionInterface.getImpressionMinPercentageViewed()).thenReturn(50);
         when(impressionInterface.getImpressionMinTimeViewed()).thenReturn(1000);
+        when(impressionInterface.getImpressionMinVisiblePx()).thenReturn(null);
         when(impressionInterface2.getImpressionMinPercentageViewed()).thenReturn(50);
         when(impressionInterface2.getImpressionMinTimeViewed()).thenReturn(1000);
+        when(impressionInterface2.getImpressionMinVisiblePx()).thenReturn(null);
 
         // XXX We need this to ensure that our SystemClock starts
         ShadowSystemClock.uptimeMillis();
@@ -70,7 +72,7 @@ public class ImpressionTrackerTest {
         assertThat(trackedViews).hasSize(1);
         assertThat(trackedViews.get(view)).isEqualTo(impressionInterface);
         verify(visibilityTracker).addView(view, impressionInterface
-                .getImpressionMinPercentageViewed());
+                .getImpressionMinPercentageViewed(), null);
     }
 
     @Test
@@ -81,7 +83,8 @@ public class ImpressionTrackerTest {
 
         assertThat(trackedViews).hasSize(0);
         verify(visibilityTracker, never())
-                .addView(view, impressionInterface.getImpressionMinPercentageViewed());
+                .addView(view, impressionInterface.getImpressionMinPercentageViewed(),
+                        null);
     }
 
     @Test
@@ -90,7 +93,8 @@ public class ImpressionTrackerTest {
 
         assertThat(trackedViews).hasSize(1);
         assertThat(trackedViews.get(view)).isEqualTo(impressionInterface);
-        verify(visibilityTracker).addView(view, impressionInterface.getImpressionMinPercentageViewed());
+        verify(visibilityTracker).addView(view,
+                impressionInterface.getImpressionMinPercentageViewed(), null);
 
         pollingViews.put(view, timeStampWrapper);
 
@@ -100,7 +104,7 @@ public class ImpressionTrackerTest {
         assertThat(trackedViews.get(view)).isEqualTo(impressionInterface2);
         assertThat(pollingViews).isEmpty();
         verify(visibilityTracker, times(2))
-                .addView(view, impressionInterface.getImpressionMinPercentageViewed());
+                .addView(view, impressionInterface.getImpressionMinPercentageViewed(), null);
     }
 
     @Test
@@ -111,7 +115,8 @@ public class ImpressionTrackerTest {
 
         assertThat(trackedViews).hasSize(1);
         assertThat(trackedViews.get(view)).isEqualTo(impressionInterface);
-        verify(visibilityTracker).addView(view, impressionInterface.getImpressionMinPercentageViewed());
+        verify(visibilityTracker).addView(view,
+                impressionInterface.getImpressionMinPercentageViewed(), null);
 
         pollingViews.put(view, timeStampWrapper);
 
@@ -120,7 +125,8 @@ public class ImpressionTrackerTest {
         assertThat(trackedViews).hasSize(0);
         assertThat(trackedViews.get(view)).isNull();
         assertThat(pollingViews).isEmpty();
-        verify(visibilityTracker).addView(view, impressionInterface.getImpressionMinPercentageViewed());
+        verify(visibilityTracker).addView(view,
+                impressionInterface.getImpressionMinPercentageViewed(), null);
     }
 
     @Test
@@ -129,7 +135,8 @@ public class ImpressionTrackerTest {
 
         assertThat(trackedViews).hasSize(1);
         assertThat(trackedViews.get(view)).isEqualTo(impressionInterface);
-        verify(visibilityTracker).addView(view, impressionInterface.getImpressionMinPercentageViewed());
+        verify(visibilityTracker).addView(view,
+                impressionInterface.getImpressionMinPercentageViewed(), null);
 
         pollingViews.put(view, timeStampWrapper);
 
@@ -140,14 +147,16 @@ public class ImpressionTrackerTest {
         assertThat(pollingViews.keySet()).containsOnly(view);
 
         // Still only one call
-        verify(visibilityTracker).addView(view, impressionInterface.getImpressionMinPercentageViewed());
+        verify(visibilityTracker).addView(view,
+                impressionInterface.getImpressionMinPercentageViewed(), null);
     }
 
     @Test
     public void removeView_shouldRemoveViewFromViewTrackedViews_shouldRemoveViewFromPollingMap_shouldRemoveViewFromVisibilityTracker() {
         trackedViews.put(view, impressionInterface);
         pollingViews.put(view, new TimestampWrapper<ImpressionInterface>(impressionInterface));
-        visibilityTracker.addView(view, impressionInterface.getImpressionMinPercentageViewed());
+        visibilityTracker.addView(view,
+                impressionInterface.getImpressionMinPercentageViewed(), null);
 
         subject.removeView(view);
 
@@ -162,8 +171,10 @@ public class ImpressionTrackerTest {
         trackedViews.put(view2, impressionInterface);
         pollingViews.put(view, timeStampWrapper);
         pollingViews.put(view2, timeStampWrapper);
-        visibilityTracker.addView(view, impressionInterface.getImpressionMinPercentageViewed());
-        visibilityTracker.addView(view2, impressionInterface.getImpressionMinPercentageViewed());
+        visibilityTracker.addView(view,
+                impressionInterface.getImpressionMinPercentageViewed(), null);
+        visibilityTracker.addView(view2,
+                impressionInterface.getImpressionMinPercentageViewed(), null);
 
         subject.clear();
 
@@ -179,8 +190,10 @@ public class ImpressionTrackerTest {
         trackedViews.put(view2, impressionInterface);
         pollingViews.put(view, timeStampWrapper);
         pollingViews.put(view2, timeStampWrapper);
-        visibilityTracker.addView(view, impressionInterface.getImpressionMinPercentageViewed());
-        visibilityTracker.addView(view2, impressionInterface.getImpressionMinPercentageViewed());
+        visibilityTracker.addView(view,
+                impressionInterface.getImpressionMinPercentageViewed(), null);
+        visibilityTracker.addView(view2,
+                impressionInterface.getImpressionMinPercentageViewed(), null);
         assertThat(subject.getVisibilityTrackerListener()).isNotNull();
 
         subject.destroy();

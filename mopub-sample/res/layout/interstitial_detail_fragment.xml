@@ -37,6 +37,16 @@
         android:imeOptions="actionDone"
         android:singleLine="true" />
 
+    <EditText
+        android:id="@+id/custom_data_field"
+        android:visibility="gone"
+        android:hint="@string/custom_data"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text|textFilter|textShortMessage"
+        android:imeOptions="actionDone"
+        android:singleLine="true" />
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -50,7 +60,7 @@
             android:layout_weight="1" />
 
         <Button
-            android:id="@+id/interstitial_show_button"
+            android:id="@+id/show_button"
             android:text="@string/show_ad"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

@@ -304,7 +304,7 @@ public class NativeUrlGeneratorTest {
                         TEST_SCREEN_HEIGHT +
                         "&sc_a=" +
                         TEST_DENSITY +
-                        "&ct=3&av=" + BuildConfig.VERSION_NAME +
+                        "&ct=3&av=" + Uri.encode(BuildConfig.VERSION_NAME) +
                         "&udid=mp_tmpl_advertising_id&dnt=mp_tmpl_do_not_track");
     }
 

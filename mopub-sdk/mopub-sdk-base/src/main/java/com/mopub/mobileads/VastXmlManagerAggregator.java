@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.mopub.network.TrackingRequest.makeVastTrackingHttpRequest;
 
@@ -234,6 +235,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
                     populateLinearTrackersAndIcon(linearXmlManager, vastVideoConfig);
                 }
                 populateVideoViewabilityTracker(vastWrapperXmlManager, vastVideoConfig);
+                populateViewabilityMetadata(vastWrapperXmlManager, vastVideoConfig);
 
                 final List<VastCompanionAdXmlManager> companionAdXmlManagers =
                         vastWrapperXmlManager.getCompanionAdXmlManagers();
@@ -328,6 +330,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
                 errorTrackers.addAll(vastInLineXmlManager.getErrorTrackers());
                 vastVideoConfig.addErrorTrackers(errorTrackers);
                 populateVideoViewabilityTracker(vastInLineXmlManager, vastVideoConfig);
+                populateViewabilityMetadata(vastInLineXmlManager, vastVideoConfig);
 
                 return vastVideoConfig;
             }
@@ -356,6 +359,26 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
                     vastVideoConfig.setVideoViewabilityTracker(vastExtensionXmlManager
                             .getVideoViewabilityTracker());
                     break;
+                }
+            }
+        }
+    }
+
+    private void populateViewabilityMetadata(
+            @NonNull final VastBaseInLineWrapperXmlManager vastInLineXmlManager,
+            @NonNull VastVideoConfig vastVideoConfig) {
+        final VastExtensionParentXmlManager vastExtensionParentXmlManager =
+                vastInLineXmlManager.getVastExtensionParentXmlManager();
+        if (vastExtensionParentXmlManager != null) {
+            final List<VastExtensionXmlManager> vastExtensionXmlManagers =
+                    vastExtensionParentXmlManager.getVastExtensionXmlManagers();
+            for (VastExtensionXmlManager vastExtensionXmlManager : vastExtensionXmlManagers) {
+                if (vastExtensionXmlManager != null) {
+                    final Set<String> avid = vastExtensionXmlManager.getAvidJavaScriptResources();
+                    vastVideoConfig.addAvidJavascriptResources(avid);
+
+                    final Set<String> moat = vastExtensionXmlManager.getMoatImpressionPixels();
+                    vastVideoConfig.addMoatImpressionPixels(moat);
                 }
             }
         }
