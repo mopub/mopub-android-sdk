@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.text.TextUtils;
 
 import com.mopub.common.MoPub;
+import com.mopub.common.logging.MoPubLog;
 import com.unity3d.ads.UnityAds;
 import com.unity3d.ads.mediation.IUnityAdsExtendedListener;
 import com.unity3d.ads.metadata.MediationMetaData;
@@ -25,7 +26,8 @@ public class UnityRouter {
     static boolean initUnityAds(Map<String, String> serverExtras, Activity launcherActivity) {
         String gameId = serverExtras.get(GAME_ID_KEY);
         if (gameId == null || gameId.isEmpty()) {
-            throw new UnityAdsException(UnityAds.UnityAdsError.INVALID_ARGUMENT, "Sever extras is missing \"%s\" or is empty.", GAME_ID_KEY);
+            MoPubLog.e("gameId is missing or entered incorrectly in the MoPub UI");
+            return false;
         }
 
         MediationMetaData mediationMetaData = new MediationMetaData(launcherActivity);

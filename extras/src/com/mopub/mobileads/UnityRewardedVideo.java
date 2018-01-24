@@ -59,7 +59,7 @@ public class UnityRewardedVideo extends CustomEventRewardedVideo {
                 UnityRouter.initUnityAds(serverExtras, launcherActivity);
                 UnityRouter.addListener(sPlacementId, sUnityAdsListener);
             } catch (UnityRouter.UnityAdsException e) {
-                MoPubLog.e("Failed to initialize Unity Ads.", e);
+                MoPubLog.e("Failed to initialize Unity Ads.");
                 MoPubRewardedVideoManager.onRewardedVideoLoadFailure(UnityRewardedVideo.class, sPlacementId, UnityRouter.UnityAdsUtils.getMoPubErrorCode(e.getErrorCode()));
             }
 

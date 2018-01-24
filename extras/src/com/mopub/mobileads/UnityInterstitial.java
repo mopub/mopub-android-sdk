@@ -2,6 +2,7 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 
 import com.mopub.common.logging.MoPubLog;
 import com.unity3d.ads.mediation.IUnityAdsExtendedListener;
@@ -45,7 +46,8 @@ public class UnityInterstitial extends CustomEventInterstitial implements IUnity
     private void initializeUnityAdsSdk(Map<String, String> serverExtras) {
         if (!UnityAds.isInitialized()) {
             if (!(mContext instanceof Activity)) {
-                throw new UnityRouter.UnityAdsException(UnityAds.UnityAdsError.INVALID_ARGUMENT, "Context is null or is not an instanceof Activity.");
+                MoPubLog.e("Context is null or is not an instanceof Activity.");
+                return;
             }
             UnityRouter.initUnityAds(serverExtras, (Activity) mContext);
         }
