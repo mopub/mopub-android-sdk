@@ -5,8 +5,10 @@ import android.util.Log;
 
 import com.facebook.ads.Ad;
 import com.facebook.ads.AdError;
+import com.facebook.ads.AdSettings;
 import com.facebook.ads.InterstitialAd;
 import com.facebook.ads.InterstitialAdListener;
+import com.mopub.common.MoPub;
 
 import java.util.Map;
 
@@ -28,6 +30,7 @@ public class FacebookInterstitial extends CustomEventInterstitial implements Int
             final CustomEventInterstitialListener customEventInterstitialListener,
             final Map<String, Object> localExtras,
             final Map<String, String> serverExtras) {
+        Log.e("MoPub", "Loading Facebook interstitial");
         mInterstitialListener = customEventInterstitialListener;
 
         final String placementId;
@@ -37,6 +40,8 @@ public class FacebookInterstitial extends CustomEventInterstitial implements Int
             mInterstitialListener.onInterstitialFailed(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
             return;
         }
+
+        AdSettings.setMediationService("MOPUB_" + MoPub.SDK_VERSION);
 
         mFacebookInterstitial = new InterstitialAd(context, placementId);
         mFacebookInterstitial.setAdListener(this);
