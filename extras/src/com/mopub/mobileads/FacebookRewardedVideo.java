@@ -7,10 +7,12 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.facebook.ads.AdError;
+import com.facebook.ads.AdSettings;
 import com.facebook.ads.RewardedVideoAd;
 import com.facebook.ads.RewardedVideoAdListener;
 import com.mopub.common.LifecycleListener;
 import com.facebook.ads.Ad;
+import com.mopub.common.MoPub;
 import com.mopub.common.MoPubReward;
 
 import java.util.Map;
@@ -70,6 +72,7 @@ public class FacebookRewardedVideo extends CustomEventRewardedVideo implements R
 
         if (mRewardedVideoAd != null) {
             Log.d(TAG, "Sending Facebook an ad request.");
+            AdSettings.setMediationService("MOPUB_" + MoPub.SDK_VERSION);
             mRewardedVideoAd.loadAd();
         }
     }

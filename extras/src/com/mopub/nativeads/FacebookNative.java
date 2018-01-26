@@ -7,9 +7,11 @@ import android.view.ViewGroup;
 import com.facebook.ads.Ad;
 import com.facebook.ads.AdError;
 import com.facebook.ads.AdListener;
+import com.facebook.ads.AdSettings;
 import com.facebook.ads.MediaView;
 import com.facebook.ads.NativeAd;
 import com.facebook.ads.NativeAd.Rating;
+import com.mopub.common.MoPub;
 import com.mopub.common.Preconditions;
 import com.mopub.common.logging.MoPubLog;
 
@@ -182,6 +184,7 @@ public class FacebookNative extends CustomEventNative {
         }
 
         void loadAd() {
+            AdSettings.setMediationService("MOPUB_" + MoPub.SDK_VERSION);
             mNativeAd.setAdListener(this);
             mNativeAd.loadAd();
         }
@@ -315,6 +318,7 @@ public class FacebookNative extends CustomEventNative {
         }
 
         void loadAd() {
+            AdSettings.setMediationService("MOPUB_" + MoPub.SDK_VERSION);
             mNativeAd.setAdListener(this);
             mNativeAd.loadAd();
         }
