@@ -17,6 +17,7 @@ import com.mopub.common.MoPubReward;
 import java.util.Arrays;
 import java.util.Map;
 
+import static com.mopub.mobileads.MoPubRewardedVideoManager.onRewardedVideoClicked;
 import static com.mopub.mobileads.MoPubRewardedVideoManager.onRewardedVideoClosed;
 import static com.mopub.mobileads.MoPubRewardedVideoManager.onRewardedVideoCompleted;
 import static com.mopub.mobileads.MoPubRewardedVideoManager.onRewardedVideoLoadFailure;
@@ -29,9 +30,7 @@ public class IronSourceRewardedVideo extends CustomEventRewardedVideo implements
     /**
      * private vars
      */
-    private static final String TAG = IronSourceRewardedVideo.class.getSimpleName();
-
-    private static final String IRON_SOURCE_AD_NETWORK_ID = "ironsrc_id";
+    private static final String TAG = "MoPub";
 
     // Configuration keys
     private static final String APPLICATION_KEY  = "applicationKey";
@@ -73,45 +72,61 @@ public class IronSourceRewardedVideo extends CustomEventRewardedVideo implements
     @NonNull
     @Override
     protected String getAdNetworkId() {
-        return IRON_SOURCE_AD_NETWORK_ID;
+        return mInstanceId;
     }
 
     @Override
     protected boolean checkAndInitializeSdk(@NonNull Activity launcherActivity, @NonNull Map<String, Object> localExtras, @NonNull Map<String, String> serverExtras) throws Exception {
 
-        String applicationKey = "";
-        mInstanceId = "0";
-        if (serverExtras.get(APPLICATION_KEY) != null) {
-            applicationKey = serverExtras.get(APPLICATION_KEY);
-        } else if (serverExtras.get(APP_KEY) != null) {
-            //try appKey if applicationKey doesn't exists (fallback)
-            applicationKey = serverExtras.get(APP_KEY);
+        try {
+            String applicationKey = "";
+            mInstanceId = "0";
+            if (serverExtras != null) {
+
+                if (serverExtras.get(APPLICATION_KEY) != null) {
+                    applicationKey = serverExtras.get(APPLICATION_KEY);
+                }
+                else if (serverExtras.get(APP_KEY) != null) {
+                    //try appKey if applicationKey doesn't exists (fallback)
+                    applicationKey = serverExtras.get(APP_KEY);
+                }
+
+                if (serverExtras.get(PLACEMENT_KEY) != null) {
+                    mPlacementName = serverExtras.get(PLACEMENT_KEY);
+                }
+
+                if (serverExtras.get(TEST_ENABLED_KEY) != null) {
+                    mIsTestEnabled = Boolean.valueOf(serverExtras.get(TEST_ENABLED_KEY));
+                }
+
+                if (serverExtras.get(INSTANCE_ID_KEY) != null) {
+                    mInstanceId = serverExtras.get(INSTANCE_ID_KEY);
+                }
+            }
+
+            if (mInitRewardedVideoSuccessfully) return true;
+
+            if (!TextUtils.isEmpty(applicationKey)) {
+                onLog("server extras: " + Arrays.toString(serverExtras.entrySet().toArray()));
+                initIronSourceSDK(launcherActivity, applicationKey);
+            } else {
+                onLog("Initialization Failed, make sure that 'applicationKey' server parameter is added");
+                return false;
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            onLog(e.toString());
+            return false;
         }
-
-        if (serverExtras.get(PLACEMENT_KEY) != null) {
-            mPlacementName = serverExtras.get(PLACEMENT_KEY);
-        }
-
-        if (serverExtras.get(TEST_ENABLED_KEY) != null) {
-            mIsTestEnabled = Boolean.valueOf(serverExtras.get(TEST_ENABLED_KEY));
-        }
-
-        if (serverExtras.get(INSTANCE_ID_KEY) != null) {
-            mInstanceId = serverExtras.get(INSTANCE_ID_KEY);
-        }
-
-        onLog("server extras: " + Arrays.toString(serverExtras.entrySet().toArray()));
-
-        initIronSourceSDK(launcherActivity, applicationKey);
-
-        return true;
 
     }
 
     @Override
     protected void loadWithSdkInitialized(@NonNull Activity activity, @NonNull Map<String, Object> localExtras, @NonNull Map<String, String> serverExtras) throws Exception {
         if (IronSource.isISDemandOnlyRewardedVideoAvailable(mInstanceId)) {
-            onRewardedVideoLoadSuccess(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID);
+            onRewardedVideoLoadSuccess(IronSourceRewardedVideo.class, mInstanceId);
         }
     }
 
@@ -219,10 +234,10 @@ public class IronSourceRewardedVideo extends CustomEventRewardedVideo implements
             return;
 
         if (available) {
-            onRewardedVideoLoadSuccess(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID);
+            onRewardedVideoLoadSuccess(IronSourceRewardedVideo.class, instanceId);
             onLog("onRewardedVideoLoadSuccess");
         } else {
-            onRewardedVideoLoadFailure(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID, MoPubErrorCode.NETWORK_NO_FILL);
+            onRewardedVideoLoadFailure(IronSourceRewardedVideo.class, instanceId, MoPubErrorCode.NETWORK_NO_FILL);
             onLog("onRewardedVideoLoadFailure");
         }
         onLog("onVideoAvailabilityChanged");
@@ -232,14 +247,14 @@ public class IronSourceRewardedVideo extends CustomEventRewardedVideo implements
     @Override
     public void onRewardedVideoAdOpened(String instanceId) {
         onLog("onRewardedVideoAdOpened");
-        onRewardedVideoStarted(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID);
+        onRewardedVideoStarted(IronSourceRewardedVideo.class, instanceId);
     }
 
     //Invoked when the user is about to return to the application after closing the RewardedVideo ad.
     @Override
     public void onRewardedVideoAdClosed(String instanceId) {
         onLog("onRewardedVideoAdClosed, rewardName: " + rewardName + " rewardAmount: " + rewardAmount);
-        onRewardedVideoClosed(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID);
+        onRewardedVideoClosed(IronSourceRewardedVideo.class, instanceId);
 
     }
 
@@ -251,7 +266,7 @@ public class IronSourceRewardedVideo extends CustomEventRewardedVideo implements
             rewardName = placement.getRewardName();
             rewardAmount = placement.getRewardAmount();
             MoPubReward reward = MoPubReward.success(rewardName, rewardAmount);
-            onRewardedVideoCompleted(IronSourceRewardedVideo.class, IRON_SOURCE_AD_NETWORK_ID, reward);
+            onRewardedVideoCompleted(IronSourceRewardedVideo.class, instanceId, reward);
         }
         onLog("onRewardedVideoAdRewarded");
     }
@@ -261,14 +276,13 @@ public class IronSourceRewardedVideo extends CustomEventRewardedVideo implements
     public void onRewardedVideoAdShowFailed(String instanceId, IronSourceError ironSourceError) {
         onLog("onRewardedVideoShowFail");
 
-        onRewardedVideoPlaybackError(IronSourceRewardedVideo.class,
-                IRON_SOURCE_AD_NETWORK_ID,
-                getMoPubErrorMessage(ironSourceError));
+        onRewardedVideoPlaybackError(IronSourceRewardedVideo.class, instanceId, getMoPubErrorMessage(ironSourceError));
     }
 
     //Invoked when the video ad was clicked by the user.
     @Override
     public void onRewardedVideoAdClicked(String instanceId, Placement placement) {
         onLog("onRewardedVideoAdClicked");
+        onRewardedVideoClicked(IronSourceRewardedVideo.class, instanceId);
     }
 }
