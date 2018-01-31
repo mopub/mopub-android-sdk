@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class MoPubRewardedVideo extends MoPubRewardedAd {
 
-    @NonNull private static final String MOPUB_REWARDED_VIDEO_ID = "mopub_rewarded_video_id";
+    @NonNull static final String MOPUB_REWARDED_VIDEO_ID = "mopub_rewarded_video_id";
 
     @Nullable private RewardedVastVideoInterstitial mRewardedVastVideoInterstitial;
 
@@ -26,7 +26,7 @@ public class MoPubRewardedVideo extends MoPubRewardedAd {
     @NonNull
     @Override
     protected String getAdNetworkId() {
-        return MOPUB_REWARDED_VIDEO_ID;
+        return mAdUnitId != null ?  mAdUnitId : MOPUB_REWARDED_VIDEO_ID;
     }
 
     @Override

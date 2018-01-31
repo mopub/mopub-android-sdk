@@ -15,7 +15,6 @@ import org.robolectric.annotation.Config;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -61,7 +60,7 @@ public class MoPubRewardedPlayableTest {
     @Test
     public void loadWithSdkInitialized_withCorrectLocalExtras_shouldLoadVastVideoInterstitial() throws Exception {
         subject.setRewardedMraidInterstitial(mockRewardedMraidInterstitial);
-        final Map<String, Object> localExtras = new TreeMap<String, Object>();
+        final Map<String, Object> localExtras = new HashMap<String, Object>();
         final Map<String, String> serverExtras = new HashMap<String, String>();
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_NAME_KEY, "currencyName");
         localExtras.put(DataKeys.REWARDED_AD_CURRENCY_AMOUNT_STRING_KEY, "10");
@@ -77,6 +76,25 @@ public class MoPubRewardedPlayableTest {
         verifyNoMoreInteractions(mockRewardedMraidInterstitial);
         assertThat(subject.getRewardedAdCurrencyName()).isEqualTo("currencyName");
         assertThat(subject.getRewardedAdCurrencyAmount()).isEqualTo(10);
+    }
+
+    @Test
+    public void loadWithSdkInitialized_withAdUnitId_shouldSetAdNetworkId() throws Exception {
+        final Map<String, Object> localExtras = new HashMap<String, Object>();
+        localExtras.put(DataKeys.AD_UNIT_ID_KEY, "adUnit");
+
+        subject.loadWithSdkInitialized(activity, localExtras, new HashMap<String, String>());
+
+        assertThat(subject.getAdNetworkId()).isEqualTo("adUnit");
+    }
+
+    @Test
+    public void loadWithSdkInitialized_withNoAdUnitId_shouldUseDefaultAdNetworkId() throws Exception {
+        subject.loadWithSdkInitialized(activity, new HashMap<String, Object>(),
+                new HashMap<String, String>());
+
+        assertThat(subject.getAdNetworkId()).isEqualTo(
+                MoPubRewardedPlayable.MOPUB_REWARDED_PLAYABLE_ID);
     }
 
     @Test

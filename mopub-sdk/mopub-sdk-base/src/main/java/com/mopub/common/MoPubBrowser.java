@@ -24,12 +24,14 @@ import com.mopub.mobileads.util.WebViews;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.mopub.common.event.BaseEvent.*;
+import static com.mopub.common.event.BaseEvent.Category;
+import static com.mopub.common.event.BaseEvent.Name;
+import static com.mopub.common.event.BaseEvent.SamplingRate;
 import static com.mopub.common.util.Drawables.BACKGROUND;
 import static com.mopub.common.util.Drawables.CLOSE;
-import static com.mopub.common.util.Drawables.LEFT_ARROW;
 import static com.mopub.common.util.Drawables.REFRESH;
-import static com.mopub.common.util.Drawables.RIGHT_ARROW;
+import static com.mopub.common.util.Drawables.UNLEFT_ARROW;
+import static com.mopub.common.util.Drawables.UNRIGHT_ARROW;
 
 public class MoPubBrowser extends Activity {
     public static final String DESTINATION_URL_KEY = "URL";
@@ -220,8 +222,8 @@ public class MoPubBrowser extends Activity {
         innerLayout.setBackgroundDrawable(BACKGROUND.createDrawable(this));
         outerLayout.addView(innerLayout);
 
-        mBackButton = getButton(LEFT_ARROW.createDrawable(this));
-        mForwardButton = getButton(RIGHT_ARROW.createDrawable(this));
+        mBackButton = getButton(UNLEFT_ARROW.createDrawable(this));
+        mForwardButton = getButton(UNRIGHT_ARROW.createDrawable(this));
         mRefreshButton = getButton(REFRESH.createDrawable(this));
         mCloseButton = getButton(CLOSE.createDrawable(this));
 

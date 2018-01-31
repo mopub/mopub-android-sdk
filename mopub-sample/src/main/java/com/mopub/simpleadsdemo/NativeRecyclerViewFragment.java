@@ -80,6 +80,7 @@ public class NativeRecyclerViewFragment extends Fragment {
         final String adUnitId = mAdConfiguration.getAdUnitId();
         viewHolder.mDescriptionView.setText(mAdConfiguration.getDescription());
         viewHolder.mAdUnitIdView.setText(adUnitId);
+        viewHolder.mKeywordsField.setText(getArguments().getString(MoPubListFragment.KEYWORDS_KEY, ""));
 
         final RecyclerView.Adapter originalAdapter = new DemoRecyclerAdapter();
 

@@ -422,7 +422,7 @@ public class NativeFullScreenVideoView extends RelativeLayout {
         public int getOpacity() {
             return PixelFormat.UNKNOWN;
         }
-    };
+    }
 
     @Deprecated
     @VisibleForTesting

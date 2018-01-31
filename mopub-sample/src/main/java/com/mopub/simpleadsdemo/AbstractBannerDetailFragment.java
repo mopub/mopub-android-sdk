@@ -44,6 +44,7 @@ public abstract class AbstractBannerDetailFragment extends Fragment implements B
         layoutParams.height = getHeight();
         mMoPubView.setLayoutParams(layoutParams);
 
+        views.mKeywordsField.setText(getArguments().getString(MoPubListFragment.KEYWORDS_KEY, ""));
         hideSoftKeyboard(views.mKeywordsField);
 
         final String adUnitId = mMoPubSampleAdUnit.getAdUnitId();

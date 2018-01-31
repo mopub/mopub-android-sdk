@@ -4,24 +4,25 @@ repositories {
         dirs '../libs'
     }
     maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
+    maven { url 'https://maven.google.com' }
 }
 
 apply plugin: 'com.android.application'
 
 project.group = 'com.mopub'
 project.description = '''MoPub Sample App'''
-project.version = '4.17.0'
+project.version = '4.19.0'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion '25.0.2'
+    compileSdkVersion 26
+    buildToolsVersion '26.0.2'
     lintOptions { abortOnError false }
 
     defaultConfig {
-        versionCode 55
+        versionCode 57
         versionName version
         minSdkVersion 16
-        targetSdkVersion 25
+        targetSdkVersion 26
     }
 
     buildTypes {
@@ -56,8 +57,9 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:25.3.1'
-    compile 'com.google.android.gms:play-services-ads:9.4.0'
-    compile 'com.android.support:recyclerview-v7:25.3.1'
+    compile 'com.android.support:support-v4:26.1.0'
+    compile 'com.google.android.gms:play-services-ads:11.4.0'
+    compile 'com.google.android.gms:play-services-base:11.4.0'
+    compile 'com.android.support:recyclerview-v7:26.1.0'
     compile project(':mopub-sdk')
 }

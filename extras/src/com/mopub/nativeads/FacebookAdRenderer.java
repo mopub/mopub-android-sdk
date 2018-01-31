@@ -19,8 +19,7 @@ import static android.view.View.VISIBLE;
  * Include this class if you want to use Facebook native video ads. This renderer handles Facebook
  * static and video native ads. This will automatically replace the main image view with the
  * Facebook MediaView that handles showing the main asset.
- * Please reference the Supported Mediation Partner page at http://bit.ly/2mqsuFH for the
- * latest version and ad format certifications.
+ * Certified with Facebook Audience Network 4.26.1
  */
 public class FacebookAdRenderer implements MoPubAdRenderer<FacebookNative.FacebookVideoEnabledNativeAd> {
     private final ViewBinder mViewBinder;

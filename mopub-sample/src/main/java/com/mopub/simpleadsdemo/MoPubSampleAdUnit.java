@@ -2,9 +2,11 @@ package com.mopub.simpleadsdemo;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 
 import java.util.Comparator;
+import java.util.Locale;
 
 class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
 
@@ -50,6 +52,35 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
             }
 
             return null;
+        }
+
+        @Nullable
+        static AdType fromDeeplinkString(@Nullable final String adType) {
+            if (adType == null) {
+                return null;
+            }
+            switch (adType.toLowerCase(Locale.US)) {
+                case "banner":
+                    return BANNER;
+                case "interstitial":
+                    return INTERSTITIAL;
+                case "mrect":
+                    return MRECT;
+                case "leaderboard":
+                    return LEADERBOARD;
+                case "skyscraper":
+                    return SKYSCRAPER;
+                case "rewarded":
+                    return REWARDED_VIDEO;
+                case "native":
+                    return LIST_VIEW;
+                case "nativetableplacer":
+                    return RECYCLER_VIEW;
+                case "nativecollectionplacer":
+                    return CUSTOM_NATIVE;
+                default:
+                    return null;
+            }
         }
     }
 

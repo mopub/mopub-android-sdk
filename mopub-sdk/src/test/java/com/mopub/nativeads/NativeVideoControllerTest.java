@@ -17,16 +17,16 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayer.ExoPlayerMessage;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.Renderer;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
 import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer;
+import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
+import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.VastTracker;
 import com.mopub.mobileads.VastVideoConfig;
-import com.mopub.nativeads.NativeVideoController.MoPubExoPlayerFactory;
 import com.mopub.nativeads.NativeVideoController.Listener;
+import com.mopub.nativeads.NativeVideoController.MoPubExoPlayerFactory;
 import com.mopub.nativeads.NativeVideoController.NativeVideoProgressRunnable;
 import com.mopub.nativeads.NativeVideoController.NativeVideoProgressRunnable.ProgressListener;
 import com.mopub.nativeads.NativeVideoController.VisibilityTrackingEvent;
@@ -39,6 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.robolectric.Robolectric;
@@ -538,8 +539,10 @@ public class NativeVideoControllerTest {
         when(mockExoPlayer.getCurrentPosition()).thenReturn(10L);
         when(mockExoPlayer.getDuration()).thenReturn(25L);
         when(mockExoPlayer.getPlayWhenReady()).thenReturn(true);
-        when(mockVisibilityChecker.isVisible(mockTextureView, mockTextureView, 10)).thenReturn(true);
-        when(mockVisibilityChecker.isVisible(mockTextureView, mockTextureView, 20)).thenReturn(false);
+        when(mockVisibilityChecker.isVisible(mockTextureView, mockTextureView,
+                10, null)).thenReturn(true);
+        when(mockVisibilityChecker.isVisible(mockTextureView, mockTextureView,
+                20, null)).thenReturn(false);
 
         nativeVideoProgressRunnable.setUpdateIntervalMillis(10);
         nativeVideoProgressRunnable.doWork();
@@ -639,7 +642,8 @@ public class NativeVideoControllerTest {
     public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerFalse_shouldOnlyTriggerNotTrackedEvents_shouldNotStopRunnable() {
         when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
         when(mockExoPlayer.getDuration()).thenReturn(50L);
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt()))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt(),
+                Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         spyNativeVideoProgressRunnable.setUpdateIntervalMillis(50);
 
@@ -659,7 +663,8 @@ public class NativeVideoControllerTest {
         // Enough time has passed for all impressions to trigger organically
         when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
         when(mockExoPlayer.getDuration()).thenReturn(50L);
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt()))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt(),
+                Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         spyNativeVideoProgressRunnable.setUpdateIntervalMillis(50);
         spyNativeVideoProgressRunnable.requestStop();
@@ -681,7 +686,8 @@ public class NativeVideoControllerTest {
         // be triggered because forceTrigger is true
         when(mockExoPlayer.getCurrentPosition()).thenReturn(5L);
         when(mockExoPlayer.getDuration()).thenReturn(50L);
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt()))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt(),
+                Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         spyNativeVideoProgressRunnable.setUpdateIntervalMillis(50);
 
@@ -700,7 +706,8 @@ public class NativeVideoControllerTest {
     public void NativeVideoProgressRunnable_checkImpressionTrackers_withForceTriggerTrue_withStopRequested_shouldOnlyTriggerNotTrackedEvents_shouldStopRunnable() {
         when(mockExoPlayer.getCurrentPosition()).thenReturn(50L);
         when(mockExoPlayer.getDuration()).thenReturn(50L);
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt()))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), anyInt(),
+                Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         spyNativeVideoProgressRunnable.setUpdateIntervalMillis(50);
         spyNativeVideoProgressRunnable.requestStop();
@@ -726,16 +733,20 @@ public class NativeVideoControllerTest {
         // track: whether the impression should be organically triggered
 
         // trackingUrl1: visible & played = track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(10)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(10), Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         // trackingUrl2: visible & !played = !track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(20)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(20), Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         // trackingUrl3: already tracked = !track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(30)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(30), Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         // trackingUrl4: !visible & played = !track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(9)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(9), Matchers.isNull(Integer.class)))
                 .thenReturn(false);
         spyNativeVideoProgressRunnable.setUpdateIntervalMillis(10);
         spyNativeVideoProgressRunnable.requestStop();
@@ -763,16 +774,20 @@ public class NativeVideoControllerTest {
         // track: whether the impression should be organically triggered
 
         // trackingUrl1: visible & played = track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(10)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(10), Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         // trackingUrl2: visible & !played = !track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(20)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(20), Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         // trackingUrl3: already tracked = !track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(30)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(30), Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         // trackingUrl4: !visible & played = !track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(9)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(9), Matchers.isNull(Integer.class)))
                 .thenReturn(false);
         spyNativeVideoProgressRunnable.setUpdateIntervalMillis(10);
 
@@ -800,16 +815,20 @@ public class NativeVideoControllerTest {
         // track: whether the impression should be organically triggered
 
         // trackingUrl1: visible & played = track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(10)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(10), Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         // trackingUrl2: visible & !played = !track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(20)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(20), Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         // trackingUrl3: already tracked = !track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(30)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(30), Matchers.isNull(Integer.class)))
                 .thenReturn(true);
         // trackingUrl4: !visible & played = !track
-        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView), eq(9)))
+        when(mockVisibilityChecker.isVisible(eq(mockTextureView), eq(mockTextureView),
+                eq(9), Matchers.isNull(Integer.class)))
                 .thenReturn(false);
         spyNativeVideoProgressRunnable.setUpdateIntervalMillis(10);
         spyNativeVideoProgressRunnable.requestStop();

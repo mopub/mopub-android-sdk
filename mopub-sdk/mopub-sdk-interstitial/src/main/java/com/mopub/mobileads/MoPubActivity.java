@@ -31,8 +31,8 @@ import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_FAIL;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_SHOW;
-import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
-import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_CLOSE;
+import static com.mopub.common.util.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
+import static com.mopub.common.util.JavaScriptWebViewCallbacks.WEB_VIEW_DID_CLOSE;
 import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.broadcastAction;
 import static com.mopub.mobileads.HtmlWebViewClient.MOPUB_FAIL_LOAD;
@@ -167,13 +167,13 @@ public class MoPubActivity extends BaseInterstitialActivity {
 
     @Override
     protected void onDestroy() {
-        if (mHtmlInterstitialWebView != null) {
-            mHtmlInterstitialWebView.loadUrl(WEB_VIEW_DID_CLOSE.getUrl());
-            mHtmlInterstitialWebView.destroy();
-        }
         if (mExternalViewabilitySessionManager != null) {
             mExternalViewabilitySessionManager.endDisplaySession();
             mExternalViewabilitySessionManager = null;
+        }
+        if (mHtmlInterstitialWebView != null) {
+            mHtmlInterstitialWebView.loadUrl(WEB_VIEW_DID_CLOSE.getUrl());
+            mHtmlInterstitialWebView.destroy();
         }
         broadcastAction(this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_DISMISS);
         super.onDestroy();

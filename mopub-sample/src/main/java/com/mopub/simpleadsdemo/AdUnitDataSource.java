@@ -4,7 +4,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.support.annotation.NonNull;
 
+import com.mopub.common.Preconditions;
 import com.mopub.common.logging.MoPubLog;
 
 import java.util.ArrayList;
@@ -53,7 +55,10 @@ class AdUnitDataSource {
     }
 
     private MoPubSampleAdUnit createSampleAdUnit(final MoPubSampleAdUnit sampleAdUnit,
-                                                 final boolean isUserGenerated) {
+            final boolean isUserGenerated) {
+        deleteAllAdUnitsWithAdUnitIdAndAdType(sampleAdUnit.getAdUnitId(),
+                sampleAdUnit.getFragmentClassName());
+
         final ContentValues values = new ContentValues();
         final int userGenerated = isUserGenerated ? 1 : 0;
         values.put(COLUMN_AD_UNIT_ID, sampleAdUnit.getAdUnitId());
@@ -85,6 +90,20 @@ class AdUnitDataSource {
         database.close();
     }
 
+    private void deleteAllAdUnitsWithAdUnitIdAndAdType(@NonNull final String adUnitId,
+            @NonNull final String adType) {
+        Preconditions.checkNotNull(adUnitId);
+        Preconditions.checkNotNull(adType);
+
+        final SQLiteDatabase database = mDatabaseHelper.getWritableDatabase();
+        final int numDeletedRows = database.delete(TABLE_AD_CONFIGURATIONS,
+                COLUMN_AD_UNIT_ID + " = '" + adUnitId +
+                "' AND " + COLUMN_USER_GENERATED + " = 1 AND " +
+                COLUMN_AD_TYPE + " = '" + adType + "'", null);
+        MoPubLog.d(numDeletedRows + " rows deleted with adUnitId: " + adUnitId);
+        database.close();
+    }
+
     List<MoPubSampleAdUnit> getAllAdUnits() {
         final List<MoPubSampleAdUnit> adConfigurations = new ArrayList<>();
         SQLiteDatabase database = mDatabaseHelper.getReadableDatabase();
@@ -94,7 +113,9 @@ class AdUnitDataSource {
 
         while (!cursor.isAfterLast()) {
             final MoPubSampleAdUnit adConfiguration = cursorToAdConfiguration(cursor);
-            adConfigurations.add(adConfiguration);
+            if (adConfiguration != null) {
+                adConfigurations.add(adConfiguration);
+            }
             cursor.moveToNext();
         }
 

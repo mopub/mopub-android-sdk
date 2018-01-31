@@ -27,9 +27,14 @@ public enum ResponseHeader {
     ACCEPT_LANGUAGE("Accept-Language"),
     BROWSER_AGENT("X-Browser-Agent"),
 
+    // Banner impression tracking fields
+    BANNER_IMPRESSION_MIN_VISIBLE_DIPS("X-Banner-Impression-Min-Pixels"),
+    BANNER_IMPRESSION_MIN_VISIBLE_MS("X-Banner-Impression-Min-Ms"),
+
     // Native fields
     IMPRESSION_MIN_VISIBLE_PERCENT("X-Impression-Min-Visible-Percent"),
     IMPRESSION_VISIBLE_MS("X-Impression-Visible-Ms"),
+    IMPRESSION_MIN_VISIBLE_PX("X-Native-Impression-Min-Px"),
 
     // Native Video fields
     PLAY_VISIBLE_PERCENT("X-Play-Visible-Percent"),

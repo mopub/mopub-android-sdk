@@ -875,19 +875,6 @@ public class VastVideoViewControllerTest {
     }
 
     @Test
-    public void onTouch_withNullBaseVideoViewListener_andActionTouchUp_shouldReturnTrueAndNotBlowUp() throws Exception {
-        subject = new VastVideoViewController((Activity) context, bundle, null,
-                testBroadcastIdentifier, null);
-
-        boolean result = getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(
-                0, 0));
-
-        // pass
-
-        assertThat(result).isTrue();
-    }
-
-    @Test
     public void onTouch_withActionTouchDown_shouldConsumeMotionEvent() throws Exception {
         initializeSubject();
 

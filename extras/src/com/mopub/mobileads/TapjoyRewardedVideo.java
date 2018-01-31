@@ -21,7 +21,7 @@ import com.tapjoy.TapjoyLog;
 import java.util.Hashtable;
 import java.util.Map;
 
-// Tested with Tapjoy SDK 11.8.2
+// Tested with Tapjoy SDK 11.11.0
 public class TapjoyRewardedVideo extends CustomEventRewardedVideo {
     private static final String TAG = TapjoyRewardedVideo.class.getSimpleName();
     private static final String TJC_MOPUB_NETWORK_CONSTANT = "mopub";

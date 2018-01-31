@@ -25,6 +25,7 @@ public class InterstitialDetailFragment extends Fragment implements Interstitial
                 MoPubSampleAdUnit.fromBundle(getArguments());
         final View view = inflater.inflate(R.layout.interstitial_detail_fragment, container, false);
         final DetailFragmentViewHolder views = DetailFragmentViewHolder.fromView(view);
+        views.mKeywordsField.setText(getArguments().getString(MoPubListFragment.KEYWORDS_KEY, ""));
         hideSoftKeyboard(views.mKeywordsField);
 
         final String adUnitId = adConfiguration.getAdUnitId();

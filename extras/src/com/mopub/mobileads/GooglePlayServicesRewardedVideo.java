@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * A {@link CustomEventRewardedVideo} used to load rewarded video Google rewarded video ads.
  *
- * Compatible with version 11.0.2 of the Google Play Services SDK.
+ * Compatible with version 11.4.0 of the Google Play Services SDK.
  */
 public class GooglePlayServicesRewardedVideo extends CustomEventRewardedVideo implements
         RewardedVideoAdListener {

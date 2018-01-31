@@ -35,6 +35,7 @@ public abstract class StaticNativeAd extends BaseNativeAd implements ImpressionI
     private boolean mImpressionRecorded;
     private int mImpressionMinTimeViewed;
     private int mImpressionMinPercentageViewed;
+    private Integer mImpressionMinVisiblePx;
 
     // Extras
     @NonNull private final Map<String, Object> mExtras;
@@ -42,6 +43,7 @@ public abstract class StaticNativeAd extends BaseNativeAd implements ImpressionI
     public StaticNativeAd() {
         mImpressionMinTimeViewed = DEFAULT_IMPRESSION_MIN_TIME_VIEWED_MS;
         mImpressionMinPercentageViewed = DEFAULT_IMPRESSION_MIN_PERCENTAGE_VIEWED;
+        mImpressionMinVisiblePx = null;
 
         mExtras = new HashMap<String, Object>();
     }
@@ -213,7 +215,7 @@ public abstract class StaticNativeAd extends BaseNativeAd implements ImpressionI
         if (impressionMinTimeViewed > 0) {
             mImpressionMinTimeViewed = impressionMinTimeViewed;
         } else {
-            MoPubLog.d("Ignoring non-positive impressionMinTimeViewed");
+            MoPubLog.d("Ignoring non-positive impressionMinTimeViewed: " + impressionMinTimeViewed);
         }
     }
 
@@ -227,7 +229,23 @@ public abstract class StaticNativeAd extends BaseNativeAd implements ImpressionI
         if (impressionMinPercentageViewed >= 0 && impressionMinPercentageViewed <= 100) {
             mImpressionMinPercentageViewed = impressionMinPercentageViewed;
         } else {
-            MoPubLog.d("Ignoring impressionMinTimeViewed that's not a percent [0, 100]");
+            MoPubLog.d("Ignoring impressionMinTimeViewed that's not a percent [0, 100]: " +
+                    impressionMinPercentageViewed);
+        }
+    }
+
+    /**
+     * Sets the minimum number of pixels of the ad to be on screen before impression trackers are
+     * fired. This must be an Integer greater than 0.
+     *
+     * @param impressionMinVisiblePx Number of pixels of an ad (ignored if negative or 0).
+     */
+    final public void setImpressionMinVisiblePx(@Nullable final Integer impressionMinVisiblePx) {
+        if (impressionMinVisiblePx != null && impressionMinVisiblePx > 0) {
+            mImpressionMinVisiblePx = impressionMinVisiblePx;
+        } else {
+            MoPubLog.d("Ignoring null or non-positive impressionMinVisiblePx: " +
+                    impressionMinVisiblePx);
         }
     }
 
@@ -269,6 +287,17 @@ public abstract class StaticNativeAd extends BaseNativeAd implements ImpressionI
     @Override
     final public int getImpressionMinTimeViewed() {
         return mImpressionMinTimeViewed;
+    }
+
+    /**
+     * Returns the minimum viewable number of pixels of the ad that must be onscreen for it to be
+     * considered visible. This value, if present and positive will override the min percentage.
+     * See {@link StaticNativeAd#getImpressionMinTimeViewed()} for additional impression
+     * tracking considerations.
+     */
+    @Override
+    final public Integer getImpressionMinVisiblePx() {
+        return mImpressionMinVisiblePx;
     }
 
     @Override

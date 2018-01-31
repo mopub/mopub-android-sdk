@@ -26,8 +26,8 @@ import static com.mopub.common.DataKeys.REWARDED_AD_DURATION_KEY;
 import static com.mopub.common.DataKeys.SHOULD_REWARD_ON_CLICK_KEY;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_FAIL;
-import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
-import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_CLOSE;
+import static com.mopub.common.util.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
+import static com.mopub.common.util.JavaScriptWebViewCallbacks.WEB_VIEW_DID_CLOSE;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.broadcastAction;
 
 public class RewardedMraidActivity extends MraidActivity {

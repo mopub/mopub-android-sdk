@@ -69,6 +69,7 @@ public class NativeGalleryFragment extends Fragment implements MoPubNativeAdLoad
         final String adUnitId = mAdConfiguration.getAdUnitId();
         views.mDescriptionView.setText(mAdConfiguration.getDescription());
         views.mAdUnitIdView.setText(adUnitId);
+        views.mKeywordsField.setText(getArguments().getString(MoPubListFragment.KEYWORDS_KEY, ""));
         mViewPager = (ViewPager) view.findViewById(R.id.gallery_pager);
 
         // Set up a renderer for a static native ad.

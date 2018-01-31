@@ -18,27 +18,6 @@ import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 
 abstract class BaseInterstitialActivity extends Activity {
     @Nullable protected AdReport mAdReport;
-
-    enum JavaScriptWebViewCallbacks {
-        // The ad server appends these functions to the MRAID javascript to help with third party
-        // impression tracking.
-        WEB_VIEW_DID_APPEAR("webviewDidAppear();"),
-        WEB_VIEW_DID_CLOSE("webviewDidClose();");
-
-        private String mJavascript;
-        private JavaScriptWebViewCallbacks(String javascript) {
-            mJavascript = javascript;
-        }
-
-        protected String getJavascript() {
-            return mJavascript;
-        }
-
-        protected String getUrl() {
-            return "javascript:" + mJavascript;
-        }
-    }
-
     @Nullable private CloseableLayout mCloseableLayout;
     @Nullable private Long mBroadcastIdentifier;
 

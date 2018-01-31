@@ -27,7 +27,7 @@ import java.util.WeakHashMap;
  * The {@link GooglePlayServicesAdRenderer} class is used to render
  * GooglePlayServicesStaticNativeAds.
  *
- * Compatible with version 11.0.2 of the Google Play Services SDK.
+ * Compatible with version 11.4.0 of the Google Play Services SDK.
  */
 public class GooglePlayServicesAdRenderer implements MoPubAdRenderer<GooglePlayServicesNativeAd> {
 

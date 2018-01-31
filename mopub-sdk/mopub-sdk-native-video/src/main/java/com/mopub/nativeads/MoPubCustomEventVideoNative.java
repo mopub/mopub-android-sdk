@@ -42,6 +42,7 @@ import java.util.Set;
 
 import static com.mopub.common.DataKeys.EVENT_DETAILS;
 import static com.mopub.common.DataKeys.IMPRESSION_MIN_VISIBLE_PERCENT;
+import static com.mopub.common.DataKeys.IMPRESSION_MIN_VISIBLE_PX;
 import static com.mopub.common.DataKeys.IMPRESSION_VISIBLE_MS;
 import static com.mopub.common.DataKeys.JSON_BODY_KEY;
 import static com.mopub.common.DataKeys.MAX_BUFFER_MS;
@@ -305,6 +306,8 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
             visibilityTrackingEvent.totalRequiredPlayTimeMs =
                     mVideoResponseHeaders.getImpressionVisibleMs();
             visibilityTrackingEvents.add(visibilityTrackingEvent);
+            visibilityTrackingEvent.minimumVisiblePx =
+                    mVideoResponseHeaders.getImpressionVisiblePx();
 
             // VAST impression trackers
             for (final VastTracker vastTracker : vastVideoConfig.getImpressionTrackers()) {
@@ -317,6 +320,8 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
                 vastImpressionTrackingEvent.totalRequiredPlayTimeMs =
                         mVideoResponseHeaders.getImpressionVisibleMs();
                 visibilityTrackingEvents.add(vastImpressionTrackingEvent);
+                vastImpressionTrackingEvent.minimumVisiblePx =
+                        mVideoResponseHeaders.getImpressionVisiblePx();
             }
 
             // Visibility tracking event from http response Vast payload
@@ -435,7 +440,8 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
             mVideoVisibleTracking.addView(mRootView,
                     mediaLayout,
                     mVideoResponseHeaders.getPlayVisiblePercent(),
-                    mVideoResponseHeaders.getPauseVisiblePercent());
+                    mVideoResponseHeaders.getPauseVisiblePercent(),
+                    mVideoResponseHeaders.getImpressionVisiblePx());
 
             mMediaLayout = mediaLayout;
             mMediaLayout.initForVideo();
@@ -905,20 +911,38 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         private int mImpressionMinVisiblePercent;
         private int mImpressionVisibleMs;
         private int mMaxBufferMs;
+        private Integer mImpressionVisiblePx;
         private JSONObject mVideoTrackers;
 
         VideoResponseHeaders(@NonNull final Map<String, String> serverExtras) {
             try {
                 mPlayVisiblePercent = Integer.parseInt(serverExtras.get(PLAY_VISIBLE_PERCENT));
                 mPauseVisiblePercent = Integer.parseInt(serverExtras.get(PAUSE_VISIBLE_PERCENT));
-                mImpressionMinVisiblePercent =
-                        Integer.parseInt(serverExtras.get(IMPRESSION_MIN_VISIBLE_PERCENT));
                 mImpressionVisibleMs = Integer.parseInt(serverExtras.get(IMPRESSION_VISIBLE_MS));
                 mMaxBufferMs = Integer.parseInt(serverExtras.get(MAX_BUFFER_MS));
                 mHeadersAreValid = true;
             } catch (NumberFormatException e) {
                 mHeadersAreValid = false;
             }
+
+            final String impressionVisiblePxString = serverExtras.get(IMPRESSION_MIN_VISIBLE_PX);
+            if (!TextUtils.isEmpty(impressionVisiblePxString)) {
+                try {
+                    mImpressionVisiblePx = Integer.parseInt(impressionVisiblePxString);
+                } catch (NumberFormatException e) {
+                    MoPubLog.d("Unable to parse impression min visible px from server extras.");
+                }
+            }
+            try {
+                mImpressionMinVisiblePercent =
+                        Integer.parseInt(serverExtras.get(IMPRESSION_MIN_VISIBLE_PERCENT));
+            } catch (NumberFormatException e) {
+                MoPubLog.d("Unable to parse impression min visible percent from server extras.");
+                if (mImpressionVisiblePx == null || mImpressionVisiblePx < 0) {
+                    mHeadersAreValid = false;
+                }
+            }
+
 
             final String videoTrackers = serverExtras.get(VIDEO_TRACKERS_KEY);
             if (TextUtils.isEmpty(videoTrackers)) {
@@ -955,6 +979,11 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
 
         int getMaxBufferMs() {
             return mMaxBufferMs;
+        }
+
+        @Nullable
+        Integer getImpressionVisiblePx() {
+            return mImpressionVisiblePx;
         }
 
         JSONObject getVideoTrackers() {

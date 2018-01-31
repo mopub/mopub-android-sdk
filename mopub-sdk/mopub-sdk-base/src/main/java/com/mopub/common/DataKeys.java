@@ -17,9 +17,14 @@ public class DataKeys {
     public static final String AD_WIDTH = "com_mopub_ad_width";
     public static final String AD_HEIGHT = "com_mopub_ad_height";
 
+    // Banner imp tracking fields
+    public static final String BANNER_IMPRESSION_MIN_VISIBLE_DIPS = "Banner-Impression-Min-Pixels";
+    public static final String BANNER_IMPRESSION_MIN_VISIBLE_MS = "Banner-Impression-Min-Ms";
+
     // Native fields
     public static final String IMPRESSION_MIN_VISIBLE_PERCENT = "Impression-Min-Visible-Percent";
     public static final String IMPRESSION_VISIBLE_MS = "Impression-Visible-Ms";
+    public static final String IMPRESSION_MIN_VISIBLE_PX = "Impression-Min-Visible-Px";
 
     // Native Video fields
     public static final String PLAY_VISIBLE_PERCENT = "Play-Visible-Percent";

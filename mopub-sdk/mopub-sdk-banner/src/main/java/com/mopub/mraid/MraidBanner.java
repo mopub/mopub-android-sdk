@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static com.mopub.common.DataKeys.AD_REPORT_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
+import static com.mopub.common.util.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
 import static com.mopub.mobileads.MoPubErrorCode.MRAID_LOAD_ERROR;
 
 class MraidBanner extends CustomEventBanner {
@@ -95,15 +96,19 @@ class MraidBanner extends CustomEventBanner {
 
     @Override
     protected void onInvalidate() {
-        if (mMraidController != null) {
-            mMraidController.setMraidListener(null);
-            mMraidController.destroy();
-        }
-
         if (mExternalViewabilitySessionManager != null) {
             mExternalViewabilitySessionManager.endDisplaySession();
             mExternalViewabilitySessionManager = null;
         }
+        if (mMraidController != null) {
+            mMraidController.setMraidListener(null);
+            mMraidController.destroy();
+        }
+    }
+
+    @Override
+    protected void trackMpxAndThirdPartyImpressions() {
+        mMraidController.loadJavascript(WEB_VIEW_DID_APPEAR.getJavascript());
     }
 
     private boolean extrasAreValid(@NonNull final Map<String, String> serverExtras) {

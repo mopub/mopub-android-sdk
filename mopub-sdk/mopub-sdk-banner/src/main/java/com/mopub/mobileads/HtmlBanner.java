@@ -13,6 +13,7 @@ import com.mopub.mobileads.factories.HtmlBannerWebViewFactory;
 import java.util.Map;
 
 import static com.mopub.common.DataKeys.AD_REPORT_KEY;
+import static com.mopub.common.util.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
 import static com.mopub.mobileads.MoPubErrorCode.INTERNAL_ERROR;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_INVALID_STATE;
 
@@ -37,6 +38,7 @@ public class HtmlBanner extends CustomEventBanner {
             redirectUrl = serverExtras.get(DataKeys.REDIRECT_URL_KEY);
             clickthroughUrl = serverExtras.get(DataKeys.CLICKTHROUGH_URL_KEY);
             isScrollable = Boolean.valueOf(serverExtras.get(DataKeys.SCROLLABLE_KEY));
+
             try {
                 adReport = (AdReport) localExtras.get(AD_REPORT_KEY);
             } catch (ClassCastException e) {
@@ -73,6 +75,11 @@ public class HtmlBanner extends CustomEventBanner {
         if (mHtmlBannerWebView != null) {
             mHtmlBannerWebView.destroy();
         }
+    }
+
+    @Override
+    protected void trackMpxAndThirdPartyImpressions() {
+        mHtmlBannerWebView.loadUrl(WEB_VIEW_DID_APPEAR.getUrl());
     }
 
     private boolean extrasAreValid(Map<String, String> serverExtras) {

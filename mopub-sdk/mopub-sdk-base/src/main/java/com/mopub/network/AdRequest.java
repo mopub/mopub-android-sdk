@@ -243,12 +243,17 @@ public class AdRequest extends Request<AdResponse> {
                     ResponseHeader.IMPRESSION_MIN_VISIBLE_PERCENT);
             final String impressionVisibleMS = extractHeader(headers,
                     ResponseHeader.IMPRESSION_VISIBLE_MS);
+            final String impressionMinVisiblePx = extractHeader(headers,
+                    ResponseHeader.IMPRESSION_MIN_VISIBLE_PX);
             if (!TextUtils.isEmpty(impressionMinVisiblePercent)) {
                 serverExtras.put(DataKeys.IMPRESSION_MIN_VISIBLE_PERCENT,
                         impressionMinVisiblePercent);
             }
             if (!TextUtils.isEmpty(impressionVisibleMS)) {
                 serverExtras.put(DataKeys.IMPRESSION_VISIBLE_MS, impressionVisibleMS);
+            }
+            if (!TextUtils.isEmpty(impressionMinVisiblePx)) {
+                serverExtras.put(DataKeys.IMPRESSION_MIN_VISIBLE_PX, impressionMinVisiblePx);
             }
         }
         if (AdType.VIDEO_NATIVE.equals(adTypeString)) {
@@ -287,6 +292,14 @@ public class AdRequest extends Request<AdResponse> {
                         FullAdType.VAST.equals(fullAdTypeString))) {
             serverExtras.put(DataKeys.EXTERNAL_VIDEO_VIEWABILITY_TRACKERS_KEY,
                     extractHeader(headers, ResponseHeader.VIDEO_VIEWABILITY_TRACKERS));
+        }
+
+        // Banner imp tracking
+        if (AdFormat.BANNER.equals(mAdFormat)) {
+            serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS,
+                    extractHeader(headers, ResponseHeader.BANNER_IMPRESSION_MIN_VISIBLE_MS));
+            serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS,
+                    extractHeader(headers, ResponseHeader.BANNER_IMPRESSION_MIN_VISIBLE_DIPS));
         }
 
         // Disable viewability vendors, if any

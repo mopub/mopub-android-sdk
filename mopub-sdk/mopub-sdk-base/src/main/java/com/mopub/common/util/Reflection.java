@@ -4,7 +4,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.mopub.common.Preconditions;
-import com.mopub.common.logging.MoPubLog;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

@@ -34,8 +34,8 @@ class HtmlWebViewClient extends WebViewClient {
 
     private final Context mContext;
     private final String mDspCreativeId;
-    private HtmlWebViewListener mHtmlWebViewListener;
-    private BaseHtmlWebView mHtmlWebView;
+    private final HtmlWebViewListener mHtmlWebViewListener;
+    private final BaseHtmlWebView mHtmlWebView;
     private final String mClickthroughUrl;
     private final String mRedirectUrl;
 
@@ -83,10 +83,8 @@ class HtmlWebViewClient extends WebViewClient {
 
                     @Override
                     public void onFailLoad() {
-                        mHtmlWebView.getSettings().setJavaScriptEnabled(false);
                         mHtmlWebView.stopLoading();
                         mHtmlWebViewListener.onFailed(UNSPECIFIED);
-                        mHtmlWebView.getSettings().setJavaScriptEnabled(true);
                     }
                 })
                 .build().handleUrl(mContext, url, mHtmlWebView.wasClicked());

@@ -8,7 +8,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.mopub.common.logging.MoPubLog;
-import com.mopub.exceptions.IntentNotResolvableException;
 
 import java.util.EnumSet;
 
@@ -78,8 +77,6 @@ class BrowserWebViewClient extends WebViewClient {
     @Override
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
         super.onPageStarted(view, url, favicon);
-        mMoPubBrowser.getForwardButton()
-                .setImageDrawable(UNRIGHT_ARROW.createDrawable(mMoPubBrowser));
     }
 
     @Override

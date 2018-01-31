@@ -25,6 +25,7 @@ public abstract class MoPubRewardedAd extends CustomEventRewardedAd {
     private boolean mIsLoaded;
     @Nullable private String mRewardedAdCurrencyName;
     private int mRewardedAdCurrencyAmount;
+    @Nullable protected String mAdUnitId;
 
     @Nullable
     @Override
@@ -83,6 +84,13 @@ public abstract class MoPubRewardedAd extends CustomEventRewardedAd {
                     "Negative currency amount specified for rewarded ad. Using the default reward amount: " +
                             MoPubReward.DEFAULT_REWARD_AMOUNT);
             mRewardedAdCurrencyAmount = MoPubReward.DEFAULT_REWARD_AMOUNT;
+        }
+
+        final Object adUnitId = localExtras.get(DataKeys.AD_UNIT_ID_KEY);
+        if (adUnitId instanceof String) {
+            mAdUnitId = (String) adUnitId;
+        } else {
+            MoPubLog.d("Unable to set ad unit for rewarded ad.");
         }
     }
 

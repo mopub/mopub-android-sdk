@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class MoPubRewardedPlayable extends MoPubRewardedAd {
 
-    @NonNull private static final String MOPUB_REWARDED_PLAYABLE_ID = "mopub_rewarded_playable_id";
+    @NonNull static final String MOPUB_REWARDED_PLAYABLE_ID = "mopub_rewarded_playable_id";
     @Nullable private RewardedMraidInterstitial mRewardedMraidInterstitial;
 
     public MoPubRewardedPlayable() {
@@ -40,7 +40,7 @@ public class MoPubRewardedPlayable extends MoPubRewardedAd {
     @NonNull
     @Override
     protected String getAdNetworkId() {
-        return MOPUB_REWARDED_PLAYABLE_ID;
+        return mAdUnitId != null ? mAdUnitId : MOPUB_REWARDED_PLAYABLE_ID;
     }
 
     @Override

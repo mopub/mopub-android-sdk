@@ -35,10 +35,11 @@ The MoPub SDK is available via:
     repositories {
         jcenter() // includes the MoPub SDK and AVID library
         maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
+        maven { url 'https://maven.google.com' } // necessary for Android API 26
     }
 
     dependencies {
-        compile('com.mopub:mopub-sdk:4.17.0@aar') {
+        compile('com.mopub:mopub-sdk:4.19.0@aar') {
             transitive = true
         }
     }
@@ -53,33 +54,34 @@ The MoPub SDK is available via:
         // ... other project repositories
         jcenter() // includes the MoPub SDK and AVID library
         maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
+        maven { url 'https://maven.google.com' } // necessary for Android API 26
     }
 
     dependencies {
         // ... other project dependencies
 
         // For banners
-        compile('com.mopub:mopub-sdk-banner:4.17.0@aar') {
+        compile('com.mopub:mopub-sdk-banner:4.19.0@aar') {
             transitive = true
         }
         
         // For interstitials
-        compile('com.mopub:mopub-sdk-interstitial:4.17.0@aar') {
+        compile('com.mopub:mopub-sdk-interstitial:4.19.0@aar') {
             transitive = true
         }
 
         // For rewarded videos. This will automatically also include interstitials
-        compile('com.mopub:mopub-sdk-rewardedvideo:4.17.0@aar') {
+        compile('com.mopub:mopub-sdk-rewardedvideo:4.19.0@aar') {
             transitive = true
         }
 
         // For native static (images).
-        compile('com.mopub:mopub-sdk-native-static:4.17.0@aar') {
+        compile('com.mopub:mopub-sdk-native-static:4.19.0@aar') {
             transitive = true
         }
 
         // For native video. This will automatically also include native static
-        compile('com.mopub:mopub-sdk-native-video:4.17.0@aar') {
+        compile('com.mopub:mopub-sdk-native-video:4.19.0@aar') {
             transitive = true
         }
     }
@@ -107,17 +109,18 @@ The MoPub SDK is available via:
 ## New in this Version
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
-- Rewarded Ads can now send up optional custom data through the server completion url. See `MoPubRewardedVideos#showRewardedVideo(String, String)`.
-- Updated Facebook native adapter to ignore clicks on whitespace as per Facebook policy.
+- Updated Facebook Audience Network adapters to 4.26.1.
+- Updated Flurry adapters to 8.1.0.
+- Updated Millennial rewarded ads adapters to 6.6.1.
 
 ## Requirements
 
 - Android 4.1 (API Version 16) and up (**Updated in 4.12.0**)
-- android-support-v4.jar, r23 (**Updated in 4.4.0**)
-- android-support-annotations.jar, r23 (**Updated in 4.4.0**)
-- android-support-v7-recyclerview.jar, r23 (**Updated in 4.4.0**)
+- android-support-v4.jar, r26 (**Updated in 4.18.0**)
+- android-support-annotations.jar, r26 (**Updated in 4.18.0**)
+- android-support-v7-recyclerview.jar, r26 (**Updated in 4.18.0**)
 - MoPub Volley Library (mopub-volley-1.1.0.jar - available on JCenter) (**Updated in 3.6.0**)
-- **Recommended** Google Play Services 9.4.0
+- **Recommended** Google Play Services 11.4.0
 
 ## <a name="upgradeRepositoryViewability"></a>Upgrading from 4.15.0 and Prior
 In 4.16.0, dependencies were added to viewability libraries provided by AVID and Moat. Apps upgrading from previous versions must add
@@ -131,7 +134,7 @@ Normally, to add the MoPub SDK to your app via JCenter, your `build.gradle` woul
 
 ```	
 dependencies {
-    compile('com.mopub:mopub-sdk:4.17.0@aar') {
+    compile('com.mopub:mopub-sdk:4.18.0@aar') {
         transitive = true
     }
 }
@@ -140,7 +143,7 @@ Update to the following to exclude one or both viewability vendors:
 
 ```
 dependencies {
-    compile('com.mopub:mopub-sdk:4.17.0@aar') {
+    compile('com.mopub:mopub-sdk:4.19.0@aar') {
         transitive = true
         exclude module: 'libAvid-mopub' // To exclude AVID
         exclude module: 'moat-mobile-app-kit' // To exclude Moat

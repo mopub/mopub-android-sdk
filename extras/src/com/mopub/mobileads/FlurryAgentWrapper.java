@@ -11,7 +11,7 @@ import com.flurry.android.FlurryAgent;
 import com.flurry.android.FlurryAgentListener;
 
 /**
- * Certified with Flurry 7.2.0
+ * Certified with Flurry 8.1.0
  */
 public final class FlurryAgentWrapper {
     public static final String PARAM_API_KEY = "apiKey";

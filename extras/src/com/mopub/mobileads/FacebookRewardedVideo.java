@@ -16,7 +16,7 @@ import com.mopub.common.MoPubReward;
 import java.util.Map;
 
 /**
- * Certified with Facebook Audience Network 4.23.0
+ * Certified with Facebook Audience Network 4.26.1
  */
 public class FacebookRewardedVideo extends CustomEventRewardedVideo implements RewardedVideoAdListener {
 

@@ -353,7 +353,7 @@ public class MoPubVideoNativeAdTest {
         subject.prepare(mockRootView);
         subject.render(mockMediaLayout);
 
-        verify(mockVisibilityTracker).addView(mockRootView, mockMediaLayout, 10, 5);
+        verify(mockVisibilityTracker).addView(mockRootView, mockMediaLayout, 10, 5, null);
     }
 
     @Test

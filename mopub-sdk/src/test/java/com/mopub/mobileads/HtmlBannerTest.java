@@ -123,4 +123,13 @@ public class HtmlBannerTest {
         assertThat(layoutParams.height).isEqualTo(50);
         assertThat(layoutParams.gravity).isEqualTo(Gravity.CENTER);
     }
+
+    @Test
+    public void trackMpxAndThirdPartyImpressions_shouldFireJavascriptWebViewDidAppear() throws Exception {
+        subject.loadBanner(context, customEventBannerListener, localExtras, serverExtras);
+        subject.trackMpxAndThirdPartyImpressions();
+
+        verify(htmlBannerWebView).loadHtmlResponse(responseBody);
+        verify(htmlBannerWebView).loadUrl(eq("javascript:webviewDidAppear();"));
+    }
 }

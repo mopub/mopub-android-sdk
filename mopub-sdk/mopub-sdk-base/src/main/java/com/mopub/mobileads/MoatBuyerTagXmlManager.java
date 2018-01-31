@@ -6,7 +6,6 @@ import android.support.annotation.Nullable;
 import com.mopub.common.Preconditions;
 import com.mopub.mobileads.util.XmlUtils;
 
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import java.util.HashSet;

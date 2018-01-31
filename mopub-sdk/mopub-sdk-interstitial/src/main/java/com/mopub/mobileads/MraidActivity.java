@@ -34,8 +34,8 @@ import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_FAIL;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_SHOW;
-import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
-import static com.mopub.mobileads.BaseInterstitialActivity.JavaScriptWebViewCallbacks.WEB_VIEW_DID_CLOSE;
+import static com.mopub.common.util.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
+import static com.mopub.common.util.JavaScriptWebViewCallbacks.WEB_VIEW_DID_CLOSE;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiver.broadcastAction;
 import static com.mopub.mobileads.HtmlWebViewClient.MOPUB_FAIL_LOAD;
 
@@ -240,13 +240,14 @@ public class MraidActivity extends BaseInterstitialActivity {
 
     @Override
     protected void onDestroy() {
-        if (mMraidController != null) {
-            mMraidController.destroy();
-        }
         if (mExternalViewabilitySessionManager != null) {
             mExternalViewabilitySessionManager.endDisplaySession();
             mExternalViewabilitySessionManager = null;
         }
+        if (mMraidController != null) {
+            mMraidController.destroy();
+        }
+
         if (getBroadcastIdentifier()!= null) {
             broadcastAction(this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_DISMISS);
         }
