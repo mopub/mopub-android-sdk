@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 
 import static org.mockito.Matchers.any;
@@ -38,7 +39,7 @@ public class MoPubConversionTrackerTest {
     @Before
     public void setUp() throws Exception {
         subject = new MoPubConversionTracker();
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         Networking.setRequestQueueForTesting(mockRequestQueue);
     }
 

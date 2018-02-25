@@ -8,6 +8,7 @@ import com.mopub.common.MoPub.BrowserAgent;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,6 +31,11 @@ public class UrlActionTest {
 
     @Before
     public void setUp() {
+        MoPub.resetBrowserAgent();
+    }
+
+    @After
+    public void tearDown() {
         MoPub.resetBrowserAgent();
     }
 

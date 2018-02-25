@@ -90,6 +90,10 @@ public class
     public void setup() {
         mActivity = Robolectric.buildActivity(Activity.class).create().get();
         MoPubRewardedVideoManager.init(mActivity);
+        // The fact that next call fixes issues in multiple tests proves that Robolectric doesn't
+        // teardown singletons properly between tests.
+        MoPubRewardedVideoManager.updateActivity(mActivity);
+
         MoPubRewardedVideoManager.setVideoListener(mockVideoListener);
 
         mTestCustomEventSharedPrefs = SharedPreferencesHelper.getSharedPreferences(

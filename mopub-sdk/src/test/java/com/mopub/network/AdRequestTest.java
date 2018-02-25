@@ -6,6 +6,7 @@ import android.location.Location;
 import com.mopub.common.AdFormat;
 import com.mopub.common.AdType;
 import com.mopub.common.DataKeys;
+import com.mopub.common.MoPub;
 import com.mopub.common.MoPub.BrowserAgent;
 import com.mopub.common.event.BaseEvent;
 import com.mopub.common.event.EventDispatcher;
@@ -82,6 +83,7 @@ public class AdRequestTest {
         // Reset our locale for other tests.
         Locale.setDefault(Locale.US);
         MoPubEvents.setEventDispatcher(null);
+        MoPub.resetBrowserAgent();
     }
 
     @Test

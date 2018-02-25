@@ -1,3 +1,11 @@
+## Version 4.20.0 (February 20, 2018)
+- Upgraded Gradle dependency to 4.3.1.
+- Upgraded Moat dependency to 2.4.1. This fixes the AAPT2 manifest merge error.
+- Fixed a viewability bug for video ads where ViewGroups were not being properly added to the list of known obstructions.
+- We are formally separating network adapters from our MoPub SDK. This is to enable an independent release cadence resulting in faster updates and certification cycles. New mediation location is accessible [here](https://github.com/mopub/mopub-android-mediation).  
+We have also added an additional tool, making it easy for publishers to get up and running with the mediation integration. Check out https://developers.mopub.com/docs/mediation/integrate/ and integration instructions at https://developers.mopub.com/docs/android/integrating-networks/.
+- Bug fixes.
+
 ## Version 4.19.0 (December 11, 2017)
 - Updated Facebook Audience Network adapters to 4.26.1.
 - Updated Flurry adapters to 8.1.0.

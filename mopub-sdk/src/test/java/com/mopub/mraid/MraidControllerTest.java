@@ -38,7 +38,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 
@@ -57,6 +56,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.robolectric.Shadows.shadowOf;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -508,7 +508,7 @@ public class MraidControllerTest {
     @Test
     public void handleOpen_withApplicationUrl_shouldStartNewIntent() {
         String applicationUrl = "amzn://blah";
-        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW, Uri
+        shadowOf(activity.getPackageManager()).addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW, Uri
                 .parse(applicationUrl)), new ResolveInfo());
 
         subject.handleOpen(applicationUrl);
@@ -529,8 +529,8 @@ public class MraidControllerTest {
 
         subject.handleOpen(applicationUrl);
 
-        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
-        Intent startedIntent = ShadowApplication.getInstance().getNextStartedActivity();
+        Robolectric.flushBackgroundThreadScheduler();
+        Intent startedIntent = shadowOf(activity).getNextStartedActivity();
         assertThat(startedIntent).isNotNull();
         // Since we are not using an Activity context, we should have FLAG_ACTIVITY_NEW_TASK
         assertThat(Utils.bitMaskContainsFlag(startedIntent.getFlags(),

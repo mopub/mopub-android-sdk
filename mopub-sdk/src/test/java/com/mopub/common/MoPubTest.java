@@ -10,6 +10,7 @@ import com.mopub.mobileads.MoPubRewardedVideoListener;
 import com.mopub.mobileads.MoPubRewardedVideoManager;
 import com.mopub.mobileads.MoPubRewardedVideos;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -55,6 +56,11 @@ public class MoPubTest {
 
         mockStatic(MoPubRewardedVideoManager.class);
 
+        MoPub.resetBrowserAgent();
+    }
+
+    @After
+    public void tearDown() {
         MoPub.resetBrowserAgent();
     }
 

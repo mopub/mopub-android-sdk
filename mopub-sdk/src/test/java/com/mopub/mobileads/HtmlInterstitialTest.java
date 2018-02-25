@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
@@ -22,9 +23,9 @@ import static com.mopub.common.DataKeys.CLICKTHROUGH_URL_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.common.DataKeys.REDIRECT_URL_KEY;
 import static com.mopub.common.DataKeys.SCROLLABLE_KEY;
-import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_SHOW;
+import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiverTest.getIntentForActionAndIdentifier;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_INVALID_STATE;
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -50,7 +51,7 @@ public class HtmlInterstitialTest extends ResponseBodyInterstitialTest {
 
         expectedResponse = "this is the response";
         htmlInterstitialWebView = TestHtmlInterstitialWebViewFactory.getSingletonMock();
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         customEventInterstitialListener = mock(CustomEventInterstitialListener.class);
         localExtras = new HashMap<String, Object>();
         serverExtras = new HashMap<String, String>();

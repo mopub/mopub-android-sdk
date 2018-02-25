@@ -301,8 +301,8 @@ class AvidViewabilitySession implements ExternalViewabilitySession {
 
     @Override
     @Nullable
-    public Boolean registerVideoObstructions(@NonNull final List<View> views) {
-        Preconditions.checkNotNull(views);
+    public Boolean registerVideoObstruction(@NonNull final View view) {
+        Preconditions.checkNotNull(view);
 
         if (!isEnabled()) {
             return null;
@@ -314,16 +314,12 @@ class AvidViewabilitySession implements ExternalViewabilitySession {
         }
 
         try {
-            for (final View view : views) {
-                if (view != null) {
-                    // Pre-reflection code:
-                    // mAvidVideoAdSession.registerFriendlyObstruction(view);
+            // Pre-reflection code:
+            // mAvidVideoAdSession.registerFriendlyObstruction(view);
 
-                    new Reflection.MethodBuilder(mAvidVideoAdSession, "registerFriendlyObstruction")
-                            .addParam(View.class, view)
-                            .execute();
-                }
-            }
+            new Reflection.MethodBuilder(mAvidVideoAdSession, "registerFriendlyObstruction")
+                    .addParam(View.class, view)
+                    .execute();
 
             return true;
         } catch (Exception e) {

@@ -21,27 +21,28 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
-import org.robolectric.internal.ShadowExtractor;
+import org.robolectric.shadow.api.Shadow;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
-import org.robolectric.util.ActivityController;
 
 import static com.mopub.common.DataKeys.CLICKTHROUGH_URL_KEY;
 import static com.mopub.common.DataKeys.CREATIVE_ORIENTATION_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.common.DataKeys.REDIRECT_URL_KEY;
 import static com.mopub.common.DataKeys.SCROLLABLE_KEY;
-import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_FAIL;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_SHOW;
+import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiverTest.getIntentForActionAndIdentifier;
 import static com.mopub.mobileads.MoPubErrorCode.UNSPECIFIED;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -79,7 +80,8 @@ public class MoPubActivityTest {
                 EXPECTED_REDIRECT_URL,
                 EXPECTED_CLICKTHROUGH_URL, EXPECTED_ORIENTATION, testBroadcastIdentifier);
 
-        final ActivityController<MoPubActivity> subjectController = Robolectric.buildActivity(MoPubActivity.class).withIntent(moPubActivityIntent);
+        final ActivityController<MoPubActivity> subjectController = Robolectric.buildActivity(
+                MoPubActivity.class, moPubActivityIntent);
         subject = subjectController.get();
         ShadowLocalBroadcastManager.getInstance(subject).registerReceiver(broadcastReceiver,
                 new EventForwardingBroadcastReceiver(customEventInterstitialListener,
@@ -264,8 +266,8 @@ public class MoPubActivityTest {
         MoPubActivity.BroadcastingInterstitialListener broadcastingInterstitialListener = ((MoPubActivity) subject).new BroadcastingInterstitialListener();
         broadcastingInterstitialListener.onInterstitialFailed(null);
 
-        verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
-        assertThat(((ShadowActivity) ShadowExtractor.extract(subject)).isFinishing()).isTrue();
+        verify(broadcastReceiver).onReceive(any(Context.class), argThat(new IntentIsEqual(expectedIntent)));
+        assertThat(((ShadowActivity) Shadow.extract(subject)).isFinishing()).isTrue();
     }
 
     @Test
@@ -275,14 +277,14 @@ public class MoPubActivityTest {
         MoPubActivity.BroadcastingInterstitialListener broadcastingInterstitialListener = ((MoPubActivity) subject).new BroadcastingInterstitialListener();
         broadcastingInterstitialListener.onInterstitialClicked();
 
-        verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
+        verify(broadcastReceiver).onReceive(any(Context.class), argThat(new IntentIsEqual(expectedIntent)));
     }
 
     @Test
     public void onCreate_shouldBroadcastInterstitialShow() throws Exception {
         Intent expectedIntent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_SHOW, testBroadcastIdentifier);
 
-        verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
+        verify(broadcastReceiver).onReceive(any(Context.class), argThat(new IntentIsEqual(expectedIntent)));
     }
 
     @Test
@@ -291,7 +293,7 @@ public class MoPubActivityTest {
 
         subject.onDestroy();
 
-        verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
+        verify(broadcastReceiver).onReceive(any(Context.class), argThat(new IntentIsEqual(expectedIntent)));
     }
 
     private FrameLayout getContentView() {
@@ -304,5 +306,6 @@ public class MoPubActivityTest {
                 new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT,
                         FrameLayout.LayoutParams.WRAP_CONTENT));
     }
+
 }
 

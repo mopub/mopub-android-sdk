@@ -11,7 +11,7 @@ apply plugin: 'com.android.application'
 
 project.group = 'com.mopub'
 project.description = '''MoPub Sample App'''
-project.version = '4.19.0'
+project.version = '4.20.0'
 
 android {
     compileSdkVersion 26
@@ -19,7 +19,7 @@ android {
     lintOptions { abortOnError false }
 
     defaultConfig {
-        versionCode 57
+        versionCode 58
         versionName version
         minSdkVersion 16
         targetSdkVersion 26
@@ -57,9 +57,11 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:26.1.0'
-    compile 'com.google.android.gms:play-services-ads:11.4.0'
-    compile 'com.google.android.gms:play-services-base:11.4.0'
-    compile 'com.android.support:recyclerview-v7:26.1.0'
-    compile project(':mopub-sdk')
+    implementation 'com.android.support:support-v4:26.1.0'
+    implementation 'com.google.android.gms:play-services-ads:11.4.0'
+    implementation 'com.google.android.gms:play-services-base:11.4.0'
+    implementation 'com.android.support:recyclerview-v7:26.1.0'
+    implementation project(':mopub-sdk')
+    implementation('com.mopub:libAvid-mopub:3.6.4')
+    implementation 'com.moat.analytics.mobile.mpub:moat-mobile-app-kit:2.1.0'
 }

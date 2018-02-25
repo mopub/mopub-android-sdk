@@ -17,7 +17,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 
@@ -39,6 +38,7 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.robolectric.Shadows.shadowOf;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -941,12 +941,12 @@ public class UrlHandlerTest {
     }
 
     private void makeDeeplinkResolvable(String deeplink) {
-        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW,
+        shadowOf(context.getPackageManager()).addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW,
                 Uri.parse(deeplink)), new ResolveInfo());
     }
 
     private void makeIntentUrlResolvable(String intentUrl) throws URISyntaxException {
-        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(
+        shadowOf(context.getPackageManager()).addResolveInfoForIntent(
                 Intent.parseUri(intentUrl, Intent.URI_INTENT_SCHEME), new ResolveInfo());
     }
 }

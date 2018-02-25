@@ -8,7 +8,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.mopub.volley:mopub-volley:1.1.0'
+    api 'com.mopub.volley:mopub-volley:1.1.0'
 
     def avidEnabled = project.hasProperty("mopub.avidEnabled") ? project.getProperty("mopub.avidEnabled").toBoolean() : true
     if (avidEnabled) {
@@ -16,7 +16,7 @@ dependencies {
     }
     def moatEnabled = project.hasProperty("mopub.moatEnabled") ? project.getProperty("mopub.moatEnabled").toBoolean() : true
     if (moatEnabled) {
-        compile 'com.moat.analytics.mobile.mpub:moat-mobile-app-kit:2.1.0'
+        compile 'com.moat.analytics.mobile.mpub:moat-mobile-app-kit:2.4.1'
     }
 }
 

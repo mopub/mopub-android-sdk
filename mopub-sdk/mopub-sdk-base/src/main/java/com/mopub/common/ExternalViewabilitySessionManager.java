@@ -11,7 +11,6 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.mobileads.VastVideoConfig;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -194,13 +193,13 @@ public class ExternalViewabilitySessionManager {
     /**
      * Prevents friendly obstructions from affecting viewability scores.
      *
-     * @param views Views in the same Window and a higher z-index as the video playing.
+     * @param view View in the same Window and a higher z-index as the video playing.
      */
-    public void registerVideoObstructions(@NonNull final List<View> views) {
-        Preconditions.checkNotNull(views);
+    public void registerVideoObstruction(@NonNull View view) {
+        Preconditions.checkNotNull(view);
 
         for (final ExternalViewabilitySession session : mViewabilitySessions) {
-            final Boolean successful = session.registerVideoObstructions(views);
+            final Boolean successful = session.registerVideoObstruction(view);
             logEvent(session, "register friendly obstruction", successful, true);
         }
     }

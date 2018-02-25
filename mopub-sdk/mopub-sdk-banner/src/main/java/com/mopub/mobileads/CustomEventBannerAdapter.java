@@ -23,6 +23,7 @@ import java.util.TreeMap;
 import static com.mopub.common.DataKeys.AD_HEIGHT;
 import static com.mopub.common.DataKeys.AD_REPORT_KEY;
 import static com.mopub.common.DataKeys.AD_WIDTH;
+import static com.mopub.common.DataKeys.BANNER_IMPRESSION_PIXEL_COUNT_ENABLED;
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_NOT_FOUND;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_TIMEOUT;
@@ -87,6 +88,7 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
         mLocalExtras.put(AD_REPORT_KEY, adReport);
         mLocalExtras.put(AD_WIDTH, mMoPubView.getAdWidth());
         mLocalExtras.put(AD_HEIGHT, mMoPubView.getAdHeight());
+        mLocalExtras.put(BANNER_IMPRESSION_PIXEL_COUNT_ENABLED, mIsVisibilityImpressionTrackingEnabled);
     }
 
     @ReflectionTarget

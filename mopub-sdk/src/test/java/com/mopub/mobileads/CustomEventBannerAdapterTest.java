@@ -63,8 +63,6 @@ public class CustomEventBannerAdapterTest {
         when(moPubView.getLocalExtras()).thenReturn(localExtras);
 
         serverExtras = new HashMap<String, String>();
-        serverExtras.put("key", "value");
-        serverExtras.put("another_key", "another_value");
         subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
 
         expectedLocalExtras = new HashMap<String, Object>();
@@ -72,6 +70,7 @@ public class CustomEventBannerAdapterTest {
         expectedLocalExtras.put("broadcastIdentifier", BROADCAST_IDENTIFIER);
         expectedLocalExtras.put(DataKeys.AD_WIDTH, 320);
         expectedLocalExtras.put(DataKeys.AD_HEIGHT, 50);
+        expectedLocalExtras.put(DataKeys.BANNER_IMPRESSION_PIXEL_COUNT_ENABLED, false);
 
         expectedServerExtras = new HashMap<String, String>();
 
@@ -149,11 +148,33 @@ public class CustomEventBannerAdapterTest {
 
     @Test
     public void loadAd_shouldPropagateServerExtrasToLoadBanner() throws Exception {
+        serverExtras.put("key", "value");
+        serverExtras.put("another_key", "another_value");
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+
         subject.loadAd();
 
         expectedServerExtras.put("key", "value");
         expectedServerExtras.put("another_key", "another_value");
+        verify(banner).loadBanner(
+                any(Context.class),
+                eq(subject),
+                eq(expectedLocalExtras),
+                eq(expectedServerExtras)
+        );
+    }
 
+    @Test
+    public void loadAd_withVisibilityImpressionTrackingEnabled_shouldPropagateVisibilityImpressionTrackingEnabledFlagInLocalExtras() {
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "1");
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "0");
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+
+        subject.loadAd();
+
+        expectedLocalExtras.put(DataKeys.BANNER_IMPRESSION_PIXEL_COUNT_ENABLED, true);
+        expectedServerExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "1");
+        expectedServerExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "0");
         verify(banner).loadBanner(
                 any(Context.class),
                 eq(subject),

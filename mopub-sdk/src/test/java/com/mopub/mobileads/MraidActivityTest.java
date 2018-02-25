@@ -26,9 +26,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
 import org.robolectric.Shadows;
+import org.robolectric.android.controller.ActivityController;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
-import org.robolectric.util.ActivityController;
 
 import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
@@ -331,7 +331,8 @@ public class MraidActivityTest {
     @Test
     public void onResume_shouldResumeMraidView() throws Exception {
         subject.onCreate(null);
-        Shadows.shadowOf(subject).pauseAndThenResume();
+        activityController.pause();
+        activityController.resume();
 
         verify(mockMraidWebView).onResume();
     }

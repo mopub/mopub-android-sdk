@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.internal.matchers.Null;
 import org.robolectric.annotation.Config;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class UrlResolutionTaskTest {
 
     @After
     public void tearDown() {
-        MoPub.setBrowserAgent(MoPub.BrowserAgent.IN_APP);
+        MoPub.resetBrowserAgent();
     }
 
     @Test
@@ -134,12 +135,11 @@ public class UrlResolutionTaskTest {
                 .isNull();
     }
 
-    @Test
-    public void resolveRedirectLocation_withoutLocation_shouldReturnNull() throws Exception {
-        setupMockHttpUrlConnection(200, null);
+    @Test(expected = NullPointerException.class)
+    public void resolveRedirectLocation_withResponseCode302_withoutLocation_shouldThrowException() throws Exception {
+        when(mockHttpUrlConnection.getResponseCode()).thenReturn(302);
 
-        assertThat(UrlResolutionTask.resolveRedirectLocation(BASE_URL, mockHttpUrlConnection))
-                .isNull();
+        UrlResolutionTask.resolveRedirectLocation(BASE_URL, mockHttpUrlConnection);
     }
 
     @Test(expected = URISyntaxException.class)

@@ -1,5 +1,6 @@
 package com.mopub.mraid;
 
+import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -17,6 +18,7 @@ import com.mopub.mraid.MraidController.MraidListener;
 import java.util.Map;
 
 import static com.mopub.common.DataKeys.AD_REPORT_KEY;
+import static com.mopub.common.DataKeys.BANNER_IMPRESSION_PIXEL_COUNT_ENABLED;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.common.util.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
 import static com.mopub.mobileads.MoPubErrorCode.MRAID_LOAD_ERROR;
@@ -26,6 +28,7 @@ class MraidBanner extends CustomEventBanner {
     @Nullable private CustomEventBannerListener mBannerListener;
     @Nullable private MraidWebViewDebugListener mDebugListener;
     @Nullable private ExternalViewabilitySessionManager mExternalViewabilitySessionManager;
+    private boolean mBannerImpressionPixelCountEnabled = false;
 
     @Override
     protected void loadBanner(@NonNull final Context context,
@@ -40,6 +43,12 @@ class MraidBanner extends CustomEventBanner {
         } else {
             mBannerListener.onBannerFailed(MRAID_LOAD_ERROR);
             return;
+        }
+
+        final Object bannerImpressionPixelCountEnabledObject = localExtras.get(
+                BANNER_IMPRESSION_PIXEL_COUNT_ENABLED);
+        if (bannerImpressionPixelCountEnabledObject instanceof Boolean) {
+            mBannerImpressionPixelCountEnabled = (boolean) bannerImpressionPixelCountEnabledObject;
         }
 
         try {
@@ -88,8 +97,16 @@ class MraidBanner extends CustomEventBanner {
             public void onReady(final @NonNull MraidBridge.MraidWebView webView,
                     final @Nullable ExternalViewabilitySessionManager viewabilityManager) {
                 webView.getSettings().setJavaScriptEnabled(true);
-                mExternalViewabilitySessionManager = new ExternalViewabilitySessionManager(context);
-                mExternalViewabilitySessionManager.createDisplaySession(context, webView);
+
+                // We only measure viewability when we have an activity context. This sets up a delayed
+                // viewability session if we have the new pixel-counting banner impression tracking enabled.
+                // Otherwise, set up a regular display session.
+                if (context instanceof Activity) {
+                    mExternalViewabilitySessionManager = new ExternalViewabilitySessionManager(
+                            context);
+                    mExternalViewabilitySessionManager.createDisplaySession(context, webView,
+                            mBannerImpressionPixelCountEnabled);
+                }
             }
         });
     }
@@ -108,7 +125,25 @@ class MraidBanner extends CustomEventBanner {
 
     @Override
     protected void trackMpxAndThirdPartyImpressions() {
+        if (mMraidController == null) {
+            return;
+        }
+
         mMraidController.loadJavascript(WEB_VIEW_DID_APPEAR.getJavascript());
+
+        // mExternalViewabilitySessionManager is usually only null if the original Context given
+        // to mMraidController was not an Activity Context. We don't need to start the deferred
+        // viewability tracker since it wasn't created, and if it was, and the activity reference
+        // was lost, something bad has happened, so we should drop the request.
+        if (mBannerImpressionPixelCountEnabled &&
+                mExternalViewabilitySessionManager != null) {
+            final Activity activity = mMraidController.getWeakActivity().get();
+            if (activity != null) {
+                mExternalViewabilitySessionManager.startDeferredDisplaySession(activity);
+            } else {
+                MoPubLog.d("Lost the activity for deferred Viewability tracking. Dropping session.");
+            }
+        }
     }
 
     private boolean extrasAreValid(@NonNull final Map<String, String> serverExtras) {
@@ -121,5 +156,10 @@ class MraidBanner extends CustomEventBanner {
         if (mMraidController != null) {
             mMraidController.setDebugListener(debugListener);
         }
+    }
+
+    @VisibleForTesting
+    boolean isBannerImpressionPixelCountEnabled() {
+        return mBannerImpressionPixelCountEnabled;
     }
 }

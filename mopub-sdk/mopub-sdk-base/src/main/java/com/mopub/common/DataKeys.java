@@ -20,6 +20,7 @@ public class DataKeys {
     // Banner imp tracking fields
     public static final String BANNER_IMPRESSION_MIN_VISIBLE_DIPS = "Banner-Impression-Min-Pixels";
     public static final String BANNER_IMPRESSION_MIN_VISIBLE_MS = "Banner-Impression-Min-Ms";
+    public static final String BANNER_IMPRESSION_PIXEL_COUNT_ENABLED = "Banner-Impression-Pixel-Count-Enabled";
 
     // Native fields
     public static final String IMPRESSION_MIN_VISIBLE_PERCENT = "Impression-Min-Visible-Percent";

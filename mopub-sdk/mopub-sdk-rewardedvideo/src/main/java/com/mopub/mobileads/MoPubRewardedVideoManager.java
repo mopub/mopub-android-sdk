@@ -594,10 +594,11 @@ public class MoPubRewardedVideoManager {
                         "Updating init settings for custom event %s with params %s",
                         customEventClassName, serverExtrasJsonString));
 
+                // https://github.com/robolectric/robolectric/issues/3641
                 sCustomEventSharedPrefs
                         .edit()
                         .putString(customEventClassName, serverExtrasJsonString)
-                        .apply();
+                        .commit();
             }
 
             // Load custom event

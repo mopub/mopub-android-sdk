@@ -43,8 +43,8 @@ public class RewardedMraidActivityTest {
         Context context = Robolectric.buildActivity(Activity.class).create().get();
         Intent intent = RewardedMraidActivity.createIntent(context, mockAdReport, HTML_DATA,
                 broadcastIdentifier, REWARDED_DURATION_IN_SECONDS, shouldRewardOnClick);
-        subject = Robolectric.buildActivity(RewardedMraidActivity.class)
-                .withIntent(intent).create().get();
+        subject = Robolectric.buildActivity(RewardedMraidActivity.class, intent)
+                .create().get();
     }
 
     @Test

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.view.Gravity;
 import android.widget.FrameLayout;
 
+import com.mopub.common.DataKeys;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestHtmlBannerWebViewFactory;
 import com.mopub.mobileads.test.support.TestMoPubViewFactory;
@@ -93,6 +94,28 @@ public class HtmlBannerTest {
         assertThat(TestHtmlBannerWebViewFactory.getLatestRedirectUrl()).isEqualTo("redirectUrl");
         assertThat(TestHtmlBannerWebViewFactory.getLatestClickthroughUrl()).isEqualTo("clickthroughUrl");
         verify(htmlBannerWebView).loadHtmlResponse(responseBody);
+    }
+
+    @Test
+    public void loadBanner_withTrueFlag_shouldSetBannerImpressionPixelCountEnabledTrue() {
+        assertThat(subject.isBannerImpressionPixelCountEnabled()).isFalse();
+
+        localExtras.put(DataKeys.BANNER_IMPRESSION_PIXEL_COUNT_ENABLED, true);
+
+        subject.loadBanner(context, customEventBannerListener, localExtras, serverExtras);
+
+        assertThat(subject.isBannerImpressionPixelCountEnabled()).isTrue();
+    }
+
+    @Test
+    public void loadBanner_withFalseFlag_shouldSetBannerImpressionPixelCountEnabledFalse() {
+        assertThat(subject.isBannerImpressionPixelCountEnabled()).isFalse();
+
+        localExtras.put(DataKeys.BANNER_IMPRESSION_PIXEL_COUNT_ENABLED, false);
+
+        subject.loadBanner(context, customEventBannerListener, localExtras, serverExtras);
+
+        assertThat(subject.isBannerImpressionPixelCountEnabled()).isFalse();
     }
 
     @Test

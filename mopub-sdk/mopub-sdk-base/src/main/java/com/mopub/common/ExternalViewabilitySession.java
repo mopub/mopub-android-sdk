@@ -36,7 +36,7 @@ public interface ExternalViewabilitySession {
     @Nullable Boolean createVideoSession(@NonNull final Activity activity, @NonNull final View view,
             @NonNull final Set<String> buyerResources,
             @NonNull final Map<String, String> videoViewabilityTrackers);
-    @Nullable Boolean registerVideoObstructions(@NonNull final List<View> views);
+    @Nullable Boolean registerVideoObstruction(@NonNull final View view);
     @Nullable Boolean onVideoPrepared(@NonNull final View playerView, final int duration);
     @Nullable Boolean recordVideoEvent(@NonNull final VideoEvent event, final int playheadMillis);
     @Nullable Boolean endVideoSession();

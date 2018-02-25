@@ -31,8 +31,8 @@ android.libraryVariants.all { variant ->
         title = project.ext.displayName
         description "Generates Javadoc for $variant.name."
         source = variant.javaCompile.source
-        classpath += files(variant.javaCompile.classpath.files, project.android.getBootClasspath())
-        classpath += project.configurations.compile
+        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+        classpath += configurations.compile
 
         options {
             links "http://docs.oracle.com/javase/7/docs/api/"

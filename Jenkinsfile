@@ -13,10 +13,10 @@ pipeline {
     }
     post {
         success {
-            hipchatSend message: "${env.JOB_NAME} #${env.BUILD_NUMBER} has succeeded.", color: 'GREEN'
+            slackSend color: 'GREEN', message: "<${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}> has succeeded."
         }
         failure {
-            hipchatSend message: "Attention @here ${env.JOB_NAME} #${env.BUILD_NUMBER} has failed.", color: 'RED'
+            slackSend color: 'RED', message: "Attention @here <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}> has failed."
         }
     }
 }

@@ -33,7 +33,6 @@ import com.mopub.common.util.Utils;
 import com.mopub.mobileads.resource.DrawableConstants;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Map;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
@@ -172,6 +171,7 @@ public class VastVideoViewController extends BaseVideoViewController {
         mExternalViewabilitySessionManager = new ExternalViewabilitySessionManager(activity);
         mExternalViewabilitySessionManager.createVideoSession(activity, mVideoView,
                 mVastVideoConfig);
+        mExternalViewabilitySessionManager.registerVideoObstruction(mBlurredLastVideoFrameImageView);
 
         // Companion ad view, set to invisible initially to have it be drawn to calculate size
         mLandscapeCompanionAdView = createCompanionAdView(activity,
@@ -220,10 +220,6 @@ public class VastVideoViewController extends BaseVideoViewController {
         // Close button snapped to top-right corner of screen
         // Always add last to layout since it must be visible above all other views
         addCloseButtonWidget(activity, View.GONE);
-
-        mExternalViewabilitySessionManager.registerVideoObstructions(Arrays.asList(
-                mTopGradientStripWidget, mProgressBarWidget, mBottomGradientStripWidget,
-                mRadialCountdownWidget, mCtaButtonWidget, mSocialActionsView, mCloseButtonWidget));
 
         Handler mainHandler = new Handler(Looper.getMainLooper());
         mProgressCheckerRunnable = new VastVideoViewProgressRunnable(this, mVastVideoConfig,
@@ -504,6 +500,7 @@ public class VastVideoViewController extends BaseVideoViewController {
                 RelativeLayout.ALIGN_TOP,
                 getLayout().getId());
         getLayout().addView(mTopGradientStripWidget);
+        mExternalViewabilitySessionManager.registerVideoObstruction(mTopGradientStripWidget);
     }
 
     private void addBottomGradientStripWidget(@NonNull final Context context) {
@@ -517,6 +514,7 @@ public class VastVideoViewController extends BaseVideoViewController {
                 RelativeLayout.ABOVE,
                 mProgressBarWidget.getId());
         getLayout().addView(mBottomGradientStripWidget);
+        mExternalViewabilitySessionManager.registerVideoObstruction(mBottomGradientStripWidget);
     }
 
     private void addProgressBarWidget(@NonNull final Context context, int initialVisibility) {
@@ -524,12 +522,14 @@ public class VastVideoViewController extends BaseVideoViewController {
         mProgressBarWidget.setAnchorId(mVideoView.getId());
         mProgressBarWidget.setVisibility(initialVisibility);
         getLayout().addView(mProgressBarWidget);
+        mExternalViewabilitySessionManager.registerVideoObstruction(mProgressBarWidget);
     }
 
     private void addRadialCountdownWidget(@NonNull final Context context, int initialVisibility) {
         mRadialCountdownWidget = new VastVideoRadialCountdownWidget(context);
         mRadialCountdownWidget.setVisibility(initialVisibility);
         getLayout().addView(mRadialCountdownWidget);
+        mExternalViewabilitySessionManager.registerVideoObstruction(mRadialCountdownWidget);
     }
 
     private void addCtaButtonWidget(@NonNull final Context context) {
@@ -541,6 +541,7 @@ public class VastVideoViewController extends BaseVideoViewController {
                 hasClickthroughUrl);
 
         getLayout().addView(mCtaButtonWidget);
+        mExternalViewabilitySessionManager.registerVideoObstruction(mCtaButtonWidget);
 
         mCtaButtonWidget.setOnTouchListener(mClickThroughListener);
 
@@ -556,6 +557,7 @@ public class VastVideoViewController extends BaseVideoViewController {
         mCloseButtonWidget.setVisibility(initialVisibility);
 
         getLayout().addView(mCloseButtonWidget);
+        mExternalViewabilitySessionManager.registerVideoObstruction(mCloseButtonWidget);
 
         final View.OnTouchListener closeOnTouchListener = new View.OnTouchListener() {
             @Override
@@ -632,6 +634,7 @@ public class VastVideoViewController extends BaseVideoViewController {
                         RelativeLayout.LayoutParams.MATCH_PARENT,
                         RelativeLayout.LayoutParams.MATCH_PARENT);
         getLayout().addView(relativeLayout, layoutParams);
+        mExternalViewabilitySessionManager.registerVideoObstruction(relativeLayout);
 
         VastWebView companionView = createCompanionVastWebView(context, vastCompanionAdConfig);
 
@@ -644,6 +647,8 @@ public class VastVideoViewController extends BaseVideoViewController {
         companionAdLayout.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
 
         relativeLayout.addView(companionView, companionAdLayout);
+        mExternalViewabilitySessionManager.registerVideoObstruction(companionView);
+
         return companionView;
     }
 
@@ -695,9 +700,12 @@ public class VastVideoViewController extends BaseVideoViewController {
                 new RelativeLayout.LayoutParams(
                         RelativeLayout.LayoutParams.WRAP_CONTENT,
                         RelativeLayout.LayoutParams.WRAP_CONTENT);
+
         relativeLayout.addView(companionView, layoutParams);
+        mExternalViewabilitySessionManager.registerVideoObstruction(companionView);
 
         getLayout().addView(relativeLayout, companionAdLayout);
+        mExternalViewabilitySessionManager.registerVideoObstruction(relativeLayout);
 
         companionView.setVisibility(initialVisibility);
         return companionView;
@@ -753,6 +761,7 @@ public class VastVideoViewController extends BaseVideoViewController {
         layoutParams.setMargins(leftMargin, topMargin, 0, 0);
 
         getLayout().addView(iconView, layoutParams);
+        mExternalViewabilitySessionManager.registerVideoObstruction(iconView);
 
         return iconView;
     }

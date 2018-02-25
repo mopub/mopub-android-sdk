@@ -107,6 +107,7 @@ class MoatViewabilitySession implements ExternalViewabilitySession {
         // Pre-reflection code:
         // final MoatOptions options = new MoatOptions();
         // options.disableAdIdCollection = true;
+        // options.disableLocationServices = true;
         // MoatAnalytics.getInstance().start(options, application);
 
         try {
@@ -114,6 +115,9 @@ class MoatViewabilitySession implements ExternalViewabilitySession {
                     Object.class);
 
             moatOptions.getClass().getField("disableAdIdCollection")
+                    .setBoolean(moatOptions, true);
+
+            moatOptions.getClass().getField("disableLocationServices")
                     .setBoolean(moatOptions, true);
 
             Object moatAnalytics = new Reflection.MethodBuilder(null, "getInstance")
@@ -285,8 +289,8 @@ class MoatViewabilitySession implements ExternalViewabilitySession {
 
     @Override
     @Nullable
-    public Boolean registerVideoObstructions(@NonNull final List<View> views) {
-        Preconditions.checkNotNull(views);
+    public Boolean registerVideoObstruction(@NonNull final View view) {
+        Preconditions.checkNotNull(view);
 
         if (!isEnabled()) {
             return null;

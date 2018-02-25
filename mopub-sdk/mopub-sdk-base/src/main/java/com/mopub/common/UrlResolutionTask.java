@@ -74,6 +74,8 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
             return null;
         } catch (URISyntaxException e) {
             return null;
+        } catch (NullPointerException e) {
+            return null;
         }
 
         return previousUrl;
@@ -121,7 +123,11 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
                 result =  baseUri.resolve(redirectUrl).toString();
             } catch (IllegalArgumentException e) {
                 // Ensure the request is cancelled instead of resolving an intermediary URL
+                MoPubLog.e("Invalid URL redirection. baseUrl=" + baseUrl + "\n redirectUrl=" + redirectUrl);
                 throw new URISyntaxException(redirectUrl, "Unable to parse invalid URL");
+            } catch (NullPointerException e) {
+                MoPubLog.e("Invalid URL redirection. baseUrl=" + baseUrl + "\n redirectUrl=" + redirectUrl);
+                throw e;
             }
         }
 

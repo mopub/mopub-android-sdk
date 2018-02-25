@@ -274,7 +274,7 @@ public class BannerVisibilityTrackerTest {
         assertThat(visibilityChecker.isVisible(null, null)).isFalse();
     }
 
-    static View createViewMock(final int visibility,
+    View createViewMock(final int visibility,
             final int visibleWidth,
             final int visibleHeight,
             final int viewWidth,
@@ -282,7 +282,7 @@ public class BannerVisibilityTrackerTest {
             final boolean isParentSet,
             final boolean isOnScreen) {
         View view = mock(View.class);
-        when(view.getContext()).thenReturn(new Activity());
+        when(view.getContext()).thenReturn(activity);
         when(view.getVisibility()).thenReturn(visibility);
 
         when(view.getGlobalVisibleRect(any(Rect.class)))

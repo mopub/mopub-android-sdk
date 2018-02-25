@@ -1,6 +1,7 @@
 package com.mopub.mobileads;
 
 import android.app.Activity;
+import android.app.Application;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -16,7 +17,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 
@@ -31,6 +31,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.stub;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.robolectric.Shadows.shadowOf;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -52,6 +53,7 @@ public class HtmlWebViewClientTest {
         when(htmlWebView.wasClicked()).thenReturn(true);
         subject = new HtmlWebViewClient(htmlWebViewListener, htmlWebView, CLICKTHROUGH_URL,
                 "redirect", "dsp_creative_id");
+        while(shadowOf((Application) context).getNextStartedActivity() != null) {}
     }
 
     @Test
@@ -94,7 +96,7 @@ public class HtmlWebViewClientTest {
         String customUrl = "myintent://something";
         stub(htmlWebView.wasClicked()).toReturn(true);
         subject = new HtmlWebViewClient(htmlWebViewListener, htmlWebView, null, null, null);
-        RuntimeEnvironment.getRobolectricPackageManager().addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(customUrl)), new ResolveInfo());
+        shadowOf(context.getPackageManager()).addResolveInfoForIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(customUrl)), new ResolveInfo());
 
         boolean didOverrideUrl = subject.shouldOverrideUrlLoading(htmlWebView, customUrl);
 

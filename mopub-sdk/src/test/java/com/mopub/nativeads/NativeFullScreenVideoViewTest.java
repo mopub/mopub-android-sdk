@@ -29,9 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
-import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowConfiguration;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -72,17 +70,15 @@ public class NativeFullScreenVideoViewTest {
     @Mock SurfaceTexture mockSurfaceTexture;
     @Mock RectF mockRectF;
     @Mock Paint mockPaint;
-    private ShadowConfiguration shadowConfiguration;
+    private Configuration configuration;
 
     @Before
     public void setUp() {
         context = Robolectric.buildActivity(Activity.class).create().get();
 
-        shadowConfiguration = Shadows.shadowOf(context.getResources().getConfiguration());
-        Configuration configuration = new Configuration();
+        configuration = context.getResources().getConfiguration();
         configuration.screenWidthDp = screenWidthDp;
         configuration.screenHeightDp = screenHeightDp;
-        shadowConfiguration.setTo(configuration);
 
         videoWidthLandscapePx = Dips.dipsToIntPixels((float) screenWidthDp, context);
         videoHeightLandscapePx = Dips.dipsToIntPixels((float) screenWidthDp * 9 / 16, context);
@@ -341,10 +337,8 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void setOrientation_withLandscape_shouldSetWidthAndHeightOfVideoTextureAppropriately() throws Exception {
-        Configuration configuration = new Configuration();
         configuration.screenWidthDp = screenWidthDp;
         configuration.screenHeightDp = screenHeightDp;
-        shadowConfiguration.setTo(configuration);
 
         subject.setOrientation(Configuration.ORIENTATION_LANDSCAPE);
 
@@ -358,10 +352,8 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void setOrientation_withPortrait_shouldSetWidthAndHeightOfVideoTextureAppropriately() throws Exception {
-        Configuration configuration = new Configuration();
         configuration.screenWidthDp = screenHeightDp;
         configuration.screenHeightDp = screenWidthDp;
-        shadowConfiguration.setTo(configuration);
 
         subject.setOrientation(Configuration.ORIENTATION_PORTRAIT);
 
