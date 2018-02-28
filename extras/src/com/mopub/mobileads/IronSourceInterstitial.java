@@ -13,12 +13,6 @@ import com.ironsource.mediationsdk.sdk.ISDemandOnlyInterstitialListener;
 
 import java.util.Map;
 
-/**
- * A custom event for showing IronSource interstitial ads.
- *
- * Certified with IronSource 6.7.5
- */
-
 public class IronSourceInterstitial extends CustomEventInterstitial implements ISDemandOnlyInterstitialListener {
 
     /**
@@ -33,6 +27,7 @@ public class IronSourceInterstitial extends CustomEventInterstitial implements I
     private static final String TEST_ENABLED_KEY = "isTestEnabled";
     private static final String PLACEMENT_KEY = "placementName";
     private static final String INSTANCE_ID_KEY = "instanceId";
+
     private static final String MEDIATION_TYPE = "mopub" ;
 
     // This is the instance id used inside ironSource SDK
@@ -41,10 +36,8 @@ public class IronSourceInterstitial extends CustomEventInterstitial implements I
     // This is the placement name used inside ironSource SDK
     private String mPlacementName = null;
 
-    // Indicates if IronSource adapter is in test mode
     private boolean mIsTestEnabled;
 
-    // Indicates if IronSource SDK initiated successfully
     private static boolean mInitInterstitialSuccessfully;
 
     static CustomEventInterstitialListener mMoPubListener;
