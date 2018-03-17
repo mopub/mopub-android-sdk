@@ -248,8 +248,13 @@ public class DeviceUtils {
         Preconditions.checkNotNull(context);
         Preconditions.checkNotNull(permission);
 
-        return ContextCompat.checkSelfPermission(context, permission) ==
-                PackageManager.PERMISSION_GRANTED;
+        try {
+            return ContextCompat.checkSelfPermission(context, permission) ==
+                    PackageManager.PERMISSION_GRANTED;
+        } catch (RuntimeException e) {
+            MoPubLog.e("checkSelfPermission failed.", e);
+            return false;
+        }
     }
 
     /**
