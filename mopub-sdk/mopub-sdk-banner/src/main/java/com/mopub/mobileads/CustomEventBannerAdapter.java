@@ -209,7 +209,7 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
      * CustomEventBanner.Listener implementation
      */
     @Override
-    public void onBannerLoaded(View bannerView) {
+    public void onBannerLoaded(View bannerView, boolean failedToLoadOnce) {
         if (isInvalidated()) {
             return;
         }
@@ -245,7 +245,7 @@ public class CustomEventBannerAdapter implements CustomEventBannerListener {
 
             // Old behavior
             if (!mIsVisibilityImpressionTrackingEnabled) {
-                if (!(bannerView instanceof HtmlBannerWebView)) {
+                if (!(bannerView instanceof HtmlBannerWebView) && !failedToLoadOnce) {
                     mMoPubView.trackNativeImpression();
                 }
             }
