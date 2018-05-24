@@ -207,6 +207,7 @@ public class PersonalInfoManager implements SyncRequest.Listener {
      *
      * @return true for in GDPR region, false for not in GDPR region, null for unknown
      */
+    @Nullable
     public Boolean gdprApplies() {
         return mPersonalInfoData.getGdprApplies();
     }
