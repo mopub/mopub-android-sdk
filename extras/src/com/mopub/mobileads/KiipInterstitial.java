@@ -68,7 +68,7 @@ public class KiipInterstitial extends CustomEventInterstitial {
 
         if (Kiip.getInstance() != null) {
             if (serverExtras.containsKey("testMode")) {
-                Kiip.getInstance().setTestMode(Boolean.getBoolean(serverExtras.get("testMode")));
+                Kiip.getInstance().setTestMode(Boolean.valueOf(serverExtras.get("testMode")));
             }
             if (serverExtras.containsKey("email")) {
                 Kiip.getInstance().setEmail(serverExtras.get("email"));
