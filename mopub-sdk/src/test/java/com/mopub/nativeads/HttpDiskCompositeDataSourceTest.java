@@ -4,8 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
 
-import com.google.android.exoplayer.upstream.DataSpec;
-import com.google.android.exoplayer.upstream.HttpDataSource;
+import com.google.android.exoplayer2.upstream.DataSpec;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.mopub.common.CacheService;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
@@ -49,8 +49,8 @@ public class HttpDiskCompositeDataSourceTest {
     public void setUp() throws Exception {
         Context context = Robolectric.buildActivity(Activity.class).create().get();
         CacheService.initialize(context);
-        subject = new HttpDiskCompositeDataSource(context, "userAgent", null, mockHttpDataSource);
-        uri = new Uri.Builder().scheme("http").path("www.someurl").build();
+        subject = new HttpDiskCompositeDataSource(context, "userAgent", mockHttpDataSource);
+        uri = new Uri.Builder().scheme("https").path("www.someurl").build();
         dataSpec = new DataSpec(uri, 0, -1, null);
     }
 

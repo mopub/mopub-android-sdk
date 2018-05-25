@@ -1,5 +1,7 @@
 package com.mopub.nativeads;
 
+import android.app.Activity;
+
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
 import com.mopub.network.MoPubNetworkError;
@@ -12,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 
 import java.util.TreeMap;
@@ -23,7 +26,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 @Config(constants = BuildConfig.class)
 public class PositioningRequestTest {
 
-    String url = "http://example.com";
+    String url = "https://example.com";
     @Mock
     Response.Listener<MoPubNativeAdPositioning.MoPubClientPositioning> mockListener;
     @Mock
@@ -34,7 +37,8 @@ public class PositioningRequestTest {
 
     @Before
     public void setup() {
-        subject = new PositioningRequest(url, mockListener, mockErrorListener);
+        subject = new PositioningRequest(Robolectric.buildActivity(Activity.class).get(),
+                url, mockListener, mockErrorListener);
     }
 
     @Test

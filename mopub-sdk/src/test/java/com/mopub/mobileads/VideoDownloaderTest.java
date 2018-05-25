@@ -31,8 +31,8 @@ import static org.mockito.Mockito.verify;
 @Config(constants = BuildConfig.class, shadows = {ShadowAsyncTasks.class, ShadowMoPubHttpUrlConnection.class})
 public class VideoDownloaderTest {
     @Mock VideoDownloaderListener mockListener;
-    private final static String expectedUrl1 = "http://video_url";
-    private final static String expectedUrl2 = "http://video_url2";
+    private final static String expectedUrl1 = "https://video_url";
+    private final static String expectedUrl2 = "https://video_url2";
 
     @Before
     public void setUp() {

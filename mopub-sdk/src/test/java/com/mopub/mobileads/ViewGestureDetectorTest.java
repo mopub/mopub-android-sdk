@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.robolectric.Robolectric;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowGestureDetector;
@@ -34,7 +35,7 @@ public class ViewGestureDetectorTest {
 
     @Before
     public void setUp() throws Exception {
-        context = new Activity();
+        context = Robolectric.buildActivity(Activity.class).create().get();
         view = mock(View.class);
         stub(view.getWidth()).toReturn(320);
         stub(view.getHeight()).toReturn(50);

@@ -1,6 +1,5 @@
 package com.mopub.mobileads;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -11,17 +10,15 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.VideoView;
 
-import com.mopub.TestSdkHelper;
+import com.mopub.common.ExternalViewabilitySession;
 import com.mopub.common.MoPubBrowser;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.DeviceUtils.ForceOrientation;
@@ -41,34 +38,31 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
-import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
-import org.robolectric.internal.ShadowExtractor;
+import org.robolectric.shadow.api.Shadow;
 import org.robolectric.shadows.ShadowApplication;
-import org.robolectric.shadows.ShadowImageView;
 import org.robolectric.shadows.ShadowRelativeLayout;
 import org.robolectric.shadows.ShadowTextView;
 import org.robolectric.shadows.ShadowVideoView;
+import org.robolectric.shadows.ShadowView;
 import org.robolectric.shadows.httpclient.FakeHttp;
 import org.robolectric.shadows.httpclient.RequestMatcher;
 import org.robolectric.shadows.httpclient.TestHttpResponse;
 import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
+import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_FAIL;
+import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_SHOW;
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static com.mopub.mobileads.BaseVideoViewController.BaseVideoViewControllerListener;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_DISMISS;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_FAIL;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.ACTION_INTERSTITIAL_SHOW;
-import static com.mopub.mobileads.EventForwardingBroadcastReceiver.getHtmlInterstitialIntentFilter;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiverTest.getIntentForActionAndIdentifier;
 import static com.mopub.mobileads.VastVideoViewController.CURRENT_POSITION;
 import static com.mopub.mobileads.VastVideoViewController.DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON;
@@ -95,6 +89,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.robolectric.Shadows.shadowOf;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class, shadows = {ShadowVastVideoView.class})
@@ -105,11 +100,11 @@ public class VastVideoViewControllerTest {
     private static final String COMPANION_CLICK_TRACKING_URL_1 = "companion_click_tracking_url_1";
     private static final String COMPANION_CLICK_TRACKING_URL_2 = "companion_click_tracking_url_2";
     private static final String COMPANION_CLICK_TRACKING_URL_3 = "companion_click_tracking_url_3";
-    private static final String COMPANION_CLICK_DESTINATION_URL = "http://companion_click_destination_url";
+    private static final String COMPANION_CLICK_DESTINATION_URL = "https://companion_click_destination_url";
     private static final String COMPANION_CREATIVE_VIEW_URL_1 = "companion_creative_view_url_1";
     private static final String COMPANION_CREATIVE_VIEW_URL_2 = "companion_creative_view_url_2";
     private static final String COMPANION_CREATIVE_VIEW_URL_3 = "companion_creative_view_url_3";
-    private static final String RESOLVED_CLICKTHROUGH_URL = "http://www.mopub.com/";
+    private static final String RESOLVED_CLICKTHROUGH_URL = "https://www.mopub.com/";
     private static final String CLICKTHROUGH_URL = "deeplink+://navigate?" +
             "&primaryUrl=bogus%3A%2F%2Furl" +
             "&fallbackUrl=" + Uri.encode(RESOLVED_CLICKTHROUGH_URL);
@@ -139,7 +134,6 @@ public class VastVideoViewControllerTest {
     private VastVideoViewProgressRunnable spyProgressRunnable;
     private VideoView spyVideoView;
 
-    @TargetApi(VERSION_CODES.GINGERBREAD_MR1)
     @Before
     public void setUp() throws Exception {
         Networking.setRequestQueueForTesting(mockRequestQueue);
@@ -152,6 +146,7 @@ public class VastVideoViewControllerTest {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setNetworkMediaFileUrl("video_url");
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setDspCreativeId("dsp_creative_id");
         vastVideoConfig.addAbsoluteTrackers(
                 Arrays.asList(new VastAbsoluteProgressTracker("start" + MACRO_TAGS, 2000)));
         vastVideoConfig.addFractionalTrackers(
@@ -235,7 +230,9 @@ public class VastVideoViewControllerTest {
             }
         }, new TestHttpResponse(200, "body"));
 
-        ShadowLocalBroadcastManager.getInstance(context).registerReceiver(broadcastReceiver, getHtmlInterstitialIntentFilter());
+        ShadowLocalBroadcastManager.getInstance(context).registerReceiver(broadcastReceiver,
+                new EventForwardingBroadcastReceiver(null,
+                testBroadcastIdentifier).getIntentFilter());
 
         expectedUserAgent = new WebView(context).getSettings().getUserAgentString();
     }
@@ -255,7 +252,7 @@ public class VastVideoViewControllerTest {
         VastVideoCtaButtonWidget ctaButtonWidget = subject.getCtaButtonWidget();
         assertThat(ctaButtonWidget.getParent()).isEqualTo(subject.getLayout());
         assertThat(ctaButtonWidget.getVisibility()).isEqualTo(View.INVISIBLE);
-        ShadowImageView ctaButtonWidgetShadow = Shadows.shadowOf(ctaButtonWidget);
+        ShadowView ctaButtonWidgetShadow = shadowOf(ctaButtonWidget);
         assertThat(ctaButtonWidgetShadow.getOnTouchListener()).isNotNull();
         assertThat(ctaButtonWidgetShadow.getOnTouchListener()).isEqualTo(
                 getShadowVideoView().getOnTouchListener());
@@ -268,7 +265,7 @@ public class VastVideoViewControllerTest {
         VastVideoProgressBarWidget progressBarWidget = subject.getProgressBarWidget();
         assertThat(progressBarWidget.getParent()).isEqualTo(subject.getLayout());
         assertThat(progressBarWidget.getVisibility()).isEqualTo(View.INVISIBLE);
-        ShadowImageView progressBarWidgetShadow = Shadows.shadowOf(progressBarWidget);
+        ShadowView progressBarWidgetShadow = shadowOf(progressBarWidget);
         assertThat(progressBarWidgetShadow.getOnTouchListener()).isNull();
     }
 
@@ -279,7 +276,7 @@ public class VastVideoViewControllerTest {
         VastVideoRadialCountdownWidget radialCountdownWidget = subject.getRadialCountdownWidget();
         assertThat(radialCountdownWidget.getParent()).isEqualTo(subject.getLayout());
         assertThat(radialCountdownWidget.getVisibility()).isEqualTo(View.INVISIBLE);
-        ShadowImageView radialCountdownWidgetShadow = Shadows.shadowOf(radialCountdownWidget);
+        ShadowView radialCountdownWidgetShadow = shadowOf(radialCountdownWidget);
         assertThat(radialCountdownWidgetShadow.getOnTouchListener()).isNull();
     }
 
@@ -323,13 +320,13 @@ public class VastVideoViewControllerTest {
         assertThat(closeButtonWidget.getParent()).isEqualTo(subject.getLayout());
         assertThat(closeButtonWidget.getVisibility()).isEqualTo(View.GONE);
 
-        ShadowRelativeLayout closeButtonWidgetShadow = (ShadowRelativeLayout) Shadows.shadowOf(closeButtonWidget);
+        ShadowRelativeLayout closeButtonWidgetShadow = (ShadowRelativeLayout) shadowOf(closeButtonWidget);
         assertThat(closeButtonWidgetShadow.getOnTouchListener()).isNull();
 
-        ShadowImageView closeButtonImageViewShadow = Shadows.shadowOf(closeButtonWidget.getImageView());
+        ShadowView closeButtonImageViewShadow = shadowOf(closeButtonWidget.getImageView());
         assertThat(closeButtonImageViewShadow.getOnTouchListener()).isNotNull();
 
-        ShadowTextView closeButtonTextViewShadow = Shadows.shadowOf(closeButtonWidget.getTextView());
+        ShadowTextView closeButtonTextViewShadow = shadowOf(closeButtonWidget.getTextView());
         assertThat(closeButtonTextViewShadow.getOnTouchListener()).isNotNull();
     }
 
@@ -340,7 +337,7 @@ public class VastVideoViewControllerTest {
         VastVideoGradientStripWidget topGradientStripWidget = subject.getTopGradientStripWidget();
         assertThat(topGradientStripWidget.getParent()).isEqualTo(subject.getLayout());
 
-        ShadowImageView topGradientStripWidgetShadow = Shadows.shadowOf(topGradientStripWidget);
+        ShadowView topGradientStripWidgetShadow = shadowOf(topGradientStripWidget);
         assertThat(topGradientStripWidgetShadow.getOnTouchListener()).isNull();
     }
 
@@ -351,7 +348,7 @@ public class VastVideoViewControllerTest {
         VastVideoGradientStripWidget bottomGradientStripWidget = subject.getBottomGradientStripWidget();
         assertThat(bottomGradientStripWidget.getParent()).isEqualTo(subject.getLayout());
 
-        ShadowImageView bottomGradientStripWidgetShadow = Shadows.shadowOf(bottomGradientStripWidget);
+        ShadowView bottomGradientStripWidgetShadow = shadowOf(bottomGradientStripWidget);
         assertThat(bottomGradientStripWidgetShadow.getOnTouchListener()).isNull();
     }
 
@@ -362,14 +359,14 @@ public class VastVideoViewControllerTest {
         ImageView blurredLastVideoFrameImageView = subject.getBlurredLastVideoFrameImageView();
         assertThat(blurredLastVideoFrameImageView.getParent()).isEqualTo(subject.getLayout());
         assertThat(blurredLastVideoFrameImageView.getVisibility()).isEqualTo(View.INVISIBLE);
-        ShadowImageView blurredLastVideoFrameImageViewShadow = Shadows.shadowOf(blurredLastVideoFrameImageView);
+        ShadowView blurredLastVideoFrameImageViewShadow = shadowOf(blurredLastVideoFrameImageView);
         assertThat(blurredLastVideoFrameImageViewShadow.getOnTouchListener()).isNull();
     }
 
     @Test
     public void constructor_shouldSetVideoListenersAndVideoPath() throws Exception {
         initializeSubject();
-        ShadowVideoView videoView = Shadows.shadowOf(subject.getVideoView());
+        ShadowVideoView videoView = shadowOf(subject.getVideoView());
 
         assertThat(videoView.getOnCompletionListener()).isNotNull();
         assertThat(videoView.getOnErrorListener()).isNotNull();
@@ -388,7 +385,6 @@ public class VastVideoViewControllerTest {
                 DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
     }
 
-    @TargetApi(VERSION_CODES.HONEYCOMB)
     @Test
     public void constructor_shouldAddBlackBackgroundToLayout() throws Exception {
         initializeSubject();
@@ -488,13 +484,13 @@ public class VastVideoViewControllerTest {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         vastVideoConfig.setCustomCloseIconUrl(
-                "http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png");
+                "https://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png");
         bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
 
         initializeSubject();
 
         verify(mockImageLoader).get(
-                eq("http://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png"),
+                eq("https://ton.twitter.com/exchange-media/images/v4/star_icon_3x_1.png"),
                 any(ImageListener.class));
     }
 
@@ -555,7 +551,8 @@ public class VastVideoViewControllerTest {
 
         Robolectric.getForegroundThreadScheduler().unPause();
         subject.onCreate();
-        verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
+        verify(broadcastReceiver).onReceive(any(Context.class),
+                argThat(new IntentIsEqual(expectedIntent)));
     }
 
     @Test
@@ -568,7 +565,7 @@ public class VastVideoViewControllerTest {
         subject.onCreate();
 
         verify(baseVideoViewControllerListener).onSetRequestedOrientation(
-                SCREEN_ORIENTATION_LANDSCAPE);
+                SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     }
 
     @Test
@@ -609,7 +606,7 @@ public class VastVideoViewControllerTest {
         subject.onCreate();
 
         verify(baseVideoViewControllerListener).onSetRequestedOrientation(
-                SCREEN_ORIENTATION_LANDSCAPE);
+                SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
     }
 
     @Test
@@ -628,7 +625,7 @@ public class VastVideoViewControllerTest {
                 vastCompanionAdConfig, View.INVISIBLE);
 
         view.getVastWebViewClickListener().onVastWebViewClick();
-        verify(vastCompanionAdConfig).handleClick(any(Context.class), eq(1), anyString());
+        verify(vastCompanionAdConfig).handleClick(any(Context.class), eq(1), anyString(), eq("dsp_creative_id"));
     }
 
     @Test
@@ -669,14 +666,16 @@ public class VastVideoViewControllerTest {
         subject.onDestroy();
         Robolectric.getForegroundThreadScheduler().unPause();
 
-        verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
+        verify(broadcastReceiver).onReceive(any(Context.class),
+                argThat(new IntentIsEqual(expectedIntent)));
     }
 
     @Test
     public void onDestroy_withBlurLastVideoFrameTaskStillRunning_shouldCancelTask() throws Exception {
         initializeSubject();
 
-        VastVideoBlurLastVideoFrameTask mockBlurLastVideoFrameTask = mock(VastVideoBlurLastVideoFrameTask.class);
+        VastVideoBlurLastVideoFrameTask mockBlurLastVideoFrameTask = mock(
+                VastVideoBlurLastVideoFrameTask.class);
         when(mockBlurLastVideoFrameTask.getStatus()).thenReturn(AsyncTask.Status.RUNNING);
         subject.getVastVideoView().setBlurLastVideoFrameTask(mockBlurLastVideoFrameTask);
 
@@ -787,7 +786,7 @@ public class VastVideoViewControllerTest {
         getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(0, 0));
 
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
-        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
+        final Intent startedActivity = shadowOf((Activity) context).peekNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo(MoPubBrowser.class.getName());
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(
@@ -827,7 +826,7 @@ public class VastVideoViewControllerTest {
         getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(0, 0));
 
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
-        final Intent startedActivity = ShadowApplication.getInstance().peekNextStartedActivity();
+        final Intent startedActivity = shadowOf((Activity) context).peekNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo(MoPubBrowser.class.getName());
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY)).isEqualTo(
@@ -875,19 +874,6 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(0, 0));
         assertThat(FakeHttp.httpRequestWasMade()).isFalse();
-    }
-
-    @Test
-    public void onTouch_withNullBaseVideoViewListener_andActionTouchUp_shouldReturnTrueAndNotBlowUp() throws Exception {
-        subject = new VastVideoViewController((Activity) context, bundle, null,
-                testBroadcastIdentifier, null);
-
-        boolean result = getShadowVideoView().getOnTouchListener().onTouch(null, GestureUtils.createActionUp(
-                0, 0));
-
-        // pass
-
-        assertThat(result).isTrue();
     }
 
     @Test
@@ -1082,7 +1068,7 @@ public class VastVideoViewControllerTest {
     }
 
     @Test
-    public void onPrepared_whenSkipOffsetIsLongerThanDurationForShortVideo_shouldNotSetShowCloseButtonDelay() throws Exception {
+    public void onPrepared_whenSkipOffsetIsLongerThanDurationForShortVideo_shouldSetShowCloseButtonDelay() throws Exception {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         vastVideoConfig.setSkipOffset("00:00:11");   // 11s
@@ -1095,11 +1081,11 @@ public class VastVideoViewControllerTest {
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
         assertThat(subject.getShowCloseButtonDelay()).isEqualTo(10 * 1000);
-        assertThat(subject.getHasSkipOffset()).isFalse();
+        assertThat(subject.getHasSkipOffset()).isTrue();
     }
 
     @Test
-    public void onPrepared_whenSkipOffsetIsLongerThanDurationForLongVideo_shouldNotSetShowCloseButtonDelay() throws Exception {
+    public void onPrepared_whenSkipOffsetIsLongerThanDurationForLongVideo_shouldSetShowCloseButtonDelay() throws Exception {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         vastVideoConfig.setSkipOffset("00:00:21");   // 21s
@@ -1111,8 +1097,41 @@ public class VastVideoViewControllerTest {
 
         getShadowVideoView().getOnPreparedListener().onPrepared(null);
 
-        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(
-                DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(20 * 1000);
+        assertThat(subject.getHasSkipOffset()).isTrue();
+    }
+
+    @Test
+    public void onPrepared_whenSkipOffset100Percent_shouldSetShowCloseButtonDelayToVideoDuration() throws Exception {
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("100%");   // 20000 ms
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
+
+        initializeSubject();
+        spyOnVideoView();
+        setVideoViewParams(0, 20000);    // 20s: long video
+
+        getShadowVideoView().getOnPreparedListener().onPrepared(null);
+
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(20000);
+        assertThat(subject.getHasSkipOffset()).isTrue();
+    }
+
+    @Test
+    public void onPrepared_whenSkipOffsetGreaterThan100Percent_shouldSetShowCloseButtonDelayToDefault() throws Exception {
+        VastVideoConfig vastVideoConfig = new VastVideoConfig();
+        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
+        vastVideoConfig.setSkipOffset("101%");   // 20200 ms
+        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
+
+        initializeSubject();
+        spyOnVideoView();
+        setVideoViewParams(0, 20000);    // 20s: long video
+
+        getShadowVideoView().getOnPreparedListener().onPrepared(null);
+
+        assertThat(subject.getShowCloseButtonDelay()).isEqualTo(DEFAULT_VIDEO_DURATION_FOR_CLOSE_BUTTON);
         assertThat(subject.getHasSkipOffset()).isFalse();
     }
 
@@ -1163,29 +1182,7 @@ public class VastVideoViewControllerTest {
     }
 
     @Test
-    public void onPrepared_beforeGingerbreadMr1_shouldNotSetBlurredLastVideoFrame() throws Exception {
-
-        TestSdkHelper.setReportedSdkLevel(VERSION_CODES.GINGERBREAD);
-        VastVideoConfig vastVideoConfig = new VastVideoConfig();
-        vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
-        bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
-
-        initializeSubject();
-
-        getShadowVideoView().getOnPreparedListener().onPrepared(null);
-        Robolectric.getBackgroundThreadScheduler().unPause();
-        Robolectric.getForegroundThreadScheduler().unPause();
-        Thread.sleep(NETWORK_DELAY);
-
-        assertThat(subject.getBlurredLastVideoFrameImageView().getDrawable()).isNull();
-
-        ShadowImageView imageView = Shadows.shadowOf(subject.getBlurredLastVideoFrameImageView());
-        assertThat(imageView.getOnTouchListener()).isNull();
-    }
-
-    @Test
-    public void onPrepared_atLeastGingerbreadMr1_shouldSetBlurredLastVideoFrame() throws Exception {
-        TestSdkHelper.setReportedSdkLevel(VERSION_CODES.GINGERBREAD_MR1);
+    public void onPrepared_shouldSetBlurredLastVideoFrame() throws Exception {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
         vastVideoConfig.setDiskMediaFileUrl("disk_video_path");
         bundle.putSerializable(VAST_VIDEO_CONFIG, vastVideoConfig);
@@ -1202,7 +1199,7 @@ public class VastVideoViewControllerTest {
         assertThat(
                 ((BitmapDrawable) blurredLastVideoFrameImageView.getDrawable()).getBitmap()).isNotNull();
 
-        ShadowImageView imageView = Shadows.shadowOf(subject.getBlurredLastVideoFrameImageView());
+        ShadowView imageView = shadowOf(subject.getBlurredLastVideoFrameImageView());
         assertThat(imageView.getOnTouchListener()).isNull();
     }
 
@@ -1230,6 +1227,7 @@ public class VastVideoViewControllerTest {
 
         initializeSubject();
         testTracker.setTracked();
+        setViewabilityTrackersTracked(vastVideoConfig);
         spyOnVideoView();
         setVideoViewParams(15000, 15000);
 
@@ -1410,8 +1408,7 @@ public class VastVideoViewControllerTest {
         assertThat(topGradientStripWidget.getVisibility()).isEqualTo(View.GONE);
         assertThat(bottomGradientStripWidget.getVisibility()).isEqualTo(View.GONE);
     }
-
-    @TargetApi(VERSION_CODES.HONEYCOMB)
+    
     @Test
     public void onCompletion_whenCompanionAdNotAvailableAndBlurredLastVideoFrameNotPrepared_shouldShowBlackBackground() throws Exception {
         VastVideoConfig vastVideoConfig = new VastVideoConfig();
@@ -1491,7 +1488,8 @@ public class VastVideoViewControllerTest {
         Robolectric.getForegroundThreadScheduler().unPause();
 
         assertThat(result).isFalse();
-        verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
+        verify(broadcastReceiver).onReceive(any(Context.class),
+                argThat(new IntentIsEqual(expectedIntent)));
         assertThat(subject.getVideoError()).isTrue();
     }
 
@@ -1507,33 +1505,6 @@ public class VastVideoViewControllerTest {
 
         verify(spyProgressRunnable).stop();
         verify(spyCountdownRunnable).stop();
-    }
-
-
-    @Test
-    @Config(shadows = {MoPubShadowMediaPlayer.class})
-    public void onError_withVideoFilePermissionErrorBelowJellyBean_shouldRetryPlayingTheVideo() throws Exception {
-        TestSdkHelper.setReportedSdkLevel(VERSION_CODES.ICE_CREAM_SANDWICH);
-
-        File file = new File("disk_video_path");
-        file.createNewFile();
-
-        // ShadowMediaPlayer setup needed to
-
-        initializeSubject();
-
-        assertThat(getShadowVideoView().getCurrentVideoState()).isEqualTo(-1);
-
-        assertThat(subject.getVastVideoView().getVideoRetries()).isEqualTo(0);
-        getShadowVideoView().getOnErrorListener().onError(new MediaPlayer(), 1, Integer.MIN_VALUE);
-
-        // Robo 3.0 introduces a requirement that ShadowMediaPlayer be set up with MediaInfo for a data source.
-        // Because we generate a file descriptor datasource at runtime, we can't set it up easily in this test.
-
-        assertThat(getShadowVideoView().isPlaying()).isTrue();
-        assertThat(subject.getVastVideoView().getVideoRetries()).isEqualTo(1);
-
-        file.delete();
     }
 
     @Test
@@ -2116,7 +2087,7 @@ public class VastVideoViewControllerTest {
         // We don't have direct access to the CloseButtonWidget icon's close event, so we manually
         // invoke its onTouchListener's onTouch callback with a fake MotionEvent.ACTION_UP action.
         View.OnTouchListener closeButtonImageViewOnTouchListener =
-                Shadows.shadowOf(subject.getCloseButtonWidget().getImageView()).getOnTouchListener();
+                shadowOf(subject.getCloseButtonWidget().getImageView()).getOnTouchListener();
         closeButtonImageViewOnTouchListener.onTouch(null, GestureUtils.createActionUp(0, 0));
 
         verify(mockRequestQueue).add(
@@ -2139,7 +2110,7 @@ public class VastVideoViewControllerTest {
         // We don't have direct access to the CloseButtonWidget text's close event, so we manually
         // invoke its onTouchListener's onTouch callback with a fake MotionEvent.ACTION_UP action.
         View.OnTouchListener closeButtonTextViewOnTouchListener =
-                Shadows.shadowOf(subject.getCloseButtonWidget().getTextView()).getOnTouchListener();
+                shadowOf(subject.getCloseButtonWidget().getTextView()).getOnTouchListener();
         closeButtonTextViewOnTouchListener.onTouch(null, GestureUtils.createActionUp(0, 0));
 
         verify(mockRequestQueue).add(
@@ -2190,7 +2161,7 @@ public class VastVideoViewControllerTest {
         VastWebView view = (VastWebView) subject.createIconView(context, vastIconConfig, View.INVISIBLE);
 
         view.getVastWebViewClickListener().onVastWebViewClick();
-        verify(vastIconConfig).handleClick(any(Context.class), anyString());
+        verify(vastIconConfig).handleClick(any(Context.class), anyString(), eq("dsp_creative_id"));
     }
 
     @Test
@@ -2271,6 +2242,19 @@ public class VastVideoViewControllerTest {
     }
 
     private ShadowVastVideoView getShadowVideoView() {
-        return (ShadowVastVideoView) ShadowExtractor.extract(subject.getVastVideoView());
+        return (ShadowVastVideoView) Shadow.extract(subject.getVastVideoView());
+    }
+
+    private void setViewabilityTrackersTracked(VastVideoConfig vastVideoConfig) {
+        for (VastFractionalProgressTracker tracker : vastVideoConfig.getFractionalTrackers()) {
+            final String content = tracker.getContent();
+            try {
+                // Only mark trackers that match with viewability's VideoEvent enum
+                Enum.valueOf(ExternalViewabilitySession.VideoEvent.class, content);
+                tracker.setTracked();
+            } catch (IllegalArgumentException e) {
+                // pass
+            }
+        }
     }
 }

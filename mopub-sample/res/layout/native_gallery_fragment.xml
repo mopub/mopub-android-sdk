@@ -27,17 +27,26 @@
         android:textSize="14sp"
         android:textStyle="normal"/>
 
+    <EditText
+        android:id="@+id/keywords_field"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/keywords"
+        android:imeOptions="actionDone"
+        android:inputType="text|textFilter|textShortMessage"
+        android:singleLine="true"/>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
         <EditText
-            android:id="@+id/keywords_field"
+            android:id="@+id/user_data_keywords_field"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="3"
-            android:hint="@string/keywords"
+            android:hint="@string/user_data_keywords"
             android:imeOptions="actionDone"
             android:inputType="text|textFilter|textShortMessage"
             android:singleLine="true"/>

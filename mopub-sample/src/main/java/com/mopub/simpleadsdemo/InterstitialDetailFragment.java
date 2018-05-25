@@ -21,11 +21,12 @@ public class InterstitialDetailFragment extends Fragment implements Interstitial
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        final MoPubSampleAdUnit adConfiguration =
-                MoPubSampleAdUnit.fromBundle(getArguments());
+        final MoPubSampleAdUnit adConfiguration = MoPubSampleAdUnit.fromBundle(getArguments());
         final View view = inflater.inflate(R.layout.interstitial_detail_fragment, container, false);
         final DetailFragmentViewHolder views = DetailFragmentViewHolder.fromView(view);
-        hideSoftKeyboard(views.mKeywordsField);
+        views.mKeywordsField.setText(getArguments().getString(MoPubListFragment.KEYWORDS_KEY, ""));
+        views.mUserDataKeywordsField.setText(getArguments().getString(MoPubListFragment.USER_DATA_KEYWORDS_KEY, ""));
+        hideSoftKeyboard(views.mUserDataKeywordsField);
 
         final String adUnitId = adConfiguration.getAdUnitId();
         views.mDescriptionView.setText(adConfiguration.getDescription());
@@ -33,17 +34,19 @@ public class InterstitialDetailFragment extends Fragment implements Interstitial
         views.mLoadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                mShowButton.setEnabled(false);
                 if (mMoPubInterstitial == null) {
                     mMoPubInterstitial = new MoPubInterstitial(getActivity(), adUnitId);
                     mMoPubInterstitial.setInterstitialAdListener(InterstitialDetailFragment.this);
                 }
                 final String keywords = views.mKeywordsField.getText().toString();
+                final String userDatakeywords = views.mUserDataKeywordsField.getText().toString();
                 mMoPubInterstitial.setKeywords(keywords);
+                mMoPubInterstitial.setUserDataKeywords(userDatakeywords);
                 mMoPubInterstitial.load();
-                mShowButton.setEnabled(false);
             }
         });
-        mShowButton = (Button) view.findViewById(R.id.interstitial_show_button);
+        mShowButton = views.mShowButton;
         mShowButton.setEnabled(false);
         mShowButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,6 +77,7 @@ public class InterstitialDetailFragment extends Fragment implements Interstitial
 
     @Override
     public void onInterstitialFailed(MoPubInterstitial interstitial, MoPubErrorCode errorCode) {
+        mShowButton.setEnabled(false);
         final String errorMessage = (errorCode != null) ? errorCode.toString() : "";
         logToast(getActivity(), "Interstitial failed to load: " + errorMessage);
     }

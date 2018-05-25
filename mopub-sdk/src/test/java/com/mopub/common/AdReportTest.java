@@ -1,16 +1,21 @@
 package com.mopub.common;
 
+import android.app.Activity;
 import android.os.Build;
 
+import com.mopub.common.privacy.MoPubIdentifier;
+import com.mopub.common.privacy.MoPubIdentifierTest;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.test.support.TestDateAndTime;
 import com.mopub.mobileads.BuildConfig;
 import com.mopub.network.AdResponse;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
 
 import java.text.SimpleDateFormat;
@@ -24,21 +29,30 @@ import static org.mockito.Mockito.stub;
 @Config(constants = BuildConfig.class)
 public class AdReportTest {
 
-    public AdReport subject;
     @Mock
-    ClientMetadata mockClientMetadata;
+    private ClientMetadata mockClientMetadata;
     @Mock
-    AdResponse mockAdResponse;
+    private AdResponse mockAdResponse;
+
     private Date now;
+    private Activity context;
+    public AdReport subject;
 
     @Before
-    public void setup() {
+    public void setup() throws Exception {
+        context = Robolectric.buildActivity(Activity.class).create().get();
         now = new Date();
         TestDateAndTime.getInstance().setNow(now);
+        MoPubIdentifierTest.writeAdvertisingInfoToSharedPreferences(context, true);
+    }
+
+    @After
+    public void tearDown(){
+        MoPubIdentifierTest.clearPreferences(context);
     }
 
     @Test
-    public void testToString_shouldProperlyConstructParametersTextFile() throws Exception {
+    public void testToString_shouldProperlyConstructParametersTextFile() {
         String expectedParameters =
                 "sdk_version : 1.15.2.2\n" +
                         "creative_id : \n" +
@@ -46,7 +60,7 @@ public class AdReportTest {
                         "device_model : android\n" +
                         "ad_unit_id : testAdUnit\n" +
                         "device_locale : en_US\n" +
-                        "device_id : UDID\n" +
+                        "device_id : "+MoPubIdentifierTest.TEST_MOPUB_ID+"\n" +
                         "network_type : unknown\n" +
                         "platform : android\n" +
                         "timestamp : " + getCurrentDateTime() + "\n" +
@@ -57,9 +71,9 @@ public class AdReportTest {
         stub(mockAdResponse.getDspCreativeId()).toReturn("");
         stub(mockClientMetadata.getDeviceModel()).toReturn("android");
         stub(mockClientMetadata.getDeviceLocale()).toReturn(Locale.US);
-        stub(mockClientMetadata.getDeviceId()).toReturn("UDID");
-        stub(mockAdResponse.getNetworkType()).toReturn("unknown");
+        stub(mockClientMetadata.getMoPubIdentifier()).toReturn(new MoPubIdentifier(context));
 
+        stub(mockAdResponse.getNetworkType()).toReturn("unknown");
         stub(mockAdResponse.getTimestamp()).toReturn(now.getTime());
         stub(mockAdResponse.getAdType()).toReturn("interstitial");
         stub(mockAdResponse.getWidth()).toReturn(480);
@@ -70,7 +84,7 @@ public class AdReportTest {
     }
 
     @Test
-    public void constructor_shouldHandleInvalidAdConfigurationValues() throws Exception {
+    public void constructor_shouldHandleInvalidAdConfigurationValues() {
         String expectedParameters =
                 "sdk_version : null\n" +
                         "creative_id : null\n" +
@@ -78,7 +92,7 @@ public class AdReportTest {
                         "device_model : null\n" +
                         "ad_unit_id : testAdUnit\n" +
                         "device_locale : null\n" +
-                        "device_id : null\n" +
+                        "device_id : "+MoPubIdentifierTest.TEST_MOPUB_ID+"\n" +
                         "network_type : null\n" +
                         "platform : android\n" +
                         "timestamp : null" + "\n" +
@@ -88,8 +102,8 @@ public class AdReportTest {
         stub(mockClientMetadata.getSdkVersion()).toReturn(null);
         stub(mockAdResponse.getDspCreativeId()).toReturn(null);
         stub(mockClientMetadata.getDeviceLocale()).toReturn(null);
-        stub(mockClientMetadata.getDeviceId()).toReturn(null);
         stub(mockAdResponse.getNetworkType()).toReturn(null);
+        stub(mockClientMetadata.getMoPubIdentifier()).toReturn(new MoPubIdentifier(context));
 
         stub(mockAdResponse.getTimestamp()).toReturn(-1L);
         stub(mockAdResponse.getAdType()).toReturn(null);

@@ -2,6 +2,8 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Point;
@@ -19,16 +21,23 @@ import android.view.Display;
 import android.view.WindowManager;
 
 import com.mopub.common.ClientMetadata;
-import com.mopub.common.GpsHelper;
-import com.mopub.common.GpsHelperTest;
+import com.mopub.common.LocationService;
 import com.mopub.common.MoPub;
+import com.mopub.common.MoPubAdvancedBidder;
+import com.mopub.common.SdkConfiguration;
+import com.mopub.common.privacy.ConsentData;
+import com.mopub.common.privacy.ConsentStatus;
+import com.mopub.common.privacy.PersonalInfoManager;
+import com.mopub.common.privacy.AdvertisingId;
+import com.mopub.common.privacy.MoPubIdentifier;
+import com.mopub.common.privacy.MoPubIdentifierTest;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.util.Reflection;
 import com.mopub.common.util.Reflection.MethodBuilder;
 import com.mopub.common.util.Utils;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
 import com.mopub.mobileads.test.support.MoPubShadowTelephonyManager;
 import com.mopub.mraid.MraidNativeCommandHandler;
-import com.mopub.network.Networking;
 import com.mopub.network.PlayServicesUrlRewriter;
 
 import org.junit.After;
@@ -45,6 +54,8 @@ import org.robolectric.shadows.ShadowConnectivityManager;
 import org.robolectric.shadows.ShadowLocationManager;
 import org.robolectric.shadows.ShadowNetworkInfo;
 
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
 import static android.net.ConnectivityManager.TYPE_DUMMY;
 import static android.net.ConnectivityManager.TYPE_ETHERNET;
@@ -56,8 +67,10 @@ import static android.net.ConnectivityManager.TYPE_MOBILE_SUPL;
 import static android.net.ConnectivityManager.TYPE_WIFI;
 import static android.telephony.TelephonyManager.NETWORK_TYPE_UNKNOWN;
 import static com.mopub.common.ClientMetadata.MoPubNetworkType;
+import static com.mopub.common.MoPubTest.INIT_ADUNIT;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -80,11 +93,15 @@ public class WebViewAdUrlGeneratorTest {
     private ShadowConnectivityManager shadowConnectivityManager;
     private Activity context;
     private MethodBuilder methodBuilder;
+    private PersonalInfoManager mockPersonalInfoManager;
+    private ConsentData mockConsentData;
 
     @Before
-    public void setup() {
+    public void setup() throws Exception {
         context = spy(Robolectric.buildActivity(Activity.class).create().get());
         Shadows.shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
+        Shadows.shadowOf(context).grantPermissions(ACCESS_FINE_LOCATION);
+        Shadows.shadowOf(context).grantPermissions(ACCESS_COARSE_LOCATION);
 
         // Set the expected screen dimensions to arbitrary numbers
         final Resources spyResources = spy(context.getResources());
@@ -112,9 +129,27 @@ public class WebViewAdUrlGeneratorTest {
             }).when(mockDisplay).getRealSize(any(Point.class));
             when(mockWindowManager.getDefaultDisplay()).thenReturn(mockDisplay);
             final Context spyApplicationContext = spy(context.getApplicationContext());
+            when(spyApplicationContext.getResources()).thenReturn(spyResources);
+            when(spyApplicationContext.getPackageName()).thenReturn("testBundle");
+            PackageManager mockPackageManager = mock(PackageManager.class);
+            PackageInfo mockPackageInfo = mock(PackageInfo.class);
+            mockPackageInfo.versionName = BuildConfig.VERSION_NAME;
+            when(mockPackageManager.getPackageInfo(any(String.class), anyInt())).thenReturn(mockPackageInfo);
+            when(spyApplicationContext.getPackageManager()).thenReturn(mockPackageManager);
             when(spyApplicationContext.getSystemService(Context.WINDOW_SERVICE)).thenReturn(mockWindowManager);
             when(context.getApplicationContext()).thenReturn(spyApplicationContext);
+            when(spyApplicationContext.getApplicationContext()).thenReturn(spyApplicationContext);
         }
+
+        mockConsentData = mock(ConsentData.class);
+        mockPersonalInfoManager = mock(PersonalInfoManager.class);
+        when(mockPersonalInfoManager.getPersonalInfoConsentStatus()).thenReturn(ConsentStatus.UNKNOWN);
+        when(mockPersonalInfoManager.getConsentData()).thenReturn(mockConsentData);
+        new Reflection.MethodBuilder(null, "setPersonalInfoManager")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .addParam(PersonalInfoManager.class, mockPersonalInfoManager)
+                .execute();
 
         subject = new WebViewAdUrlGenerator(context,
                 new MraidNativeCommandHandler().isStorePictureSupported(context));
@@ -124,17 +159,25 @@ public class WebViewAdUrlGeneratorTest {
         shadowTelephonyManager = (MoPubShadowTelephonyManager) Shadows.shadowOf((TelephonyManager) RuntimeEnvironment.application.getSystemService(Context.TELEPHONY_SERVICE));
         shadowConnectivityManager = Shadows.shadowOf((ConnectivityManager) RuntimeEnvironment.application.getSystemService(Context.CONNECTIVITY_SERVICE));
         methodBuilder = TestMethodBuilderFactory.getSingletonMock();
-        Networking.useHttps(false);
+
+        LocationService.clearLastKnownLocation();
+        MoPubIdentifierTest.writeAdvertisingInfoToSharedPreferences(context, false);
     }
 
     @After
     public void tearDown() throws Exception {
         reset(methodBuilder);
+        ClientMetadata.clearForTesting();
+        MoPubIdentifierTest.clearPreferences(context);
+        new Reflection.MethodBuilder(null, "clearAdvancedBidders")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .execute();
     }
 
     @Test
-    public void generateAdUrl_shouldIncludeMinimumFields() throws Exception {
-        String expectedAdUrl = new AdUrlBuilder(expectedUdid).build();
+    public void generateAdUrl_shouldIncludeMinimumFields() {
+        String expectedAdUrl = new AdUrlBuilder(expectedUdid).withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue()).build();
 
         String adUrl = generateMinimumUrlString();
 
@@ -142,15 +185,16 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
-    public void generateAdUrl_withHttpsScheme() throws Exception {
-        Networking.useHttps(true);
+    public void generateAdUrl_withHttpsScheme() {
         String adUrl = generateMinimumUrlString();
         assertThat(adUrl).startsWith("https://");
     }
 
     @Test
-    public void generateAdUrl_shouldRunMultipleTimes() throws Exception {
-        String expectedAdUrl = new AdUrlBuilder(expectedUdid).build();
+    public void generateAdUrl_shouldRunMultipleTimes() throws Exception{
+        String expectedAdUrl = new AdUrlBuilder(expectedUdid).withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue()).build();
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
 
         String adUrl = generateMinimumUrlString();
         assertThat(adUrl).isEqualTo(expectedAdUrl);
@@ -160,15 +204,33 @@ public class WebViewAdUrlGeneratorTest {
 
     @Test
     public void generateAdUrl_shouldIncludeAllFields() throws Exception {
+        SdkConfiguration sdkConfiguration = new SdkConfiguration.Builder(
+                INIT_ADUNIT).withAdvancedBidder(
+                WebViewAdvancedBidder.class).build();
+        MoPub.initializeSdk(context, sdkConfiguration, null);
+        MoPub.setAdvancedBiddingEnabled(true);
+        new Reflection.MethodBuilder(null, "setPersonalInfoManager")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .addParam(PersonalInfoManager.class, mockPersonalInfoManager)
+                .execute();
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+
+        ClientMetadata.clearForTesting();
+
         final String expectedAdUrl = new AdUrlBuilder(expectedUdid)
                 .withAdUnitId("adUnitId")
-                .withQuery("key%3Avalue")
+                .withKeywordsQuery("keywordsKey%3AkeywordsValue")
+                .withUserDataQuery("userDataKey%3AuserDataValue")
                 .withLatLon("20.1%2C30.0", "1", "101325")
                 .withMcc("123")
                 .withMnc("456")
                 .withCountryIso("expected%20country")
                 .withCarrierName("expected%20carrier")
                 .withExternalStoragePermission(false)
+                .withAbt("{\"UrlGeneratorTest\":{\"token\":\"WebViewAdvancedBidderToken\"}}")
+                .withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue())
                 .build();
 
         shadowTelephonyManager.setNetworkOperator("123456");
@@ -183,7 +245,56 @@ public class WebViewAdUrlGeneratorTest {
 
         String adUrl = subject
                 .withAdUnitId("adUnitId")
-                .withKeywords("key:value")
+                .withKeywords("keywordsKey:keywordsValue")
+                .withUserDataKeywords("userDataKey:userDataValue")
+                .withLocation(location)
+                .generateUrlString("ads.mopub.com");
+
+        // Only compare the seconds since millis can be off
+        adUrl = adUrl.replaceFirst("llf=101[0-9]{3}", "llf=101325");
+
+        assertThat(adUrl).isEqualTo(expectedAdUrl);
+
+        new Reflection.MethodBuilder(null, "clearAdvancedBidders")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .execute();
+    }
+
+    @Test
+    public void generateAdUrl_shouldNotLocationFieldsWhenConsentIsFalse() throws Exception {
+        SdkConfiguration sdkConfiguration = new SdkConfiguration.Builder(
+                INIT_ADUNIT).withAdvancedBidder(WebViewAdvancedBidder.class).build();
+        MoPub.initializeSdk(context, sdkConfiguration, null);
+        new Reflection.MethodBuilder(null, "setPersonalInfoManager")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .addParam(PersonalInfoManager.class, mockPersonalInfoManager)
+                .execute();
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(false);
+
+        final String expectedAdUrl = new AdUrlBuilder(expectedUdid)
+                .withAdUnitId("adUnitId")
+                .withExternalStoragePermission(false)
+                .withKeywordsQuery("keywordsKey%3AkeywordsValue")
+                .withAbt("{\"UrlGeneratorTest\":{\"token\":\"WebViewAdvancedBidderToken\"}}")
+                .withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue())
+                .build();
+
+        shadowTelephonyManager.setNetworkOperator("123456");
+        shadowTelephonyManager.setNetworkCountryIso("expected country");
+        shadowTelephonyManager.setNetworkOperatorName("expected carrier");
+
+        Location location = new Location("");
+        location.setLatitude(20.1);
+        location.setLongitude(30.0);
+        location.setAccuracy(1.23f); // should get rounded to "1"
+        location.setTime(System.currentTimeMillis() - 101325);
+
+        String adUrl = subject
+                .withAdUnitId("adUnitId")
+                .withKeywords("keywordsKey:keywordsValue")
                 .withLocation(location)
                 .generateUrlString("ads.mopub.com");
 
@@ -194,7 +305,106 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
-    public void generateAdUrl_shouldRecognizeOrientation() throws Exception {
+    public void generateAdUrl_withAdvancedBiddingDisabled_shouldNotIncludeAbt() throws Exception {
+        SdkConfiguration sdkConfiguration = new SdkConfiguration.Builder(
+                INIT_ADUNIT).withAdvancedBidder(
+                WebViewAdvancedBidder.class).build();
+        MoPub.initializeSdk(context, sdkConfiguration, null);
+        MoPub.setAdvancedBiddingEnabled(false);
+        new Reflection.MethodBuilder(null, "setPersonalInfoManager")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .addParam(PersonalInfoManager.class, mockPersonalInfoManager)
+                .execute();
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(false);
+
+        final String expectedAdUrl = new AdUrlBuilder(expectedUdid)
+                .withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue())
+                .build();
+
+        String adUrl = subject.generateUrlString("ads.mopub.com");
+        assertThat(adUrl).isEqualTo(expectedAdUrl);
+
+        MoPub.setAdvancedBiddingEnabled(true);
+    }
+
+    @Test
+    public void generateAdUrl_withCollectUserDataDisabled_shouldNotIncludeKeywords() throws Exception {
+        SdkConfiguration sdkConfiguration = new SdkConfiguration.Builder(INIT_ADUNIT)
+                .withAdvancedBidder(WebViewAdvancedBidder.class).build();
+        MoPub.initializeSdk(context, sdkConfiguration, null);
+        new Reflection.MethodBuilder(null, "setPersonalInfoManager")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .addParam(PersonalInfoManager.class, mockPersonalInfoManager)
+                .execute();
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(false);
+
+        // expected has no keywords
+        final String expectedAdUrl = new AdUrlBuilder(expectedUdid)
+                .withAdUnitId("adUnitId")
+                .withKeywordsQuery("keywordsKey%3AkeywordsValue")
+                .withExternalStoragePermission(false)
+                .withAbt("{\"UrlGeneratorTest\":{\"token\":\"WebViewAdvancedBidderToken\"}}")
+                .withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue())
+                .build();
+
+        shadowTelephonyManager.setNetworkOperator("123456");
+        shadowTelephonyManager.setNetworkCountryIso("expected country");
+        shadowTelephonyManager.setNetworkOperatorName("expected carrier");
+
+        Location location = new Location("");
+        location.setLatitude(20.1);
+        location.setLongitude(30.0);
+        location.setAccuracy(1.23f); // should get rounded to "1"
+        location.setTime(System.currentTimeMillis() - 101325);
+
+        String adUrl = subject
+                .withAdUnitId("adUnitId")
+                .withUserDataKeywords("key:value")
+                .withKeywords("keywordsKey:keywordsValue")
+                .withLocation(location)
+                .generateUrlString("ads.mopub.com");
+
+        // Only compare the seconds since millis can be off
+        adUrl = adUrl.replaceFirst("llf=101[0-9]{3}", "llf=101325");
+
+        assertThat(adUrl).isEqualTo(expectedAdUrl);
+
+        new Reflection.MethodBuilder(null, "clearAdvancedBidders")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .execute();
+    }
+
+    @Test
+    public void generateAdUrl_withAdvancedBiddingEnabled_shouldIncludeAbt() throws Exception {
+        MoPub.setAdvancedBiddingEnabled(true);
+        SdkConfiguration sdkConfiguration = new SdkConfiguration.Builder(
+                "b195f8dd8ded45fe847ad89ed1d016da").withAdvancedBidder(
+                WebViewAdvancedBidder.class).build();
+        MoPub.initializeSdk(context, sdkConfiguration, null);
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(false);
+
+        final String expectedAdUrl = new AdUrlBuilder(expectedUdid)
+                .withAbt("{\"UrlGeneratorTest\":{\"token\":\"WebViewAdvancedBidderToken\"}}")
+                .withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue())
+                .build();
+
+        String adUrl = subject.generateUrlString("ads.mopub.com");
+        assertThat(adUrl).isEqualTo(expectedAdUrl);
+
+        new Reflection.MethodBuilder(null, "clearAdvancedBidders")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .execute();
+    }
+
+    @Test
+    public void generateAdUrl_shouldRecognizeOrientation() {
         configuration.orientation = Configuration.ORIENTATION_LANDSCAPE;
         assertThat(generateMinimumUrlString()).contains("&o=l");
         configuration.orientation = Configuration.ORIENTATION_PORTRAIT;
@@ -204,8 +414,8 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
-    public void generateAdUrl_shouldHandleFunkyNetworkOperatorCodes() throws Exception {
-        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid);
+    public void generateAdUrl_shouldHandleFunkyNetworkOperatorCodes() {
+        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid).withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue());
 
         shadowTelephonyManager.setNetworkOperator("123456");
         String adUrl = generateMinimumUrlString();
@@ -233,19 +443,71 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
-    public void generateAdUrl_needsAndDoesNotHaveReadPhoneState_shouldNotContainOperatorName() {
-        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid);
+    public void generateAdUrl_needsAndDoesNotHaveReadPhoneState_shouldNotContainOperatorName() throws Exception {
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(false);
+
+        final String expectedAdUrl = new AdUrlBuilder(expectedUdid)
+                .withCarrierName("")
+                .withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue())
+                .build();
 
         shadowTelephonyManager.setNeedsReadPhoneState(true);
         shadowTelephonyManager.setReadPhoneStatePermission(false);
 
         String adUrl = generateMinimumUrlString();
-        assertThat(adUrl).isEqualTo(urlBuilder.withCarrierName("").build());
+        assertThat(adUrl).isEqualTo(expectedAdUrl);
     }
 
     @Test
-    public void generateAdUrl_needsAndHasReadPhoneState_shouldContainOperatorName() {
-        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid);
+    public void generateAdUrl_shouldIncludeGdprAppliesWhenAvailable() throws Exception {
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+        when(mockPersonalInfoManager.gdprApplies()).thenReturn(true);
+
+        final String expectedAdUrl = new AdUrlBuilder(expectedUdid)
+                .withGdprApplies("1")
+                .withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue())
+                .build();
+
+        String adUrl = generateMinimumUrlString();
+        assertThat(adUrl).isEqualTo(expectedAdUrl);
+    }
+
+    @Test
+    public void generateAdUrl_shouldIncludeConsentedPrivacyPolicyVersionWhenAvailable() throws Exception {
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+        when(mockPersonalInfoManager.getConsentData()).thenReturn(mockConsentData);
+        when(mockConsentData.getConsentedPrivacyPolicyVersion()).thenReturn("10");
+
+        final String expectedAdUrl = new AdUrlBuilder(expectedUdid)
+                .withConsentedPrivacyPolicyVersion("10")
+                .withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue())
+                .build();
+
+        String adUrl = generateMinimumUrlString();
+        assertThat(adUrl).isEqualTo(expectedAdUrl);
+    }
+
+    @Test
+    public void generateAdUrl_shouldIncludeConsentedVendorListVersionWhenAvailable() throws Exception {
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+        when(mockPersonalInfoManager.getConsentData()).thenReturn(mockConsentData);
+        when(mockConsentData.getConsentedVendorListVersion()).thenReturn("15");
+
+        final String expectedAdUrl = new AdUrlBuilder(expectedUdid)
+                .withConsentedVendorListVersion("15")
+                .withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue())
+                .build();
+
+        String adUrl = generateMinimumUrlString();
+        assertThat(adUrl).isEqualTo(expectedAdUrl);
+    }
+
+
+    @Test
+    public void generateAdUrl_needsAndHasReadPhoneState_shouldContainOperatorName() throws Exception {
+        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid).withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue());
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
 
         shadowTelephonyManager.setNeedsReadPhoneState(true);
         shadowTelephonyManager.setReadPhoneStatePermission(true);
@@ -257,7 +519,7 @@ public class WebViewAdUrlGeneratorTest {
 
     @Test
     public void generateAdUrl_doesNotNeedReadPhoneState_shouldContainOperatorName() {
-        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid);
+        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid).withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue());
 
         shadowTelephonyManager.setNeedsReadPhoneState(false);
         shadowTelephonyManager.setReadPhoneStatePermission(false);
@@ -268,8 +530,8 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
-    public void generateAdurl_whenOnCDMA_shouldGetOwnerStringFromSimCard() throws Exception {
-        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid);
+    public void generateAdurl_whenOnCDMA_shouldGetOwnerStringFromSimCard() {
+        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid).withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue());
         shadowTelephonyManager.setPhoneType(TelephonyManager.PHONE_TYPE_CDMA);
         shadowTelephonyManager.setSimState(TelephonyManager.SIM_STATE_READY);
         shadowTelephonyManager.setNetworkOperator("123456");
@@ -279,20 +541,26 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
-    public void generateAdurl_whenSimNotReady_shouldDefaultToNetworkOperator() throws Exception {
+    public void generateAdurl_whenSimNotReady_shouldDefaultToNetworkOperator() {
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
         AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid);
         shadowTelephonyManager.setPhoneType(TelephonyManager.PHONE_TYPE_CDMA);
         shadowTelephonyManager.setSimState(TelephonyManager.SIM_STATE_ABSENT);
         shadowTelephonyManager.setNetworkOperator("123456");
         shadowTelephonyManager.setSimOperator("789012");
         String adUrl = generateMinimumUrlString();
-        assertThat(adUrl).isEqualTo(urlBuilder.withMcc("123").withMnc("456").build());
+        assertThat(adUrl).isEqualTo(urlBuilder.withMcc("123")
+                                            .withMnc("456").
+                                            withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue())
+                                            .build());
     }
 
     @Test
     public void generateAdUrl_shouldSetNetworkType() throws Exception {
-        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid);
+        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid).withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue());
         String adUrl;
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
 
         shadowConnectivityManager.setActiveNetworkInfo(createNetworkInfo(TYPE_DUMMY));
         adUrl = generateMinimumUrlString();
@@ -329,7 +597,7 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
-    public void generateAdUrl_whenNoNetworkPermission_shouldGenerateUnknownNetworkType() throws Exception {
+    public void generateAdUrl_whenNoNetworkPermission_shouldGenerateUnknownNetworkType() {
         AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid);
 
         Shadows.shadowOf(context).denyPermissions(ACCESS_NETWORK_STATE);
@@ -337,41 +605,70 @@ public class WebViewAdUrlGeneratorTest {
 
         String adUrl = generateMinimumUrlString();
 
-        assertThat(adUrl).isEqualTo(urlBuilder.withNetworkType(MoPubNetworkType.UNKNOWN).build());
+        assertThat(adUrl).isEqualTo(urlBuilder.withNetworkType(MoPubNetworkType.UNKNOWN)
+                .withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue()).build());
     }
 
     @Test
     public void generateAdUrl_shouldTolerateNullActiveNetwork() throws Exception {
-        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid);
+        SdkConfiguration sdkConfiguration = new SdkConfiguration.Builder(INIT_ADUNIT)
+                .withAdvancedBidder(WebViewAdvancedBidder.class).build();
+        MoPub.initializeSdk(context, sdkConfiguration, null);
+        MoPub.setAdvancedBiddingEnabled(false);
+        new Reflection.MethodBuilder(null, "setPersonalInfoManager")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .addParam(PersonalInfoManager.class, mockPersonalInfoManager)
+                .execute();
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(false);
+
+        AdUrlBuilder urlBuilder = new AdUrlBuilder(expectedUdid).withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue());
         shadowConnectivityManager.setActiveNetworkInfo(null);
 
         String adUrl = generateMinimumUrlString();
 
         assertThat(adUrl).isEqualTo(urlBuilder.withNetworkType(MoPubNetworkType.UNKNOWN).build());
+
+        new Reflection.MethodBuilder(null, "clearAdvancedBidders")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .execute();
     }
 
 
 
     @Test
-    public void generateAdUrl_whenGooglePlayServicesIsLinkedAndAdInfoIsCached_shouldUseAdInfoParams() throws Exception {
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.setStatic(any(Class.class))).thenReturn(methodBuilder);
-        when(methodBuilder.addParam(any(Class.class), any())).thenReturn(methodBuilder);
-        when(methodBuilder.execute()).thenReturn(GpsHelper.GOOGLE_PLAY_SUCCESS_CODE);
+    public void generateAdUrl_whenAdInfoIsCached_shouldUseAdInfoParams() throws Exception {
+        SdkConfiguration sdkConfiguration = new SdkConfiguration.Builder(INIT_ADUNIT).build();
+        MoPub.initializeSdk(context, sdkConfiguration, null);
+        new Reflection.MethodBuilder(null, "setPersonalInfoManager")
+                .setStatic(MoPub.class)
+                .setAccessible()
+                .addParam(PersonalInfoManager.class, mockPersonalInfoManager)
+                .execute();
 
-        GpsHelperTest.TestAdInfo adInfo = new GpsHelperTest.TestAdInfo();
+        MoPubIdentifierTest.writeAdvertisingInfoToSharedPreferences(context, false);
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+
         final ClientMetadata clientMetadata = ClientMetadata.getInstance(context);
-        clientMetadata.setAdvertisingInfo(adInfo.mAdId, adInfo.mLimitAdTrackingEnabled);
+        MoPubIdentifier identifier = clientMetadata.getMoPubIdentifier();
+        AdvertisingId adInfo = identifier.getAdvertisingInfo();
 
-        expectedUdid = "ifa%3A" + adInfo.ADVERTISING_ID;
+        String generatedAdUrl = generateMinimumUrlString();
+        expectedUdid = "ifa%3A" + adInfo.getIdWithPrefix(true);
         String expectedAdUrl = new AdUrlBuilder(expectedUdid)
-                .withDnt(adInfo.LIMIT_AD_TRACKING_ENABLED)
+                .withDnt(adInfo.isDoNotTrack())
+                .withCurrentConsentStatus(ConsentStatus.UNKNOWN.getValue())
                 .build();
-        assertThat(generateMinimumUrlString()).isEqualTo(expectedAdUrl);
+        assertThat(generatedAdUrl).isEqualTo(expectedAdUrl);
     }
 
     @Test
-    public void generateAdUrl_whenLocationServiceGpsProviderHasMostRecentLocation_shouldUseLocationServiceValue() {
+    public void generateAdUrl_whenLocationServiceGpsProviderHasMostRecentLocation_shouldUseLocationServiceValue() throws Exception {
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+
         Location locationFromDeveloper = new Location("");
         locationFromDeveloper.setLatitude(42);
         locationFromDeveloper.setLongitude(-42);
@@ -397,7 +694,100 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
-    public void generateAdUrl_whenDeveloperSuppliesMoreRecentLocationThanLocationService_shouldUseDeveloperSuppliedLocation() {
+    public void generateAdUrl_whenLocationServiceGpsProviderHasMostRecentLocation_WithFineLocationPermissionOnly_shouldUseLocationServiceValue() throws Exception {
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+
+        Shadows.shadowOf(context).denyPermissions(ACCESS_COARSE_LOCATION);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(37);
+        locationFromSdk.setLongitude(-122);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.GPS_PROVIDER, locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("37.0,-122.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("5");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEqualTo("1");
+    }
+
+    @Test
+    public void generateAdUrl_whenLocationServiceGpsProviderHasMostRecentLocation_WithCoarseLocationPermissionOnly_shouldUseDeveloperSuppliedLocation() throws Exception {
+        Shadows.shadowOf(context).denyPermissions(ACCESS_FINE_LOCATION);
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(37);
+        locationFromSdk.setLongitude(-122);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.GPS_PROVIDER, locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("42.0,-42.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("3");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEmpty();
+    }
+
+    @Test
+    public void generateAdUrl_whenLocationServiceGpsProviderHasMostRecentLocation_WithNoLocationPermission_shouldUseDeveloperSuppliedLocation() throws Exception {
+        Shadows.shadowOf(context).denyPermissions(ACCESS_FINE_LOCATION);
+        Shadows.shadowOf(context).denyPermissions(ACCESS_COARSE_LOCATION);
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(37);
+        locationFromSdk.setLongitude(-122);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.GPS_PROVIDER, locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("42.0,-42.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("3");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEmpty();
+    }
+
+    @Test
+    public void generateAdUrl_whenDeveloperSuppliesMoreRecentLocationThanLocationService_shouldUseDeveloperSuppliedLocation() throws Exception {
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+
         Location locationFromDeveloper = new Location("");
         locationFromDeveloper.setLatitude(42);
         locationFromDeveloper.setLongitude(-42);
@@ -424,7 +814,10 @@ public class WebViewAdUrlGeneratorTest {
     }
 
     @Test
-    public void generateAdUrl_whenLocationServiceNetworkProviderHasMostRecentLocation_shouldUseLocationServiceValue() {
+    public void generateAdUrl_whenLocationServiceNetworkProviderHasMostRecentLocation_shouldUseLocationServiceValue() throws Exception {
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+
         Location locationFromDeveloper = new Location("");
         locationFromDeveloper.setLatitude(42);
         locationFromDeveloper.setLongitude(-42);
@@ -448,6 +841,100 @@ public class WebViewAdUrlGeneratorTest {
         assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("38.0,-123.0");
         assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("5");
         assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEqualTo("1");
+    }
+
+    @Test
+    public void generateAdUrl_whenLocationServiceNetworkProviderHasMostRecentLocation_WithFineLocationPermissionOnly_shouldUseLocationServiceValue() throws Exception {
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+
+        Shadows.shadowOf(context).denyPermissions(ACCESS_COARSE_LOCATION);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(38);
+        locationFromSdk.setLongitude(-123);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.NETWORK_PROVIDER,
+                locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("38.0,-123.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("5");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEqualTo("1");
+    }
+
+    @Test
+    public void generateAdUrl_whenLocationServiceNetworkProviderHasMostRecentLocation_WithCoarseLocationPermissionOnly_shouldUseLocationServiceValue() throws Exception {
+        Shadows.shadowOf(context).denyPermissions(ACCESS_FINE_LOCATION);
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(38);
+        locationFromSdk.setLongitude(-123);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.NETWORK_PROVIDER,
+                locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("38.0,-123.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("5");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEqualTo("1");
+    }
+
+    @Test
+    public void generateAdUrl_whenLocationServiceNetworkProviderHasMostRecentLocation_WithNoLocationPermission_shouldUseDeveloperSuppliedLocation() throws Exception {
+        Shadows.shadowOf(context).denyPermissions(ACCESS_FINE_LOCATION);
+        Shadows.shadowOf(context).denyPermissions(ACCESS_COARSE_LOCATION);
+
+        when(mockPersonalInfoManager.canCollectPersonalInformation()).thenReturn(true);
+
+        Location locationFromDeveloper = new Location("");
+        locationFromDeveloper.setLatitude(42);
+        locationFromDeveloper.setLongitude(-42);
+        locationFromDeveloper.setAccuracy(3.5f);
+        locationFromDeveloper.setTime(1000);
+
+        // Mock out the LocationManager's last known location to be more recent than the
+        // developer-supplied location.
+        ShadowLocationManager shadowLocationManager = Shadows.shadowOf(
+                (LocationManager) RuntimeEnvironment.application.getSystemService(Context.LOCATION_SERVICE));
+        Location locationFromSdk = new Location("");
+        locationFromSdk.setLatitude(38);
+        locationFromSdk.setLongitude(-123);
+        locationFromSdk.setAccuracy(5.0f);
+        locationFromSdk.setTime(2000);
+        shadowLocationManager.setLastKnownLocation(LocationManager.NETWORK_PROVIDER,
+                locationFromSdk);
+
+        String adUrl = subject.withLocation(locationFromDeveloper)
+                .generateUrlString("ads.mopub.com");
+        assertThat(getParameterFromRequestUrl(adUrl, "ll")).isEqualTo("42.0,-42.0");
+        assertThat(getParameterFromRequestUrl(adUrl, "lla")).isEqualTo("3");
+        assertThat(getParameterFromRequestUrl(adUrl, "llsdk")).isEmpty();
     }
 
     @Test
@@ -517,7 +1004,8 @@ public class WebViewAdUrlGeneratorTest {
     private static class AdUrlBuilder {
         private String expectedUdid;
         private String adUnitId = "";
-        private String query = "";
+        private String keywordsQuery = "";
+        private String userDataQuery = "";
         private String latLon = "";
         private String locationAccuracy = "";
         private String latLonLastUpdated = "";
@@ -528,38 +1016,50 @@ public class WebViewAdUrlGeneratorTest {
         private String dnt = "";
         private MoPubNetworkType networkType = MoPubNetworkType.MOBILE;
         private int externalStoragePermission;
+        private String abt = "";
+        private String currentConsentStatus = "";
+        private String gdprApplies = "0";
+        private String consentedPrivacyPolicyVersion = "";
+        private String consentedVendorListVersion = "";
 
         public AdUrlBuilder(String expectedUdid) {
             this.expectedUdid = expectedUdid;
         }
 
         public String build() {
-            return "http://ads.mopub.com/m/ad" +
+            return "https://ads.mopub.com/m/ad" +
                     "?v=6" +
                     paramIfNotEmpty("id", adUnitId) +
-                    "&nv=" + MoPub.SDK_VERSION +
+                    "&nv=" + Uri.encode(MoPub.SDK_VERSION) +
                     "&dn=" + Build.MANUFACTURER +
                     "%2C" + Build.MODEL +
                     "%2C" + Build.PRODUCT +
                     "&bundle=" + "testBundle" +
-                    paramIfNotEmpty("q", query) +
+                    paramIfNotEmpty("q", keywordsQuery) +
+                    paramIfNotEmpty("user_data_q", userDataQuery) +
                     (TextUtils.isEmpty(latLon) ? "" :
                             "&ll=" + latLon + "&lla=" + locationAccuracy + "&llf=" + latLonLastUpdated) +
                     "&z=-0700" +
                     "&o=u" +
                     "&w=" + TEST_SCREEN_WIDTH +
                     "&h=" + TEST_SCREEN_HEIGHT +
-                    "&sc_a=1.0" +
+                    "&sc=1.0" +
                     paramIfNotEmpty("mcc", mcc) +
                     paramIfNotEmpty("mnc", mnc) +
                     paramIfNotEmpty("iso", countryIso) +
                     paramIfNotEmpty("cn", carrierName) +
                     "&ct=" + networkType +
-                    "&av=" + BuildConfig.VERSION_NAME +
+                    "&av=" + Uri.encode(BuildConfig.VERSION_NAME) +
+                    (TextUtils.isEmpty(abt) ? "" : "&abt=" + Uri.encode(abt)) +
                     "&udid=" + PlayServicesUrlRewriter.UDID_TEMPLATE +
                     "&dnt=" + PlayServicesUrlRewriter.DO_NOT_TRACK_TEMPLATE +
+                    paramIfNotEmpty("gdpr_applies", gdprApplies) +
+                    paramIfNotEmpty("current_consent_status", currentConsentStatus) +
+                    paramIfNotEmpty("consented_privacy_policy_version", consentedPrivacyPolicyVersion) +
+                    paramIfNotEmpty("consented_vendor_list_version", consentedVendorListVersion) +
                     "&mr=1" +
-                    "&android_perms_ext_storage=" + externalStoragePermission;
+                    "&android_perms_ext_storage=" + externalStoragePermission +
+                    "&vv=3";
         }
 
         public AdUrlBuilder withAdUnitId(String adUnitId) {
@@ -567,8 +1067,12 @@ public class WebViewAdUrlGeneratorTest {
             return this;
         }
 
-        public AdUrlBuilder withQuery(String query) {
-            this.query = query;
+        public AdUrlBuilder withUserDataQuery(String query) {
+            this.userDataQuery = query;
+            return this;
+        }
+        public AdUrlBuilder withKeywordsQuery(String query) {
+            this.keywordsQuery = query;
             return this;
         }
 
@@ -617,6 +1121,31 @@ public class WebViewAdUrlGeneratorTest {
             return this;
         }
 
+        public AdUrlBuilder withAbt(String abt) {
+            this.abt = abt;
+            return this;
+        }
+
+        public AdUrlBuilder withCurrentConsentStatus(String currentConsentStatus) {
+            this.currentConsentStatus = currentConsentStatus;
+            return this;
+        }
+
+        public AdUrlBuilder withGdprApplies(String gdprApplies) {
+            this.gdprApplies = gdprApplies;
+            return this;
+        }
+
+        public AdUrlBuilder withConsentedPrivacyPolicyVersion(String consentedPrivacyPolicyVersion) {
+            this.consentedPrivacyPolicyVersion = consentedPrivacyPolicyVersion;
+            return this;
+        }
+
+        public AdUrlBuilder withConsentedVendorListVersion(String consentedVendorListVersion) {
+            this.consentedVendorListVersion = consentedVendorListVersion;
+            return this;
+        }
+
         private String paramIfNotEmpty(String key, String value) {
             if (TextUtils.isEmpty(value)) {
                 return "";
@@ -625,4 +1154,18 @@ public class WebViewAdUrlGeneratorTest {
             }
         }
     }
+
+    private static class WebViewAdvancedBidder implements MoPubAdvancedBidder {
+
+        @Override
+        public String getToken(final Context context) {
+            return "WebViewAdvancedBidderToken";
+        }
+
+        @Override
+        public String getCreativeNetworkName() {
+            return "UrlGeneratorTest";
+        }
+    }
+
 }

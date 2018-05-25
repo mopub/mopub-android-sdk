@@ -2,18 +2,22 @@ package com.mopub.common.util;
 
 import android.app.Activity;
 
+import com.mopub.common.test.support.SdkTestRunner;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
+import org.robolectric.Robolectric;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
-@RunWith(RobolectricTestRunner.class)
+@RunWith(SdkTestRunner.class)
 public class DrawablesTest {
     @Test
     public void createDrawable_shouldNotCacheDrawables() throws Exception {
-        assertThat(Drawables.BACKGROUND.createDrawable(new Activity()))
-                .isNotSameAs(Drawables.BACKGROUND.createDrawable(new Activity()));
+        assertThat(Drawables.BACKGROUND.createDrawable(
+                Robolectric.buildActivity(Activity.class).create().get())).isNotSameAs(
+                Drawables.BACKGROUND.createDrawable(
+                        Robolectric.buildActivity(Activity.class).create().get()));
     }
 
     @Test

@@ -25,7 +25,6 @@ public class NativeAdViewHelperTest {
     private Activity activity;
     @Mock private View mockView;
     @Mock private ViewGroup mockViewGroup;
-    @Mock private ViewBinder mockViewBinder;
     @Mock private NativeAd mMockNativeAd1;
     @Mock private NativeAd mMockNativeAd2;
 
@@ -42,8 +41,7 @@ public class NativeAdViewHelperTest {
 
     @Test
     public void getAdView_shouldRenderView() throws Exception {
-        NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd1,
-                mockViewBinder);
+        NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd1);
 
         verify(mMockNativeAd1).createAdView(activity, mockViewGroup);
         verify(mMockNativeAd1).renderAdView(mockView);
@@ -53,8 +51,7 @@ public class NativeAdViewHelperTest {
     public void getAdView_withDestroyedNativeAd_shouldReturnEmptyAndGoneConvertView() throws Exception {
         when(mMockNativeAd1.isDestroyed()).thenReturn(true);
 
-        View view = NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd1,
-                mockViewBinder);
+        View view = NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd1);
 
         assertThat(view).isNotEqualTo(mockView);
         assertThat(view.getTag()).isEqualTo(NativeAdViewHelper.ViewType.EMPTY);
@@ -63,24 +60,20 @@ public class NativeAdViewHelperTest {
 
     @Test
     public void getAdView_shouldClearPreviousNativeAd() throws Exception {
-        NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd1,
-                mockViewBinder);
+        NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd1);
 
         // Second call should clear the first NativeAd
-        NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd2,
-                mockViewBinder);
+        NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd2);
         verify(mMockNativeAd1).clear(mockView);
 
         // Third call should clear the second NativeAd
-        NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd1,
-                mockViewBinder);
+        NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd1);
         verify(mMockNativeAd2).clear(mockView);
     }
 
     @Test
     public void getAdView_shouldPrepareNativeAd() throws Exception {
-        NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd1,
-                mockViewBinder);
+        NativeAdViewHelper.getAdView(mockView, mockViewGroup, activity, mMockNativeAd1);
 
         verify(mMockNativeAd1).prepare(mockView);
     }

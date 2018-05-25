@@ -29,7 +29,7 @@ public class NativeRecyclerViewFragment extends Fragment {
     private MoPubRecyclerAdapter mRecyclerAdapter;
     private MoPubSampleAdUnit mAdConfiguration;
     private RequestParameters mRequestParameters;
-    private enum LayoutType { LINEAR, GRID };
+    private enum LayoutType { LINEAR, GRID }
     private LayoutType mLayoutType;
     private RecyclerView mRecyclerView;
 
@@ -56,6 +56,7 @@ public class NativeRecyclerViewFragment extends Fragment {
                 // If your app already has location access, include it here.
                 final Location location = null;
                 final String keywords = viewHolder.mKeywordsField.getText().toString();
+                final String userDataKeywords = viewHolder.mUserDataKeywordsField.getText().toString();
 
                 // Setting desired assets on your request helps native ad networks and bidders
                 // provide higher-quality ads.
@@ -69,6 +70,7 @@ public class NativeRecyclerViewFragment extends Fragment {
                 mRequestParameters = new RequestParameters.Builder()
                         .location(location)
                         .keywords(keywords)
+                        .userDataKeywords(userDataKeywords)
                         .desiredAssets(desiredAssets)
                         .build();
 
@@ -80,6 +82,8 @@ public class NativeRecyclerViewFragment extends Fragment {
         final String adUnitId = mAdConfiguration.getAdUnitId();
         viewHolder.mDescriptionView.setText(mAdConfiguration.getDescription());
         viewHolder.mAdUnitIdView.setText(adUnitId);
+        viewHolder.mKeywordsField.setText(getArguments().getString(MoPubListFragment.KEYWORDS_KEY, ""));
+        viewHolder.mUserDataKeywordsField.setText(getArguments().getString(MoPubListFragment.USER_DATA_KEYWORDS_KEY, ""));
 
         final RecyclerView.Adapter originalAdapter = new DemoRecyclerAdapter();
 

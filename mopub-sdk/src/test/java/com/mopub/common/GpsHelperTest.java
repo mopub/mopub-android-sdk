@@ -120,114 +120,6 @@ public class GpsHelperTest {
     }
 
     @Test
-    public void fetchAdvertisingInfoAsync_whenGooglePlayServicesIsLinked_shouldPopulateClientMetadata() throws Exception {
-        verifyCleanClientMetadata(context);
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.execute()).thenReturn(
-                GpsHelper.GOOGLE_PLAY_SUCCESS_CODE,
-                adInfo,
-                adInfo.mAdId,
-                adInfo.mLimitAdTrackingEnabled
-        );
-
-        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
-        safeAcquireSemaphore();
-        verifyClientMetadata(context, adInfo);
-    }
-
-    @Test
-    public void fetchAdvertisingInfoAsync_whenReflectedMethodCallThrows_shouldNotPopulateClientMetadata() throws Exception {
-        verifyCleanClientMetadata(context);
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.execute()).thenThrow(new Exception());
-
-        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
-        safeAcquireSemaphore();
-        verifyCleanClientMetadata(context);
-    }
-
-    @Test
-    public void fetchAdvertisingInfoAsync_whenReflectedMethodCallReturnsNull_shouldNotPopulateClientMetadata() throws Exception {
-        verifyCleanClientMetadata(context);
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.execute()).thenReturn(null);
-
-        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
-        safeAcquireSemaphore();
-        verifyCleanClientMetadata(context);
-    }
-
-    @Test
-    public void fetchAdvertisingInfoAsync_whenGooglePlayServicesIsLinkedAndClientMetadataIsClean_shouldPopulateClientMetadata() throws Exception {
-        verifyCleanClientMetadata(context);
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.execute()).thenReturn(
-                GpsHelper.GOOGLE_PLAY_SUCCESS_CODE,
-                adInfo,
-                adInfo.mAdId,
-                adInfo.mLimitAdTrackingEnabled
-        );
-
-        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
-        safeAcquireSemaphore();
-        verifyClientMetadata(context, adInfo);
-    }
-
-    @Test
-    public void fetchAdvertisingInfoAsync_whenGooglePlayServicesLinkedAndClientMetadataIsPopulated_shouldRePopulateClientMetadata() throws Exception {
-        verifyCleanClientMetadata(context);
-        populateAndVerifyClientMetadata(context, adInfo);
-        adInfo.mLimitAdTrackingEnabled = false;
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.execute()).thenReturn(
-                GpsHelper.GOOGLE_PLAY_SUCCESS_CODE,
-                adInfo,
-                adInfo.mAdId,
-                adInfo.mLimitAdTrackingEnabled
-        );
-
-        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
-        safeAcquireSemaphore();
-        verifyClientMetadata(context, adInfo);
-    }
-
-    @Test
-    public void fetchAdvertisingInfoAsync_whenGooglePlayServicesIsNotLinked_shouldNotPopulateClientMetadata() throws Exception {
-        verifyCleanClientMetadata(context);
-        GpsHelper.setClassNamesForTesting();
-        when(methodBuilder.execute()).thenReturn(
-                GpsHelper.GOOGLE_PLAY_SUCCESS_CODE + 1
-        );
-
-        GpsHelper.fetchAdvertisingInfoAsync(context, semaphoreGpsHelperListener);
-        safeAcquireSemaphore();
-        verifyCleanClientMetadata(context);
-    }
-
-    @Test
-    public void isClientMetadataPopulated_whenContainsAdvertisingIdKeyAndIsLimitAdTrackingEnabledKey_shouldReturnTrue() throws Exception {
-        verifyCleanClientMetadata(context);
-        populateAndVerifyClientMetadata(context, adInfo);
-        assertThat(GpsHelper.isClientMetadataPopulated(context)).isTrue();
-    }
-
-    @Test
-    public void isClientMetadataPopulated_whenClean_shouldReturnFalse() throws Exception {
-        verifyCleanClientMetadata(context);
-        assertThat(GpsHelper.isClientMetadataPopulated(context)).isFalse();
-    }
-
-    @Test
-    public void updateClientMetadata_whenPassingInValidAdInfoObject_shouldUpdateClientMetadata() throws Exception {
-        // Use the real MethodBuilderFactory for this test, not the mock one
-        // Most mocks are set by default in SdkTestRunner setup
-        MethodBuilderFactory.setInstance(new MethodBuilderFactory());
-        verifyCleanClientMetadata(context);
-        GpsHelper.updateClientMetadata(context, adInfo);
-        verifyClientMetadata(context, adInfo);
-    }
-
-    @Test
     public void reflectedGetIsLimitAdTrackingEnabled_whenIsLimitAdTrackingEnabledIsSet_shouldReturnIsLimitAdTrackingEnabled() throws Exception {
         MethodBuilderFactory.setInstance(new MethodBuilderFactory());
         assertThat(GpsHelper.reflectedIsLimitAdTrackingEnabled(adInfo, false)).isEqualTo(adInfo.LIMIT_AD_TRACKING_ENABLED);
@@ -290,27 +182,10 @@ public class GpsHelperTest {
         assertThat(GpsHelper.isLimitAdTrackingEnabled(context)).isFalse();
     }
 
-    static public void populateAndVerifyClientMetadata(Context context, TestAdInfo adInfo) {
-        ClientMetadata clientMetadata = ClientMetadata.getInstance(context);
-        clientMetadata.setAdvertisingInfo(adInfo.getId(), adInfo.isLimitAdTrackingEnabled());
-        verifyClientMetadata(context, adInfo);
-    }
-
     private void safeAcquireSemaphore() throws Exception {
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
         ShadowLooper.runUiThreadTasks();
         semaphore.acquire();
-    }
-
-    static public void verifyClientMetadata(Context context, TestAdInfo adInfo) {
-        ClientMetadata clientMetadata = ClientMetadata.getInstance(context);
-        assertThat(clientMetadata.getDeviceId()).isEqualTo("ifa:" + adInfo.getId());
-        assertThat(clientMetadata.isDoNotTrackSet()).isEqualTo(adInfo.isLimitAdTrackingEnabled());
-    }
-
-    static public void verifyCleanClientMetadata(Context context) {
-        ClientMetadata clientMetadata = ClientMetadata.getInstance(context);
-        assertThat(clientMetadata.isAdvertisingInfoSet()).isFalse();
     }
 }
 

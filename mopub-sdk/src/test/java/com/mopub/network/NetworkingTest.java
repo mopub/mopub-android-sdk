@@ -1,19 +1,18 @@
 package com.mopub.network;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.os.Build;
 
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
-
-import java.util.concurrent.Semaphore;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
@@ -42,36 +41,25 @@ public class NetworkingTest {
         assertThat(userAgent).isEqualTo("some cached user agent");
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN)
     @Test
-    public void getUserAgent_fromMainThread_shouldIncludeAndroid() throws InterruptedException {
-        context.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                String userAgent = Networking.getUserAgent(context);
-                assertThat(userAgent).containsIgnoringCase("android");
-            }
-        });
+    public void getUserAgent_withSdkVersion16_shouldIncludeAndroid() {
+        String userAgent = Networking.getUserAgent(context);
+
+        assertThat(userAgent).containsIgnoringCase("android");
     }
 
-    @Ignore("Flaky - setProperty + threading is unreliable in the test environment.")
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+    @Config(sdk = Build.VERSION_CODES.JELLY_BEAN_MR1)
     @Test
-    public void getUserAgent_fromBackgroundThread_shouldIncludeAndroid() throws InterruptedException {
-        System.setProperty("http.agent", "system level user agent");
+    public void getUserAgent_withSdkVersionGreaterThan16_shouldIncludeAndroid() {
+        String userAgent = Networking.getUserAgent(context);
 
-        final Semaphore semaphore = new Semaphore(0);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                sUserAgent = Networking.getUserAgent(context);
-                semaphore.release();
-            }
-        }).start();
-
-        semaphore.acquire();
-        assertThat(sUserAgent).isEqualTo("system level user agent");
+        assertThat(userAgent).containsIgnoringCase("android");
     }
 
+    @Test
     public void getCachedUserAgent_usesCachedUserAgent() {
         Networking.setUserAgentForTesting("some cached user agent");
         String userAgent = Networking.getCachedUserAgent();

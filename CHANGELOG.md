@@ -1,4 +1,199 @@
-## Version 4.3.0 (Deceber 15, 2015)
+## Version 5.0.0 (May 14, 2018)
+- General Data Protection Regulation (GDPR) update to support a way for publishers to determine GDPR applicability and to obtain and manage consent from users in European Economic Area, the United Kingdom, or Switzerland to serve personalized ads.
+- New SDK initialization method to initialize consent management and rewarded video ad networks. Required for receiving personalized ads. In future versions of the SDK, initialization will be required to receive ads.
+- Updated network stack to MoPub-Volley-2.0.0.
+- Updated ad requests to use POST instead of GET.
+- All communication with MoPub servers is now made via HTTPS.
+
+## Version 4.20.0 (February 20, 2018)
+- Upgraded Gradle dependency to 4.3.1.
+- Upgraded Moat dependency to 2.4.1. This fixes the AAPT2 manifest merge error.
+- Fixed a viewability bug for video ads where ViewGroups were not being properly added to the list of known obstructions.
+- We are formally separating network adapters from our MoPub SDK. This is to enable an independent release cadence resulting in faster updates and certification cycles. New mediation location is accessible [here](https://github.com/mopub/mopub-android-mediation).  
+We have also added an additional tool, making it easy for publishers to get up and running with the mediation integration. Check out https://developers.mopub.com/docs/mediation/integrate/ and integration instructions at https://developers.mopub.com/docs/android/integrating-networks/.
+- Bug fixes.
+
+## Version 4.19.0 (December 11, 2017)
+- Updated Facebook Audience Network adapters to 4.26.1.
+- Updated Flurry adapters to 8.1.0.
+- Updated Millennial rewarded ads adapters to 6.6.1.
+- Fixed a potential crash for native video ads when attempting to blur the last video frame.
+- Fixed a duplicate on loaded callback for some rewarded ads.
+
+## Version 4.18.0 (November 1, 2017)
+- Updated the SDK compile version to 26. Android API 26 artifacts live in the new Google maven repository `maven { url 'https://maven.google.com' }`. See [this article](https://developer.android.com/about/versions/oreo/android-8.0-migration.html) for more information about using Android API 26.
+- Fixed MoPub in-app browser's back and forward button icons.
+- Updated AdMob adapters to 11.4.0.
+- Updated Chartboost adapters to 7.0.1.
+- Updated Facebook Audience Network adapters to 4.26.0.
+- Updated Millennial to 6.6.1.
+- Updated TapJoy adapters to 11.11.0.
+- Updated Unity Ads adapters to 2.1.1.
+- Updated Vungle adapters to 5.3.0.
+- Bug fixes.
+
+## Version 4.17.0 (September 27, 2017)
+- Rewarded Ads can now send up optional custom data through the server completion url. See `MoPubRewardedVideos#showRewardedVideo(String, String)`.
+- Updated Facebook native adapter to ignore clicks on whitespace as per Facebook policy.
+
+#### Version 4.16.1 (August 24, 2017)
+- Fixed issue where null javascript was being passed to AVID video sessions.
+
+## Version 4.16.0 (August 23, 2017)
+- Added support for viewability measurement from IAS (AVID library) and Moat.  
+  - **Important:** New dependencies were included in this release; please update your `build.gradle`'s repositories block to include `maven { url "https://s3.amazonaws.com/moat-sdk-builds" }`. Note that the AVID library is provided on JCenter, so no additional steps must be taken -- it will be included automatically.
+  - To disable this feature, see note below on [Disabling Viewability Measurement](#disableViewability).
+- Interstitials are now loaded offscreen instead of in a separate WebView.
+- Rewarded Videos have a new init method. See `MoPubRewardedVideos.initializeRewardedVideo(Activity, List<Class<? extends CustomEventRewardedVideo>>, MediationSettings...)`. Pass in a list of networks to initialize, and MoPub will initialize those networks with the settings from the previous ad request, persisted across app close.
+- Upgraded our ExoPlayer dependency to 2.4.4.
+- Bug fixes
+
+#### Disclosures
+MoPub v4.16 SDK integrates technology from our partners Integral Ad Science, Inc. (“IAS”) and Moat, Inc. (“Moat”) in order to support viewability measurement and other proprietary reporting that [IAS](https://integralads.com/capabilities/viewability/) and [Moat](https://moat.com/analytics) provide to their advertiser and publisher clients. You have the option to remove or disable this technology by following the [opt-out instructions](#disableViewability) below.  
+
+If you do not remove or disable IAS's and/or Moat’s technology in accordance with these instructions, you agree that IAS's [privacy policy](https://integralads.com/privacy-policy/) and [license](https://integralads.com/sdk-license-agreement) and Moat’s [privacy policy](https://moat.com/privacy),  [terms](https://moat.com/terms), and [license](https://moat.com/sdklicense.txt), respectively, apply to your integration of these partners' technologies into your application.
+
+#### <a name="disableViewability"></a>Disabling Viewability Measurement
+There are a few options for opting out of viewability measurement:  
+##### Strip out from JCenter Integration
+Normally, to add the MoPub SDK to your app via JCenter, your `build.gradle` would contain:
+
+```	
+dependencies {
+	compile('com.mopub:mopub-sdk:4.16.0@aar') {
+		transitive = true
+	}
+}
+```
+Update to the following to exclude one or both viewability vendors:
+
+```
+dependencies {
+	compile('com.mopub:mopub-sdk:4.16.0@aar') {
+		transitive = true
+		exclude module: 'libAvid-mopub' // To exclude AVID
+		exclude module: 'moat-mobile-app-kit' // To exclude Moat
+    }
+}
+```
+##### Strip out from GitHub integration
+Navigate to the `gradle.properties` file in your home directory (e.g. `~/.gradle/gradle.properties`) and include one or both of these lines to opt out of viewability measurement for AVID and/or Moat.  
+
+```
+mopub.avidEnabled=false
+mopub.moatEnabled=false
+```
+##### Disable via API
+If you would like to opt out of viewability measurement but do not want to modify the MoPub SDK, a function is provided for your convenience. At any point, call `MoPub.disableViewability(vendor);`. This method can can be called with any of the enum values available in `ExternalViewabilitySessionManager.ViewabilityVendor`: `AVID` will disable AVID but leave Moat enabled, `MOAT` will disable Moat but leave AVID enabled, and `ALL` will disable all viewability measurement.
+
+## Version 4.15.0 (June 19, 2017)
+- The SDK now sends Advertising ID on Amazon devices when appropriate.
+- Fixed issue with Charles proxy in sample app for API 24+.
+- Bug fixes.
+
+## Version 4.14.0 (May 10, 2017)
+- Rewarded Ad reward callback `onRewardedVideoCompleted(Set<String>, MoPubReward)` is also triggered now on the client for server-side rewarding.
+- Added click callback for Rewarded Ads.
+  - Any implementors of `MoPubRewardedVideoListener` will now need to also implement `MoPubRewardedVideoListener#onRewardedVideoClicked(String)`.
+- MoPub Ads now expire after 4 hours of being unused.
+  - Interstitial and Rewarded ads served by MoPub will expire 4 hours after successfully loading, triggering a load failure with the new `EXPIRED` `MoPubErrorCode`.
+  - Cached Native Ad Placer ads now also expire in 4 hours.
+- Improved logging when attempting to show an ad that is not ready.
+- Updated build tools version to 25.0.2.
+- Bug fixes.
+
+## Version 4.13.0 (March 23, 2017)
+
+- Updated AdColony Custom Events.
+- Updated Unity Custom Events.
+- Added AdMob Custom Events:
+  - Native: `GooglePlayServicesAdRenderer` and `GooglePlayServicesNative`
+  - Rewarded Video: `GooglePlayServicesRewardedVideo`
+- Bug fixes.
+
+## Version 4.12.0 (February 9, 2017)
+
+- Updated minimum supported Android API version to 16+ (Jelly Bean).
+- New required Activity declaration in `AndroidManifest`, please add:
+
+```
+<activity android:name="com.mopub.mobileads.RewardedMraidActivity"
+          android:configChanges="keyboardHidden|orientation|screenSize"/>
+```
+- Added support for **rich media in rewarded video** inventory.
+- Bug fixes:
+    - Fixed incorrectly forwarded lifecycle events `onStop()` and `onDestroy()` in `MoPubLifeCycleManager` for rewarded rich media ads.
+    - Prevented MoPub-related crashes due to system-level WebView updates while the app is running.
+    - Allow video playback in `reverseLandscape` orientation (in addition to previously supported `landscape` orientation).
+    - Fixed crash caused by invalid VAST absolute tracker values.
+
+## Version 4.11.0 (November 10, 2016)
+- Added a workaround for an Android bug where Lollipop devices (Android 5.1.1, API level 22) and lower incorrectly handle SSL connections using Server Name Identification.
+- Rewarded video `load()` calls now do not load another rewarded video with the same ad unit id while one is already loading or loaded.
+- Moved the VAST video start tracker to immediately after the video starts (was 2 seconds after the video started).
+- Bug fixes.
+
+## Version 4.10.0 (October 18, 2016)
+- **Added and updated mediated network versions**
+  - Added Flurry version 6.5.0. All Flurry adapters can be found in the corresponding `extras` directory (`/extras/src/com/mopub/mobileads` for banners and interstitials, `/extras/src/com/mopub/nativeads` for native).
+    - All Flurry ad formats must include: `FlurryAgentWrapper`
+    - Banners: `FlurryCustomEventBanner`
+    - Interstitial: `FlurryCustomEventInterstitial`
+    - Native: `FlurryCustomEventNative`, `FlurryBaseNativeAd`, `FlurryNativeAdRenderer`, and `FlurryViewBinder`
+  - Certified Facebook Audience Network version 4.15.0  
+  - Certified Tapjoy version 11.8.2
+  - Certified Millennial Media version 6.3.0
+  - Certified Vungle version 4.0.2  
+- Fixed intermittent `IllegalStateException` for MRAID creatives attemping to retrieve getRootView() on unattached Views.
+- Updated `mopub-sample`'s example `proguard.cfg` to properly retain methods called only via reflection.
+
+## Version 4.9.0 (September 1, 2016)
+- Removed the full SDK bundle.
+- Removed Eclipse support.
+- Removed InMobi custom events from extras.
+- Deprecated rewarded video calls from `MoPub.java` and moved them to `MoPubRewardedVideos.java`.
+  - For example, `MoPub#loadRewardedVideo` is deprecated in favor of `MoPubRewardedVideos#loadRewardedVideo`.
+- Bug fixes.
+
+**Modular SDK**
+ - Added the ability to specify which ad formats to include as dependencies (to decrease the overall footprint of the MoPub SDK in your app).
+ - Default behavior remains unchanged and includes access to all ad formats.
+ - **Note:** Maven builds from source are currently unstable and will be reinstated in a future release. Maven developers can still pull the MoPub SDK AAR from JCenter.
+
+## Version 4.8.0 (August 1, 2016)
+- Changed the behavior of `MoPubInterstitial#load()` while an interstitial is loading or has been successfully loaded. Previously, this would discard the currently-caching or cached interstitial -- now the interstitial will be unaffected and will remain in the cache.
+- `MoPubInterstitial`s can now be shown only once per successful ad load.
+- Modified a number of Native Ads APIs (manual integration) to accept Context instead of Activity. Affected classes/methods include: `MoPubNative`, `AdapterHelper`, `CustomEventNative#loadNativeAd()`, and `MoPubAdRenderer#createAdView()`.
+
+#### Version 4.7.1 (June 10, 2016)
+- Fixed deeplink bug.
+
+## Version 4.7.0 (June 2, 2016)
+- Rewarded video server-side currency rewarding (Beta).
+- Enhanced Android intent handling.
+
+#### Version 4.6.1 (May 5, 2016)
+- Enhanced caching logic for HTML and MRAID interstitials. Resource-heavy interstitials will now render more quickly when MoPubInterstitial#show() is called.
+
+## Version 4.6.0 (April 21, 2016)
+- Certified Chartboost version 6.4.1
+- Certified Tapjoy version 11.5.1
+
+#### Version 4.5.1 (March 31, 2016)
+- Updated ExoPlayer dependency from r1.4.2 to r1.5.6; courtesy @talklittle. Removed references to READ_EXTERNAL_STORAGE permission.
+
+## Version 4.5.0 (March 24, 2016)
+- Rewarded video support from the MoPub Marketplace (Beta)
+- Miscellaneous bug fixes.
+
+#### Version 4.4.1 (February 23, 2016)
+- Fixed deeplink bug where host must be present in URL.
+
+## Version 4.4.0 (February 11, 2016) 
+- Updated permission model to be compatible with Android 6.0 (API level 23).
+- Enhancements and bug fixes for video ads.
+
+## Version 4.3.0 (December 15, 2015)
 
 - Enhancements and bug fixes for VAST video ads.
 
@@ -6,7 +201,7 @@
 
 - Support for mediating Facebook Native Video ads.
 - Mediated Facebook Native Ads now display the AdChoices icon.
-- Support for Facebook SDK 8.4.1
+- Support for Facebook SDK 4.8.1
 
 ## Version 4.1.0 (November 12, 2015)
 
@@ -440,3 +635,4 @@ To allow users to play videos using the native video player:
   - Added support for custom events
   - Added network connectivity check before loading an ad
   - Added `OnAdPresentedOverlay` listener methods
+  

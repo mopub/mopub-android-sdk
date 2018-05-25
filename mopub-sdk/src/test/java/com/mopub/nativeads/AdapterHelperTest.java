@@ -32,14 +32,14 @@ public class AdapterHelperTest {
         subject = new AdapterHelper(context, start, interval);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void constructor_whenPassedAnApplicationContext_shouldThrowIllegalArgumentException() {
+    @Test
+    public void constructor_whenPassedAnApplicationContext_shouldNotThrowIllegalArgumentException() {
         new AdapterHelper(context.getApplicationContext(), start, interval);
     }
 
     @Test
     public void getAdView_withNullActivityContext_shouldReturnEmptyViewWithApplicationContext() {
-        subject.clearActivityContext();
+        subject.clearContext();
         Context viewContext = subject.getAdView(null, null, mock(NativeAd.class),
                 mock(ViewBinder.class)).getContext();
         assertThat(viewContext).isEqualTo(context.getApplication());

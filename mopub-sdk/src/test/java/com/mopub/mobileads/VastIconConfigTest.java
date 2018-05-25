@@ -16,13 +16,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowApplication;
 
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.robolectric.Shadows.shadowOf;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -31,6 +31,7 @@ public class VastIconConfigTest {
     private VastIconConfig subject;
     private Context context;
     @Mock private MoPubRequestQueue mockRequestQueue;
+    private String dspCreativeId;
 
     @Before
     public void setup() {
@@ -38,10 +39,11 @@ public class VastIconConfigTest {
                 new VastResource("resource", VastResource.Type.STATIC_RESOURCE, VastResource
                         .CreativeType.IMAGE, 123, 456),
                 VastUtils.stringsToVastTrackers("clickTrackerOne", "clickTrackerTwo"),
-                "http://www.mopub.com/",
+                "https://www.mopub.com/",
                 VastUtils.stringsToVastTrackers("viewTrackerOne", "viewTrackerTwo")
         );
         context = Robolectric.buildActivity(Activity.class).create().get();
+        dspCreativeId = "dspCreativeId";
         Networking.setRequestQueueForTesting(mockRequestQueue);
     }
 
@@ -57,7 +59,7 @@ public class VastIconConfigTest {
                 .isEqualTo(VastResource.CreativeType.IMAGE);
         assertThat(VastUtils.vastTrackersToStrings(subject.getClickTrackingUris()))
                 .containsOnly("clickTrackerOne", "clickTrackerTwo");
-        assertThat(subject.getClickThroughUri()).isEqualTo("http://www.mopub.com/");
+        assertThat(subject.getClickThroughUri()).isEqualTo("https://www.mopub.com/");
         assertThat(VastUtils.vastTrackersToStrings(subject.getViewTrackingUris()))
                 .containsOnly("viewTrackerOne", "viewTrackerTwo");
     }
@@ -85,7 +87,7 @@ public class VastIconConfigTest {
 
     @Test
     public void handleClick_shouldNotTrackClick() throws Exception {
-        subject.handleClick(context, null);
+        subject.handleClick(context, null, dspCreativeId);
 
         verifyNoMoreInteractions(mockRequestQueue);
     }
@@ -93,14 +95,16 @@ public class VastIconConfigTest {
 
     @Test
     public void handleClick_shouldOpenMoPubBrowser() throws Exception {
-        subject.handleClick(context, null);
+        subject.handleClick(context, null, dspCreativeId);
 
-        Robolectric.getBackgroundThreadScheduler().advanceBy(0);
-        Intent startedActivity = ShadowApplication.getInstance().getNextStartedActivity();
+        Robolectric.flushBackgroundThreadScheduler();
+        Intent startedActivity = shadowOf((Activity) context).getNextStartedActivity();
         assertThat(startedActivity.getComponent().getClassName())
                 .isEqualTo("com.mopub.common.MoPubBrowser");
         assertThat(startedActivity.getStringExtra(MoPubBrowser.DESTINATION_URL_KEY))
-                .isEqualTo("http://www.mopub.com/");
+                .isEqualTo("https://www.mopub.com/");
+        assertThat(startedActivity.getStringExtra(MoPubBrowser.DSP_CREATIVE_ID))
+                .isEqualTo("dspCreativeId");
         assertThat(startedActivity.getData()).isNull();
     }
 }

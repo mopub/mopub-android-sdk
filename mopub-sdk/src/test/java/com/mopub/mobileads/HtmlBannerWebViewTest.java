@@ -30,6 +30,7 @@ public class HtmlBannerWebViewTest {
     private CustomEventBannerListener customEventBannerListener;
     private String clickthroughUrl;
     private String redirectUrl;
+    private String dspCreativeId;
 
     @Before
     public void setup() throws Exception {
@@ -38,11 +39,12 @@ public class HtmlBannerWebViewTest {
         customEventBannerListener = mock(CustomEventBannerListener.class);
         clickthroughUrl = "clickthroughUrl";
         redirectUrl = "redirectUrl";
+        dspCreativeId = "dspCreativeId";
     }
 
     @Test
     public void init_shouldSetupWebViewClient() throws Exception {
-        subject.init(customEventBannerListener, false, clickthroughUrl, redirectUrl);
+        subject.init(customEventBannerListener, false, clickthroughUrl, redirectUrl, dspCreativeId);
         WebViewClient webViewClient = Shadows.shadowOf(subject).getWebViewClient();
         assertThat(webViewClient).isNotNull();
         assertThat(webViewClient).isInstanceOf(HtmlWebViewClient.class);

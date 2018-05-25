@@ -1,6 +1,5 @@
 package com.mopub.mobileads;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -17,19 +16,16 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.robolectric.Robolectric;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowApplication;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -68,10 +64,8 @@ public class AdAlertReporterTest {
         subject = new AdAlertReporter(mockContext, mockView, mockAdReport);
         emailIntent = subject.getEmailIntent();
 
-        assertThat(emailIntent.getAction()).isEqualTo(Intent.ACTION_SEND_MULTIPLE);
-        assertThat(emailIntent.getType()).isEqualTo("plain/text");
-        assertThat(emailIntent.getData().toString()).isEqualTo("mailto:");
-        assertThat(emailIntent.getStringArrayExtra(Intent.EXTRA_EMAIL)[0]).isEqualTo(EMAIL_ADDRESS);
+        assertThat(emailIntent.getAction()).isEqualTo(Intent.ACTION_SENDTO);
+        assertThat(emailIntent.getData()).isEqualTo(Uri.parse("mailto:creative-review@mopub.com"));
     }
 
     @Test
@@ -119,30 +113,6 @@ public class AdAlertReporterTest {
     }
 
     @Test
-    public void constructor_shouldAddBitmapToAttachmentArray() throws Exception {
-        stub(mockContext.getFilesDir()).toReturn(new File("filesDir"));
-        stub(mockContext.openFileOutput(any(String.class), any(int.class))).toReturn(mock(FileOutputStream.class));
-        subject = new AdAlertReporter(mockContext, mockView, mockAdReport);
-
-        emailAttachments = subject.getEmailAttachments();
-        Uri fileUri = Uri.fromFile(new File("filesDir/mp_adalert_screenshot.png"));
-
-        assertThat(emailAttachments).contains(fileUri);
-    }
-
-    @Test
-    public void constructor_shouldAddParametersTextFileToAttachmentArray() throws Exception {
-        stub(mockContext.getFilesDir()).toReturn(new File("filesDir"));
-        stub(mockContext.openFileOutput(any(String.class), any(int.class))).toReturn(mock(FileOutputStream.class));
-        subject = new AdAlertReporter(mockContext, mockView, mockAdReport);
-
-        emailAttachments = subject.getEmailAttachments();
-        Uri fileUri = Uri.fromFile(new File("filesDir/mp_adalert_parameters.txt"));
-
-        assertThat(emailAttachments).contains(fileUri);
-    }
-
-    @Test
     public void constructor_whenAdReportIsNull_shouldReturnEmptyString() throws Exception {
         subject = new AdAlertReporter(mockContext, mockView, null);
 
@@ -161,44 +131,15 @@ public class AdAlertReporterTest {
     }
 
     @Test
-    public void constructor_shouldAddMarkupTextFileToAttachmentArray() throws Exception {
-        stub(mockAdReport.getResponseString()).toReturn("anything!");
-        stub(mockContext.getFilesDir()).toReturn(new File("filesDir"));
-        stub(mockContext.openFileOutput(any(String.class), any(int.class))).toReturn(mock(FileOutputStream.class));
-        subject = new AdAlertReporter(mockContext, mockView, mockAdReport);
-
-        emailAttachments = subject.getEmailAttachments();
-        Uri fileUri = Uri.fromFile(new File("filesDir/mp_adalert_markup.html"));
-
-        assertThat(emailAttachments).contains(fileUri);
-    }
-
-    @Test
-    public void send_shouldAddAttachmentsToIntent() throws Exception {
-        stub(mockContext.getFilesDir()).toReturn(new File("filesDir"));
-        stub(mockContext.openFileOutput(any(String.class), any(int.class))).toReturn(mock(FileOutputStream.class));
-        stub(mockAdReport.getResponseString()).toReturn("anything!");
-        subject = new AdAlertReporter(mockContext, mockView, mockAdReport);
-        subject.send();
-
-        emailIntent = subject.getEmailIntent();
-        ArrayList<Uri> attachments = emailIntent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-
-        assertThat(attachments.size()).isEqualTo(3);
-        assertThat(attachments).contains(Uri.fromFile(new File("filesDir/mp_adalert_screenshot.png")));
-        assertThat(attachments).contains(Uri.fromFile(new File("filesDir/mp_adalert_parameters.txt")));
-        assertThat(attachments).contains(Uri.fromFile(new File("filesDir/mp_adalert_markup.html")));
-    }
-
-    @Test
     public void send_shouldCreateEmailChooserIntent() throws Exception {
-
-        subject = new AdAlertReporter(Robolectric.buildActivity(Activity.class).create().get(), mockView, mockAdReport);
+        final Context applicationContext = RuntimeEnvironment.application;
+        // A real device uses application context here, which causes Intents.startActivity to add
+        // FLAG_ACTIVITY_NEW_TASK (and thus we assert for it below)
+        subject = new AdAlertReporter(applicationContext, mockView, mockAdReport);
         subject.send();
 
         Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
-        assertThat(intent.getAction()).isEqualTo(Intent.ACTION_CHOOSER);
-        assertThat(intent.getStringExtra(Intent.EXTRA_TITLE)).isEqualTo("Send Email...");
+        assertThat(intent.getAction()).isEqualTo(Intent.ACTION_SENDTO);
         assertThat(intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0);
     }
 

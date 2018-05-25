@@ -1,17 +1,16 @@
 package com.mopub.nativeads;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 
+import com.mopub.common.Constants;
 import com.mopub.common.MoPubBrowser;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BaseVideoViewController.BaseVideoViewControllerListener;
@@ -42,7 +41,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class NativeVideoViewControllerTest {
@@ -63,13 +61,13 @@ public class NativeVideoViewControllerTest {
         activity = Robolectric.buildActivity(Activity.class).create().get();
 
         intentExtras = new Bundle();
-        intentExtras.putLong(NativeVideoViewController.NATIVE_VIDEO_ID, 123);
+        intentExtras.putLong(Constants.NATIVE_VIDEO_ID, 123);
         NativeVideoController.setForId(123, mockVideoController);
 
         when(mockVastVideoConfig.getCustomCtaText()).thenReturn("Learn More");
         when(mockFullScreenVideoView.getTextureView()).thenReturn(mockTextureView);
         when(mockTextureView.getBitmap()).thenReturn(mockBitmap);
-        intentExtras.putSerializable(NativeVideoViewController.NATIVE_VAST_VIDEO_CONFIG, mockVastVideoConfig);
+        intentExtras.putSerializable(Constants.NATIVE_VAST_VIDEO_CONFIG, mockVastVideoConfig);
 
         subject = new NativeVideoViewController(activity, intentExtras, null,
                 mockBaseVideoViewControllerListener, mockFullScreenVideoView);
@@ -100,7 +98,7 @@ public class NativeVideoViewControllerTest {
 
     @Test(expected = NullPointerException.class)
     public void onCreate_withNullNativeVideoController_shouldThrowNPE() {
-        intentExtras.remove(NativeVideoViewController.NATIVE_VAST_VIDEO_CONFIG);
+        intentExtras.remove(Constants.NATIVE_VAST_VIDEO_CONFIG);
         subject = new NativeVideoViewController(activity, intentExtras, null,
                 mockBaseVideoViewControllerListener, mockFullScreenVideoView);
     }
@@ -256,9 +254,6 @@ public class NativeVideoViewControllerTest {
 
     @Test
     public void onStateChanged_shouldAppropriatelySetVideoState() {
-        subject.onStateChanged(true, NativeVideoController.STATE_PREPARING);
-        assertThat(subject.getVideoState()).isEqualTo(VideoState.LOADING);
-
         subject.onStateChanged(true, NativeVideoController.STATE_IDLE);
         assertThat(subject.getVideoState()).isEqualTo(VideoState.LOADING);
 

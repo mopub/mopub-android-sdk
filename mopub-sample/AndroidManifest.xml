@@ -1,30 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.mopub.simpleadsdemo"
-      android:versionCode="34"
-      android:versionName="4.3.0">
-    <uses-sdk android:minSdkVersion="9"
-              android:targetSdkVersion="23"/>
+      android:versionCode="59"
+      android:versionName="5.0.0">
+    <uses-sdk android:minSdkVersion="16"
+              android:targetSdkVersion="26"/>
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- This is added as a workaround for the manifest merger duplicating exoplayer
-         and play services permissions. -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
-    <!-- For MRAID 2 -->
+    <!--WRITE_EXTERNAL_STORAGE is optional and only required for MRAID 2.0 storePicture ads.-->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
-    <application android:icon="@drawable/icon" android:label="@string/app_name">
+    <application android:icon="@drawable/icon" android:label="@string/app_name"
+                 android:networkSecurityConfig="@xml/network_security_config">
 	    <activity android:name="com.mopub.simpleadsdemo.MoPubSampleActivity"
 	            android:label="@string/app_name"
+                android:launchMode="singleInstance"
                 android:configChanges="orientation|screenSize">
 	        <intent-filter>
 	            <action android:name="android.intent.action.MAIN" />
 	            <category android:name="android.intent.category.LAUNCHER" />
 	        </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="mopub"
+                      android:host="load" />
+            </intent-filter>
 	    </activity>
         <activity android:name="com.mopub.mobileads.MoPubActivity"
                 android:configChanges="keyboardHidden|orientation|screenSize"/>
@@ -34,6 +39,11 @@
                 android:configChanges="keyboardHidden|orientation|screenSize"/>
         <activity android:name="com.mopub.mobileads.MraidVideoPlayerActivity"
                 android:configChanges="keyboardHidden|orientation|screenSize"/>
+        <activity android:name="com.mopub.mobileads.RewardedMraidActivity"
+                  android:configChanges="keyboardHidden|orientation|screenSize"/>
+
+        <activity android:name="com.mopub.common.privacy.ConsentDialogActivity"
+                  android:configChanges="keyboardHidden|orientation|screenSize"/>
 
         <meta-data android:name="com.google.android.gms.version"
                    android:value="@integer/google_play_services_version" />

@@ -2,11 +2,14 @@ package com.mopub.mobileads;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Configuration;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.test.support.VastUtils;
 import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
 
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -82,6 +85,274 @@ public class VastVideoConfigTest {
         assertThat(subject.getAbsoluteTrackers()).isSorted();
     }
 
+    @Test
+    public void addVideoTrackers_withValidJSON_shouldHydrateUrls() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                    "urls: [" +
+                        "\"http://mopub.com/%%VIDEO_EVENT%%/foo\"," +
+                        "\"http://mopub.com/%%VIDEO_EVENT%%/bar\"" +
+                    "]," +
+                    "events: [ \"start\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastAbsoluteProgressTracker> trackers = subject.getAbsoluteTrackers();
+        assertThat(trackers.size()).isEqualTo(2);
+        assertAbsoluteTracker(trackers.get(0), "http://mopub.com/start/foo", 0);
+        assertAbsoluteTracker(trackers.get(1), "http://mopub.com/start/bar", 0);
+    }
+
+    @Test
+    public void addVideoTrackers_withStartEvent_shouldAddAbsoluteTrackerWith0Ms() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                    "urls: [ \"http://mopub.com/%%VIDEO_EVENT%%/foo\" ]," +
+                    "events: [ \"start\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastAbsoluteProgressTracker> trackers = subject.getAbsoluteTrackers();
+        assertThat(trackers.size()).isEqualTo(1);
+        assertAbsoluteTracker(trackers.get(0), "http://mopub.com/start/foo", 0);
+    }
+
+    @Test
+    public void addVideoTrackers_withFirstQuartileEvent_shouldAddFractionalTrackerWithQuarterFraction() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                    "urls: [ \"http://mopub.com/%%VIDEO_EVENT%%/foo\" ]," +
+                    "events: [ \"firstQuartile\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastFractionalProgressTracker> trackers = subject.getFractionalTrackers();
+        assertThat(trackers.size()).isEqualTo(1);
+        assertFractionalTracker(trackers.get(0), "http://mopub.com/firstQuartile/foo", 0.25f);
+    }
+
+    @Test
+    public void addVideoTrackers_withMidpointEvent_shouldAddFractionalTrackerWithHalfFraction() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                    "urls: [ \"http://mopub.com/%%VIDEO_EVENT%%/foo\" ]," +
+                    "events: [ \"midpoint\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastFractionalProgressTracker> trackers = subject.getFractionalTrackers();
+        assertThat(trackers.size()).isEqualTo(1);
+        assertFractionalTracker(trackers.get(0), "http://mopub.com/midpoint/foo", 0.5f);
+    }
+
+    @Test
+    public void addVideoTrackers_withThirdQuartileEvent_shouldAddFractionalTrackerWithThirdFraction() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                    "urls: [ \"http://mopub.com/%%VIDEO_EVENT%%/foo\" ]," +
+                    "events: [ \"thirdQuartile\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastFractionalProgressTracker> trackers = subject.getFractionalTrackers();
+        assertThat(trackers.size()).isEqualTo(1);
+        assertFractionalTracker(trackers.get(0), "http://mopub.com/thirdQuartile/foo", 0.75f);
+    }
+
+    @Test
+    public void addVideoTrackers_withCompleteEvent_shouldAddCompleteTracker() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                    "urls: [ \"http://mopub.com/%%VIDEO_EVENT%%/foo\" ]," +
+                    "events: [ \"complete\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastTracker> trackers = subject.getCompleteTrackers();
+        assertThat(trackers.size()).isEqualTo(1);
+        assertTracker(trackers.get(0), "http://mopub.com/complete/foo");
+    }
+
+    @Test
+    public void addVideoTrackers_withCompanionAdViewEvent_shouldAddCreativeViewTracker() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                    "urls: [ \"http://mopub.com/%%VIDEO_EVENT%%/foo\" ]," +
+                    "events: [ \"companionAdView\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+        addCompanionAds(subject);
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastTracker> landscapeTrackers = subject.getVastCompanionAd(
+                Configuration.ORIENTATION_LANDSCAPE).getCreativeViewTrackers();
+        final List<VastTracker> portraitTrackers = subject.getVastCompanionAd(
+                Configuration.ORIENTATION_PORTRAIT).getCreativeViewTrackers();
+        assertThat(landscapeTrackers.size()).isEqualTo(2);
+        assertThat(portraitTrackers.size()).isEqualTo(2);
+        // First tracker is irrelevant and just necessary for test setup
+        assertTracker(landscapeTrackers.get(1), "http://mopub.com/companionAdView/foo");
+        assertTracker(portraitTrackers.get(1), "http://mopub.com/companionAdView/foo");
+    }
+
+    @Test
+    public void addVideoTrackers_withCompanionClickEvent_shouldAddCreativeClickTracker() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                    "urls: [ \"http://mopub.com/%%VIDEO_EVENT%%/foo\" ]," +
+                    "events: [ \"companionAdClick\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+        addCompanionAds(subject);
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastTracker> landscapeTrackers = subject.getVastCompanionAd(
+                Configuration.ORIENTATION_LANDSCAPE).getClickTrackers();
+        final List<VastTracker> portraitTrackers = subject.getVastCompanionAd(
+                Configuration.ORIENTATION_PORTRAIT).getClickTrackers();
+        assertThat(landscapeTrackers.size()).isEqualTo(2);
+        assertThat(portraitTrackers.size()).isEqualTo(2);
+        // First tracker is irrelevant and just necessary for test setup
+        assertTracker(landscapeTrackers.get(1), "http://mopub.com/companionAdClick/foo");
+        assertTracker(portraitTrackers.get(1), "http://mopub.com/companionAdClick/foo");
+    }
+
+    @Test
+    public void addVideoTrackers_withMultipleUrls_withMultipleEvents_shouldAddCorrespondingTrackers() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                    "urls: [" +
+                        "\"http://mopub.com/%%VIDEO_EVENT%%/foo\"," +
+                        "\"http://mopub.com/%%VIDEO_EVENT%%/bar\"" +
+                    "]," +
+                    "events: [" +
+                        "\"start\"," +
+                        "\"firstQuartile\"," +
+                        "\"midpoint\"," +
+                        "\"thirdQuartile\"," +
+                        "\"complete\"," +
+                        "\"companionAdView\"," +
+                        "\"companionAdClick\"" +
+                    "]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+        addCompanionAds(subject);
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastAbsoluteProgressTracker> startTrackers = subject.getAbsoluteTrackers();
+        final List<VastFractionalProgressTracker> fractionalTrackers = // quartile trackers
+                subject.getFractionalTrackers();
+        final List<VastTracker> completeTrackers = subject.getCompleteTrackers();
+        final List<VastTracker> landscapeCompanionViewTrackers = subject.getVastCompanionAd(
+                Configuration.ORIENTATION_LANDSCAPE).getCreativeViewTrackers();
+        final List<VastTracker> portraitCompanionViewTrackers = subject.getVastCompanionAd(
+                Configuration.ORIENTATION_PORTRAIT).getCreativeViewTrackers();
+        final List<VastTracker> landscapeCompanionClickTrackers = subject.getVastCompanionAd(
+                Configuration.ORIENTATION_LANDSCAPE).getClickTrackers();
+        final List<VastTracker> portraitCompanionClickTrackers = subject.getVastCompanionAd(
+                Configuration.ORIENTATION_PORTRAIT).getClickTrackers();
+        assertThat(startTrackers.size()).isEqualTo(2);
+        assertThat(fractionalTrackers.size()).isEqualTo(6);
+        assertThat(completeTrackers.size()).isEqualTo(2);
+        assertThat(landscapeCompanionViewTrackers.size()).isEqualTo(3);
+        assertThat(portraitCompanionViewTrackers.size()).isEqualTo(3);
+        assertThat(landscapeCompanionClickTrackers.size()).isEqualTo(3);
+        assertThat(portraitCompanionClickTrackers.size()).isEqualTo(3);
+        assertAbsoluteTracker(startTrackers.get(0), "http://mopub.com/start/foo", 0);
+        assertAbsoluteTracker(startTrackers.get(1), "http://mopub.com/start/bar", 0);
+        assertFractionalTracker(fractionalTrackers.get(0),
+                "http://mopub.com/firstQuartile/foo", 0.25f);
+        assertFractionalTracker(fractionalTrackers.get(1),
+                "http://mopub.com/firstQuartile/bar", 0.25f);
+        assertFractionalTracker(fractionalTrackers.get(2), "http://mopub.com/midpoint/foo", 0.5f);
+        assertFractionalTracker(fractionalTrackers.get(3), "http://mopub.com/midpoint/bar", 0.5f);
+        assertFractionalTracker(fractionalTrackers.get(4),
+                "http://mopub.com/thirdQuartile/foo", 0.75f);
+        assertFractionalTracker(fractionalTrackers.get(5),
+                "http://mopub.com/thirdQuartile/bar", 0.75f);
+        assertTracker(completeTrackers.get(0), "http://mopub.com/complete/foo");
+        assertTracker(completeTrackers.get(1), "http://mopub.com/complete/bar");
+        // First tracker is irrelevant and just necessary for test setup
+        assertTracker(landscapeCompanionViewTrackers.get(1),
+                "http://mopub.com/companionAdView/foo");
+        assertTracker(landscapeCompanionViewTrackers.get(2),
+                "http://mopub.com/companionAdView/bar");
+        assertTracker(portraitCompanionViewTrackers.get(1),
+                "http://mopub.com/companionAdView/foo");
+        assertTracker(portraitCompanionViewTrackers.get(2),
+                "http://mopub.com/companionAdView/bar");
+        assertTracker(landscapeCompanionClickTrackers.get(1),
+                "http://mopub.com/companionAdClick/foo");
+        assertTracker(landscapeCompanionClickTrackers.get(2),
+                "http://mopub.com/companionAdClick/bar");
+        assertTracker(portraitCompanionClickTrackers.get(1),
+                "http://mopub.com/companionAdClick/foo");
+        assertTracker(portraitCompanionClickTrackers.get(2),
+                "http://mopub.com/companionAdClick/bar");
+    }
+
+    @Test
+    public void addVideoTrackers_withCompanionAdViewEvent_withoutCompanionAd_shouldDoNothing() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                "urls: [ \"http://mopub.com/%%VIDEO_EVENT%%/foo\" ]," +
+                "events: [ \"companionAdView\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+        // Note companion ads were NOT added
+
+        subject.addVideoTrackers(videoTrackers);
+
+        // Trackers would be in companion ad, so just make sure they are still null
+        assertThat(subject.getVastCompanionAd(Configuration.ORIENTATION_LANDSCAPE)).isNull();
+        assertThat(subject.getVastCompanionAd(Configuration.ORIENTATION_PORTRAIT)).isNull();
+    }
+
+    @Test
+    public void addVideoTrackers_withoutUrls_shouldDoNothing() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                "events: [ \"start\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastAbsoluteProgressTracker> trackers = subject.getAbsoluteTrackers();
+        assertThat(trackers).isEmpty();
+    }
+
+    @Test
+    public void addVideoTrackers_withoutEvents_shouldDoNothing() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                "urls: [ \"http://mopub.com/%%VIDEO_EVENT%%/foo\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastAbsoluteProgressTracker> trackers = subject.getAbsoluteTrackers();
+        assertThat(trackers).isEmpty();
+    }
+
+    @Test
+    public void addVideoTrackers_withInvalidEvent_shouldSkipInvalidEvent() throws Exception {
+        final JSONObject videoTrackers = new JSONObject("{" +
+                "urls: [ \"http://mopub.com/%%VIDEO_EVENT%%/foo\" ]," +
+                "events: [ \"start\", \"INVALID\" ]" +
+                "}");
+        VastVideoConfig subject = new VastVideoConfig();
+
+        subject.addVideoTrackers(videoTrackers);
+
+        final List<VastAbsoluteProgressTracker> trackers = subject.getAbsoluteTrackers();
+        assertThat(trackers.size()).isEqualTo(1);
+        assertThat(trackers.get(0).getContent()).isEqualTo("http://mopub.com/start/foo");
+    }
 
     @Test
     public void getUntriggeredTrackersBefore_withTriggeredTrackers_shouldNotReturnTriggered() throws Exception {
@@ -147,6 +418,22 @@ public class VastVideoConfigTest {
     }
 
     @Test
+    public void getUntriggeredTrackersBefore_withNegativeCurrentTime_shouldReturnNoTrackers() throws Exception {
+        VastVideoConfig subject = new VastVideoConfig();
+        subject.setDiskMediaFileUrl("disk_video_path");
+        subject.addFractionalTrackers(
+                Arrays.asList(new VastFractionalProgressTracker("zero", 0f),
+                        new VastFractionalProgressTracker("half", 0.5f)));
+        subject.addAbsoluteTrackers(
+                Arrays.asList(new VastAbsoluteProgressTracker("5secs", 5000),
+                        new VastAbsoluteProgressTracker("10secs", 10000)));
+
+        final List<VastTracker> untriggeredTrackers = subject.getUntriggeredTrackersBefore(-2000,
+                11000);
+        assertThat(untriggeredTrackers).isEmpty();
+    }
+
+    @Test
     public void handleClickForResult_withNullClickThroughUrl_shouldNotOpenNewActivity() throws Exception {
         subject.handleClickForResult(activity, 1234, 1);
 
@@ -157,40 +444,40 @@ public class VastVideoConfigTest {
     @Test
     public void handleClickForResult_withMoPubNativeBrowserClickThroughUrl_shouldOpenExternalBrowser_shouldMakeTrackingHttpRequest() throws Exception {
         subject.setClickThroughUrl(
-                "mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.mopub.com%2F");
+                "mopubnativebrowser://navigate?url=https%3A%2F%2Fwww.mopub.com%2F");
         subject.addClickTrackers(
-                Arrays.asList(new VastTracker("http://trackerone+content=[CONTENTPLAYHEAD]"),
-                        new VastTracker("http://trackertwo+error=[ERRORCODE]&asset=[ASSETURI]")));
+                Arrays.asList(new VastTracker("https://trackerone+content=[CONTENTPLAYHEAD]"),
+                        new VastTracker("https://trackertwo+error=[ERRORCODE]&asset=[ASSETURI]")));
 
         subject.handleClickForResult(activity, 2345, 1234);
 
         Robolectric.getForegroundThreadScheduler().unPause();
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
         Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
-        assertThat(intent.getDataString()).isEqualTo("http://www.mopub.com/");
+        assertThat(intent.getDataString()).isEqualTo("https://www.mopub.com/");
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
-        verify(mockRequestQueue).add(argThat(isUrl("http://trackerone+content=00:00:02.345")));
-        verify(mockRequestQueue).add(argThat(isUrl("http://trackertwo+error=&asset=video_url")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://trackerone+content=00:00:02.345")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://trackertwo+error=&asset=video_url")));
         verifyNoMoreInteractions(mockRequestQueue);
     }
 
     @Test
     public void handleClickWithoutResult_shouldOpenExternalBrowser_shouldMakeTrackingHttpRequest() throws Exception {
         subject.setClickThroughUrl(
-                "mopubnativebrowser://navigate?url=http%3A%2F%2Fwww.mopub.com%2F");
+                "mopubnativebrowser://navigate?url=https%3A%2F%2Fwww.mopub.com%2F");
         subject.addClickTrackers(
-                Arrays.asList(new VastTracker("http://trackerone+content=[CONTENTPLAYHEAD]"),
-                        new VastTracker("http://trackertwo+error=[ERRORCODE]&asset=[ASSETURI]")));
+                Arrays.asList(new VastTracker("https://trackerone+content=[CONTENTPLAYHEAD]"),
+                        new VastTracker("https://trackertwo+error=[ERRORCODE]&asset=[ASSETURI]")));
 
         subject.handleClickWithoutResult(activity.getApplicationContext(), 2345);
 
         Robolectric.getForegroundThreadScheduler().unPause();
         Robolectric.getBackgroundThreadScheduler().advanceBy(0);
         Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
-        assertThat(intent.getDataString()).isEqualTo("http://www.mopub.com/");
+        assertThat(intent.getDataString()).isEqualTo("https://www.mopub.com/");
         assertThat(intent.getAction()).isEqualTo(Intent.ACTION_VIEW);
-        verify(mockRequestQueue).add(argThat(isUrl("http://trackerone+content=00:00:02.345")));
-        verify(mockRequestQueue).add(argThat(isUrl("http://trackertwo+error=&asset=video_url")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://trackerone+content=00:00:02.345")));
+        verify(mockRequestQueue).add(argThat(isUrl("https://trackertwo+error=&asset=video_url")));
         verifyNoMoreInteractions(mockRequestQueue);
     }
 
@@ -198,7 +485,7 @@ public class VastVideoConfigTest {
     public void handleClickForResult_withMalformedMoPubNativeBrowserClickThroughUrl_shouldNotOpenANewActivity() throws Exception {
         // url2 is an invalid query parameter
         subject.setClickThroughUrl(
-                "mopubnativebrowser://navigate?url2=http%3A%2F%2Fwww.mopub.com%2F");
+                "mopubnativebrowser://navigate?url2=https%3A%2F%2Fwww.mopub.com%2F");
 
         subject.handleClickForResult(activity, 3456, 1);
 
@@ -212,5 +499,37 @@ public class VastVideoConfigTest {
         subject.handleClickForResult(activity, 4567, 1);
 
         assertThat(ShadowApplication.getInstance().getNextStartedActivity()).isNull();
+    }
+
+    private void assertAbsoluteTracker(final VastAbsoluteProgressTracker actualTracker,
+            final String expectedUrl, final int expectedMs) {
+        assertThat(actualTracker.getContent()).isEqualTo(expectedUrl);
+        assertThat(actualTracker.getTrackingMilliseconds()).isEqualTo(expectedMs);
+    }
+
+    private void assertFractionalTracker(final VastFractionalProgressTracker actualTracker,
+            final String expectedUrl, final float expectedFraction) {
+        assertThat(actualTracker.getContent()).isEqualTo(expectedUrl);
+        assertThat(actualTracker.trackingFraction()).isEqualTo(expectedFraction);
+    }
+
+    private void assertTracker(final VastTracker actualTracker, final String expectedUrl) {
+        assertThat(actualTracker.getContent()).isEqualTo(expectedUrl);
+    }
+
+    private void addCompanionAds(VastVideoConfig subject) {
+        VastCompanionAdConfig companionLandscape = new VastCompanionAdConfig(123, 456,
+                new VastResource("resource", VastResource.Type.STATIC_RESOURCE, VastResource
+                        .CreativeType.IMAGE, 123, 456),
+                "http://mopub.com",
+                VastUtils.stringsToVastTrackers("clickTracker"),
+                VastUtils.stringsToVastTrackers("viewTracker"));
+        VastCompanionAdConfig companionPortrait = new VastCompanionAdConfig(123, 456,
+                new VastResource("resource", VastResource.Type.STATIC_RESOURCE, VastResource
+                        .CreativeType.IMAGE, 123, 456),
+                "http://mopub.com",
+                VastUtils.stringsToVastTrackers("clickTracker"),
+                VastUtils.stringsToVastTrackers("viewTracker"));
+        subject.setVastCompanionAd(companionLandscape, companionPortrait);
     }
 }

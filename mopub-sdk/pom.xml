@@ -21,20 +21,20 @@
         <dependency>
             <groupId>com.android.support</groupId>
             <artifactId>support-annotations</artifactId>
-            <version>22.0.0</version>
+            <version>23.1.1</version>
         </dependency>
 
         <dependency>
             <groupId>com.android.support</groupId>
             <artifactId>support-v4</artifactId>
-            <version>22.0.0</version>
+            <version>23.1.1</version>
             <type>aar</type>
         </dependency>
 
         <dependency>
             <groupId>com.android.support</groupId>
             <artifactId>recyclerview-v7</artifactId>
-            <version>22.0.0</version>
+            <version>23.1.1</version>
             <type>aar</type>
         </dependency>
         
@@ -47,7 +47,7 @@
         <dependency>
             <groupId>com.google.android.exoplayer</groupId>
             <artifactId>exoplayer</artifactId>
-            <version>r1.4.2</version>
+            <version>r1.5.6</version>
             <type>aar</type>
         </dependency>
 

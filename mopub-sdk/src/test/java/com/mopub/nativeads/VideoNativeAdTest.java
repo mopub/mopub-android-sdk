@@ -1,8 +1,5 @@
 package com.mopub.nativeads;
 
-import android.annotation.TargetApi;
-import android.os.Build;
-
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
 
@@ -13,7 +10,6 @@ import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class VideoNativeAdTest {

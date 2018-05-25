@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
+import org.robolectric.fakes.RoboWebSettings;
 import org.robolectric.shadows.ShadowWebView;
 
 import static org.fest.assertions.api.Assertions.assertThat;
@@ -32,9 +33,9 @@ public class BaseWebViewTest {
         context = Robolectric.buildActivity(Activity.class).create().get();
     }
 
-    @Config(sdk = VERSION_CODES.JELLY_BEAN_MR1)
+    @Config(sdk = VERSION_CODES.JELLY_BEAN)
     @Test
-    public void beforeJellyBeanMr1_shouldDisablePluginsByDefault() throws Exception {
+    public void constructor_beforeJellyBeanMr1_shouldDisablePluginsByDefault() throws Exception {
         subject = new BaseWebView(context);
 
         WebSettings webSettings = subject.getSettings();
@@ -44,14 +45,52 @@ public class BaseWebViewTest {
         assertThat(webSettings.getPluginState()).isEqualTo(WebSettings.PluginState.ON);
     }
 
+    @Test
+    public void constructor_shouldDisableFileAccess() {
+        subject = new BaseWebView(context);
+
+        final WebSettings webSettings = subject.getSettings();
+        assertThat(webSettings.getAllowFileAccess()).isEqualTo(false);
+    }
+
+    @Test
+    public void constructor_shouldDisableContentAccess() {
+        subject = new BaseWebView(context);
+
+        final WebSettings webSettings = subject.getSettings();
+        assertThat(webSettings.getAllowContentAccess()).isEqualTo(false);
+    }
+
+    @Test
+    public void constructor_shouldDisableAccessFromFileUrls() {
+        subject = new BaseWebView(context);
+
+        final WebSettings webSettings = subject.getSettings();
+        assertThat(webSettings.getAllowFileAccessFromFileURLs()).isEqualTo(false);
+        assertThat(webSettings.getAllowUniversalAccessFromFileURLs()).isEqualTo(false);
+    }
+
     @Config(sdk = VERSION_CODES.JELLY_BEAN_MR2)
     @Test
-    public void atLeastJellybeanMr2_shouldPass() throws Exception {
+    public void constructor_atLeastJellybeanMr2_shouldPass() throws Exception {
         subject = new BaseWebView(context);
 
         subject.enablePlugins(true);
 
         // pass
+    }
+
+    @Test
+    public void enableJavascriptCaching_enablesJavascriptDomStorageAndAppCache() {
+        subject = new BaseWebView(context);
+        final RoboWebSettings settings = (RoboWebSettings) subject.getSettings();
+
+        subject.enableJavascriptCaching();
+
+        assertThat(settings.getJavaScriptEnabled()).isTrue();
+        assertThat(settings.getDomStorageEnabled()).isTrue();
+        assertThat(settings.getAppCacheEnabled()).isTrue();
+        assertThat(settings.getAppCachePath()).isEqualTo(context.getCacheDir().getAbsolutePath());
     }
 
     @Test

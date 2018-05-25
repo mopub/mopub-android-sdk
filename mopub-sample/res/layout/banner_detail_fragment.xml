@@ -28,14 +28,23 @@
         android:textSize="14sp"
         android:textStyle="normal" />
 
+    <EditText
+        android:id="@+id/keywords_field"
+        android:hint="@string/keywords"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text|textFilter|textShortMessage"
+        android:imeOptions="actionDone"
+        android:singleLine="true" />
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <EditText
-            android:id="@+id/keywords_field"
-            android:hint="@string/keywords"
+            android:id="@+id/user_data_keywords_field"
+            android:hint="@string/user_data_keywords"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="3"

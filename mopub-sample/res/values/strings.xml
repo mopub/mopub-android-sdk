@@ -2,6 +2,8 @@
 <resources>
     <string name="app_name">MoPub Sample App</string>
     <string name="keywords">Keywords (optional)</string>
+    <string name="user_data_keywords">User Data Keywords (optional)</string>
+    <string name="custom_data">Custom Data (optional)</string>
     <string name="load_ad">Load Ad</string>
     <string name="refresh_ad">Refresh Ad</string>
     <string name="switch_layout">Switch Layout</string>
@@ -20,7 +22,10 @@
     <string name="add_ad_unit_button">Add an Ad Unit</string>
     <string name="ad_unit_id_banner">b195f8dd8ded45fe847ad89ed1d016da</string>
     <string name="ad_unit_id_mrect">252412d5e9364a05ab77d9396346d73d</string>
+    <string name="ad_unit_id_leaderboard">a8919cca19784497872ae69d48f678e1</string>
     <string name="ad_unit_id_interstitial">24534e1901884e398f1253216226017e</string>
+    <string name="ad_unit_id_rewarded_video">920b6145fb1546cf8b5cf2ac34638bb7</string>
+    <string name="ad_unit_id_rewarded_rich_media">15173ac6d3e54c9389b9a5ddca69b34b</string>
     <string name="ad_unit_id_native">11a17b188668469fb0412708c3d16813</string>
     <string name="swipe_text"><![CDATA[< Swipe Left & Right >]]></string>
 </resources>

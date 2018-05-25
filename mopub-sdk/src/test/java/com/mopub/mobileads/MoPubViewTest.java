@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.view.View;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.util.Reflection;
+import com.mopub.common.util.test.support.ShadowReflection;
 import com.mopub.mobileads.test.support.TestAdViewControllerFactory;
 import com.mopub.mobileads.test.support.TestCustomEventBannerAdapterFactory;
 
@@ -28,7 +30,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
-@Config(constants = BuildConfig.class)
+@Config(constants = BuildConfig.class, shadows = {ShadowReflection.class})
 public class MoPubViewTest {
     private MoPubView subject;
     private Map<String,String> paramsMap = new HashMap<String, String>();
@@ -49,7 +51,7 @@ public class MoPubViewTest {
     public void screenStateBroadcastReceiver_withActionUserPresent_shouldUnpauseRefresh() throws Exception {
         broadcastIntent(new Intent(Intent.ACTION_USER_PRESENT));
 
-        verify(adViewController).unpauseRefresh();
+        verify(adViewController).resumeRefresh();
     }
 
     @Test
@@ -64,7 +66,7 @@ public class MoPubViewTest {
         broadcastIntent(null);
 
         verify(adViewController, never()).pauseRefresh();
-        verify(adViewController, never()).unpauseRefresh();
+        verify(adViewController, never()).resumeRefresh();
     }
 
     @Test
@@ -72,7 +74,7 @@ public class MoPubViewTest {
         broadcastIntent(new Intent(Intent.ACTION_BATTERY_LOW));
 
         verify(adViewController, never()).pauseRefresh();
-        verify(adViewController, never()).unpauseRefresh();
+        verify(adViewController, never()).resumeRefresh();
     }
 
     @Test
@@ -81,7 +83,7 @@ public class MoPubViewTest {
         reset(adViewController);
 
         broadcastIntent(new Intent(Intent.ACTION_USER_PRESENT));
-        verify(adViewController, never()).unpauseRefresh();
+        verify(adViewController, never()).resumeRefresh();
 
         broadcastIntent(new Intent(Intent.ACTION_SCREEN_OFF));
         verify(adViewController, never()).pauseRefresh();
@@ -92,7 +94,7 @@ public class MoPubViewTest {
         subject.destroy();
 
         broadcastIntent(new Intent(Intent.ACTION_USER_PRESENT));
-        verify(adViewController, never()).unpauseRefresh();
+        verify(adViewController, never()).resumeRefresh();
 
         broadcastIntent(new Intent(Intent.ACTION_SCREEN_OFF));
         verify(adViewController, never()).pauseRefresh();
@@ -104,7 +106,7 @@ public class MoPubViewTest {
         subject.onWindowVisibilityChanged(View.INVISIBLE);
 
         verify(adViewController).pauseRefresh();
-        verify(adViewController, never()).unpauseRefresh();
+        verify(adViewController, never()).resumeRefresh();
     }
 
 
@@ -116,7 +118,7 @@ public class MoPubViewTest {
         subject.onWindowVisibilityChanged(View.VISIBLE);
 
         verify(adViewController, never()).pauseRefresh();
-        verify(adViewController).unpauseRefresh();
+        verify(adViewController).resumeRefresh();
     }
 
     @Test
@@ -125,7 +127,7 @@ public class MoPubViewTest {
         subject.onWindowVisibilityChanged(View.VISIBLE);
 
         verify(adViewController, never()).pauseRefresh();
-        verify(adViewController, never()).unpauseRefresh();
+        verify(adViewController, never()).resumeRefresh();
     }
 
     @Test
@@ -136,7 +138,7 @@ public class MoPubViewTest {
         subject.onWindowVisibilityChanged(View.GONE);
 
         verify(adViewController, never()).pauseRefresh();
-        verify(adViewController, never()).unpauseRefresh();
+        verify(adViewController, never()).resumeRefresh();
     }
 
     @Test
@@ -147,21 +149,21 @@ public class MoPubViewTest {
         subject.onWindowVisibilityChanged(View.INVISIBLE);
 
         verify(adViewController, never()).pauseRefresh();
-        verify(adViewController, never()).unpauseRefresh();
+        verify(adViewController, never()).resumeRefresh();
     }
 
     @Test
     public void setAutorefreshEnabled_withRefreshTrue_shouldForwardToAdViewController() throws Exception {
         subject.setAutorefreshEnabled(true);
 
-        verify(adViewController).forceSetAutorefreshEnabled(true);
+        verify(adViewController).setShouldAllowAutoRefresh(true);
     }
 
     @Test
     public void setAutorefreshEnabled_withRefreshFalse_shouldForwardToAdViewController() throws Exception {
         subject.setAutorefreshEnabled(false);
 
-        verify(adViewController).forceSetAutorefreshEnabled(false);
+        verify(adViewController).setShouldAllowAutoRefresh(false);
     }
     
     @Test
@@ -189,6 +191,57 @@ public class MoPubViewTest {
         verify(adViewController).loadFailUrl(eq(ADAPTER_NOT_FOUND));
         verify(customEventBannerAdapter, never()).invalidate();
         verify(customEventBannerAdapter, never()).loadAd();
+    }
+
+    @Test
+    public void loadCustomEvent_withTwoCalls_shouldInvalidateAdapterOnce() throws Exception {
+        subject.loadCustomEvent("name", paramsMap);
+        subject.loadCustomEvent("name", paramsMap);
+
+        verify(customEventBannerAdapter).invalidate();
+    }
+
+    @Test
+    public void forceRefresh_withCallToLoadCustomEvent_shouldInvalidateAdapter() throws Exception {
+        subject.loadCustomEvent("name", paramsMap);
+        subject.forceRefresh();
+
+        verify(customEventBannerAdapter).invalidate();
+    }
+
+    @Test
+    public void loadCustomEvent_withoutBannerModule_shouldNotLoadAd() throws Exception {
+        ShadowReflection.setNextClassNotFound(true);
+
+        subject.loadCustomEvent("name", paramsMap);
+
+        verify(customEventBannerAdapter, never()).loadAd();
+    }
+
+    @Test
+    public void forceRefresh_withoutBannerModule_withCallToLoadCustomEvent_shouldNotInvalidateAdapter() throws Exception {
+        ShadowReflection.setNextClassNotFound(true);
+
+        subject.loadCustomEvent("name", paramsMap);
+        subject.forceRefresh();
+
+        verify(customEventBannerAdapter, never()).invalidate();
+    }
+
+    @Test
+    public void forceRefresh_withoutBannerModule_withCallToLoadCustomEvent_shouldForceRefreshAdViewController() throws Exception {
+        ShadowReflection.setNextClassNotFound(true);
+
+        subject.loadCustomEvent("name", paramsMap);
+        subject.forceRefresh();
+
+        verify(adViewController).forceRefresh();
+    }
+
+    @Test
+    public void invalidateAdapter_withReflection_shouldExist() throws Exception {
+        assertThat(Reflection.getDeclaredMethodWithTraversal(CustomEventBannerAdapter.class,
+                "invalidate")).isNotNull();
     }
 
     private void broadcastIntent(final Intent intent) {

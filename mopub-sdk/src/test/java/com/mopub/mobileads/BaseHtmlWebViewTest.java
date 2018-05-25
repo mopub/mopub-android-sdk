@@ -55,8 +55,8 @@ public class BaseHtmlWebViewTest {
     }
 
     @Test
-    public void pluginState_atLeastIcsButBelowJellybeanMr2_shouldDefaultToOn_shouldAllowToggling() {
-        TestSdkHelper.setReportedSdkLevel(VERSION_CODES.ICE_CREAM_SANDWICH);
+    public void pluginState_BelowJellybeanMr2_shouldDefaultToOn_shouldAllowToggling() {
+        TestSdkHelper.setReportedSdkLevel(VERSION_CODES.JELLY_BEAN);
         subject = new BaseHtmlWebView(testActivity, mockAdReport);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.ON);
 
@@ -65,20 +65,6 @@ public class BaseHtmlWebViewTest {
 
         subject.enablePlugins(true);
         assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.ON);
-    }
-
-    @Test
-    public void pluginState_beforeIcs_shouldDefaultToOff_shouldAllowToggling() {
-        TestSdkHelper.setReportedSdkLevel(VERSION_CODES.GINGERBREAD_MR1);
-
-        subject = new BaseHtmlWebView(testActivity, mockAdReport);
-        assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.OFF);
-
-        subject.enablePlugins(true);
-        assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.ON);
-
-        subject.enablePlugins(false);
-        assertThat(subject.getSettings().getPluginState()).isEqualTo(PluginState.OFF);
     }
 
     @Test

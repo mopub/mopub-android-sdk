@@ -55,7 +55,6 @@ public class CustomEventBannerAdapterTest {
 
     @Before
     public void setUp() throws Exception {
-
         when(moPubView.getAdTimeoutDelay()).thenReturn(null);
         when(moPubView.getAdWidth()).thenReturn(320);
         when(moPubView.getAdHeight()).thenReturn(50);
@@ -64,8 +63,6 @@ public class CustomEventBannerAdapterTest {
         when(moPubView.getLocalExtras()).thenReturn(localExtras);
 
         serverExtras = new HashMap<String, String>();
-        serverExtras.put("key", "value");
-        serverExtras.put("another_key", "another_value");
         subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
 
         expectedLocalExtras = new HashMap<String, Object>();
@@ -73,6 +70,7 @@ public class CustomEventBannerAdapterTest {
         expectedLocalExtras.put("broadcastIdentifier", BROADCAST_IDENTIFIER);
         expectedLocalExtras.put(DataKeys.AD_WIDTH, 320);
         expectedLocalExtras.put(DataKeys.AD_HEIGHT, 50);
+        expectedLocalExtras.put(DataKeys.BANNER_IMPRESSION_PIXEL_COUNT_ENABLED, false);
 
         expectedServerExtras = new HashMap<String, String>();
 
@@ -128,7 +126,6 @@ public class CustomEventBannerAdapterTest {
         assertThat(subject.isInvalidated()).isTrue();
     }
 
-
     @Test
     public void loadAd_shouldPropagateLocationInLocalExtras() throws Exception {
         Location expectedLocation = new Location("");
@@ -151,11 +148,33 @@ public class CustomEventBannerAdapterTest {
 
     @Test
     public void loadAd_shouldPropagateServerExtrasToLoadBanner() throws Exception {
+        serverExtras.put("key", "value");
+        serverExtras.put("another_key", "another_value");
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+
         subject.loadAd();
 
         expectedServerExtras.put("key", "value");
         expectedServerExtras.put("another_key", "another_value");
+        verify(banner).loadBanner(
+                any(Context.class),
+                eq(subject),
+                eq(expectedLocalExtras),
+                eq(expectedServerExtras)
+        );
+    }
 
+    @Test
+    public void loadAd_withVisibilityImpressionTrackingEnabled_shouldPropagateVisibilityImpressionTrackingEnabledFlagInLocalExtras() {
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "1");
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "0");
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+
+        subject.loadAd();
+
+        expectedLocalExtras.put(DataKeys.BANNER_IMPRESSION_PIXEL_COUNT_ENABLED, true);
+        expectedServerExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "1");
+        expectedServerExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "0");
         verify(banner).loadBanner(
                 any(Context.class),
                 eq(subject),
@@ -197,6 +216,7 @@ public class CustomEventBannerAdapterTest {
             }
         };
 
+        // noinspection unchecked
         doAnswer(assertTimeoutRunnableHasStarted)
                 .when(banner)
                 .loadBanner(
@@ -208,7 +228,6 @@ public class CustomEventBannerAdapterTest {
 
         subject.loadAd();
     }
-
 
     @Test
     public void loadAd_whenCallingOnBannerFailed_shouldCancelExistingTimeoutRunnable() throws Exception {
@@ -224,6 +243,7 @@ public class CustomEventBannerAdapterTest {
             }
         };
 
+        // noinspection unchecked
         doAnswer(justCallOnBannerFailed)
                 .when(banner)
                 .loadBanner(
@@ -239,22 +259,74 @@ public class CustomEventBannerAdapterTest {
     }
 
     @Test
-    public void onBannerLoaded_shouldSignalMoPubView() throws Exception {
-        View view = new View(Robolectric.buildActivity(Activity.class).create().get());
-        subject.onBannerLoaded(view);
-
-        verify(moPubView).nativeAdLoaded();
-        verify(moPubView).setAdContentView(eq(view));
-        verify(moPubView).trackNativeImpression();
-    }
-
-    @Test
     public void onBannerLoaded_whenViewIsHtmlBannerWebView_shouldNotTrackImpression() throws Exception {
         View mockHtmlBannerWebView = mock(HtmlBannerWebView.class);
         subject.onBannerLoaded(mockHtmlBannerWebView);
 
         verify(moPubView).nativeAdLoaded();
         verify(moPubView).setAdContentView(eq(mockHtmlBannerWebView));
+        verify(moPubView, never()).trackNativeImpression();
+
+        // Since there are no visibility imp tracking headers, imp tracking should not be enabled.
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isFalse();
+        assertThat(subject.getVisibilityTracker()).isNull();
+    }
+
+    @Test
+    public void onBannerLoaded_whenViewIsNotHtmlBannerWebView_shouldSignalMoPubView() throws Exception {
+        View view = new View(Robolectric.buildActivity(Activity.class).create().get());
+        subject.onBannerLoaded(view);
+
+        verify(moPubView).nativeAdLoaded();
+        verify(moPubView).setAdContentView(eq(view));
+        verify(moPubView).trackNativeImpression();
+
+        // Since there are no visibility imp tracking headers, imp tracking should not be enabled.
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isFalse();
+        assertThat(subject.getVisibilityTracker()).isNull();
+    }
+
+    @Test
+    public void onBannerLoaded_whenViewIsHtmlBannerWebView_withVisibilityImpressionTrackingEnabled_shouldSetUpVisibilityTrackerWithListener_shouldNotTrackNativeImpressionImmediately() {
+        View mockHtmlBannerWebView = mock(HtmlBannerWebView.class);
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "1");
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "0");
+
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+        subject.onBannerLoaded(mockHtmlBannerWebView);
+
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(1);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(0);
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isTrue();
+        assertThat(subject.getVisibilityTracker()).isNotNull();
+        assertThat(subject.getVisibilityTracker().getBannerVisibilityTrackerListener()).isNotNull();
+        verify(moPubView).nativeAdLoaded();
+        verify(moPubView).setAdContentView(eq(mockHtmlBannerWebView));
+        verify(moPubView, never()).trackNativeImpression();
+    }
+
+    @Test
+    public void onBannerLoaded_whenViewIsNotHtmlBannerWebView_withVisibilityImpressionTrackingEnabled_shouldSetUpVisibilityTrackerWithListener_shouldNotTrackNativeImpressionImmediately() {
+        View view = new View(Robolectric.buildActivity(Activity.class).create().get());
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "1");
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "0");
+
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+        subject.onBannerLoaded(view);
+
+        // When visibility impression tracking is enabled, regardless of whether the banner view is
+        // HtmlBannerWebView or not, the behavior should be the same.
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(1);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(0);
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isTrue();
+        assertThat(subject.getVisibilityTracker()).isNotNull();
+        assertThat(subject.getVisibilityTracker().getBannerVisibilityTrackerListener()).isNotNull();
+        verify(moPubView).nativeAdLoaded();
+        verify(moPubView).setAdContentView(eq(view));
         verify(moPubView, never()).trackNativeImpression();
     }
 
@@ -317,6 +389,7 @@ public class CustomEventBannerAdapterTest {
 
         subject.loadAd();
 
+        // noinspection unchecked
         verify(banner, never()).loadBanner(
                 any(Context.class),
                 any(CustomEventBannerListener.class),
@@ -343,5 +416,107 @@ public class CustomEventBannerAdapterTest {
         verify(moPubView, never()).setAutorefreshEnabled(any(boolean.class));
         verify(moPubView, never()).adClosed();
         verify(moPubView, never()).registerClick();
+    }
+
+    @Test
+    public void parseBannerImpressionTrackingHeaders_whenMissingInServerExtras_shouldUseDefaultValues_shouldNotEnableVisibilityImpressionTracking() {
+        // If headers are missing, use default values
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isFalse();
+    }
+
+    @Test
+    public void parseBannerImpressionTrackingHeaders_withBothValuesNonInteger_shouldUseDefaultValues_shouldNotEnableVisibilityImpressionTracking() {
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "");
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, null);
+
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+
+        // Both header values must be Integers in order to be parsed
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isFalse();
+    }
+
+    @Test
+    public void parseBannerImpressionTrackingHeaders_withNonIntegerMinVisibleDipsValue_shouldUseDefaultValues_shouldNotEnableVisibilityImpressionTracking() {
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, null);
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "0");
+
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+
+        // Both header values must be Integers in order to be parsed
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isFalse();
+    }
+
+    @Test
+    public void parseBannerImpressionTrackingHeaders_withNonIntegerMinVisibleMsValue_shouldUseDefaultValues_shouldNotEnableVisibilityImpressionTracking() {
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "1");
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "");
+
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+
+        // Both header values must be Integers in order to be parsed
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(Integer.MIN_VALUE);
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isFalse();
+    }
+
+    @Test
+    public void parseBannerImpressionTrackingHeaders_withBothValuesValid_shouldParseValues_shouldEnableVisibilityImpressionTracking() {
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "1");
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "0");
+
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(1);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(0);
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isTrue();
+    }
+
+    @Test
+    public void parseBannerImpressionTrackingHeaders_withBothValuesInvalid_shouldParseValues_shouldNotEnableVisibilityImpressionTracking() {
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "0");
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "-1");
+
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(0);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(-1);
+
+        // ImpressionMinVisibleDips must be > 0 AND ImpressionMinVisibleMs must be >= 0 in order to
+        // enable viewable impression tracking
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isFalse();
+    }
+
+    @Test
+    public void parseBannerImpressionTrackingHeaders_withInvalidMinVisibleDipsValue_shouldParseValues_shouldNotEnableVisibilityImpressionTracking() {
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "0");
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "0");
+
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(0);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(0);
+
+        // ImpressionMinVisibleDips must be > 0 in order to enable viewable impression tracking
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isFalse();
+    }
+
+    @Test
+    public void parseBannerImpressionTrackingHeaders_withInvalidMinVisibleMsValue_shouldParseValues_shouldNotEnableVisibilityImpressionTracking() {
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS, "1");
+        serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS, "-1");
+
+        subject = new CustomEventBannerAdapter(moPubView, CLASS_NAME, serverExtras, BROADCAST_IDENTIFIER, mockAdReport);
+
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo(1);
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo(-1);
+
+        // ImpressionMinVisibleMs must be >= 0 in order to enable viewable impression tracking
+        assertThat(subject.isVisibilityImpressionTrackingEnabled()).isFalse();
     }
 }

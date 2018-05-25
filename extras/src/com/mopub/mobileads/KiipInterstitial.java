@@ -68,7 +68,7 @@ public class KiipInterstitial extends CustomEventInterstitial {
 
         if (Kiip.getInstance() != null) {
             if (serverExtras.containsKey("testMode")) {
-                Kiip.getInstance().setTestMode(Boolean.getBoolean(serverExtras.get("testMode")));
+                Kiip.getInstance().setTestMode(Boolean.valueOf(serverExtras.get("testMode")));
             }
             if (serverExtras.containsKey("email")) {
                 Kiip.getInstance().setEmail(serverExtras.get("email"));
@@ -81,6 +81,9 @@ public class KiipInterstitial extends CustomEventInterstitial {
             }
             if (serverExtras.containsKey("userId")) {
                 Kiip.getInstance().setUserId(serverExtras.get("userId"));
+            }
+            if (serverExtras.containsKey("ageGroup")) {
+                Kiip.getInstance().setAgeGroup(Kiip.AgeGroup.valueOf(serverExtras.get("ageGroup")));
             }
             if (serverExtras.containsKey("momentId")) {
                 Kiip.getInstance().saveMoment(serverExtras.get("momentId"), new Kiip.Callback() {

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.mopub.common.test.support.SdkTestRunner;
@@ -63,8 +62,7 @@ public class BaseInterstitialActivityTest {
         Intent intent = new Intent(context, TestInterstitialActivity.class);
         intent.putExtra(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
 
-        subject = Robolectric.buildActivity(TestInterstitialActivity.class)
-                .withIntent(intent)
+        subject = Robolectric.buildActivity(TestInterstitialActivity.class, intent)
                 .create().get();
         assertThat(subject.getBroadcastIdentifier()).isEqualTo(2222L);
     }
@@ -75,14 +73,13 @@ public class BaseInterstitialActivityTest {
         Intent intent = new Intent(context, TestInterstitialActivity.class);
         // This intent is missing a broadcastidentifier extra.
 
-        subject = Robolectric.buildActivity(TestInterstitialActivity.class)
-                .withIntent(intent)
+        subject = Robolectric.buildActivity(TestInterstitialActivity.class, intent)
                 .create().get();
 
         assertThat(subject.getBroadcastIdentifier()).isNull();
     }
 
     protected FrameLayout getContentView(BaseInterstitialActivity subject) {
-        return (FrameLayout) ((ViewGroup) subject.findViewById(android.R.id.content)).getChildAt(0);
+        return subject.getCloseableLayout();
     }
 }

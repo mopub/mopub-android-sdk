@@ -1,229 +1,35 @@
-// This buildscript will assemble the MoPub SDK into an AAR.
-
-buildscript {
-    repositories {
-        mavenCentral()
-        jcenter()
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:1.2.3'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.3'
-    }
-}
-
-plugins {
-    id "com.jfrog.bintray" version "1.2"
-}
-
-repositories {
-    mavenCentral()
-    jcenter()
-    flatDir {
-         dirs '../libs'
-    }
-}
-
-configurations {
-    javadocDeps
-}
-
-apply plugin: 'com.android.library'
-apply plugin: 'com.github.dcendents.android-maven'
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.5'
-}
-
-group = 'com.mopub'
-description = '''MoPub Android SDK'''
-version = '4.3.0'
-
-android {
-    compileSdkVersion 22
-    buildToolsVersion '22.0.1'
-    lintOptions { abortOnError false }
-
-    defaultConfig {
-        versionCode 34
-        versionName version
-        minSdkVersion 9
-        targetSdkVersion 22
-        consumerProguardFiles 'proguard.txt'
-    }
-
-    sourceSets {
-        main {
-            manifest.srcFile 'AndroidManifest.xml'
-            java.srcDirs = ['src/main/java']
-            resources.srcDirs = ['src/main/resources']
-            aidl.srcDirs = ['src/main']
-            renderscript.srcDirs = ['src/main']
-            res.srcDirs = ['res']
-            assets.srcDirs = ['assets']
-        }
-    }
-
-    testOptions {
-        unitTests {
-            // This causes android platform methods from the test JAR
-            // to return null, false, etc instead of throwing an exception.
-            // We should periodically disable this and tackle the broken tests
-            // as it exposes when we are hitting platform APIs in our tests.
-            // If these tests *require* platform APIs we may want to make them
-            // connected tests instead.
-            returnDefaultValues = true
-
-            // Test JVM settings since we have a lot of classes loaded.
-            all {
-                jvmArgs '-XX:MaxPermSize=4096m', '-Xmx8192m'
-                forkEvery 200
-            }
-        }
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), file('proguard.txt')
-        }
-      
-        debug {
-            minifyEnabled false
-        }
-    }
-
-    // Note: You will also need a local.properties file to set the location of the SDK in the same 
-    // way that the existing SDK requires, using the sdk.dir property.
-    // Alternatively, you can set an environment variable called ANDROID_HOME. There is no 
-    // difference between the two methods, you can use the one you prefer.
-}
-
+apply from: 'shared-build.gradle'
 
 dependencies {
-    compile 'com.android.support:support-v4:22.2.0'
-    compile 'com.android.support:support-annotations:22.2.0'
-    compile 'com.android.support:recyclerview-v7:22.2.0'
-    compile 'com.mopub.volley:mopub-volley:1.1.0'
-    compile 'com.google.android.exoplayer:exoplayer:r1.4.2'
-    // anchor: additional dependencies
+    api project(':mopub-sdk:mopub-sdk-base')
+    api project(':mopub-sdk:mopub-sdk-banner')
+    api project(':mopub-sdk:mopub-sdk-interstitial')
+    api project(':mopub-sdk:mopub-sdk-rewardedvideo')
+    api project(':mopub-sdk:mopub-sdk-native-static')
+    api project(':mopub-sdk:mopub-sdk-native-video')
 
-    javadocDeps 'com.google.android.exoplayer:exoplayer:r1.4.2:sources'
-    javadocDeps 'com.mopub.volley:mopub-volley:1.1.0:sources'
-    javadocDeps 'com.android.support:support-v4:22.0.0:sources'
-    javadocDeps 'com.android.support:support-annotations:22.0.0:sources'
-    javadocDeps 'com.android.support:recyclerview-v7:22.0.0:sources'
-
-    testCompile 'junit:junit:4.10'
-    testCompile 'org.robolectric:robolectric:3.0'
-    testCompile 'org.robolectric:shadows-support-v4:3.0'
-    testCompile 'org.robolectric:shadows-httpclient:3.0'
-    testCompile 'com.squareup:fest-android:1.0.7'
-    testCompile 'org.mockito:mockito-core:1.9.5'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.robolectric:robolectric:3.5.1'
+    testImplementation 'org.robolectric:shadows-support-v4:3.3.2'
+    testImplementation 'org.robolectric:shadows-httpclient:3.5.1'
+    testImplementation 'com.squareup:fest-android:1.0.7'
+    testImplementation 'org.mockito:mockito-core:1.9.5'
+    testImplementation 'org.powermock:powermock-module-junit4:1.6.5'
+    testImplementation 'org.powermock:powermock-module-junit4-rule:1.6.5'
+    testImplementation 'org.powermock:powermock-api-mockito:1.6.5'
+    testImplementation 'org.powermock:powermock-classloading-xstream:1.6.5'
 }
 
-def siteUrl = 'https://github.com/mopub/mopub-android-sdk'
-def gitUrl = 'https://github.com/mopub/mopub-android-sdk.git'
-// Put your credentials (bintray.user, bintray.apikey) in ~/.gradle/gradle.properties
-bintray {
-    user = project.hasProperty("bintray.user") ? project.getProperty("bintray.user") : ""
-    key = project.hasProperty("bintray.apikey") ? project.getProperty("bintray.apikey") : ""
-
-    configurations = ['archives']
-    publish = true
-
-    pkg {
-        repo = 'mopub-android-sdk'
-        name = 'mopub-android-sdk'
-
-        userOrg = 'mopub'
-        desc = description
-
-        websiteUrl = siteUrl
-        vcsUrl = gitUrl
-        licenses = ['Apache-2.0']
-
-        version {
-            name = project.version
+android {
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
         }
     }
 }
 
-install {
-    repositories.mavenInstaller {
-        pom {
-            project {
-                packaging 'aar'
-
-                name 'MoPub Android SDK'
-                url siteUrl
-
-                licenses {
-                    license {
-                        name 'MoPub SDK License'
-                        url 'http://www.mopub.com/legal/sdk-license-agreement/'
-                    }
-                }
-                developers {
-                    // ID corresponds to GitHub user name
-                    developer {
-                        id 'nathanshayefar'
-                        name 'Nathan Shayefar'
-                        email 'nshayefar@twitter.com'
-                    }
-                    developer {
-                        id 'joeblubaugh'
-                        name 'Joe Blubaugh'
-                        email 'joeblubaugh@twitter.com'
-                    }
-                    developer {
-                        id 'steffanc'
-                        name 'Steffan Chartrand'
-                        email 'schartrand@twitter.com'
-                    }
-                    developer {
-                        id 'aornelas'
-                        name 'Andrés Ornelas'
-                        email 'andres@twitter.com'
-                    }
-                    developer {
-                        id 'bichenwang'
-                        name 'Bichen Wang'
-                        email 'bwang@twitter.com'
-                    }
-                    developer {
-                        id 'nathank33'
-                        name 'Nathan Braun'
-                        email 'nbraun@twitter.com'
-                    }
-                }
-                scm {
-                    connection gitUrl
-                    developerConnection gitUrl
-                    url siteUrl
-                }
-            }
-        }
-    }
-}
-
-task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
-    classifier = 'sources'
-}
-
-task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-    classpath += configurations.javadocDeps
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives javadocJar
-    archives sourcesJar
-}
+project.description = 'MoPub Android SDK'
+project.ext.displayName = 'MoPub Android SDK'
+project.ext.projectName = 'mopub-sdk'
+project.ext.uploadName = 'mopub-android-sdk'
+apply from: 'publisher.gradle'

@@ -1,0 +1,11 @@
+apply from: '../shared-build.gradle'
+
+dependencies {
+    api project(':mopub-sdk:mopub-sdk-base')
+}
+
+project.description = 'MoPub Android SDK - Interstitial'
+project.ext.displayName = 'MoPub Android SDK - Interstitial'
+project.ext.projectName = 'mopub-sdk-interstitial'
+project.ext.uploadName = 'mopub-android-sdk-interstitial'
+apply from: '../publisher.gradle'

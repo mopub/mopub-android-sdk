@@ -1,6 +1,5 @@
 package com.mopub.nativeads;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
@@ -9,7 +8,6 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.GradientDrawable;
-import android.os.Build;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.ImageView;
@@ -31,9 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
-import org.robolectric.Shadows;
 import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowConfiguration;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -44,7 +40,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class NativeFullScreenVideoViewTest {
@@ -75,17 +70,15 @@ public class NativeFullScreenVideoViewTest {
     @Mock SurfaceTexture mockSurfaceTexture;
     @Mock RectF mockRectF;
     @Mock Paint mockPaint;
-    private ShadowConfiguration shadowConfiguration;
+    private Configuration configuration;
 
     @Before
     public void setUp() {
         context = Robolectric.buildActivity(Activity.class).create().get();
 
-        shadowConfiguration = Shadows.shadowOf(context.getResources().getConfiguration());
-        Configuration configuration = new Configuration();
+        configuration = context.getResources().getConfiguration();
         configuration.screenWidthDp = screenWidthDp;
         configuration.screenHeightDp = screenHeightDp;
-        shadowConfiguration.setTo(configuration);
 
         videoWidthLandscapePx = Dips.dipsToIntPixels((float) screenWidthDp, context);
         videoHeightLandscapePx = Dips.dipsToIntPixels((float) screenWidthDp * 9 / 16, context);
@@ -344,10 +337,8 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void setOrientation_withLandscape_shouldSetWidthAndHeightOfVideoTextureAppropriately() throws Exception {
-        Configuration configuration = new Configuration();
         configuration.screenWidthDp = screenWidthDp;
         configuration.screenHeightDp = screenHeightDp;
-        shadowConfiguration.setTo(configuration);
 
         subject.setOrientation(Configuration.ORIENTATION_LANDSCAPE);
 
@@ -361,10 +352,8 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void setOrientation_withPortrait_shouldSetWidthAndHeightOfVideoTextureAppropriately() throws Exception {
-        Configuration configuration = new Configuration();
         configuration.screenWidthDp = screenHeightDp;
         configuration.screenHeightDp = screenWidthDp;
-        shadowConfiguration.setTo(configuration);
 
         subject.setOrientation(Configuration.ORIENTATION_PORTRAIT);
 

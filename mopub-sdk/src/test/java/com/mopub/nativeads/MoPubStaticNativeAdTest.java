@@ -18,7 +18,6 @@ import com.mopub.volley.VolleyError;
 import com.mopub.volley.toolbox.ImageLoader;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;

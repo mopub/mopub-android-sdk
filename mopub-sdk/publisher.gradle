@@ -1,0 +1,62 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.novoda.bintray-release'
+
+def siteUrl = 'https://github.com/mopub/mopub-android-sdk'
+def gitUrl = 'https://github.com/mopub/mopub-android-sdk.git'
+def bintrayRepo = 'mopub-android-sdk'
+def bintrayUserOrg = 'mopub'
+// Put your credentials (bintray.user, bintray.apikey) in ~/.gradle/gradle.properties
+
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+        tasks.withType(Javadoc) {
+            // The javadoc task in Java 8 is too strict and throws unnecessary syntax errors
+            // if our comments fail to abide by the new standard.
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
+}
+
+android.libraryVariants.all { variant ->
+    def name = variant.buildType.name
+    def task = project.tasks.create "jar${name.capitalize()}", Jar
+
+    task.dependsOn variant.javaCompile
+    task.from variant.javaCompile.destinationDir
+    artifacts.add('archives', task)
+}
+
+android.libraryVariants.all { variant ->
+    task("generate${variant.name.capitalize()}Javadoc", type: Javadoc) {
+        title = project.ext.displayName
+        description "Generates Javadoc for $variant.name."
+        source = variant.javaCompile.source
+        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+        classpath += configurations.compile
+
+        options {
+            links "http://docs.oracle.com/javase/7/docs/api/"
+            linksOffline "https://developer.android.com/reference","${android.sdkDirectory}/docs/reference"
+        }
+
+        exclude '**/BuildConfig.java'
+        exclude '**/R.java'
+    }
+}
+
+publish {
+    repoName = bintrayRepo
+    userOrg = bintrayUserOrg
+    groupId = project.group
+    artifactId = project.ext.projectName
+    uploadName = project.ext.uploadName
+    version = project.version
+    description = project.description
+    website = siteUrl
+    repository = gitUrl
+
+    bintrayUser = project.hasProperty("bintray.user") ? project.getProperty("bintray.user") : ""
+    bintrayKey = project.hasProperty("bintray.apikey") ? project.getProperty("bintray.apikey") : ""
+
+    dryRun = false
+}
