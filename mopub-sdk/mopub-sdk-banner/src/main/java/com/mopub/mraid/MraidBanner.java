@@ -63,15 +63,18 @@ class MraidBanner extends CustomEventBanner {
 
         mMraidController.setDebugListener(mDebugListener);
         mMraidController.setMraidListener(new MraidListener() {
+            public boolean failedToLoadOnce = false;
+
             @Override
             public void onLoaded(View view) {
                 // Honoring the server dimensions forces the WebView to be the size of the banner
                 AdViewController.setShouldHonorServerDimensions(view);
-                mBannerListener.onBannerLoaded(view);
+                mBannerListener.onBannerLoaded(view, this.failedToLoadOnce);
             }
 
             @Override
             public void onFailedToLoad() {
+                failedToLoadOnce = true;
                 mBannerListener.onBannerFailed(MRAID_LOAD_ERROR);
             }
 

@@ -50,7 +50,7 @@ public abstract class CustomEventBanner {
          * needs to display the provided View. Failure to do so will disrupt the mediation waterfall
          * and cause future ad requests to stall.
          */
-        void onBannerLoaded(View bannerView);
+        void onBannerLoaded(View bannerView, boolean failedToLoadOnce);
         
         /*
          * Your custom event subclass must call this method when it fails to load an ad.
