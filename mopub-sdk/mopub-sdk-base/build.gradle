@@ -4,20 +4,21 @@ repositories {
     flatDir {
         dirs './libs'
     }
-    maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
+//    maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
 }
 
 dependencies {
     api 'com.mopub.volley:mopub-volley:2.0.0'
 
-    def avidEnabled = project.hasProperty("mopub.avidEnabled") ? project.getProperty("mopub.avidEnabled").toBoolean() : true
-    if (avidEnabled) {
-        implementation('com.mopub:libAvid-mopub:3.6.4')
-    }
-    def moatEnabled = project.hasProperty("mopub.moatEnabled") ? project.getProperty("mopub.moatEnabled").toBoolean() : true
-    if (moatEnabled) {
-        implementation 'com.moat.analytics.mobile.mpub:moat-mobile-app-kit:2.4.5'
-    }
+//    def avidEnabled = project.hasProperty("mopub.avidEnabled") ? project.getProperty("mopub.avidEnabled").toBoolean() : true
+//    if (avidEnabled) {
+//        implementation('com.mopub:libAvid-mopub:3.6.4')
+//    }
+//    def moatEnabled = project.hasProperty("mopub.moatEnabled") ? project.getProperty("mopub.moatEnabled").toBoolean() : true
+//    if (moatEnabled) {
+//        implementation 'com.moat.analytics.mobile.mpub:moat-mobile-app-kit:2.4.5'
+//    }
+//
 }
 
 project.description = 'MoPub Android SDK - Base'

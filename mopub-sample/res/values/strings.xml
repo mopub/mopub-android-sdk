@@ -20,12 +20,12 @@
     <string name="ad_type">Ad Type:</string>
     <string name="add_ad_unit_title">Add an Ad Unit</string>
     <string name="add_ad_unit_button">Add an Ad Unit</string>
-    <string name="ad_unit_id_banner">b195f8dd8ded45fe847ad89ed1d016da</string>
-    <string name="ad_unit_id_mrect">252412d5e9364a05ab77d9396346d73d</string>
+    <string name="ad_unit_id_banner">9109daacd0c14dfc9fd4bdec5785cc44</string>
+    <string name="ad_unit_id_mrect">0400c36ea77e41cb85bc45cf0c7389d9</string>
     <string name="ad_unit_id_leaderboard">a8919cca19784497872ae69d48f678e1</string>
-    <string name="ad_unit_id_interstitial">24534e1901884e398f1253216226017e</string>
-    <string name="ad_unit_id_rewarded_video">920b6145fb1546cf8b5cf2ac34638bb7</string>
-    <string name="ad_unit_id_rewarded_rich_media">15173ac6d3e54c9389b9a5ddca69b34b</string>
-    <string name="ad_unit_id_native">11a17b188668469fb0412708c3d16813</string>
+    <string name="ad_unit_id_interstitial">ca07611f4a684c0d94641a180fea7b12</string>
+    <string name="ad_unit_id_rewarded_video">44debba1b0ff484485ef6ebda98b67cb</string>
+    <string name="ad_unit_id_rewarded_rich_media">44debba1b0ff484485ef6ebda98b67cb</string>
+    <string name="ad_unit_id_native">b0bfa27c21b64a0b91051e68e02e0953</string>
     <string name="swipe_text"><![CDATA[< Swipe Left & Right >]]></string>
 </resources>

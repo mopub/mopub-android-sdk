@@ -6,7 +6,7 @@ repositories {
     flatDir {
         dirs project(':mopub-sdk').file('../libs')
     }
-    maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
+//    maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
 }
 
 project.group = 'com.mopub'
@@ -14,7 +14,7 @@ project.version = '5.2.0'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+//    buildToolsVersion '26.0.2'
     lintOptions { abortOnError false }
     useLibrary 'org.apache.http.legacy'
 

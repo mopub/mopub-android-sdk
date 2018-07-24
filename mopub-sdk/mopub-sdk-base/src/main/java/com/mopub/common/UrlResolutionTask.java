@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
@@ -54,20 +55,25 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
 
             int redirectCount = 0;
             while (locationUrl != null && redirectCount < REDIRECT_LIMIT) {
+                Log.d("Nick","location url:" + locationUrl);
+                Log.d("Nick","redirectCount:" + redirectCount);
                 // if location url is not http(s), assume it's an Android deep link
                 // this scheme will fail URL validation so we have to check early
                 if (!UrlAction.OPEN_IN_APP_BROWSER.shouldTryHandlingUrl(Uri.parse(locationUrl))) {
+                    Log.d("Nick","OPEN_IN_APP_BROWSER");
                     return locationUrl;
                 }
 
                 // Do not resolve redirects if native browser will handle the URL.
                 if (UrlAction.OPEN_NATIVE_BROWSER.shouldTryHandlingUrl(Uri.parse(locationUrl))) {
+                    Log.d("Nick","OPEN_NATIVE_BROWSER");
                     return locationUrl;
                 }
 
                 previousUrl = locationUrl;
                 locationUrl = getRedirectLocation(locationUrl);
                 redirectCount++;
+
             }
 
         } catch (IOException e) {

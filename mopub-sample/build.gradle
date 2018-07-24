@@ -4,7 +4,9 @@ repositories {
     flatDir {
         dirs '../libs'
     }
-    maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
+//    maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://dl.bintray.com/ironsource-mobile/android-sdk'}
 }
 
 apply plugin: 'com.android.application'
@@ -15,7 +17,7 @@ project.version = '5.2.0'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+//    buildToolsVersion '26.0.2'
     lintOptions { abortOnError false }
 
     defaultConfig {
@@ -54,12 +56,36 @@ android {
     // way that the existing SDK requires, using the sdk.dir property.
     // Alternatively, you can set an environment variable called ANDROID_HOME. There is no 
     // difference between the two methods, you can use the one you prefer.
+    buildToolsVersion '27.0.3'
 }
 
 dependencies {
     implementation 'com.android.support:support-v4:26.1.0'
-    implementation 'com.google.android.gms:play-services-ads:11.4.0'
-    implementation 'com.google.android.gms:play-services-base:11.4.0'
+    implementation 'com.google.android.gms:play-services-base:15.0.0'
     implementation 'com.android.support:recyclerview-v7:26.1.0'
     implementation project(':mopub-sdk')
+
+    // AppLovin
+    implementation 'com.applovin:applovin-sdk:8.0.1'
+    implementation 'com.mopub.mediation:applovin:8.0.1.0'
+
+    // Google (AdMob)
+    implementation 'com.google.android.gms:play-services-ads:15.0.0'
+    implementation 'com.mopub.mediation:admob:15.0.0.8'
+
+    // Facebook Audience Network
+    implementation 'com.facebook.android:audience-network-sdk:4.99.0'
+    implementation 'com.mopub.mediation:facebookaudiencenetwork:4.99.0.0'
+
+    // Unity Ads
+    // This mediated network SDK is not available on JCenter. Ensure you have downloaded and imported it manually into your app project.
+    implementation 'com.mopub.mediation:unityads:2.2.1.2'
+
+    // Vungle
+    implementation 'com.github.vungle:vungle-android-sdk:6.2.5'
+    implementation 'com.mopub.mediation:vungle:6.2.5.1'
+
+    // ironSource
+    implementation 'com.ironsource.sdk:mediationsdk:6.7.9.1@jar'
+    implementation 'com.mopub.mediation:ironsource:6.7.9.1.0'
 }

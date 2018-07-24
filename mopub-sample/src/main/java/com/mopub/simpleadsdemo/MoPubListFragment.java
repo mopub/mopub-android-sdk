@@ -53,6 +53,8 @@ public class MoPubListFragment extends ListFragment implements TrashCanClickList
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         initializeAdapter();
+
+        MoPub.setBrowserAgent(MoPub.BrowserAgent.NATIVE);
     }
 
     void addAdUnitViaDeeplink(@Nullable final Uri deeplinkData) {

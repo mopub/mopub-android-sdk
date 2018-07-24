@@ -28,6 +28,7 @@ import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.LIST_VIEW;
 import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.MRECT;
 import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.RECYCLER_VIEW;
 import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.REWARDED_VIDEO;
+import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.MANUAL_NATIVE;
 
 class AdUnitDataSource {
     private Context mContext;
@@ -172,6 +173,11 @@ class AdUnitDataSource {
                 new MoPubSampleAdUnit
                         .Builder(mContext.getString(R.string.ad_unit_id_native), CUSTOM_NATIVE)
                         .description("MoPub View Pager Sample")
+                        .build());
+        adUnitList.add(
+                new MoPubSampleAdUnit
+                        .Builder(mContext.getString(R.string.ad_unit_id_native), MANUAL_NATIVE)
+                        .description("MoPub Native Manual Sample")
                         .build());
         return adUnitList;
     }
