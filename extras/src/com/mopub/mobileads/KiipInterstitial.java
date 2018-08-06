@@ -83,7 +83,7 @@ public class KiipInterstitial extends CustomEventInterstitial {
                 Kiip.getInstance().setUserId(serverExtras.get("userId"));
             }
             if (serverExtras.containsKey("ageGroup")) {
-                Kiip.getInstance().setAgeGroup(Kiip.AgeGroup.valueOf(serverExtras.get("ageGroup")));
+                Kiip.getInstance().setAgeGroup(Kiip.AgeGroup.values()[Integer.valueOf(serverExtras.get("ageGroup"))]);
             }
             if (serverExtras.containsKey("momentId")) {
                 Kiip.getInstance().saveMoment(serverExtras.get("momentId"), new Kiip.Callback() {
