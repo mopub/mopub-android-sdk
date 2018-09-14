@@ -16,6 +16,7 @@ import com.mopub.common.Constants;
 import com.mopub.common.DataKeys;
 import com.mopub.common.ExternalViewabilitySessionManager;
 import com.mopub.common.FullAdType;
+import com.mopub.common.JSONObjectSerializable;
 import com.mopub.common.MoPub;
 import com.mopub.common.Preconditions;
 import com.mopub.common.logging.MoPubLog;
@@ -429,6 +430,8 @@ public class MultiAdResponse implements Iterator<AdResponse> {
                 ResponseHeader.ENABLE_DEBUG_LOGGING, false)) {
             MoPubLog.setLogLevel(MoPubLog.LogLevel.DEBUG);
         }
+
+        builder.setRawPayload(new JSONObjectSerializable(jsonHeaders));
 
         return builder.build();
     }
