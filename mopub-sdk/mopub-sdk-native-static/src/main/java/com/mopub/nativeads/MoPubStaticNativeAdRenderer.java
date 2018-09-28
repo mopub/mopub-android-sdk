@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 
-import java.util.WeakHashMap;
+import com.mopub.mobileads.native_static.R;
 
 import static android.view.View.VISIBLE;
 
@@ -20,10 +20,6 @@ import static android.view.View.VISIBLE;
 public class MoPubStaticNativeAdRenderer implements MoPubAdRenderer<StaticNativeAd> {
     @NonNull private final ViewBinder mViewBinder;
 
-    // This is used instead of View.setTag, which causes a memory leak in 2.3
-    // and earlier: https://code.google.com/p/android/issues/detail?id=18273
-    @VisibleForTesting @NonNull final WeakHashMap<View, StaticNativeViewHolder> mViewHolderMap;
-
     /**
      * Constructs a native ad renderer with a view binder.
      *
@@ -31,7 +27,6 @@ public class MoPubStaticNativeAdRenderer implements MoPubAdRenderer<StaticNative
      */
     public MoPubStaticNativeAdRenderer(@NonNull final ViewBinder viewBinder) {
         mViewBinder = viewBinder;
-        mViewHolderMap = new WeakHashMap<View, StaticNativeViewHolder>();
     }
 
     @Override
@@ -45,10 +40,11 @@ public class MoPubStaticNativeAdRenderer implements MoPubAdRenderer<StaticNative
     @Override
     public void renderAdView(@NonNull final View view,
             @NonNull final StaticNativeAd staticNativeAd) {
-        StaticNativeViewHolder staticNativeViewHolder = mViewHolderMap.get(view);
+        StaticNativeViewHolder staticNativeViewHolder = (StaticNativeViewHolder)
+            view.getTag(R.id.mopub_tag_MoPubStaticNativeAdRenderer_StaticNativeViewHolder);
         if (staticNativeViewHolder == null) {
             staticNativeViewHolder = StaticNativeViewHolder.fromViewBinder(view, mViewBinder);
-            mViewHolderMap.put(view, staticNativeViewHolder);
+            view.setTag(R.id.mopub_tag_MoPubStaticNativeAdRenderer_StaticNativeViewHolder, staticNativeViewHolder);
         }
 
         update(staticNativeViewHolder, staticNativeAd);

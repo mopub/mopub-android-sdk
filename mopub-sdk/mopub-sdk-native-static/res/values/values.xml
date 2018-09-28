@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<item name="mopub_tag_MoPubStaticNativeAdRenderer_StaticNativeViewHolder" type="id"/>
+	<item name="mopub_tag_NativeAdViewHelper_NativeAd" type="id"/>
+</resources>
