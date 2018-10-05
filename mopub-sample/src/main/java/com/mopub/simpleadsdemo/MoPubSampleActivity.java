@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.simpleadsdemo;
 
 import android.annotation.TargetApi;
@@ -52,6 +56,9 @@ public class MoPubSampleActivity extends FragmentActivity {
     @Nullable
     PersonalInfoManager mPersonalInfoManager;
 
+    @Nullable
+    private ConsentStatusChangeListener mConsentStatusChangeListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,14 +89,25 @@ public class MoPubSampleActivity extends FragmentActivity {
                 .build();
         MoPub.initializeSdk(this, sdkConfiguration, initSdkListener());
 
+        mConsentStatusChangeListener = initConsentChangeListener();
         mPersonalInfoManager = MoPub.getPersonalInformationManager();
         if (mPersonalInfoManager != null) {
-            mPersonalInfoManager.subscribeConsentStatusChangeListener(initConsentChangeListener());
+            mPersonalInfoManager.subscribeConsentStatusChangeListener(mConsentStatusChangeListener);
         }
 
         // Intercepts all logs including Level.FINEST so we can show a toast
         // that is not normally user-facing. This is only used for native ads.
         LoggingUtils.enableCanaryLogging(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (mPersonalInfoManager != null) {
+            // unsubscribe or memory leak will occur
+            mPersonalInfoManager.unsubscribeConsentStatusChangeListener(mConsentStatusChangeListener);
+        }
+        mConsentStatusChangeListener = null;
+        super.onDestroy();
     }
 
     private void createMoPubListFragment(@NonNull final Intent intent) {

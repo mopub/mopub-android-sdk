@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -29,6 +33,7 @@ import static com.mopub.mobileads.MoPubErrorCode.NETWORK_TIMEOUT;
 import static com.mopub.mobileads.MoPubErrorCode.UNSPECIFIED;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -40,6 +45,8 @@ import static org.mockito.Mockito.when;
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class CustomEventBannerAdapterTest {
+    private static final int DEFAULT_TIMEOUT_DELAY = CustomEventBannerAdapter.DEFAULT_BANNER_TIMEOUT_DELAY;
+
     private CustomEventBannerAdapter subject;
     @Mock
     private MoPubView moPubView;
@@ -55,7 +62,7 @@ public class CustomEventBannerAdapterTest {
 
     @Before
     public void setUp() throws Exception {
-        when(moPubView.getAdTimeoutDelay()).thenReturn(null);
+        when(moPubView.getAdTimeoutDelay(anyInt())).thenReturn(DEFAULT_TIMEOUT_DELAY);
         when(moPubView.getAdWidth()).thenReturn(320);
         when(moPubView.getAdHeight()).thenReturn(50);
 
@@ -75,6 +82,7 @@ public class CustomEventBannerAdapterTest {
         expectedServerExtras = new HashMap<String, String>();
 
         banner = CustomEventBannerFactory.create(CLASS_NAME);
+        when(banner.isAutomaticImpressionAndClickTrackingEnabled()).thenReturn(true);
     }
 
     @Test
@@ -87,22 +95,7 @@ public class CustomEventBannerAdapterTest {
     public void timeout_shouldSignalFailureAndInvalidateWithDefaultDelay() throws Exception {
         subject.loadAd();
 
-        ShadowLooper.idleMainLooper(CustomEventBannerAdapter.DEFAULT_BANNER_TIMEOUT_DELAY - 1);
-        verify(moPubView, never()).loadFailUrl(eq(NETWORK_TIMEOUT));
-        assertThat(subject.isInvalidated()).isFalse();
-
-        ShadowLooper.idleMainLooper(1);
-        verify(moPubView).loadFailUrl(eq(NETWORK_TIMEOUT));
-        assertThat(subject.isInvalidated()).isTrue();
-    }
-
-    @Test
-    public void timeout_withNegativeAdTimeoutDelay_shouldSignalFailureAndInvalidateWithDefaultDelay() throws Exception {
-        when(moPubView.getAdTimeoutDelay()).thenReturn(-1);
-
-        subject.loadAd();
-
-        ShadowLooper.idleMainLooper(CustomEventBannerAdapter.DEFAULT_BANNER_TIMEOUT_DELAY - 1);
+        ShadowLooper.idleMainLooper(DEFAULT_TIMEOUT_DELAY - 1);
         verify(moPubView, never()).loadFailUrl(eq(NETWORK_TIMEOUT));
         assertThat(subject.isInvalidated()).isFalse();
 
@@ -113,7 +106,7 @@ public class CustomEventBannerAdapterTest {
 
     @Test
     public void timeout_withNonNullAdTimeoutDelay_shouldSignalFailureAndInvalidateWithCustomDelay() throws Exception {
-       when(moPubView.getAdTimeoutDelay()).thenReturn(77);
+       when(moPubView.getAdTimeoutDelay(anyInt())).thenReturn(77000);
 
         subject.loadAd();
 
@@ -263,7 +256,7 @@ public class CustomEventBannerAdapterTest {
         View mockHtmlBannerWebView = mock(HtmlBannerWebView.class);
         subject.onBannerLoaded(mockHtmlBannerWebView);
 
-        verify(moPubView).nativeAdLoaded();
+        verify(moPubView).creativeDownloaded();
         verify(moPubView).setAdContentView(eq(mockHtmlBannerWebView));
         verify(moPubView, never()).trackNativeImpression();
 
@@ -279,7 +272,7 @@ public class CustomEventBannerAdapterTest {
         View view = new View(Robolectric.buildActivity(Activity.class).create().get());
         subject.onBannerLoaded(view);
 
-        verify(moPubView).nativeAdLoaded();
+        verify(moPubView).creativeDownloaded();
         verify(moPubView).setAdContentView(eq(view));
         verify(moPubView).trackNativeImpression();
 
@@ -304,7 +297,7 @@ public class CustomEventBannerAdapterTest {
         assertThat(subject.isVisibilityImpressionTrackingEnabled()).isTrue();
         assertThat(subject.getVisibilityTracker()).isNotNull();
         assertThat(subject.getVisibilityTracker().getBannerVisibilityTrackerListener()).isNotNull();
-        verify(moPubView).nativeAdLoaded();
+        verify(moPubView).creativeDownloaded();
         verify(moPubView).setAdContentView(eq(mockHtmlBannerWebView));
         verify(moPubView, never()).trackNativeImpression();
         verify(moPubView).pauseAutorefresh();
@@ -326,7 +319,7 @@ public class CustomEventBannerAdapterTest {
         assertThat(subject.isVisibilityImpressionTrackingEnabled()).isTrue();
         assertThat(subject.getVisibilityTracker()).isNotNull();
         assertThat(subject.getVisibilityTracker().getBannerVisibilityTrackerListener()).isNotNull();
-        verify(moPubView).nativeAdLoaded();
+        verify(moPubView).creativeDownloaded();
         verify(moPubView).setAdContentView(eq(view));
         verify(moPubView, never()).trackNativeImpression();
         verify(moPubView).pauseAutorefresh();
@@ -379,6 +372,24 @@ public class CustomEventBannerAdapterTest {
     }
 
     @Test
+    public void onBannerImpression_withAutomaticImpressionAndClickTrackingEnabled_shouldDoNothing() {
+        when(banner.isAutomaticImpressionAndClickTrackingEnabled()).thenReturn(true);
+
+        subject.onBannerImpression();
+
+        verify(moPubView, never()).trackNativeImpression();
+    }
+
+    @Test
+    public void onBannerImpression_withAutomaticImpressionAndClickTrackingDisabled_shouldRegisterImpression() {
+        when(banner.isAutomaticImpressionAndClickTrackingEnabled()).thenReturn(false);
+
+        subject.onBannerImpression();
+
+        verify(moPubView).trackNativeImpression();
+    }
+
+    @Test
     public void onLeaveApplication_shouldRegisterClick() throws Exception {
         subject.onLeaveApplication();
 
@@ -411,7 +422,7 @@ public class CustomEventBannerAdapterTest {
         subject.onBannerClicked();
         subject.onLeaveApplication();
 
-        verify(moPubView, never()).nativeAdLoaded();
+        verify(moPubView, never()).creativeDownloaded();
         verify(moPubView, never()).setAdContentView(any(View.class));
         verify(moPubView, never()).trackNativeImpression();
         verify(moPubView, never()).loadFailUrl(any(MoPubErrorCode.class));

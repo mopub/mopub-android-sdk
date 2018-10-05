@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.app.Activity;
@@ -16,6 +20,7 @@ import android.widget.ListView;
 import com.mopub.common.Preconditions;
 import com.mopub.common.Preconditions.NoThrow;
 import com.mopub.common.VisibleForTesting;
+import com.mopub.common.VisibilityTracker;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubClientPositioning;
 import com.mopub.nativeads.MoPubNativeAdPositioning.MoPubServerPositioning;
 
@@ -25,7 +30,7 @@ import java.util.WeakHashMap;
 import static android.widget.AdapterView.OnItemClickListener;
 import static android.widget.AdapterView.OnItemLongClickListener;
 import static android.widget.AdapterView.OnItemSelectedListener;
-import static com.mopub.nativeads.VisibilityTracker.VisibilityTrackerListener;
+import static com.mopub.common.VisibilityTracker.VisibilityTrackerListener;
 
 /**
  * {@code MoPubAdAdapter} facilitates placing ads into an Android {@link android.widget.ListView} or

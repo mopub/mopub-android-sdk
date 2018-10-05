@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -8,6 +12,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import com.mopub.TestSdkHelper;
+import com.mopub.common.Constants;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.GestureUtils;
 import com.mopub.mobileads.test.support.VastUtils;
@@ -77,7 +82,7 @@ public class VastWebViewTest {
 
         ShadowWebView.LoadDataWithBaseURL lastLoadData
                 = Shadows.shadowOf(subject).getLastLoadDataWithBaseURL();
-        assertThat(lastLoadData.baseUrl).isEqualTo("http://ads.mopub.com/");
+        assertThat(lastLoadData.baseUrl).isEqualTo("http://" + Constants.HOST + "/");
         assertThat(lastLoadData.data).isEqualTo(data);
         assertThat(lastLoadData.mimeType).isEqualTo("text/html");
         assertThat(lastLoadData.encoding).isEqualTo("utf-8");

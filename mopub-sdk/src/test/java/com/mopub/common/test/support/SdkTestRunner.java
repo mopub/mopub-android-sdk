@@ -1,4 +1,10 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common.test.support;
+
+import android.support.annotation.NonNull;
 
 import com.mopub.common.CacheService;
 import com.mopub.common.ClientMetadata;
@@ -51,6 +57,7 @@ public class SdkTestRunner extends RobolectricTestRunner {
     }
 
     @Override
+    @NonNull
     protected Class<? extends TestLifecycle> getTestLifecycleClass() {
         return TestLifeCycleWithInjection.class;
     }

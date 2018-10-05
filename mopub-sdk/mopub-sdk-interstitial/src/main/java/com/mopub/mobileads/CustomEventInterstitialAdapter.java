@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.content.Context;
@@ -136,18 +140,25 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
         mCustomEventInterstitialAdapterListener = listener;
     }
 
+    boolean isAutomaticImpressionAndClickTrackingEnabled() {
+        final CustomEventInterstitial customEventInterstitial = mCustomEventInterstitial;
+        if (customEventInterstitial == null) {
+            return true;
+        }
+
+        return customEventInterstitial.isAutomaticImpressionAndClickTrackingEnabled();
+    }
+
     private void cancelTimeout() {
         mHandler.removeCallbacks(mTimeout);
     }
 
     private int getTimeoutDelayMilliseconds() {
-        if (mMoPubInterstitial == null
-                || mMoPubInterstitial.getAdTimeoutDelay() == null
-                || mMoPubInterstitial.getAdTimeoutDelay() < 0) {
+        if (mMoPubInterstitial == null ) {
             return DEFAULT_INTERSTITIAL_TIMEOUT_DELAY;
         }
 
-        return mMoPubInterstitial.getAdTimeoutDelay() * 1000;
+        return mMoPubInterstitial.getAdTimeoutDelay(DEFAULT_INTERSTITIAL_TIMEOUT_DELAY);
     }
 
     interface CustomEventInterstitialAdapterListener {
@@ -155,6 +166,7 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
         void onCustomEventInterstitialFailed(MoPubErrorCode errorCode);
         void onCustomEventInterstitialShown();
         void onCustomEventInterstitialClicked();
+        void onCustomEventInterstitialImpression();
         void onCustomEventInterstitialDismissed();
     }
 
@@ -208,6 +220,17 @@ public class CustomEventInterstitialAdapter implements CustomEventInterstitialLi
 
         if (mCustomEventInterstitialAdapterListener != null) {
             mCustomEventInterstitialAdapterListener.onCustomEventInterstitialClicked();
+        }
+    }
+
+    @Override
+    public void onInterstitialImpression() {
+        if (isInvalidated()) {
+            return;
+        }
+
+        if (mCustomEventInterstitialAdapterListener != null) {
+            mCustomEventInterstitialAdapterListener.onCustomEventInterstitialImpression();
         }
     }
 

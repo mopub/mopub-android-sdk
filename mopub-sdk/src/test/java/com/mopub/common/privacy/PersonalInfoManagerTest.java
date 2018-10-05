@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common.privacy;
 
 import android.app.Activity;
@@ -5,6 +9,7 @@ import android.content.Context;
 import android.os.SystemClock;
 
 import com.mopub.common.ClientMetadata;
+import com.mopub.common.MoPub;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
 import com.mopub.network.MoPubRequestQueue;
@@ -34,7 +39,7 @@ import static org.mockito.Mockito.when;
 @RunWith(SdkTestRunner.class)
 @PowerMockIgnore({"org.mockito.*", "org.robolectric.*", "android.*", "org.json.*"})
 @Config(constants = BuildConfig.class)
-@PrepareForTest({ClientMetadata.class, Networking.class, AdvertisingId.class})
+@PrepareForTest({ClientMetadata.class, Networking.class, AdvertisingId.class, MoPub.class})
 public class PersonalInfoManagerTest {
 
     private static int DEFAULT_TIME_MS = 300000;
@@ -72,6 +77,9 @@ public class PersonalInfoManagerTest {
         mockRequestQueue = mock(MoPubRequestQueueTest.TestMoPubRequestQueue2.class);
         when(Networking.getRequestQueue(any(Context.class))).thenReturn(mockRequestQueue);
         when(Networking.getScheme()).thenReturn("https");
+
+        PowerMockito.mockStatic(MoPub.class);
+        when(MoPub.isSdkInitialized()).thenReturn(true);
 
         subject = new PersonalInfoManager(activity, "adunit", null);
         personalInfoData = subject.getPersonalInfoData();
@@ -586,6 +594,35 @@ public class PersonalInfoManagerTest {
                 SystemClock.uptimeMillis() - LONG_TIME_MS, DEFAULT_TIME_MS,
                 null, false);
         assertThat(actual).isFalse();
+    }
+
+    @Test
+    public void requestSync_withSdkInitialized_withShouldMakeSyncRequestTrue_shouldAddSyncRequestToRequestQueue() {
+        personalInfoData.setGdprApplies(true);
+
+        subject.requestSync(true);
+
+        verify(mockRequestQueue).add(any(SyncRequest.class));
+    }
+
+    @Test
+    public void requestSync_withSdkNotInitialized_shouldDoNothing() {
+        personalInfoData.setGdprApplies(true);
+        when(MoPub.isSdkInitialized()).thenReturn(false);
+
+        subject.requestSync(true);
+
+        verifyZeroInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void requestSyncNoParams_withSdkNotInitialized_shouldAddSyncRequestToRequestQueue() {
+        personalInfoData.setGdprApplies(true);
+        when(MoPub.isSdkInitialized()).thenReturn(false);
+
+        subject.requestSync();
+
+        verify(mockRequestQueue).add(any(SyncRequest.class));
     }
 
     @Test

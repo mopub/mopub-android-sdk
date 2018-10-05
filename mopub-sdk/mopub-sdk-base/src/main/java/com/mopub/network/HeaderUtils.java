@@ -1,26 +1,26 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.network;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.mopub.common.Preconditions;
+import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.ResponseHeader;
-import com.mopub.volley.Header;
-import com.mopub.volley.toolbox.HttpResponse;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.NumberFormat;
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class HeaderUtils {
-    @Nullable
-    public static String extractHeader(Map<String, String> headers, ResponseHeader responseHeader) {
-        return headers.get(responseHeader.getKey().toLowerCase());
-    }
 
     @NonNull
     public static String extractHeader(@Nullable final JSONObject headers,
@@ -31,17 +31,12 @@ public class HeaderUtils {
             return "";
         }
 
-        final String key = getKeyIgnoreCase(headers, responseHeader.getKey());
-        return headers.optString(key);
+        return headers.optString(responseHeader.getKey());
     }
 
     @Nullable
     public static Integer extractIntegerHeader(JSONObject headers, ResponseHeader responseHeader) {
         return formatIntHeader(extractHeader(headers, responseHeader));
-    }
-
-    public static boolean extractBooleanHeader(Map<String, String> headers, ResponseHeader responseHeader, boolean defaultValue) {
-        return formatBooleanHeader(extractHeader(headers, responseHeader), defaultValue);
     }
 
     public static boolean extractBooleanHeader(JSONObject headers, ResponseHeader responseHeader, boolean defaultValue) {
@@ -53,36 +48,34 @@ public class HeaderUtils {
         return formatPercentHeader(extractHeader(headers, responseHeader));
     }
 
+    @NonNull
+    static List<String> extractStringArray(@NonNull final JSONObject headers,
+            @NonNull final ResponseHeader responseHeader) {
+        Preconditions.checkNotNull(headers);
+        Preconditions.checkNotNull(responseHeader);
+
+        final List<String> stringArray = new ArrayList<>();
+        final JSONArray jsonArray = headers.optJSONArray(responseHeader.getKey());
+        if (jsonArray == null) {
+            return stringArray;
+        }
+
+        for (int i = 0; i < jsonArray.length(); i++) {
+            try {
+                stringArray.add(jsonArray.getString(i));
+            } catch (JSONException e) {
+                MoPubLog.d("Unable to parse item " + i + " from " + responseHeader.getKey());
+            }
+        }
+
+        return stringArray;
+    }
+
     @Nullable
-    public static String extractPercentHeaderString(JSONObject headers,
+    static String extractPercentHeaderString(JSONObject headers,
             ResponseHeader responseHeader) {
         Integer percentHeaderValue = extractPercentHeader(headers, responseHeader);
         return percentHeaderValue != null ? percentHeaderValue.toString() : null;
-    }
-
-    @Nullable
-    public static String extractHeader(HttpResponse response, ResponseHeader responseHeader) {
-        final Header header = getFirstHeader(response.getHeaders(), responseHeader);
-        return header != null ? header.getValue() : null;
-    }
-
-    public static boolean extractBooleanHeader(HttpResponse response, ResponseHeader responseHeader, boolean defaultValue) {
-        return formatBooleanHeader(extractHeader(response, responseHeader), defaultValue);
-    }
-
-    @Nullable
-    public static Integer extractIntegerHeader(HttpResponse response, ResponseHeader responseHeader) {
-        String headerValue = extractHeader(response, responseHeader);
-        return formatIntHeader(headerValue);
-    }
-
-    public static int extractIntHeader(HttpResponse response, ResponseHeader responseHeader, int defaultValue) {
-        Integer headerValue = extractIntegerHeader(response, responseHeader);
-        if (headerValue == null) {
-            return defaultValue;
-        }
-
-        return headerValue;
     }
 
     private static boolean formatBooleanHeader(@Nullable String headerValue, boolean defaultValue) {
@@ -126,37 +119,5 @@ public class HeaderUtils {
         }
 
         return percentValue;
-    }
-
-    private static Header getFirstHeader(@Nullable final List<Header> headers,
-            @NonNull final ResponseHeader responseHeader) {
-        Preconditions.checkNotNull(responseHeader);
-
-        if (headers == null) {
-            return null;
-        }
-
-        for (final Header header : headers) {
-            if (header.getName().equalsIgnoreCase(responseHeader.getKey())) {
-                return header;
-            }
-        }
-        return null;
-    }
-
-    @NonNull
-    private static String getKeyIgnoreCase(@NonNull final JSONObject json,
-                                           @NonNull final String searchKey) {
-        Preconditions.checkNotNull(json);
-        Preconditions.checkNotNull(searchKey);
-
-        final Iterator<String> keys = json.keys();
-        while (keys.hasNext()) {
-            final String key = keys.next();
-            if (searchKey.equalsIgnoreCase(key)) {
-                return key;
-            }
-        }
-        return searchKey;
     }
 }

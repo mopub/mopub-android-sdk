@@ -1,10 +1,10 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common.util;
 
 import android.os.AsyncTask;
-import android.os.Handler;
-import android.os.Looper;
-
-import com.mopub.mobileads.test.support.ThreadUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -13,8 +13,8 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.shadows.ShadowLooper;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.Semaphore;
 
-import static junit.framework.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.spy;
@@ -48,33 +48,19 @@ public class AsyncTasksTest {
         AsyncTasks.safeExecuteOnExecutor(null, "hello");
     }
 
-
     @Test
-    public void safeExecuteOnExecutor_runningOnABackgroundThread_shouldThrowIllegalStateException() throws Exception {
-        ensureFastFailWhenTaskIsRunOnBackgroundThread();
-    }
-
-    private void ensureFastFailWhenTaskIsRunOnBackgroundThread() {
+    public void safeExecuteOnExecutor_runningOnABackgroundThread_shouldStartAsyncTaskOnUiThread() throws Exception {
+        final Semaphore semaphore = new Semaphore(0);
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    AsyncTasks.safeExecuteOnExecutor(asyncTask, "hello");
-
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            fail("Should have thrown IllegalStateException");
-                        }
-                    });
-                } catch (IllegalStateException exception) {
-                    // pass
-                }
+                AsyncTasks.safeExecuteOnExecutor(asyncTask, "hello");
+                semaphore.release();
             }
         }).start();
 
-        ThreadUtils.pause(10);
+        semaphore.acquire();
         ShadowLooper.runUiThreadTasks();
+        verify(asyncTask).executeOnExecutor(any(Executor.class), eq("hello"));
     }
 }

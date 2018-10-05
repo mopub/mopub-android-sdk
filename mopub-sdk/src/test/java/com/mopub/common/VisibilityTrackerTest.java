@@ -1,4 +1,8 @@
-package com.mopub.nativeads;
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
+package com.mopub.common;
 
 import android.app.Activity;
 import android.graphics.Rect;
@@ -9,9 +13,9 @@ import android.view.ViewParent;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 
+import com.mopub.common.VisibilityTracker.TrackingInfo;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.BuildConfig;
-import com.mopub.nativeads.VisibilityTracker.TrackingInfo;
 
 import org.fest.util.Lists;
 import org.junit.Before;
@@ -31,8 +35,8 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 import static android.view.ViewTreeObserver.OnPreDrawListener;
-import static com.mopub.nativeads.VisibilityTracker.VisibilityChecker;
-import static com.mopub.nativeads.VisibilityTracker.VisibilityTrackerListener;
+import static com.mopub.common.VisibilityTracker.VisibilityChecker;
+import static com.mopub.common.VisibilityTracker.VisibilityTrackerListener;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -368,7 +372,7 @@ public class VisibilityTrackerTest {
         assertThat(trackedViews).hasSize(1);
     }
 
-    static View createViewMock(final int visibility,
+    public static View createViewMock(final int visibility,
             final int visibleWidth,
             final int visibleHeight,
             final int viewWidth,

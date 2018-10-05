@@ -1,3 +1,7 @@
+@rem Copyright 2018 Twitter, Inc.
+@rem Licensed under the MoPub SDK License Agreement
+@rem http://www.mopub.com/legal/sdk-license-agreement/
+
 @if "%DEBUG%" == "" @echo off
 @rem ##########################################################################
 @rem

@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -21,7 +25,7 @@ import java.util.Map;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.stub;
+import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -37,8 +41,8 @@ public class AdTypeTranslatorTest {
         moPubInterstitialView = mock(MoPubInterstitial.MoPubInterstitialView.class);
 
         Context context = Robolectric.buildActivity(Activity.class).create().get();
-        stub(moPubView.getContext()).toReturn(context);
-        stub(moPubInterstitialView.getContext()).toReturn(context);
+        when(moPubView.getContext()).thenReturn(context);
+        when(moPubInterstitialView.getContext()).thenReturn(context);
 
         Map<String, String> stringHeaders = new HashMap<String, String>();
         headers = new JSONObject(stringHeaders);

@@ -1,9 +1,10 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingBottom="8dp" >
+    android:paddingBottom="8dp"
+    android:textDirection="locale">
 
     <TextView
         android:id="@+id/separator"
@@ -20,8 +21,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
+            android:paddingEnd="8dp"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
+            android:paddingStart="8dp"
             android:paddingTop="8dp"
             android:singleLine="true"
             android:textColor="?android:attr/textColorPrimary"
@@ -34,8 +37,10 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/banner_description"
             android:layout_marginTop="8dp"
+            android:paddingEnd="8dp"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
+            android:paddingStart="8dp"
             android:singleLine="true"
             android:textColor="?android:attr/textColorSecondary"
             android:textSize="14sp"
@@ -45,10 +50,10 @@
             android:id="@+id/banner_delete"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_delete"
-            />
+            android:src="@android:drawable/ic_menu_delete" />
 
     </RelativeLayout>
 </LinearLayout>

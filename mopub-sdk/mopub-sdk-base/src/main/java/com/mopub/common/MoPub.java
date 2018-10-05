@@ -1,7 +1,12 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -16,7 +21,7 @@ import java.lang.reflect.Method;
 import static com.mopub.common.ExternalViewabilitySessionManager.ViewabilityVendor;
 
 public class MoPub {
-    public static final String SDK_VERSION = "5.2.0";
+    public static final String SDK_VERSION = "5.4.0";
 
     public enum LocationAwareness { NORMAL, TRUNCATED, DISABLED }
 
@@ -166,6 +171,7 @@ public class MoPub {
 
         if (sSdkInitialized) {
             MoPubLog.d("MoPub SDK is already initialized");
+            initializationFinished(sdkInitializationListener);
             return;
         }
         if (sSdkInitializing) {
@@ -180,16 +186,9 @@ public class MoPub {
 
         sSdkInitializing = true;
 
-        final SdkInitializationListener internalSdkInitializationListener = new SdkInitializationListener() {
-            @Override
-            public void onInitializationFinished() {
-                sSdkInitializing = false;
-                sSdkInitialized = true;
-                if (sdkInitializationListener != null) {
-                    sdkInitializationListener.onInitializationFinished();
-                }
-            }
-        };
+        final InternalSdkInitializationListener internalSdkInitializationListener =
+                new InternalSdkInitializationListener(sdkInitializationListener);
+
         final SdkInitializationListener compositeSdkInitializationListener =
                 new CompositeSdkInitializationListener(internalSdkInitializationListener, 2);
 
@@ -310,6 +309,34 @@ public class MoPub {
             MoPubLog.w("initializeRewardedVideo was called without the rewarded video module");
         } catch (Exception e) {
             MoPubLog.e("Error while initializing rewarded video", e);
+        }
+    }
+
+    private static void initializationFinished(@Nullable final SdkInitializationListener sdkInitializationListener) {
+        sSdkInitializing = false;
+        sSdkInitialized = true;
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                if (sdkInitializationListener != null) {
+                    sdkInitializationListener.onInitializationFinished();
+                }
+            }
+        });
+    }
+
+    private static class InternalSdkInitializationListener implements SdkInitializationListener {
+        @Nullable
+        private SdkInitializationListener mSdkInitializationListener;
+
+        InternalSdkInitializationListener(@Nullable SdkInitializationListener sdkInitializationListener) {
+            mSdkInitializationListener = sdkInitializationListener;
+        }
+
+        @Override
+        public void onInitializationFinished() {
+            initializationFinished(mSdkInitializationListener);
+            mSdkInitializationListener = null;
         }
     }
 

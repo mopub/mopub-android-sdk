@@ -1,17 +1,16 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.mopub.common.UrlAction;
 import com.mopub.common.UrlHandler;
-import com.mopub.common.logging.MoPubLog;
-import com.mopub.common.util.Intents;
-import com.mopub.exceptions.IntentNotResolvableException;
 
 import java.util.EnumSet;
 
@@ -37,15 +36,12 @@ class HtmlWebViewClient extends WebViewClient {
     private final HtmlWebViewListener mHtmlWebViewListener;
     private final BaseHtmlWebView mHtmlWebView;
     private final String mClickthroughUrl;
-    private final String mRedirectUrl;
 
     HtmlWebViewClient(HtmlWebViewListener htmlWebViewListener,
-            BaseHtmlWebView htmlWebView, String clickthrough,
-            String redirect, String dspCreativeId) {
+            BaseHtmlWebView htmlWebView, String clickthrough, String dspCreativeId) {
         mHtmlWebViewListener = htmlWebViewListener;
         mHtmlWebView = htmlWebView;
         mClickthroughUrl = clickthrough;
-        mRedirectUrl = redirect;
         mDspCreativeId = dspCreativeId;
         mContext = htmlWebView.getContext();
     }
@@ -90,22 +86,4 @@ class HtmlWebViewClient extends WebViewClient {
                 .build().handleUrl(mContext, url, mHtmlWebView.wasClicked());
         return true;
     }
-
-    @Override
-    public void onPageStarted(WebView view, String url, Bitmap favicon) {
-        // If the URL being loaded shares the redirectUrl prefix, open it in the browser.
-        if (mRedirectUrl != null && url.startsWith(mRedirectUrl)) {
-            view.stopLoading();
-            if (mHtmlWebView.wasClicked()) {
-                try {
-                    Intents.showMoPubBrowserForUrl(mContext, Uri.parse(url), mDspCreativeId);
-                } catch (IntentNotResolvableException e) {
-                    MoPubLog.d(e.getMessage());
-                }
-            } else {
-                MoPubLog.d("Attempted to redirect without user interaction");
-            }
-        }
-    }
-
 }

@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -30,8 +34,6 @@ public class HtmlInterstitialWebViewTest {
     private HtmlInterstitialWebView subject;
     private CustomEventInterstitialListener customEventInterstitialListener;
     private String clickthroughUrl;
-    private boolean isScrollable;
-    private String redirectUrl;
     private String dspCreativeId;
 
     @Before
@@ -39,22 +41,20 @@ public class HtmlInterstitialWebViewTest {
         subject = new HtmlInterstitialWebView(Robolectric.buildActivity(Activity.class).create().get(),
                 mockAdReport);
         customEventInterstitialListener = mock(CustomEventInterstitialListener.class);
-        isScrollable = false;
         clickthroughUrl = "clickthroughUrl";
-        redirectUrl = "redirectUrl";
         dspCreativeId = "dspCreativeId";
     }
 
     @Test
-    public void init_shouldSetupWebViewClient() throws Exception {
-        subject.init(customEventInterstitialListener, false, clickthroughUrl, redirectUrl, dspCreativeId);
+    public void init_shouldSetupWebViewClient() {
+        subject.init(customEventInterstitialListener, clickthroughUrl, dspCreativeId);
         WebViewClient webViewClient = Shadows.shadowOf(subject).getWebViewClient();
         assertThat(webViewClient).isNotNull();
         assertThat(webViewClient).isInstanceOf(HtmlWebViewClient.class);
     }
 
     @Test
-    public void htmlBannerWebViewListener_shouldForwardCalls() throws Exception {
+    public void htmlBannerWebViewListener_shouldForwardCalls() {
         HtmlInterstitialWebViewListener listenerSubject = new HtmlInterstitialWebViewListener(customEventInterstitialListener);
 
         listenerSubject.onLoaded(subject);

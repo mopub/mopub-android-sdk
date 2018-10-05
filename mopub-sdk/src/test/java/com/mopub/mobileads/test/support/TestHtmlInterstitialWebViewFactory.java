@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads.test.support;
 
 import android.content.Context;
@@ -13,8 +17,6 @@ public class TestHtmlInterstitialWebViewFactory extends HtmlInterstitialWebViewF
     private HtmlInterstitialWebView mockHtmlInterstitialWebView = mock(HtmlInterstitialWebView.class);
 
     private CustomEventInterstitialListener latestListener;
-    private boolean latestIsScrollable;
-    private String latestRedirectUrl;
     private String latestClickthroughUrl;
 
     public static HtmlInterstitialWebView getSingletonMock() {
@@ -26,23 +28,14 @@ public class TestHtmlInterstitialWebViewFactory extends HtmlInterstitialWebViewF
     }
 
     @Override
-    public HtmlInterstitialWebView internalCreate(Context context, AdReport adReport, CustomEventInterstitialListener customEventInterstitialListener, boolean isScrollable, String redirectUrl, String clickthroughUrl) {
+    public HtmlInterstitialWebView internalCreate(Context context, AdReport adReport, CustomEventInterstitialListener customEventInterstitialListener, String clickthroughUrl) {
         latestListener = customEventInterstitialListener;
-        latestIsScrollable = isScrollable;
-        latestRedirectUrl = redirectUrl;
         latestClickthroughUrl = clickthroughUrl;
         return getTestFactory().mockHtmlInterstitialWebView;
     }
 
     public static CustomEventInterstitialListener getLatestListener() {
         return getTestFactory().latestListener;
-    }
-
-    public static boolean getLatestIsScrollable() {
-        return getTestFactory().latestIsScrollable;
-    }
-    public static String getLatestRedirectUrl() {
-        return getTestFactory().latestRedirectUrl;
     }
 
     public static String getLatestClickthroughUrl() {

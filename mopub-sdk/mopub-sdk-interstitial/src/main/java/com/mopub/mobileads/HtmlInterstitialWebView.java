@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.content.Context;
@@ -16,11 +20,11 @@ public class HtmlInterstitialWebView extends BaseHtmlWebView {
         mHandler = new Handler();
     }
 
-    public void init(final CustomEventInterstitialListener customEventInterstitialListener, boolean isScrollable, String redirectUrl, String clickthroughUrl, String dspCreativeId) {
-        super.init(isScrollable);
+    public void init(final CustomEventInterstitialListener customEventInterstitialListener, String clickthroughUrl, String dspCreativeId) {
+        super.init();
 
         HtmlInterstitialWebViewListener htmlInterstitialWebViewListener = new HtmlInterstitialWebViewListener(customEventInterstitialListener);
-        HtmlWebViewClient htmlWebViewClient = new HtmlWebViewClient(htmlInterstitialWebViewListener, this, clickthroughUrl, redirectUrl, dspCreativeId);
+        HtmlWebViewClient htmlWebViewClient = new HtmlWebViewClient(htmlInterstitialWebViewListener, this, clickthroughUrl, dspCreativeId);
         setWebViewClient(htmlWebViewClient);
     }
 

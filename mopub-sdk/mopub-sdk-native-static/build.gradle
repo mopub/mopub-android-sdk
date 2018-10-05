@@ -1,8 +1,12 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 apply from: '../shared-build.gradle'
 
 dependencies {
     api project(':mopub-sdk:mopub-sdk-base')
-    api 'com.android.support:recyclerview-v7:26.1.0'
+    api 'com.android.support:recyclerview-v7:28.0.0'
 }
 
 project.description = 'MoPub Android SDK - Native Static'

@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.app.Activity;
@@ -12,6 +16,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
 import org.robolectric.annotation.Config;
+
+import java.util.Collections;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -34,8 +40,8 @@ public class AdRendererRegistryTest {
     public void setUp() {
         context = Robolectric.buildActivity(Activity.class).create().get();
         subject = new AdRendererRegistry();
-        mNativeAd = new NativeAd(context, "impression", "click", "adunit",
-                mock(BaseNativeAd.class), mockRenderer);
+        mNativeAd = new NativeAd(context, Collections.singletonList("impression"), "click",
+                "adunit", mock(BaseNativeAd.class), mockRenderer);
         when(mockRenderer.supports(mockNativeAd)).thenReturn(true);
     }
 

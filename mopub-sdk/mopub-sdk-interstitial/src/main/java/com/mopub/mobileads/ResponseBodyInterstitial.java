@@ -1,6 +1,11 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import com.mopub.common.AdReport;
 import com.mopub.common.ExternalViewabilitySessionManager;
@@ -14,6 +19,7 @@ import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_INVALID_STATE;
 
 public abstract class ResponseBodyInterstitial extends CustomEventInterstitial {
+    @Nullable
     private EventForwardingBroadcastReceiver mBroadcastReceiver;
     protected Context mContext;
     protected AdReport mAdReport;
@@ -67,6 +73,7 @@ public abstract class ResponseBodyInterstitial extends CustomEventInterstitial {
     public void onInvalidate() {
         if (mBroadcastReceiver != null) {
             mBroadcastReceiver.unregister(mBroadcastReceiver);
+            mBroadcastReceiver = null;
         }
     }
 

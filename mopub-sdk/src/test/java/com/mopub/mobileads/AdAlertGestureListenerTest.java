@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.content.Context;
@@ -20,7 +24,7 @@ import static com.mopub.mobileads.AdAlertGestureListener.ZigZagState.GOING_LEFT;
 import static com.mopub.mobileads.AdAlertGestureListener.ZigZagState.GOING_RIGHT;
 import static com.mopub.mobileads.AdAlertGestureListener.ZigZagState.UNSET;
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Mockito.stub;
+import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -41,7 +45,7 @@ public class AdAlertGestureListenerTest {
 
     @Before
     public void setup() {
-        stub(mockView.getContext()).toReturn(mockContext);
+        when(mockView.getContext()).thenReturn(mockContext);
 
         subject = new AdAlertGestureListener(mockView, mockAdReport);
 
@@ -54,21 +58,21 @@ public class AdAlertGestureListenerTest {
 
     @Test
     public void constructor_shouldSetThresholdToOneThirdOfViewsWidth() throws Exception {
-        stub(mockView.getWidth()).toReturn(150);
+        when(mockView.getWidth()).thenReturn(150);
         subject = new AdAlertGestureListener(mockView, mockAdReport);
         assertThat(subject.getMinimumDipsInZigZag()).isEqualTo(50);
     }
 
     @Test
     public void constructor_whenViewWidthIsWiderThanThreeTimesMaxThreshold_shouldSetThresholdTo100() throws Exception {
-        stub(mockView.getWidth()).toReturn(500);
+        when(mockView.getWidth()).thenReturn(500);
         subject = new AdAlertGestureListener(mockView, mockAdReport);
         assertThat(subject.getMinimumDipsInZigZag()).isEqualTo(100);
     }
 
     @Test
     public void constructor_whenViewWidthIs0_shouldSetThresholdTo100() throws Exception {
-        stub(mockView.getWidth()).toReturn(0);
+        when(mockView.getWidth()).thenReturn(0);
         subject = new AdAlertGestureListener(mockView, mockAdReport);
         assertThat(subject.getMinimumDipsInZigZag()).isEqualTo(100);
     }

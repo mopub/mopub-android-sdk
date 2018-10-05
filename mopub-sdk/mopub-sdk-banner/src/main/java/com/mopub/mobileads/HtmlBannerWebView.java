@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.content.Context;
@@ -13,10 +17,10 @@ public class HtmlBannerWebView extends BaseHtmlWebView {
         super(context, adReport);
     }
 
-    public void init(CustomEventBannerListener customEventBannerListener, boolean isScrollable, String redirectUrl, String clickthroughUrl, String dspCreativeId) {
-        super.init(isScrollable);
+    public void init(CustomEventBannerListener customEventBannerListener, String clickthroughUrl, String dspCreativeId) {
+        super.init();
 
-        setWebViewClient(new HtmlWebViewClient(new HtmlBannerWebViewListener(customEventBannerListener), this, clickthroughUrl, redirectUrl, dspCreativeId));
+        setWebViewClient(new HtmlWebViewClient(new HtmlBannerWebViewListener(customEventBannerListener), this, clickthroughUrl, dspCreativeId));
     }
 
     static class HtmlBannerWebViewListener implements HtmlWebViewListener {

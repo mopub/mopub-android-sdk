@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads.factories;
 
 import android.content.Context;
@@ -14,21 +18,17 @@ public class HtmlInterstitialWebViewFactory {
             Context context,
             AdReport adReport,
             CustomEventInterstitialListener customEventInterstitialListener,
-            boolean isScrollable,
-            String redirectUrl,
             String clickthroughUrl) {
-        return instance.internalCreate(context, adReport, customEventInterstitialListener, isScrollable, redirectUrl, clickthroughUrl);
+        return instance.internalCreate(context, adReport, customEventInterstitialListener, clickthroughUrl);
     }
 
     public HtmlInterstitialWebView internalCreate(
             Context context,
             AdReport adReport,
             CustomEventInterstitialListener customEventInterstitialListener,
-            boolean isScrollable,
-            String redirectUrl,
             String clickthroughUrl) {
         HtmlInterstitialWebView htmlInterstitialWebView = new HtmlInterstitialWebView(context, adReport);
-        htmlInterstitialWebView.init(customEventInterstitialListener, isScrollable, redirectUrl, clickthroughUrl, adReport.getDspCreativeId());
+        htmlInterstitialWebView.init(customEventInterstitialListener, clickthroughUrl, adReport.getDspCreativeId());
         return htmlInterstitialWebView;
     }
 

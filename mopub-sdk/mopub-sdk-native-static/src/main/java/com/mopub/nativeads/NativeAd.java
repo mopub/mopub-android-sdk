@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.content.Context;
@@ -12,6 +16,7 @@ import com.mopub.network.AdResponse;
 import com.mopub.network.TrackingRequest;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.mopub.nativeads.BaseNativeAd.NativeEventListener;
@@ -61,7 +66,7 @@ public class NativeAd {
     private boolean mIsDestroyed;
 
     public NativeAd(@NonNull final Context context,
-            @NonNull final String moPubImpressionTrackerUrl,
+            @NonNull final List<String> moPubImpressionTrackerUrls,
             @NonNull final String moPubClickTrackerUrl,
             @NonNull final String adUnitId,
             @NonNull final BaseNativeAd baseNativeAd,
@@ -71,7 +76,7 @@ public class NativeAd {
         mAdUnitId = adUnitId;
 
         mImpressionTrackers = new HashSet<String>();
-        mImpressionTrackers.add(moPubImpressionTrackerUrl);
+        mImpressionTrackers.addAll(moPubImpressionTrackerUrls);
         mImpressionTrackers.addAll(baseNativeAd.getImpressionTrackers());
 
         mClickTrackers = new HashSet<String>();

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              android:padding="@dimen/sample_text_size">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="@dimen/sample_text_size"
+    android:textDirection="locale">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,13 +17,13 @@
             android:layout_width="80sp"
             android:layout_height="wrap_content"
             android:text="@string/ad_type"
-            android:textSize="@dimen/sample_text_size"/>
+            android:textSize="@dimen/sample_text_size" />
 
         <Spinner
             android:id="@+id/add_ad_unit_type"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+            android:layout_weight="1" />
     </LinearLayout>
 
     <LinearLayout
@@ -36,14 +36,14 @@
             android:layout_width="80sp"
             android:layout_height="wrap_content"
             android:text="@string/ad_unit_id"
-            android:textSize="@dimen/sample_text_size"/>
+            android:textSize="@dimen/sample_text_size" />
 
         <EditText
             android:id="@+id/add_ad_unit_id"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="@string/ad_unit_hint"/>
+            android:hint="@string/ad_unit_hint" />
 
     </LinearLayout>
 
@@ -58,14 +58,14 @@
             android:layout_width="80sp"
             android:layout_height="wrap_content"
             android:text="@string/ad_unit_name"
-            android:textSize="@dimen/sample_text_size"/>
+            android:textSize="@dimen/sample_text_size" />
 
         <EditText
             android:id="@+id/add_ad_unit_description"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="@string/ad_unit_name_hint"/>
+            android:hint="@string/ad_unit_name_hint" />
     </LinearLayout>
 
 </LinearLayout>

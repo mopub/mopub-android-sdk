@@ -1,10 +1,21 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common.util;
 
+import android.graphics.Bitmap;
+
+import com.mopub.common.util.test.support.TestDrawables;
+import com.mopub.mobileads.test.support.FileUtils;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -16,9 +27,17 @@ import static org.fest.assertions.api.Assertions.fail;
 
 @RunWith(RobolectricTestRunner.class)
 public class StreamsTest {
+
+    @Before
+    public void setUp() throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        TestDrawables.EXPECTED_FILE.getBitmap().compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        FileUtils.writeBytesToFile(baos.toByteArray(), "/tmp/expectedFile.jpg");
+    }
+
     @Test
     public void copyStream_shouldCopyContentsOfOneStreamToAnother() throws Exception {
-        File inFile = new File("etc/expectedFile.jpg");
+        File inFile = new File("/tmp/expectedFile.jpg");
         FileInputStream in = new FileInputStream(inFile);
         File tempFile = File.createTempFile("foo", "bar");
         FileOutputStream out = new FileOutputStream(tempFile);
@@ -30,7 +49,7 @@ public class StreamsTest {
 
     @Test
     public void copyStream_withMaxBytes_belowThreshold_shouldCopyContentsOfOneStreamToAnother() throws Exception {
-        File inFile = new File("etc/expectedFile.jpg");
+        File inFile = new File("/tmp/expectedFile.jpg");
         FileInputStream in = new FileInputStream(inFile);
         File tempFile = File.createTempFile("foo", "bar");
         FileOutputStream out = new FileOutputStream(tempFile);

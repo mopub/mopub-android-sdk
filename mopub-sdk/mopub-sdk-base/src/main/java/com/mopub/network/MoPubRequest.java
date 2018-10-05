@@ -1,18 +1,27 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.network;
 
 import android.content.Context;
+import android.os.Build;
+import android.os.LocaleList;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import com.mopub.common.Preconditions;
-import com.mopub.common.VisibleForTesting;
+import com.mopub.common.util.ResponseHeader;
 import com.mopub.volley.NetworkResponse;
 import com.mopub.volley.Request;
 import com.mopub.volley.Response;
 import com.mopub.volley.toolbox.HttpHeaderParser;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Changes the type of request it is based on whether or not the request is going to MoPub's ad
@@ -75,9 +84,46 @@ public abstract class MoPubRequest<T> extends Request<T>  {
         return parsed;
     }
 
-    @VisibleForTesting
     @NonNull
     public String getOriginalUrl() {
         return mOriginalUrl;
+    }
+
+    @Override
+    public Map<String, String> getHeaders() {
+        final TreeMap<String, String> headers = new TreeMap<>();
+
+        Locale userLocale = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            LocaleList list = mContext.getResources().getConfiguration().getLocales();
+            if (list.size() > 0) {
+                userLocale = list.get(0);
+            }
+        } else {
+            userLocale = mContext.getResources().getConfiguration().locale;
+        }
+
+        final String language;
+        final String country;
+        if (userLocale != null && !TextUtils.isEmpty(userLocale.toString().trim())) {
+            // If user's preferred locale is available
+            language = userLocale.getLanguage().trim();
+            country = userLocale.getCountry().trim();
+        } else {
+            // Use default locale
+            language = Locale.getDefault().getLanguage().trim();
+            country = Locale.getDefault().getCountry().trim();
+        }
+
+        String languageCode;
+        if (!TextUtils.isEmpty(language)) {
+            languageCode = language;
+            if (!TextUtils.isEmpty(country)) {
+                languageCode += "-" + country.toLowerCase();
+            }
+            headers.put(ResponseHeader.ACCEPT_LANGUAGE.getKey(), languageCode);
+        }
+
+        return headers;
     }
 }

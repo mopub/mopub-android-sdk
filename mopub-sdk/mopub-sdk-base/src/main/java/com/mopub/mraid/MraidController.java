@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mraid;
 
 import android.app.Activity;
@@ -25,13 +29,13 @@ import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 
 import com.mopub.common.AdReport;
-import com.mopub.common.ExternalViewabilitySessionManager;
-import com.mopub.common.UrlHandler;
 import com.mopub.common.CloseableLayout;
 import com.mopub.common.CloseableLayout.ClosePosition;
 import com.mopub.common.CloseableLayout.OnCloseListener;
+import com.mopub.common.ExternalViewabilitySessionManager;
 import com.mopub.common.Preconditions;
 import com.mopub.common.UrlAction;
+import com.mopub.common.UrlHandler;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DeviceUtils;
@@ -523,7 +527,7 @@ public class MraidController {
                         MraidNativeCommandHandler.isStorePictureSupported(mContext),
                         isInlineVideoAvailable());
                 mMraidBridge.notifyPlacementType(mPlacementType);
-                mMraidBridge.notifyViewability(mMraidBridge.isVisible());
+                mMraidBridge.notifyViewability(mMraidBridge.isViewable());
                 mMraidBridge.notifyReady();
             }
         });
@@ -547,7 +551,7 @@ public class MraidController {
                         isInlineVideoAvailable());
                 mTwoPartBridge.notifyViewState(mViewState);
                 mTwoPartBridge.notifyPlacementType(mPlacementType);
-                mTwoPartBridge.notifyViewability(mTwoPartBridge.isVisible());
+                mTwoPartBridge.notifyViewability(mTwoPartBridge.isViewable());
                 mTwoPartBridge.notifyReady();
             }
         });
@@ -654,16 +658,18 @@ public class MraidController {
         Views.removeFromParent(mCloseableAdContainer);
 
         // Calling destroy eliminates a memory leak on Gingerbread devices
+        detachMraidWebView();
+        detachTwoParWebView();
+    }
+
+    private void detachMraidWebView() {
         mMraidBridge.detach();
-        if (mMraidWebView != null) {
-            mMraidWebView.destroy();
-            mMraidWebView = null;
-        }
+        mMraidWebView = null;
+    }
+
+    private void detachTwoParWebView() {
         mTwoPartBridge.detach();
-        if (mTwoPartWebView != null) {
-            mTwoPartWebView.destroy();
-            mTwoPartWebView = null;
-        }
+        mTwoPartWebView = null;
     }
 
     private void setViewState(@NonNull ViewState viewState) {
@@ -868,8 +874,9 @@ public class MraidController {
         if (mViewState == ViewState.RESIZED || mViewState == ViewState.EXPANDED) {
             if (mTwoPartBridge.isAttached() && mTwoPartWebView != null) {
                 // If we have a two part web view, simply remove it from the closeable container
-                mCloseableAdContainer.removeView(mTwoPartWebView);
-                mTwoPartBridge.detach();
+                final MraidWebView twoPartWebView = mTwoPartWebView;
+                detachTwoParWebView();
+                mCloseableAdContainer.removeView(twoPartWebView);
             } else {
                 // Move the web view from the closeable container back to the default container
                 mCloseableAdContainer.removeView(mMraidWebView);

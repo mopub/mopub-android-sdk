@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -75,6 +79,8 @@ public class MoPubInterstitialTest {
 
         customEventInterstitialAdapter = TestCustomEventInterstitialAdapterFactory.getSingletonMock();
         reset(customEventInterstitialAdapter);
+        when(customEventInterstitialAdapter.isAutomaticImpressionAndClickTrackingEnabled())
+                .thenReturn(true);
         adViewController = TestAdViewControllerFactory.getSingletonMock();
     }
 
@@ -232,6 +238,30 @@ public class MoPubInterstitialTest {
         subject.onCustomEventInterstitialClicked();
 
         verify(interstitialAdListener, never()).onInterstitialClicked(eq(subject));
+    }
+
+    @Test
+    public void onCustomEventInterstitialImpression_whenAutomaticImpressionTrackingIsEnabled_shouldDoNothing() {
+        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
+        subject.setInterstitialView(interstitialView);
+        when(customEventInterstitialAdapter.isAutomaticImpressionAndClickTrackingEnabled())
+                .thenReturn(true);
+
+        subject.onCustomEventInterstitialImpression();
+
+        verify(interstitialView, never()).trackImpression();
+    }
+
+    @Test
+    public void onCustomEventInterstitialImpression_whenAutomaticImpressionTrackingIsDisabled_shouldDoNothing() {
+        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
+        subject.setInterstitialView(interstitialView);
+        when(customEventInterstitialAdapter.isAutomaticImpressionAndClickTrackingEnabled())
+                .thenReturn(false);
+
+        subject.onCustomEventInterstitialImpression();
+
+        verify(interstitialView).trackImpression();
     }
 
     @Test

@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common;
 
 import android.app.Activity;
@@ -38,7 +42,7 @@ public class MoPubHttpUrlConnectionTest {
     public void getHttpUrlConnection_shouldReturnHttpUrlConnectionWithUserAgent() throws Exception {
         HttpURLConnection urlConnection = MoPubHttpUrlConnection.getHttpUrlConnection(url);
 
-        List<String> userAgentHeaders = urlConnection.getRequestProperties().get("User-Agent");
+        List<String> userAgentHeaders = urlConnection.getRequestProperties().get("user-agent");
         assertThat(userAgentHeaders).containsExactly(userAgent);
     }
 

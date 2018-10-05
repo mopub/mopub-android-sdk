@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.content.Context;
@@ -12,9 +16,8 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.mobileads.native_static.R;
 
 /**
- * @deprecated As of release 2.4, use {@link MoPubStaticNativeAdRenderer} instead
+ * Use {@link MoPubStaticNativeAdRenderer} instead
  */
-@Deprecated
 class NativeAdViewHelper {
     private NativeAdViewHelper() {
     }

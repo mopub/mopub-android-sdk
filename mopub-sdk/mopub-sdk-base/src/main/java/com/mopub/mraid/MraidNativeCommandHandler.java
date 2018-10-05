@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mraid;
 
 import android.app.Activity;
@@ -26,6 +30,7 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
 import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.Intents;
+import com.mopub.common.util.ResponseHeader;
 import com.mopub.common.util.Streams;
 import com.mopub.common.util.Utils;
 
@@ -52,9 +57,6 @@ public class MraidNativeCommandHandler {
     interface MraidCommandFailureListener {
         void onFailure(MraidCommandException exception);
     }
-
-    @VisibleForTesting
-    static final String MIME_TYPE_HEADER = "Content-Type";
 
     private static final int MAX_NUMBER_DAYS_IN_MONTH = 31;
     private static final String[] DATE_FORMATS = {
@@ -511,7 +513,7 @@ public class MraidNativeCommandHandler {
             }
             String filename = new File(path).getName();
 
-            final List<String> mimeTypeHeaders = headers.get(MIME_TYPE_HEADER);
+            final List<String> mimeTypeHeaders = headers.get(ResponseHeader.CONTENT_TYPE.getKey());
             if (mimeTypeHeaders == null || mimeTypeHeaders.isEmpty()
                     || mimeTypeHeaders.get(0) == null) {
                 return filename;

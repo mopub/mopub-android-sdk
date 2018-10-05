@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common.privacy;
 
 import android.content.ContentResolver;
@@ -15,6 +19,7 @@ import com.mopub.common.SdkInitializationListener;
 import com.mopub.common.SharedPreferencesHelper;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.common.util.AsyncTasks;
 
 import java.util.Calendar;
 
@@ -83,7 +88,7 @@ public class MoPubIdentifier {
             return;
         }
         mRefreshingAdvertisingInfo = true;
-        new RefreshAdvertisingInfoAsyncTask().execute();
+        AsyncTasks.safeExecuteOnExecutor(new RefreshAdvertisingInfoAsyncTask());
     }
 
     void refreshAdvertisingInfoBackgroundThread() {

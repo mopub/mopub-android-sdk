@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common.privacy;
 
 
@@ -11,6 +15,7 @@ import android.text.TextUtils;
 
 import com.mopub.common.ClientMetadata;
 import com.mopub.common.Constants;
+import com.mopub.common.MoPub;
 import com.mopub.common.Preconditions;
 import com.mopub.common.SdkInitializationListener;
 import com.mopub.common.VisibleForTesting;
@@ -18,8 +23,8 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.ManifestUtils;
 import com.mopub.mobileads.MoPubConversionTracker;
 import com.mopub.mobileads.MoPubErrorCode;
-import com.mopub.network.AdRequest;
 import com.mopub.network.MoPubNetworkError;
+import com.mopub.network.MultiAdResponse;
 import com.mopub.network.Networking;
 import com.mopub.volley.VolleyError;
 
@@ -45,7 +50,7 @@ public class PersonalInfoManager {
     @NonNull private final ConsentDialogController mConsentDialogController;
     @NonNull private final MoPubConversionTracker mConversionTracker;
     @NonNull private final SyncRequest.Listener mSyncRequestListener;
-    @NonNull private AdRequest.ServerOverrideListener mServerOverrideListener;
+    @NonNull private MultiAdResponse.ServerOverrideListener mServerOverrideListener;
     @Nullable private SdkInitializationListener mSdkInitializationListener;
 
     private long mSyncDelayMs = MINIMUM_SYNC_DELAY;
@@ -66,11 +71,11 @@ public class PersonalInfoManager {
                 new HashSet<ConsentStatusChangeListener>());
         mSyncRequestListener = new PersonalInfoSyncRequestListener();
         mServerOverrideListener = new PersonalInfoServerOverrideListener();
-        AdRequest.setServerOverrideListener(mServerOverrideListener);
+        MultiAdResponse.setServerOverrideListener(mServerOverrideListener);
 
         mConsentDialogController = new ConsentDialogController(mAppContext);
 
-        mPersonalInfoData = new PersonalInfoData(context, adUnitId);
+        mPersonalInfoData = new PersonalInfoData(mAppContext, adUnitId);
 
         mConversionTracker = new MoPubConversionTracker(mAppContext);
 
@@ -382,6 +387,10 @@ public class PersonalInfoManager {
      *              a GDPR region or if a request is already in flight.
      */
     public void requestSync(final boolean force) {
+        if (!MoPub.isSdkInitialized()) {
+            return;
+        }
+
         final AdvertisingId advertisingId = ClientMetadata.getInstance(mAppContext)
                 .getMoPubIdentifier().getAdvertisingInfo();
         if (!shouldMakeSyncRequest(mSyncRequestInFlight,
@@ -394,6 +403,11 @@ public class PersonalInfoManager {
             return;
         }
 
+        requestSync();
+    }
+
+    @VisibleForTesting
+    void requestSync() {
         mSyncRequestConsentStatus = mPersonalInfoData.getConsentStatus();
         mSyncRequestEpochTime = Calendar.getInstance().getTimeInMillis();
         mSyncRequestInFlight = true;
@@ -547,7 +561,7 @@ public class PersonalInfoManager {
                         mSdkInitializationListener = null;
                     }
                 } else {
-                    requestSync(false);
+                    requestSync();
                 }
                 new MoPubConversionTracker(mAppContext).reportAppOpen(true);
             }
@@ -659,7 +673,7 @@ public class PersonalInfoManager {
         }
     }
 
-    private class PersonalInfoServerOverrideListener implements AdRequest.ServerOverrideListener {
+    private class PersonalInfoServerOverrideListener implements MultiAdResponse.ServerOverrideListener {
         @Override
         public void onForceExplicitNo(@Nullable final String consentChangeReason) {
             if (TextUtils.isEmpty(consentChangeReason)) {
@@ -705,7 +719,7 @@ public class PersonalInfoManager {
     @NonNull
     @Deprecated
     @VisibleForTesting
-    AdRequest.ServerOverrideListener getServerOverrideListener() {
+    MultiAdResponse.ServerOverrideListener getServerOverrideListener() {
         return mServerOverrideListener;
     }
 }

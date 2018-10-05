@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -39,15 +43,11 @@ public class HtmlBanner extends CustomEventBanner {
         }
 
         String htmlData;
-        String redirectUrl;
         String clickthroughUrl;
-        Boolean isScrollable;
         AdReport adReport;
         if (extrasAreValid(serverExtras)) {
             htmlData = serverExtras.get(DataKeys.HTML_RESPONSE_BODY_KEY);
-            redirectUrl = serverExtras.get(DataKeys.REDIRECT_URL_KEY);
             clickthroughUrl = serverExtras.get(DataKeys.CLICKTHROUGH_URL_KEY);
-            isScrollable = Boolean.valueOf(serverExtras.get(DataKeys.SCROLLABLE_KEY));
 
             try {
                 adReport = (AdReport) localExtras.get(AD_REPORT_KEY);
@@ -61,7 +61,7 @@ public class HtmlBanner extends CustomEventBanner {
             return;
         }
 
-        mHtmlBannerWebView = HtmlBannerWebViewFactory.create(context, adReport, customEventBannerListener, isScrollable, redirectUrl, clickthroughUrl);
+        mHtmlBannerWebView = HtmlBannerWebViewFactory.create(context, adReport, customEventBannerListener, clickthroughUrl);
         AdViewController.setShouldHonorServerDimensions(mHtmlBannerWebView);
 
         // We only measure viewability when we have an activity context. This sets up a delayed
@@ -89,6 +89,7 @@ public class HtmlBanner extends CustomEventBanner {
 
         if (mHtmlBannerWebView != null) {
             mHtmlBannerWebView.destroy();
+            mHtmlBannerWebView = null;
         }
     }
 

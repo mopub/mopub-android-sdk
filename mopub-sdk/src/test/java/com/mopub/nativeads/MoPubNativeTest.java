@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.app.Activity;
@@ -7,8 +11,8 @@ import com.mopub.common.SdkConfiguration;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.privacy.MoPubIdentifierTest;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.util.AsyncTasks;
 import com.mopub.common.util.Reflection;
-import com.mopub.common.util.test.support.ShadowAsyncTasks;
 import com.mopub.common.util.test.support.TestMethodBuilderFactory;
 import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.MoPubErrorCode;
@@ -29,8 +33,10 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
 import org.robolectric.Shadows;
+import org.robolectric.android.util.concurrent.RoboExecutorService;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLog;
+import org.robolectric.shadows.ShadowLooper;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -51,7 +57,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
-@Config(constants = BuildConfig.class, shadows = {ShadowAsyncTasks.class})
+@Config(constants = BuildConfig.class)
 public class MoPubNativeTest {
     private MoPubNative subject;
     private MethodBuilder methodBuilder;
@@ -66,7 +72,10 @@ public class MoPubNativeTest {
     @Before
     public void setup() throws Exception {
         context = Robolectric.buildActivity(Activity.class).create().get();
+        AsyncTasks.setExecutor(new RoboExecutorService());
         MoPub.initializeSdk(context, new SdkConfiguration.Builder("adunit").build(), null);
+        ShadowLooper.runUiThreadTasks();
+
         MoPubIdentifierTest.writeAdvertisingInfoToSharedPreferences(context, false);
         Shadows.shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
         Shadows.shadowOf(context).grantPermissions(INTERNET);
@@ -115,15 +124,15 @@ public class MoPubNativeTest {
 
     @Test
     public void requestNativeAd_shouldFireNetworkRequest() {
-        subject.requestNativeAd("https://www.mopub.com");
+        subject.requestNativeAd("https://www.mopub.com", null);
 
         verify(mockNetworkListener, never()).onNativeFail(any(NativeErrorCode.class));
         verify(mockRequestQueue).add(argThat(isUrl("https://www.mopub.com")));
     }
 
     @Test
-    public void requestNativeAd_whenReqeustQueueDeliversUnknownError_shouldFireNativeFail() {
-
+    public void requestNativeAd_whenRequestQueueDeliversUnknownError_shouldFireNativeFail() {
+        reset(mockRequestQueue);
         when(mockRequestQueue.add(any(Request.class)))
                 .then(new Answer<Void>() {
                     @Override
@@ -132,7 +141,7 @@ public class MoPubNativeTest {
                         return null;
                     }
                 });
-        subject.requestNativeAd("//\\//\\::::");
+        subject.requestNativeAd("//\\//\\::::", null);
 
         verify(mockNetworkListener).onNativeFail(any(NativeErrorCode.class));
     }
@@ -141,7 +150,7 @@ public class MoPubNativeTest {
     public void requestNativeAd_withNullUrl_shouldFireNativeFail() {
         Robolectric.getForegroundThreadScheduler().pause();
 
-        subject.requestNativeAd(null);
+        subject.requestNativeAd(null, null);
 
         verify(mockNetworkListener).onNativeFail(any(NativeErrorCode.class));
         verify(mockRequestQueue, never()).add(any(Request.class));

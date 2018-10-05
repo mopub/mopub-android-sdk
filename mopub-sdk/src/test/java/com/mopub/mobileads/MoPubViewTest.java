@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -167,10 +171,10 @@ public class MoPubViewTest {
     }
     
     @Test
-    public void nativeAdLoaded_shouldScheduleRefreshTimer() throws Exception {
-        subject.nativeAdLoaded();
+    public void creativeDownloaded_shouldCreativeDownloadSuccess() {
+        subject.creativeDownloaded();
 
-        verify(adViewController).scheduleRefreshTimerIfEnabled();
+        verify(adViewController).creativeDownloadSuccess();
     }
 
     @Test

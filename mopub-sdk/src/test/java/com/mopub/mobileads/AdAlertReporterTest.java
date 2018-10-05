@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.content.Context;
@@ -29,7 +33,7 @@ import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.stub;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
@@ -52,8 +56,8 @@ public class AdAlertReporterTest {
     public void setup() {
         bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
 
-        stub(mockView.getRootView()).toReturn(mockView);
-        stub(mockView.getDrawingCache()).toReturn(bitmap);
+        when(mockView.getRootView()).thenReturn(mockView);
+        when(mockView.getDrawingCache()).thenReturn(bitmap);
 
         now = new Date();
         TestDateAndTime.getInstance().setNow(now);
@@ -91,11 +95,11 @@ public class AdAlertReporterTest {
     public void constructor_shouldCreateIntentWithImageStringAndParametersAndResponseInBody() throws Exception {
         TextView textView = mock(TextView.class);
         Bitmap sampleBitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ALPHA_8);
-        stub(textView.getDrawingCache()).toReturn(sampleBitmap);
-        stub(mockView.getRootView()).toReturn(textView);
+        when(textView.getDrawingCache()).thenReturn(sampleBitmap);
+        when(mockView.getRootView()).thenReturn(textView);
 
-        stub(mockAdReport.toString()).toReturn("Ad Report data - this is a long list of newlined params.");
-        stub(mockAdReport.getResponseString()).toReturn("Test ad string.");
+        when(mockAdReport.toString()).thenReturn("Ad Report data - this is a long list of newlined params.");
+        when(mockAdReport.getResponseString()).thenReturn("Test ad string.");
         subject = new AdAlertReporter(mockContext, mockView, mockAdReport);
 
         emailIntent = subject.getEmailIntent();
@@ -124,7 +128,7 @@ public class AdAlertReporterTest {
     public void constructor_shouldSetCorrectResponseString() throws Exception {
         String expectedResponse = "response";
 
-        stub(mockAdReport.getResponseString()).toReturn(expectedResponse);
+        when(mockAdReport.getResponseString()).thenReturn(expectedResponse);
         subject = new AdAlertReporter(mockContext, mockView, mockAdReport);
 
         assertThat(subject.getResponse()).isEqualTo(expectedResponse);
@@ -147,8 +151,8 @@ public class AdAlertReporterTest {
     @Test
     public void getScreenshot_whenIsDrawingCacheEnabled_shouldKeepDrawingCacheEnabled() throws Exception {
         reset(mockView);
-        stub(mockView.getRootView()).toReturn(mockView);
-        stub(mockView.isDrawingCacheEnabled()).toReturn(true);
+        when(mockView.getRootView()).thenReturn(mockView);
+        when(mockView.isDrawingCacheEnabled()).thenReturn(true);
 
         subject = new AdAlertReporter(mockContext, mockView, mockAdReport);
 
@@ -159,8 +163,8 @@ public class AdAlertReporterTest {
     @Test
     public void getScreenshot_whenIsDrawingCacheDisabled_shouldKeepDrawingCacheDisabled() throws Exception {
         reset(mockView);
-        stub(mockView.getRootView()).toReturn(mockView);
-        stub(mockView.isDrawingCacheEnabled()).toReturn(false);
+        when(mockView.getRootView()).thenReturn(mockView);
+        when(mockView.isDrawingCacheEnabled()).thenReturn(false);
 
         subject = new AdAlertReporter(mockContext, mockView, mockAdReport);
 
@@ -176,7 +180,7 @@ public class AdAlertReporterTest {
 
     @Test
     public void getScreenshot_whenRootViewIsNull_shouldPass() throws Exception {
-        stub(mockView.getRootView()).toReturn(null);
+        when(mockView.getRootView()).thenReturn(null);
 
         subject = new AdAlertReporter(mockContext, mockView, mockAdReport);
 
@@ -185,7 +189,7 @@ public class AdAlertReporterTest {
 
     @Test
     public void getScreenshot_whenRootViewDrawingCacheIsNull_shouldPass() throws Exception {
-        stub(mockView.getDrawingCache()).toReturn(null);
+        when(mockView.getDrawingCache()).thenReturn(null);
 
         subject = new AdAlertReporter(mockContext, mockView, mockAdReport);
 

@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common.util;
 
 import android.app.Activity;
@@ -13,7 +17,7 @@ import java.io.File;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.stub;
+import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
 public class FilesTest {
@@ -95,7 +99,7 @@ public class FilesTest {
     @Test
     public void intLength_whenFileHasLengthLessThanMaxInt_shouldReturnThatLength() throws Exception {
         File file = mock(File.class);
-        stub(file.length()).toReturn(1234L);
+        when(file.length()).thenReturn(1234L);
 
         int length = Files.intLength(file);
 
@@ -105,7 +109,7 @@ public class FilesTest {
     @Test
     public void intLength_whenFileHasLengthGreaterThanMaxInt_shouldReturnMaxInt() throws Exception {
         File file = mock(File.class);
-        stub(file.length()).toReturn(Integer.MAX_VALUE + 100L);
+        when(file.length()).thenReturn(Integer.MAX_VALUE + 100L);
 
         int length = Files.intLength(file);
 

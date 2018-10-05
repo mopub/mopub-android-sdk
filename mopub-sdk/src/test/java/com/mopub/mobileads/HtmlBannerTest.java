@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -22,16 +26,14 @@ import java.util.Map;
 
 import static com.mopub.common.DataKeys.CLICKTHROUGH_URL_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
-import static com.mopub.common.DataKeys.REDIRECT_URL_KEY;
-import static com.mopub.common.DataKeys.SCROLLABLE_KEY;
 import static com.mopub.mobileads.MoPubErrorCode.NETWORK_INVALID_STATE;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.stub;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -55,7 +57,6 @@ public class HtmlBannerTest {
         serverExtras = new HashMap<String, String>();
         responseBody = "expected response body";
         serverExtras.put(HTML_RESPONSE_BODY_KEY, responseBody);
-        serverExtras.put(SCROLLABLE_KEY, "false");
     }
 
     @Test
@@ -63,8 +64,6 @@ public class HtmlBannerTest {
         subject.loadBanner(context, customEventBannerListener, localExtras, serverExtras);
 
         assertThat(TestHtmlBannerWebViewFactory.getLatestListener()).isSameAs(customEventBannerListener);
-        assertThat(TestHtmlBannerWebViewFactory.getLatestIsScrollable()).isFalse();
-        assertThat(TestHtmlBannerWebViewFactory.getLatestRedirectUrl()).isNull();
         assertThat(TestHtmlBannerWebViewFactory.getLatestClickthroughUrl()).isNull();
         verify(htmlBannerWebView).loadHtmlResponse(responseBody);
     }
@@ -76,22 +75,16 @@ public class HtmlBannerTest {
 
         verify(customEventBannerListener).onBannerFailed(eq(NETWORK_INVALID_STATE));
         assertThat(TestHtmlBannerWebViewFactory.getLatestListener()).isNull();
-        assertThat(TestHtmlBannerWebViewFactory.getLatestIsScrollable()).isFalse();
-        assertThat(TestHtmlBannerWebViewFactory.getLatestRedirectUrl()).isNull();
         assertThat(TestHtmlBannerWebViewFactory.getLatestClickthroughUrl()).isNull();
         verify(htmlBannerWebView, never()).loadHtmlResponse(anyString());
     }
 
     @Test
     public void loadBanner_shouldPassParametersThrough() throws Exception {
-        serverExtras.put(SCROLLABLE_KEY, "true");
-        serverExtras.put(REDIRECT_URL_KEY, "redirectUrl");
         serverExtras.put(CLICKTHROUGH_URL_KEY, "clickthroughUrl");
         subject.loadBanner(context, customEventBannerListener, localExtras, serverExtras);
 
         assertThat(TestHtmlBannerWebViewFactory.getLatestListener()).isSameAs(customEventBannerListener);
-        assertThat(TestHtmlBannerWebViewFactory.getLatestIsScrollable()).isTrue();
-        assertThat(TestHtmlBannerWebViewFactory.getLatestRedirectUrl()).isEqualTo("redirectUrl");
         assertThat(TestHtmlBannerWebViewFactory.getLatestClickthroughUrl()).isEqualTo("clickthroughUrl");
         verify(htmlBannerWebView).loadHtmlResponse(responseBody);
     }
@@ -130,7 +123,7 @@ public class HtmlBannerTest {
     public void loadBanner_shouldCauseServerDimensionsToBeHonoredWhenLayingOutView() throws Exception {
         subject.loadBanner(context, customEventBannerListener, localExtras, serverExtras);
         MoPubView moPubView = TestMoPubViewFactory.getSingletonMock();
-        stub(moPubView.getContext()).toReturn(context);
+        when(moPubView.getContext()).thenReturn(context);
         AdViewController adViewController = new AdViewController(context, moPubView);
 
 

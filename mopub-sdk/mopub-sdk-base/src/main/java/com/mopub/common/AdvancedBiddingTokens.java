@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common;
 
 import android.content.Context;
@@ -6,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.common.util.AsyncTasks;
 import com.mopub.common.util.Reflection;
 
 import org.json.JSONException;
@@ -33,7 +38,8 @@ public class AdvancedBiddingTokens implements AdvancedBiddersInitializedListener
             @NonNull final List<Class<? extends MoPubAdvancedBidder>> advancedBidderClasses) {
         Preconditions.checkNotNull(advancedBidderClasses);
 
-        new AdvancedBiddersInitializationAsyncTask(advancedBidderClasses, this).execute();
+        AsyncTasks.safeExecuteOnExecutor(
+                new AdvancedBiddersInitializationAsyncTask(advancedBidderClasses, this));
     }
 
     @Nullable

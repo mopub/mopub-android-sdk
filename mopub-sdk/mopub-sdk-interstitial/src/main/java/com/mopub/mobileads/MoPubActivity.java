@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.content.ActivityNotFoundException;
@@ -25,8 +29,6 @@ import static com.mopub.common.DataKeys.BROADCAST_IDENTIFIER_KEY;
 import static com.mopub.common.DataKeys.CLICKTHROUGH_URL_KEY;
 import static com.mopub.common.DataKeys.CREATIVE_ORIENTATION_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
-import static com.mopub.common.DataKeys.REDIRECT_URL_KEY;
-import static com.mopub.common.DataKeys.SCROLLABLE_KEY;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_FAIL;
@@ -42,11 +44,10 @@ public class MoPubActivity extends BaseInterstitialActivity {
     @Nullable private HtmlInterstitialWebView mHtmlInterstitialWebView;
     @Nullable private ExternalViewabilitySessionManager mExternalViewabilitySessionManager;
 
-    public static void start(Context context, String htmlData, AdReport adReport,
-            boolean isScrollable, String redirectUrl, String clickthroughUrl,
+    public static void start(Context context, String htmlData, AdReport adReport, String clickthroughUrl,
             CreativeOrientation creativeOrientation, long broadcastIdentifier) {
-        Intent intent = createIntent(context, htmlData, adReport, isScrollable,
-                redirectUrl, clickthroughUrl, creativeOrientation, broadcastIdentifier);
+        Intent intent = createIntent(context, htmlData, adReport, clickthroughUrl,
+                creativeOrientation, broadcastIdentifier);
         try {
             context.startActivity(intent);
         } catch (ActivityNotFoundException anfe) {
@@ -55,13 +56,11 @@ public class MoPubActivity extends BaseInterstitialActivity {
     }
 
     static Intent createIntent(Context context,
-            String htmlData, AdReport adReport, boolean isScrollable, String redirectUrl,
-            String clickthroughUrl, CreativeOrientation orientation, long broadcastIdentifier) {
+            String htmlData, AdReport adReport, String clickthroughUrl,
+            CreativeOrientation orientation, long broadcastIdentifier) {
         Intent intent = new Intent(context, MoPubActivity.class);
         intent.putExtra(HTML_RESPONSE_BODY_KEY, htmlData);
-        intent.putExtra(SCROLLABLE_KEY, isScrollable);
         intent.putExtra(CLICKTHROUGH_URL_KEY, clickthroughUrl);
-        intent.putExtra(REDIRECT_URL_KEY, redirectUrl);
         intent.putExtra(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
         intent.putExtra(AD_REPORT_KEY, adReport);
         intent.putExtra(CREATIVE_ORIENTATION_KEY, orientation);
@@ -74,13 +73,10 @@ public class MoPubActivity extends BaseInterstitialActivity {
             final AdReport adReport,
             final CustomEventInterstitialListener customEventInterstitialListener,
             final String htmlData,
-            final boolean isScrollable,
-            final String redirectUrl,
             final String clickthroughUrl,
             final long broadcastIdentifier) {
         final HtmlInterstitialWebView htmlInterstitialWebView = HtmlInterstitialWebViewFactory.create(
-                context.getApplicationContext(), adReport, customEventInterstitialListener,
-                isScrollable, redirectUrl, clickthroughUrl);
+                context.getApplicationContext(), adReport, customEventInterstitialListener, clickthroughUrl);
 
         htmlInterstitialWebView.enablePlugins(false);
         htmlInterstitialWebView.enableJavascriptCaching();
@@ -110,8 +106,6 @@ public class MoPubActivity extends BaseInterstitialActivity {
     @Override
     public View getAdView() {
         Intent intent = getIntent();
-        boolean isScrollable = intent.getBooleanExtra(SCROLLABLE_KEY, false);
-        String redirectUrl = intent.getStringExtra(REDIRECT_URL_KEY);
         String clickthroughUrl = intent.getStringExtra(CLICKTHROUGH_URL_KEY);
         String htmlResponse = intent.getStringExtra(HTML_RESPONSE_BODY_KEY);
 
@@ -124,8 +118,8 @@ public class MoPubActivity extends BaseInterstitialActivity {
                     WebViewCacheService.popWebViewConfig(broadcastIdentifier);
             if (config != null && config.getWebView() instanceof HtmlInterstitialWebView) {
                 mHtmlInterstitialWebView = (HtmlInterstitialWebView) config.getWebView();
-                mHtmlInterstitialWebView.init(new BroadcastingInterstitialListener(), isScrollable,
-                        redirectUrl, clickthroughUrl, mAdReport != null ? mAdReport.getDspCreativeId(): null);
+                mHtmlInterstitialWebView.init(new BroadcastingInterstitialListener(), clickthroughUrl,
+                        mAdReport != null ? mAdReport.getDspCreativeId() : null);
                 mHtmlInterstitialWebView.enablePlugins(true);
                 mHtmlInterstitialWebView.loadUrl(WEB_VIEW_DID_APPEAR.getUrl());
 
@@ -137,7 +131,7 @@ public class MoPubActivity extends BaseInterstitialActivity {
 
         MoPubLog.d("WebView cache miss. Recreating the WebView.");
         mHtmlInterstitialWebView = HtmlInterstitialWebViewFactory.create(getApplicationContext(),
-                mAdReport, new BroadcastingInterstitialListener(), isScrollable, redirectUrl, clickthroughUrl);
+                mAdReport, new BroadcastingInterstitialListener(), clickthroughUrl);
         
         mExternalViewabilitySessionManager = new ExternalViewabilitySessionManager(this);
         mExternalViewabilitySessionManager.createDisplaySession(this, mHtmlInterstitialWebView, true);
@@ -200,6 +194,10 @@ public class MoPubActivity extends BaseInterstitialActivity {
         @Override
         public void onInterstitialClicked() {
             broadcastAction(MoPubActivity.this, getBroadcastIdentifier(), ACTION_INTERSTITIAL_CLICK);
+        }
+
+        @Override
+        public void onInterstitialImpression() {
         }
 
         @Override

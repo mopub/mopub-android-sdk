@@ -1,8 +1,12 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 apply from: '../shared-build.gradle'
 
 dependencies {
     api project(':mopub-sdk:mopub-sdk-native-static')
-    api 'com.google.android.exoplayer:exoplayer:r2.4.4'
+    api 'com.google.android.exoplayer:exoplayer:2.8.3'
 }
 
 project.description = 'MoPub Android SDK - Native Video'

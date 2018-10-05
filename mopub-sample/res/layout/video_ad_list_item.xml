@@ -1,35 +1,46 @@
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/native_outer_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/white">
-    <ImageView android:id="@+id/native_icon_image"
+    android:background="@android:color/white"
+    android:textDirection="locale">
+
+    <ImageView
+        android:id="@+id/native_icon_image"
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:background="@null"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginTop="10dp"
         android:layout_marginLeft="10dp"
-        />
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@null"
+        android:contentDescription="@null" />
 
-    <TextView android:id="@+id/native_title"
-        android:layout_width="match_parent"
-        android:layout_marginLeft="84dp"
-        android:layout_marginTop="32dp"
+    <TextView
+        android:id="@+id/native_title"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="84dp"
+        android:layout_marginStart="84dp"
+        android:layout_marginTop="32dp"
         android:textColor="@android:color/darker_gray"
         android:textStyle="bold" />
 
-    <TextView android:id="@+id/native_text"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/native_text"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/native_icon_image"
         android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/native_icon_image"
         android:layout_marginLeft="10dp"
+        android:layout_marginStart="10dp"
         android:layout_marginTop="10dp"
         android:textColor="@android:color/darker_gray" />
 
@@ -38,37 +49,42 @@
         android:id="@+id/native_media_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#000000"
-        android:layout_marginTop="10dp"
+        android:layout_below="@+id/native_text"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="10dp"
+        android:layout_marginEnd="10dp"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
-        android:layout_marginBottom="10dp"
-        android:layout_below="@+id/native_text"
-        android:layout_centerHorizontal="true" />
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:background="#000000" />
 
     <Button
         android:id="@+id/native_cta"
         android:layout_width="wrap_content"
         android:layout_height="35dp"
-        android:text="@string/learn_more"
-        android:textColor="@android:color/black"
-        android:textStyle="bold"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/native_media_layout"
+        android:layout_marginEnd="10dp"
         android:layout_marginRight="10dp"
         android:layout_marginTop="10dp"
-        android:layout_below="@+id/native_media_layout"
-        android:textSize="12sp"
-        android:layout_alignParentRight="true"
         android:clickable="true"
-        android:paddingBottom="10dp" />
+        android:focusable="true"
+        android:paddingBottom="10dp"
+        android:text="@string/learn_more"
+        android:textColor="@android:color/black"
+        android:textSize="12sp"
+        android:textStyle="bold" />
 
     <ImageView
         android:id="@+id/native_privacy_information_icon_image"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:padding="10dp"
-        android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:contentDescription="@string/native_privacy_information_icon_image"/>
+        android:contentDescription="@string/native_privacy_information_icon_image"
+        android:padding="10dp" />
 
 </RelativeLayout>

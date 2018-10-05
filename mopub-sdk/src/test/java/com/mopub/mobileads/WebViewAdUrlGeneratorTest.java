@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -32,6 +36,7 @@ import com.mopub.common.privacy.MoPubIdentifier;
 import com.mopub.common.privacy.MoPubIdentifierTest;
 import com.mopub.common.privacy.PersonalInfoManager;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.util.AsyncTasks;
 import com.mopub.common.util.Reflection;
 import com.mopub.common.util.Reflection.MethodBuilder;
 import com.mopub.common.util.Utils;
@@ -50,8 +55,10 @@ import org.mockito.stubbing.Answer;
 import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.Shadows;
+import org.robolectric.android.util.concurrent.RoboExecutorService;
 import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowLocationManager;
+import org.robolectric.shadows.ShadowLooper;
 import org.robolectric.shadows.ShadowNetworkInfo;
 
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
@@ -89,6 +96,7 @@ public class WebViewAdUrlGeneratorTest {
     private MoPubShadowTelephonyManager shadowTelephonyManager;
     private MoPubShadowConnectivityManager shadowConnectivityManager;
     private Activity context;
+    private Context spyApplicationContext;
     private MethodBuilder methodBuilder;
     private PersonalInfoManager mockPersonalInfoManager;
     private ConsentData mockConsentData;
@@ -100,6 +108,8 @@ public class WebViewAdUrlGeneratorTest {
         Shadows.shadowOf(context).grantPermissions(ACCESS_FINE_LOCATION);
         Shadows.shadowOf(context).grantPermissions(ACCESS_COARSE_LOCATION);
         Shadows.shadowOf(context).grantPermissions(READ_PHONE_STATE);
+
+        AsyncTasks.setExecutor(new RoboExecutorService());
 
         // Set the expected screen dimensions to arbitrary numbers
         final Resources spyResources = spy(context.getResources());
@@ -126,7 +136,7 @@ public class WebViewAdUrlGeneratorTest {
                 }
             }).when(mockDisplay).getRealSize(any(Point.class));
             when(mockWindowManager.getDefaultDisplay()).thenReturn(mockDisplay);
-            final Context spyApplicationContext = spy(context.getApplicationContext());
+            spyApplicationContext = spy(context.getApplicationContext());
             when(spyApplicationContext.getResources()).thenReturn(spyResources);
             when(spyApplicationContext.getPackageName()).thenReturn("testBundle");
             PackageManager mockPackageManager = mock(PackageManager.class);
@@ -208,6 +218,7 @@ public class WebViewAdUrlGeneratorTest {
                 INIT_ADUNIT).withAdvancedBidder(
                 WebViewAdvancedBidder.class).build();
         MoPub.initializeSdk(context, sdkConfiguration, null);
+        ShadowLooper.runUiThreadTasks();
         MoPub.setAdvancedBiddingEnabled(true);
         new Reflection.MethodBuilder(null, "setPersonalInfoManager")
                 .setStatic(MoPub.class)
@@ -945,7 +956,7 @@ public class WebViewAdUrlGeneratorTest {
 
     @Test
     public void generateAdUrl_withNullPackageName_withEmptyPackageName_shouldNotIncludeBundleKey() {
-        when(context.getPackageName()).thenReturn(null).thenReturn("");
+        when(spyApplicationContext.getPackageName()).thenReturn(null).thenReturn("");
 
         final String adUrlNullPackageName = generateMinimumUrlString();
         final String adUrlEmptyPackageName = generateMinimumUrlString();
@@ -1051,7 +1062,7 @@ public class WebViewAdUrlGeneratorTest {
                     (TextUtils.isEmpty(latLon) ? "" :
                             "&ll=" + latLon + "&lla=" + locationAccuracy + "&llf=" + latLonLastUpdated) +
                     "&z=-0700" +
-                    "&o=u" +
+                    "&o=p" +
                     "&w=" + TEST_SCREEN_WIDTH +
                     "&h=" + TEST_SCREEN_HEIGHT +
                     "&sc=1.0" +

@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.support.annotation.NonNull;
@@ -29,9 +33,12 @@ public abstract class BaseNativeAd {
     @NonNull final private Set<String> mClickTrackers;
     @Nullable private NativeEventListener mNativeEventListener;
 
+    private boolean mInvalidated;
+
     protected BaseNativeAd() {
         mImpressionTrackers = new HashSet<String>();
         mClickTrackers = new HashSet<String>();
+        mInvalidated = false;
     }
 
     // Lifecycle Handlers
@@ -154,5 +161,13 @@ public abstract class BaseNativeAd {
     @NonNull
     Set<String> getClickTrackers() {
         return new HashSet<String>(mClickTrackers);
+    }
+
+    public void invalidate(){
+        mInvalidated = true;
+    }
+
+    public boolean isInvalidated(){
+        return mInvalidated;
     }
 }

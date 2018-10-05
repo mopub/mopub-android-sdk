@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.content.Context;
@@ -31,8 +35,8 @@ public class BaseHtmlWebView extends BaseWebView implements UserClickListener {
         setBackgroundColor(Color.TRANSPARENT);
     }
 
-    public void init(boolean isScrollable) {
-        initializeOnTouchListener(isScrollable);
+    public void init() {
+        initializeOnTouchListener();
     }
 
     @Override
@@ -80,13 +84,13 @@ public class BaseHtmlWebView extends BaseWebView implements UserClickListener {
                 "text/html", "utf-8", null);
     }
 
-    void initializeOnTouchListener(final boolean isScrollable) {
+    void initializeOnTouchListener() {
         setOnTouchListener(new View.OnTouchListener() {
             public boolean onTouch(View v, MotionEvent event) {
                 mViewGestureDetector.sendTouchEvent(event);
 
                 // We're not handling events if the current action is ACTION_MOVE
-                return (event.getAction() == MotionEvent.ACTION_MOVE) && !isScrollable;
+                return event.getAction() == MotionEvent.ACTION_MOVE;
             }
         });
     }

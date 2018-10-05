@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mraid;
 
 
@@ -85,16 +89,19 @@ public class RewardedMraidController extends MraidController {
 
     public void pause() {
         stopRunnables();
+        super.pause(false);
     }
 
     @Override
     public void resume() {
+        super.resume();
         startRunnables();
     }
 
     @Override
     public void destroy() {
         stopRunnables();
+        super.destroy();
     }
 
     @Override

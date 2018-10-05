@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.annotation.SuppressLint;
@@ -45,6 +49,10 @@ public class BaseWebView extends WebView {
 
     @Override
     public void destroy() {
+        if (mIsDestroyed) {
+            return;
+        }
+
         mIsDestroyed = true;
 
         // Needed to prevent receiving the following error on Android versions using WebViewClassic

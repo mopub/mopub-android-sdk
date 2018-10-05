@@ -1,4 +1,8 @@
-package com.mopub.nativeads;
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
+package com.mopub.common;
 
 import android.content.Context;
 import android.graphics.Rect;
@@ -9,7 +13,6 @@ import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
-import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Views;
 
@@ -25,7 +28,7 @@ import static android.view.ViewTreeObserver.OnPreDrawListener;
  * Tracks views to determine when they become visible or invisible, where visibility is defined as
  * having been at least X% on the screen.
  */
-class VisibilityTracker {
+public class VisibilityTracker {
     // Time interval to use for throttling visibility checks.
     private static final int VISIBILITY_THROTTLE_MILLIS = 100;
 
@@ -41,7 +44,7 @@ class VisibilityTracker {
     private long mAccessCounter = 0;
 
     // Listener that passes all visible and invisible views when a visibility check occurs
-    interface VisibilityTrackerListener {
+    public interface VisibilityTrackerListener {
         void onVisibilityChanged(List<View> visibleViews, List<View> invisibleViews);
     }
 
@@ -133,7 +136,7 @@ class VisibilityTracker {
         viewTreeObserver.addOnPreDrawListener(mOnPreDrawListener);
     }
 
-    void setVisibilityTrackerListener(
+    public void setVisibilityTrackerListener(
             @Nullable final VisibilityTrackerListener visibilityTrackerListener) {
         mVisibilityTrackerListener = visibilityTrackerListener;
     }
@@ -141,17 +144,17 @@ class VisibilityTracker {
     /**
      * Tracks the given view for visibility.
      */
-    void addView(@NonNull final View view, final int minPercentageViewed,
+    public void addView(@NonNull final View view, final int minPercentageViewed,
             @Nullable final Integer minVisiblePx) {
         addView(view, view, minPercentageViewed, minVisiblePx);
     }
 
-    void addView(@NonNull View rootView, @NonNull final View view, final int minPercentageViewed,
+    public void addView(@NonNull View rootView, @NonNull final View view, final int minPercentageViewed,
             @Nullable final Integer minVisiblePx) {
         addView(rootView, view, minPercentageViewed, minPercentageViewed, minVisiblePx);
     }
 
-    void addView(@NonNull View rootView, @NonNull final View view,
+    public void addView(@NonNull View rootView, @NonNull final View view,
             final int minVisiblePercentageViewed, final int maxInvisiblePercentageViewed,
             @Nullable final Integer minVisiblePx) {
         setViewTreeObserver(view.getContext(), view);
@@ -196,14 +199,14 @@ class VisibilityTracker {
     /**
      * Stops tracking a view, cleaning any pending tracking
      */
-    void removeView(@NonNull final View view) {
+    public void removeView(@NonNull final View view) {
         mTrackedViews.remove(view);
     }
 
     /**
      * Immediately clear all views. Useful for when we re-request ads for an ad placer
      */
-    void clear() {
+    public void clear() {
         mTrackedViews.clear();
         mVisibilityHandler.removeMessages(0);
         mIsVisibilityScheduled = false;
@@ -212,7 +215,7 @@ class VisibilityTracker {
     /**
      * Destroy the visibility tracker, preventing it from future use.
      */
-    void destroy() {
+    public void destroy() {
         clear();
         final ViewTreeObserver viewTreeObserver = mWeakViewTreeObserver.get();
         if (viewTreeObserver != null && viewTreeObserver.isAlive()) {
@@ -222,7 +225,7 @@ class VisibilityTracker {
         mVisibilityTrackerListener = null;
     }
 
-    void scheduleVisibilityCheck() {
+    public void scheduleVisibilityCheck() {
         // Tracking this directly instead of calling hasMessages directly because we measured that
         // this led to slightly better performance.
         if (mIsVisibilityScheduled) {
@@ -273,14 +276,14 @@ class VisibilityTracker {
         }
     }
 
-    static class VisibilityChecker {
+    public static class VisibilityChecker {
         // A rect to use for hit testing. Create this once to avoid excess garbage collection
         private final Rect mClipRect = new Rect();
 
         /**
          * Whether the visible time has elapsed from the start time. Easily mocked for testing.
          */
-        boolean hasRequiredTimeElapsed(final long startTimeMillis, final int minTimeViewed) {
+        public boolean hasRequiredTimeElapsed(final long startTimeMillis, final int minTimeViewed) {
             return SystemClock.uptimeMillis() - startTimeMillis >= minTimeViewed;
         }
 
@@ -288,7 +291,7 @@ class VisibilityTracker {
          * Whether the view is at least certain amount visible. If the min pixel amount is set,
          * use that. Otherwise, use the min percentage visible.
          */
-        boolean isVisible(@Nullable final View rootView, @Nullable final View view,
+        public boolean isVisible(@Nullable final View rootView, @Nullable final View view,
                 final int minPercentageViewed, @Nullable final Integer minVisiblePx) {
             // ListView & GridView both call detachFromParent() for views that can be recycled for
             // new data. This is one of the rare instances where a view will have a null parent for

@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 repositories {
     google()
     jcenter()
@@ -11,18 +15,17 @@ apply plugin: 'com.android.application'
 
 project.group = 'com.mopub'
 project.description = '''MoPub Sample App'''
-project.version = '5.2.0'
+project.version = '5.4.0'
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+    compileSdkVersion 28
     lintOptions { abortOnError false }
 
     defaultConfig {
-        versionCode 62
+        versionCode 64
         versionName version
         minSdkVersion 16
-        targetSdkVersion 26
+        targetSdkVersion 28
     }
 
     buildTypes {
@@ -57,9 +60,10 @@ android {
 }
 
 dependencies {
-    implementation 'com.android.support:support-v4:26.1.0'
-    implementation 'com.google.android.gms:play-services-ads:11.4.0'
-    implementation 'com.google.android.gms:play-services-base:11.4.0'
-    implementation 'com.android.support:recyclerview-v7:26.1.0'
+    implementation 'com.android.support:customtabs:28.0.0'
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.google.android.gms:play-services-ads:15.0.1'
+    implementation 'com.google.android.gms:play-services-base:15.0.1'
+    implementation 'com.android.support:recyclerview-v7:28.0.0'
     implementation project(':mopub-sdk')
 }

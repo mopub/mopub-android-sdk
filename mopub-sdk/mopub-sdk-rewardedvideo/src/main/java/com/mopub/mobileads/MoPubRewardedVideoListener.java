@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.support.annotation.NonNull;
@@ -14,7 +18,7 @@ public interface MoPubRewardedVideoListener {
 
     /**
      * Called when the adUnitId has loaded. At this point you should be able to call
-     * {@link com.mopub.common.MoPub#showRewardedVideo(String)} to show the video.
+     * {@link com.mopub.mobileads.MoPubRewardedVideos#showRewardedVideo(String)} to show the video.
      */
     public void onRewardedVideoLoadSuccess(@NonNull String adUnitId);
 

@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.simpleadsdemo;
 
 import android.os.Bundle;
@@ -46,7 +50,7 @@ public abstract class AbstractBannerDetailFragment extends Fragment implements B
 
         views.mKeywordsField.setText(getArguments().getString(MoPubListFragment.KEYWORDS_KEY, ""));
         views.mUserDataKeywordsField.setText(getArguments().getString(MoPubListFragment.USER_DATA_KEYWORDS_KEY, ""));
-        hideSoftKeyboard(views.mUserDataKeywordsField);
+        hideSoftKeyboard(views.mKeywordsField);
 
         final String adUnitId = mMoPubSampleAdUnit.getAdUnitId();
         views.mDescriptionView.setText(mMoPubSampleAdUnit.getDescription());

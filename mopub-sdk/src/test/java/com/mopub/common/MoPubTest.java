@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common;
 
 import android.app.Activity;
@@ -8,6 +12,7 @@ import android.support.annotation.Nullable;
 import com.mopub.common.MoPub.BrowserAgent;
 import com.mopub.common.privacy.SyncRequest;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.util.AsyncTasks;
 import com.mopub.common.util.Reflection;
 import com.mopub.mobileads.BuildConfig;
 import com.mopub.mobileads.CustomEventRewardedVideo;
@@ -31,7 +36,9 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.Robolectric;
+import org.robolectric.android.util.concurrent.RoboExecutorService;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,6 +107,7 @@ public class MoPubTest {
         mockStatic(MoPubRewardedVideoManager.class);
 
         MoPub.resetBrowserAgent();
+        AsyncTasks.setExecutor(new RoboExecutorService());
     }
 
     @After
@@ -154,6 +162,7 @@ public class MoPubTest {
                 new SdkConfiguration.Builder(INIT_ADUNIT).build(),
                 mockInitializationListener);
 
+        ShadowLooper.runUiThreadTasks();
         verify(mockInitializationListener).onInitializationFinished();
         verifyStatic();
         MoPubRewardedVideoManager.init(mActivity, mMediationSettings);
@@ -165,6 +174,7 @@ public class MoPubTest {
                 new SdkConfiguration.Builder(INIT_ADUNIT).withMediationSettings(mMediationSettings).build(),
                 mockInitializationListener);
 
+        ShadowLooper.runUiThreadTasks();
         verify(mockInitializationListener).onInitializationFinished();
         verifyStatic();
         MoPubRewardedVideoManager.init(mActivity, mMediationSettings);
@@ -189,6 +199,7 @@ public class MoPubTest {
                         .build(),
                 mockInitializationListener);
 
+        ShadowLooper.runUiThreadTasks();
         verify(mockInitializationListener).onInitializationFinished();
         List<Class<? extends CustomEventRewardedVideo>> classList = new ArrayList<>();
         classList.add(TestCustomEventRewardedVideo.class);
@@ -263,6 +274,7 @@ public class MoPubTest {
 
         MoPub.initializeSdk(mActivity, sdkConfiguration, null);
 
+        ShadowLooper.runUiThreadTasks();
         assertThat(MoPub.getAdvancedBiddingTokensJson(mActivity)).isEqualTo(
                 "{\"AdvancedBidderTestClassName\":{\"token\":\"AdvancedBidderTestClassToken\"}}");
     }
@@ -275,6 +287,7 @@ public class MoPubTest {
 
         MoPub.initializeSdk(mActivity, sdkConfiguration, null);
 
+        ShadowLooper.runUiThreadTasks();
         assertThat(MoPub.getAdvancedBiddingTokensJson(mActivity)).isEqualTo(
                 "{\"AdvancedBidderTestClassName\":{\"token\":\"AdvancedBidderTestClassToken\"}}");
 
@@ -293,6 +306,7 @@ public class MoPubTest {
     public void initializeSdk_withCallbackSet_shouldCallCallback() throws Exception {
         MoPub.initializeSdk(mActivity, new SdkConfiguration.Builder(
                 INIT_ADUNIT).build(), mockInitializationListener);
+        ShadowLooper.runUiThreadTasks();
 
         verify(mockInitializationListener).onInitializationFinished();
     }

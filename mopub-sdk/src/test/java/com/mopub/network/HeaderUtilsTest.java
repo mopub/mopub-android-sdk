@@ -1,104 +1,98 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.network;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.util.ResponseHeader;
 import com.mopub.mobileads.BuildConfig;
-import com.mopub.volley.Header;
-import com.mopub.volley.toolbox.HttpResponse;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.mopub.common.util.ResponseHeader.AD_TIMEOUT;
-import static com.mopub.common.util.ResponseHeader.SCROLLABLE;
 import static org.fest.assertions.api.Assertions.assertThat;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
 public class HeaderUtilsTest {
-    private HttpResponse response;
-    private List<Header> headers;
+    private JSONObject subject;
 
     @Before
     public void setup() {
-        headers = new ArrayList<Header>();
-        response = new HttpResponse(200, headers);
+        subject = new JSONObject();
     }
 
     @Test
-    public void extractBooleanHeader_whenValueIsZero_shouldReturnFalse() throws Exception {
-        headers.add(new Header(SCROLLABLE.getKey(), "0"));
-        assertThat(HeaderUtils.extractBooleanHeader(response, SCROLLABLE, false)).isFalse();
+    public void extractIntegerHeader_shouldReturnIntegerValue() throws JSONException {
+        subject.remove(ResponseHeader.HEIGHT.getKey());
+        assertThat(HeaderUtils.extractIntegerHeader(null, ResponseHeader.HEIGHT)).isNull();
 
-        assertThat(HeaderUtils.extractBooleanHeader(response, SCROLLABLE, true)).isFalse();
+        subject.put(ResponseHeader.HEIGHT.getKey(), "100");
+        assertThat(HeaderUtils.extractIntegerHeader(subject, ResponseHeader.HEIGHT)).isEqualTo(100);
+
+        subject.put(ResponseHeader.HEIGHT.getKey(), "1");
+        assertThat(HeaderUtils.extractIntegerHeader(subject, ResponseHeader.HEIGHT)).isEqualTo(1);
+
+        subject.put(ResponseHeader.HEIGHT.getKey(), "0");
+        assertThat(HeaderUtils.extractIntegerHeader(subject, ResponseHeader.HEIGHT)).isEqualTo(0);
+
+        subject.put(ResponseHeader.HEIGHT.getKey(), "-1");
+        assertThat(HeaderUtils.extractIntegerHeader(subject, ResponseHeader.HEIGHT)).isEqualTo(-1);
+
+        subject.put(ResponseHeader.HEIGHT.getKey(), "");
+        assertThat(HeaderUtils.extractIntegerHeader(subject, ResponseHeader.HEIGHT)).isNull();
+
+        subject.put(ResponseHeader.HEIGHT.getKey(), "a");
+        assertThat(HeaderUtils.extractIntegerHeader(subject, ResponseHeader.HEIGHT)).isNull();
     }
 
     @Test
-    public void extractBooleanHeader_whenValueIsOne_shouldReturnTrue() throws Exception {
-        headers.add(new Header(SCROLLABLE.getKey(), "1"));
-        assertThat(HeaderUtils.extractBooleanHeader(response, SCROLLABLE, false)).isTrue();
+    public void extractBooleanHeader_shouldReturnBooleanValue() throws JSONException {
+        subject.remove(ResponseHeader.HEIGHT.getKey());
+        assertThat(HeaderUtils.extractBooleanHeader(subject, ResponseHeader.HEIGHT, true)).isFalse();
 
-        assertThat(HeaderUtils.extractBooleanHeader(response, SCROLLABLE, true)).isTrue();
+        subject.put(ResponseHeader.HEIGHT.getKey(), "1");
+        assertThat(HeaderUtils.extractBooleanHeader(subject, ResponseHeader.HEIGHT, false)).isTrue();
+
+        subject.put(ResponseHeader.HEIGHT.getKey(), "0");
+        assertThat(HeaderUtils.extractBooleanHeader(subject, ResponseHeader.HEIGHT, true)).isFalse();
+
+        subject.put(ResponseHeader.HEIGHT.getKey(), "");
+        assertThat(HeaderUtils.extractBooleanHeader(subject, ResponseHeader.HEIGHT, true)).isFalse();
+
+        subject.put(ResponseHeader.HEIGHT.getKey(), "a");
+        assertThat(HeaderUtils.extractBooleanHeader(subject, ResponseHeader.HEIGHT, true)).isFalse();
     }
 
     @Test
-    public void extractBooleanHeader_shouldReturnDefaultValue() throws Exception {
-        // no header added to response
+    public void extractPercentHeader_shouldReturnPercentValue() throws JSONException {
+        subject.remove(ResponseHeader.HEIGHT.getKey());
+        assertThat(HeaderUtils.extractPercentHeader(subject, ResponseHeader.HEIGHT)).isNull();
 
-        assertThat(HeaderUtils.extractBooleanHeader(response, SCROLLABLE, false)).isFalse();
-        assertThat(HeaderUtils.extractBooleanHeader(response, SCROLLABLE, true)).isTrue();
-    }
+        subject.put(ResponseHeader.HEIGHT.getKey(), "100%");
+        assertThat(HeaderUtils.extractPercentHeader(subject, ResponseHeader.HEIGHT)).isEqualTo(100);
 
-    @Test
-    public void extractIntegerHeader_shouldReturnIntegerValue() throws Exception {
-        headers.add(new Header(AD_TIMEOUT.getKey(), "10"));
-        assertThat(HeaderUtils.extractIntegerHeader(response, AD_TIMEOUT)).isEqualTo(10);
+        subject.put(ResponseHeader.HEIGHT.getKey(), "10");
+        assertThat(HeaderUtils.extractPercentHeader(subject, ResponseHeader.HEIGHT)).isEqualTo(10);
 
-        headers.clear();
-        headers.add(new Header(AD_TIMEOUT.getKey(), "0"));
-        assertThat(HeaderUtils.extractIntegerHeader(response, AD_TIMEOUT)).isEqualTo(0);
+        subject.put(ResponseHeader.HEIGHT.getKey(), "");
+        assertThat(HeaderUtils.extractPercentHeader(subject, ResponseHeader.HEIGHT)).isNull();
 
-        headers.clear();
-        headers.add(new Header(AD_TIMEOUT.getKey(), "-2"));
-        assertThat(HeaderUtils.extractIntegerHeader(response, AD_TIMEOUT)).isEqualTo(-2);
-    }
+        subject.put(ResponseHeader.HEIGHT.getKey(), "0%");
+        assertThat(HeaderUtils.extractPercentHeader(subject, ResponseHeader.HEIGHT)).isEqualTo(0);
 
-    @Test
-    public void extractIntegerHeader_withDoubleValue_shouldTruncateValue() throws Exception {
-        headers.add(new Header(AD_TIMEOUT.getKey(), "3.14"));
-        assertThat(HeaderUtils.extractIntegerHeader(response, AD_TIMEOUT)).isEqualTo(3);
+        subject.put(ResponseHeader.HEIGHT.getKey(), "-1%");
+        assertThat(HeaderUtils.extractPercentHeader(subject, ResponseHeader.HEIGHT)).isNull();
 
-        headers.clear();
-        headers.add(new Header(AD_TIMEOUT.getKey(), "-3.14"));
-        assertThat(HeaderUtils.extractIntegerHeader(response, AD_TIMEOUT)).isEqualTo(-3);
-    }
+        subject.put(ResponseHeader.HEIGHT.getKey(), "0");
+        assertThat(HeaderUtils.extractPercentHeader(subject, ResponseHeader.HEIGHT)).isEqualTo(0);
 
-    @Test
-    public void extractIntegerHeader_whenNoHeaderPresent_shouldReturnNull() throws Exception {
-        // no header added to response
-        assertThat(HeaderUtils.extractIntegerHeader(response, AD_TIMEOUT)).isNull();
-
-        headers.add(new Header(AD_TIMEOUT.getKey(), null));
-        assertThat(HeaderUtils.extractIntegerHeader(response, AD_TIMEOUT)).isNull();
-    }
-
-    @Test
-    public void extractIntegerHeader_withNonsenseStringValue_shouldReturnNull() throws Exception {
-        headers.add(new Header(AD_TIMEOUT.getKey(), "llama!!guy"));
-        assertThat(HeaderUtils.extractIntegerHeader(response, AD_TIMEOUT)).isNull();
-    }
-
-    @Test
-    public void extractIntHeader_withInvalidHeader_shouldUseDefaultValue() throws Exception {
-        headers.add(new Header(AD_TIMEOUT.getKey(), "5"));
-        assertThat(HeaderUtils.extractIntHeader(response, AD_TIMEOUT, 10)).isEqualTo(5);
-
-        headers.clear();
-        headers.add(new Header(AD_TIMEOUT.getKey(), "five!"));
-        assertThat(HeaderUtils.extractIntHeader(response, AD_TIMEOUT, 10)).isEqualTo(10);
+        subject.put(ResponseHeader.HEIGHT.getKey(), "a%");
+        assertThat(HeaderUtils.extractPercentHeader(subject, ResponseHeader.HEIGHT)).isNull();
     }
 }

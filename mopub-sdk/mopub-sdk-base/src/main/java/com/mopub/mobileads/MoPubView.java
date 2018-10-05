@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -136,8 +140,12 @@ public class MoPubView extends FrameLayout {
         }
     }
 
-    Integer getAdTimeoutDelay() {
-        return (mAdViewController != null) ? mAdViewController.getAdTimeoutDelay() : null;
+    @NonNull
+    Integer getAdTimeoutDelay(int defaultValue) {
+        if (mAdViewController == null) {
+            return defaultValue;
+        }
+        return mAdViewController.getAdTimeoutDelay(defaultValue);
     }
 
     protected boolean loadFailUrl(@NonNull final MoPubErrorCode errorCode) {
@@ -252,8 +260,10 @@ public class MoPubView extends FrameLayout {
         }
     }
 
-    protected void nativeAdLoaded() {
-        if (mAdViewController != null) mAdViewController.scheduleRefreshTimerIfEnabled();
+    protected void creativeDownloaded() {
+        if (mAdViewController != null) {
+            mAdViewController.creativeDownloadSuccess();
+        }
         adLoaded();
     }
 

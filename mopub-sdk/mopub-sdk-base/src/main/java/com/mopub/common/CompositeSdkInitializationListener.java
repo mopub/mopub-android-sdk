@@ -1,8 +1,13 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 
 /**
@@ -10,7 +15,7 @@ import android.support.annotation.NonNull;
  */
 class CompositeSdkInitializationListener implements SdkInitializationListener {
 
-    @NonNull private final SdkInitializationListener mSdkInitializationListener;
+    @Nullable private SdkInitializationListener mSdkInitializationListener;
     private int mTimes;
 
     /**
@@ -35,7 +40,10 @@ class CompositeSdkInitializationListener implements SdkInitializationListener {
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    mSdkInitializationListener.onInitializationFinished();
+                    if (mSdkInitializationListener != null) {
+                        mSdkInitializationListener.onInitializationFinished();
+                        mSdkInitializationListener = null;
+                    }
                 }
             });
         }

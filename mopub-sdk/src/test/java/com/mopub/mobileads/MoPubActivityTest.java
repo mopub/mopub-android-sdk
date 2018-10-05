@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -31,8 +35,6 @@ import org.robolectric.shadows.support.v4.ShadowLocalBroadcastManager;
 import static com.mopub.common.DataKeys.CLICKTHROUGH_URL_KEY;
 import static com.mopub.common.DataKeys.CREATIVE_ORIENTATION_KEY;
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
-import static com.mopub.common.DataKeys.REDIRECT_URL_KEY;
-import static com.mopub.common.DataKeys.SCROLLABLE_KEY;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_FAIL;
@@ -54,9 +56,7 @@ import static org.mockito.Mockito.when;
 @Config(constants = BuildConfig.class)
 public class MoPubActivityTest {
     private static final String EXPECTED_HTML_DATA = "htmlData";
-    private static final boolean EXPECTED_IS_SCROLLABLE = true;
     @Mock private AdReport mockAdReport;
-    private static final String EXPECTED_REDIRECT_URL = "redirectUrl";
     private static final String EXPECTED_CLICKTHROUGH_URL = "https://expected_url";
     private static final CreativeOrientation EXPECTED_ORIENTATION = CreativeOrientation.PORTRAIT;
 
@@ -76,8 +76,7 @@ public class MoPubActivityTest {
 
         Context context = Robolectric.buildActivity(Activity.class).create().get();
         Intent moPubActivityIntent = MoPubActivity.createIntent(context,
-                EXPECTED_HTML_DATA, mockAdReport, EXPECTED_IS_SCROLLABLE,
-                EXPECTED_REDIRECT_URL,
+                EXPECTED_HTML_DATA, mockAdReport,
                 EXPECTED_CLICKTHROUGH_URL, EXPECTED_ORIENTATION, testBroadcastIdentifier);
 
         final ActivityController<MoPubActivity> subjectController = Robolectric.buildActivity(
@@ -102,7 +101,7 @@ public class MoPubActivityTest {
     public void preRenderHtml_shouldPreloadTheHtml() throws Exception {
         String htmlData = "this is nonsense";
         MoPubActivity.preRenderHtml(htmlInterstitial, subject, mockAdReport,
-                customEventInterstitialListener, htmlData, true, "redirectUrl",
+                customEventInterstitialListener, htmlData,
                 "clickthroughUrl", testBroadcastIdentifier);
 
         verify(htmlInterstitialWebView).enablePlugins(eq(false));
@@ -112,7 +111,7 @@ public class MoPubActivityTest {
     @Test
     public void preRenderHtml_shouldEnableJavascriptCachingForDummyWebView() {
         MoPubActivity.preRenderHtml(htmlInterstitial, subject, mockAdReport,
-                customEventInterstitialListener, "html_data", true, "redirectUrl",
+                customEventInterstitialListener, "html_data",
                 "clickthroughUrl", testBroadcastIdentifier);
 
         verify(htmlInterstitialWebView).enableJavascriptCaching();
@@ -121,7 +120,7 @@ public class MoPubActivityTest {
     @Test
     public void preRenderHtml_shouldHaveAWebViewClientThatForwardsFinishLoad() throws Exception {
         MoPubActivity.preRenderHtml(htmlInterstitial, subject, mockAdReport,
-                customEventInterstitialListener, null, true, "redirectUrl",
+                customEventInterstitialListener, null,
                 "clickthroughUrl", testBroadcastIdentifier);
 
         ArgumentCaptor<WebViewClient> webViewClientCaptor = ArgumentCaptor.forClass(WebViewClient.class);
@@ -137,7 +136,7 @@ public class MoPubActivityTest {
     @Test
     public void preRenderHtml_shouldHaveAWebViewClientThatForwardsFailLoad() throws Exception {
         MoPubActivity.preRenderHtml(htmlInterstitial, subject, mockAdReport,
-                customEventInterstitialListener, null, true, "redirectUrl",
+                customEventInterstitialListener, null,
                 "clickthroughUrl", testBroadcastIdentifier);
 
         ArgumentCaptor<WebViewClient> webViewClientCaptor = ArgumentCaptor.forClass(WebViewClient.class);
@@ -165,9 +164,7 @@ public class MoPubActivityTest {
 
         assertThat(adView).isSameAs(htmlInterstitialWebView);
         assertThat(TestHtmlInterstitialWebViewFactory.getLatestListener()).isNotNull();
-        assertThat(TestHtmlInterstitialWebViewFactory.getLatestIsScrollable()).isEqualTo(EXPECTED_IS_SCROLLABLE);
         assertThat(TestHtmlInterstitialWebViewFactory.getLatestClickthroughUrl()).isEqualTo(EXPECTED_CLICKTHROUGH_URL);
-        assertThat(TestHtmlInterstitialWebViewFactory.getLatestRedirectUrl()).isEqualTo(EXPECTED_REDIRECT_URL);
         verify(htmlInterstitialWebView).loadHtmlResponse(EXPECTED_HTML_DATA);
     }
 
@@ -189,13 +186,13 @@ public class MoPubActivityTest {
     }
 
     @Test
-    public void start_shouldStartMoPubActivityWithCorrectParameters() throws Exception {
-        MoPubActivity.start(subject, "expectedResponse", mockAdReport, true, "redirectUrl", "clickthroughUrl", CreativeOrientation.PORTRAIT, testBroadcastIdentifier);
+    public void start_shouldStartMoPubActivityWithCorrectParameters() {
+        final ActivityController<MoPubActivity> activityController = Robolectric.buildActivity(MoPubActivity.class);
+        final MoPubActivity activitySubject = activityController.get();
+        MoPubActivity.start(activitySubject, "expectedResponse", mockAdReport, "clickthroughUrl", CreativeOrientation.PORTRAIT, testBroadcastIdentifier);
 
         Intent nextStartedActivity = ShadowApplication.getInstance().getNextStartedActivity();
         assertThat(nextStartedActivity.getStringExtra(HTML_RESPONSE_BODY_KEY)).isEqualTo("expectedResponse");
-        assertThat(nextStartedActivity.getBooleanExtra(SCROLLABLE_KEY, false)).isTrue();
-        assertThat(nextStartedActivity.getStringExtra(REDIRECT_URL_KEY)).isEqualTo("redirectUrl");
         assertThat(nextStartedActivity.getStringExtra(CLICKTHROUGH_URL_KEY)).isEqualTo("clickthroughUrl");
         assertThat(nextStartedActivity.getSerializableExtra(CREATIVE_ORIENTATION_KEY)).isEqualTo(CreativeOrientation.PORTRAIT);
         assertThat(nextStartedActivity.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0);
@@ -209,8 +206,6 @@ public class MoPubActivityTest {
         subject.getAdView();
 
         assertThat(TestHtmlInterstitialWebViewFactory.getLatestListener()).isNotNull();
-        assertThat(TestHtmlInterstitialWebViewFactory.getLatestIsScrollable()).isEqualTo(EXPECTED_IS_SCROLLABLE);
-        assertThat(TestHtmlInterstitialWebViewFactory.getLatestRedirectUrl()).isEqualTo(EXPECTED_REDIRECT_URL);
         assertThat(TestHtmlInterstitialWebViewFactory.getLatestClickthroughUrl()).isEqualTo(EXPECTED_CLICKTHROUGH_URL);
         verify(htmlInterstitialWebView).loadHtmlResponse(EXPECTED_HTML_DATA);
     }

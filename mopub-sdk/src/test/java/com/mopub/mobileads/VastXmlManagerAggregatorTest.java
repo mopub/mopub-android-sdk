@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -40,8 +44,12 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
-@Config(constants = BuildConfig.class, shadows = {ShadowMoPubHttpUrlConnection.class})
+@Config(constants = BuildConfig.class, qualifiers = "w480dp-h800dp", shadows = {ShadowMoPubHttpUrlConnection.class})
 public class VastXmlManagerAggregatorTest {
+    // Default portrait screen width is 480, height is 800
+    private static final int DIM_SHORT = 480;
+    private static final int DIM_LONG = 800;
+
     static final String TEST_VAST_XML_STRING = "<VAST version='2.0'>" +
             "    <Ad id='empty'>" +
             "        <InLine>" +
@@ -281,7 +289,7 @@ public class VastXmlManagerAggregatorTest {
             "    </Ad>" +
             "</VAST>";
 
-    static final String TEST_VAST_BAD_NEST_URL_XML_STRING = "<VAST version='2.0'><Ad id='62833'><Wrapper><AdSystem>Tapad</AdSystem><VASTAdTagURI>https://dsp.x-team.staging.mopub.com/xml\"$|||</VASTAdTagURI><Impression>https://myTrackingURL/wrapper/impression1</Impression><Impression>https://myTrackingURL/wrapper/impression2</Impression><Creatives><Creative AdID='62833'><Linear><TrackingEvents><Tracking event='creativeView'>https://myTrackingURL/wrapper/creativeView</Tracking><Tracking event='start'>https://myTrackingURL/wrapper/start</Tracking><Tracking event='midpoint'>https://myTrackingURL/wrapper/midpoint</Tracking><Tracking event='firstQuartile'>https://myTrackingURL/wrapper/firstQuartile</Tracking><Tracking event='thirdQuartile'>https://myTrackingURL/wrapper/thirdQuartile</Tracking><Tracking event='complete'>https://myTrackingURL/wrapper/complete</Tracking><Tracking event='mute'>https://myTrackingURL/wrapper/mute</Tracking><Tracking event='unmute'>https://myTrackingURL/wrapper/unmute</Tracking><Tracking event='pause'>https://myTrackingURL/wrapper/pause</Tracking><Tracking event='resume'>https://myTrackingURL/wrapper/resume</Tracking><Tracking event='fullscreen'>https://myTrackingURL/wrapper/fullscreen</Tracking></TrackingEvents><VideoClicks><ClickTracking>https://myTrackingURL/wrapper/click</ClickTracking></VideoClicks></Linear></Creative></Creatives><Error>![CDATA[https://badNestedError]]</Error]</Wrapper></Ad></VAST><MP_TRACKING_URLS><MP_TRACKING_URL>https://www.mopub.com/imp1</MP_TRACKING_URL><MP_TRACKING_URL>https://www.mopub.com/imp2</MP_TRACKING_URL></MP_TRACKING_URLS>";
+    static final String TEST_VAST_BAD_NEST_URL_XML_STRING = "<VAST version='2.0'><Ad id='62833'><Wrapper><AdSystem>Tapad</AdSystem><VASTAdTagURI>https://dsp.x-team.staging.mopub.com/xml\"$|||</VASTAdTagURI><Impression>https://myTrackingURL/wrapper/impression1</Impression><Impression>https://myTrackingURL/wrapper/impression2</Impression><Creatives><Creative AdID='62833'><Linear><TrackingEvents><Tracking event='creativeView'>https://myTrackingURL/wrapper/creativeView</Tracking><Tracking event='start'>https://myTrackingURL/wrapper/start</Tracking><Tracking event='midpoint'>https://myTrackingURL/wrapper/midpoint</Tracking><Tracking event='firstQuartile'>https://myTrackingURL/wrapper/firstQuartile</Tracking><Tracking event='thirdQuartile'>https://myTrackingURL/wrapper/thirdQuartile</Tracking><Tracking event='complete'>https://myTrackingURL/wrapper/complete</Tracking><Tracking event='mute'>https://myTrackingURL/wrapper/mute</Tracking><Tracking event='unmute'>https://myTrackingURL/wrapper/unmute</Tracking><Tracking event='pause'>https://myTrackingURL/wrapper/pause</Tracking><Tracking event='resume'>https://myTrackingURL/wrapper/resume</Tracking><Tracking event='fullscreen'>https://myTrackingURL/wrapper/fullscreen</Tracking></TrackingEvents><VideoClicks><ClickTracking>https://myTrackingURL/wrapper/click</ClickTracking></VideoClicks></Linear></Creative></Creatives><Error>![CDATA[https://badNestedError]]</Error>]</Wrapper></Ad></VAST><MP_TRACKING_URLS><MP_TRACKING_URL>https://www.mopub.com/imp1</MP_TRACKING_URL><MP_TRACKING_URL>https://www.mopub.com/imp2</MP_TRACKING_URL></MP_TRACKING_URLS>";
 
     static final String TEST_JUST_ERROR_XML_STRING = "<VAST version='3.0'>" +
             "<Error><![CDATA[https://justErrorTracking?errorcode=[ERRORCODE]]]></Error>" +
@@ -356,8 +364,8 @@ public class VastXmlManagerAggregatorTest {
         }).when(vastXmlManagerAggregatorListener).onAggregationComplete(any(VastVideoConfig.class));
 
         // Always assume landscape (where width > height) since videos will always be played in this orientation
-        int screenWidth = 800;
-        int screenHeight = 480;
+        int screenWidth = DIM_LONG;
+        int screenHeight = DIM_SHORT;
         double screenAspectRatio = (double) screenWidth / screenHeight;
         int screenArea = screenWidth * screenHeight;
         subject = new VastXmlManagerAggregator(vastXmlManagerAggregatorListener, screenAspectRatio,
@@ -410,7 +418,7 @@ public class VastXmlManagerAggregatorTest {
     }
 
     @Test
-    public void getBestMediaFileUrl_shouldReturnMediaFileUrl() throws Exception {
+    public void getBestMediaFileUrl_shouldReturnMediaFileUrl() {
         final VastMediaXmlManager mediaXmlManager = initializeMediaXmlManagerMock(300, 250, "video/mp4", "video_url");
 
         final String bestMediaFileUrl = subject.getBestMediaFileUrl(Arrays.asList(mediaXmlManager));
@@ -418,7 +426,7 @@ public class VastXmlManagerAggregatorTest {
     }
 
     @Test
-    public void getBestMediaFileUrl_withNullMediaType_shouldReturnNull() throws Exception {
+    public void getBestMediaFileUrl_withNullMediaType_shouldReturnNull() {
         final VastMediaXmlManager mediaXmlManager = initializeMediaXmlManagerMock(300, 250, null, "video_url");
 
         final String bestMediaFileUrl = subject.getBestMediaFileUrl(Arrays.asList(mediaXmlManager));
@@ -426,7 +434,7 @@ public class VastXmlManagerAggregatorTest {
     }
 
     @Test
-    public void getBestMediaFileUrl_withIncompatibleMediaType_shouldReturnNull() throws Exception {
+    public void getBestMediaFileUrl_withIncompatibleMediaType_shouldReturnNull() {
         final VastMediaXmlManager mediaXmlManager = initializeMediaXmlManagerMock(300, 250, "video/rubbish", "video_url");
 
         final String bestMediaFileUrl = subject.getBestMediaFileUrl(Arrays.asList(mediaXmlManager));
@@ -468,10 +476,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getBestMediaFileUrl_withSameAspectRatios_shouldReturnUrlWithAreaCloserToScreenArea1() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Triple screen size
         final VastMediaXmlManager mediaXmlManager1 = initializeMediaXmlManagerMock(2400, 1440, "video/mp4", "video_url1");
@@ -484,10 +491,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getBestMediaFileUrl_withSameAspectRatios_shouldReturnUrlWithAreaCloserToScreenArea2() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Triple screen size
         final VastMediaXmlManager mediaXmlManager1 = initializeMediaXmlManagerMock(2400, 1440, "video/mp4", "video_url1");
@@ -502,10 +508,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getBestMediaFileUrl_withSameArea_shouldReturnUrlWithAspectRatioCloserToScreenAspectRatio() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Landscape
         final VastMediaXmlManager mediaXmlManager1 =
@@ -521,10 +526,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getBestMediaFileUrl_withInvalidMediaTypeAndNullDimension_shouldReturnNull() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Invalid media type
         final VastMediaXmlManager mediaXmlManager1 = initializeMediaXmlManagerMock(800, 480, "video/invalid", "video_url1");
@@ -539,10 +543,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getBestMediaFileUrl_withInvalidMediaTypeAndNullMediaType_shouldReturnNull() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         final VastMediaXmlManager mediaXmlManager1 = initializeMediaXmlManagerMock(800, 480, "video/invalid", "video_url1");
         final VastMediaXmlManager mediaXmlManager2 = initializeMediaXmlManagerMock(800,
@@ -610,10 +613,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getBestCompanionAd_withSameAspectRatios_shouldReturnCompanionAdWithAreaCloserToScreenArea1() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Triple screen size
         final VastCompanionAdXmlManager companionXmlManager1 =
@@ -630,10 +632,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getBestCompanionAd_withSameAspectRatios_shouldReturnCompanionAdWithAreaCloserToScreenArea2() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Triple screen size
         final VastCompanionAdXmlManager companionXmlManager1 =
@@ -650,10 +651,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getBestCompanionAd_withSameArea_shouldReturnLandscapeCompanionAdWithAspectRatioCloserToScreenAspectRatio() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Landscape
         final VastCompanionAdXmlManager companionXmlManager1 =
@@ -670,10 +670,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getBestCompanionAd_withSameArea_shouldReturnPortraitCompanionAdWithAspectRatioCloserToScreenAspectRatio() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Landscape
         final VastCompanionAdXmlManager companionXmlManager1 =
@@ -738,10 +737,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getBestCompanionAd_withCompanionAdTooSmall_shouldReturnCompanionAdWithAtLeastMinimumSize() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // 305 x 305 is both fewer pixels (screen area) and a worse aspect ratio. It still should be
         // chosen because 240 is not wide enough to be considered for a companion ad
@@ -880,16 +878,15 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void
     getScaledDimensions_withStaticResource_withWidthLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(1600, 400,
                 VastResource.Type.STATIC_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
-        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.x).isEqualTo(DIM_LONG - VastVideoViewController.WEBVIEW_PADDING);
         assertThat(landscapePoint.y).isEqualTo(200 - VastVideoViewController.WEBVIEW_PADDING);
 
         // Width and height are evaluated in portrait
@@ -902,10 +899,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getScaledDimensions_withStaticResource_withHeightLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(400, 960,
@@ -924,10 +920,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getScaledDimensions_withStaticResource_withWidthAndHeightEqualToScreen_shouldNotScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(
@@ -935,8 +930,8 @@ public class VastXmlManagerAggregatorTest {
                 480 - VastVideoViewController.WEBVIEW_PADDING,
                 VastResource.Type.STATIC_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
-        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
-        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.x).isEqualTo(DIM_LONG - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(DIM_SHORT - VastVideoViewController.WEBVIEW_PADDING);
 
         // Width and height are evaluated in portrait
         Point portraitPoint = subject.getScaledDimensions(
@@ -950,11 +945,10 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getScaledDimensions_withStaticResource_withWidthAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(
                 Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(1600, 2,
@@ -973,10 +967,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getScaledDimensions_withStaticResource_withHeightAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(2, 960,
@@ -996,55 +989,52 @@ public class VastXmlManagerAggregatorTest {
     @Test
     public void getScaledDimensions_withHTMLResource_withWidthLargerThanScreen_shouldScaleWidthAndHeight()
             throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(1600, 400,
                 VastResource.Type.HTML_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
-        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.x).isEqualTo(DIM_LONG - VastVideoViewController.WEBVIEW_PADDING);
         assertThat(landscapePoint.y).isEqualTo(400 - VastVideoViewController.WEBVIEW_PADDING);
 
         // Width and height are evaluated in portrait
         Point portraitPoint = subject.getScaledDimensions(960, 600,
                 VastResource.Type.HTML_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
-        assertThat(portraitPoint.x).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.x).isEqualTo(DIM_SHORT - VastVideoViewController.WEBVIEW_PADDING);
         assertThat(portraitPoint.y).isEqualTo(600 - VastVideoViewController.WEBVIEW_PADDING);
     }
 
     @Test
     public void getScaledDimensions_withHTMLResource_withHeightLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(400, 960,
                 VastResource.Type.HTML_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
         assertThat(landscapePoint.x).isEqualTo(400 - VastVideoViewController.WEBVIEW_PADDING);
-        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(DIM_SHORT - VastVideoViewController.WEBVIEW_PADDING);
 
         // Width and height are evaluated in portrait
         Point portraitPoint = subject.getScaledDimensions(400, 1600,
                 VastResource.Type.HTML_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
         assertThat(portraitPoint.x).isEqualTo(400 - VastVideoViewController.WEBVIEW_PADDING);
-        assertThat(portraitPoint.y).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(DIM_LONG - VastVideoViewController.WEBVIEW_PADDING);
     }
 
     @Test
     public void getScaledDimensions_withHTMLResource_withWidthAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(
                 Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(1600, 2,
@@ -1063,10 +1053,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getScaledDimensions_withHTMLResource_withHeightAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(2, 960,
@@ -1085,10 +1074,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getScaledDimensions_withHTMLResource_withWidthAndHeightEqualToScreen_shouldNotScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(
@@ -1096,8 +1084,8 @@ public class VastXmlManagerAggregatorTest {
                 480 - VastVideoViewController.WEBVIEW_PADDING,
                 VastResource.Type.HTML_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
-        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
-        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.x).isEqualTo(DIM_LONG - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(DIM_SHORT - VastVideoViewController.WEBVIEW_PADDING);
 
         // Width and height are evaluated in portrait
         Point portraitPoint = subject.getScaledDimensions(
@@ -1105,44 +1093,42 @@ public class VastXmlManagerAggregatorTest {
                 800 - VastVideoViewController.WEBVIEW_PADDING,
                 VastResource.Type.HTML_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
-        assertThat(portraitPoint.x).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
-        assertThat(portraitPoint.y).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.x).isEqualTo(DIM_SHORT - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(DIM_LONG - VastVideoViewController.WEBVIEW_PADDING);
     }
 
     @Test
     public void getScaledDimensions_withHTMLResource_withWidthAndHeightLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(5000, 5000,
                 VastResource.Type.HTML_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
-        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
-        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.x).isEqualTo(DIM_LONG - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(DIM_SHORT - VastVideoViewController.WEBVIEW_PADDING);
 
         // Width and height are evaluated in portrait
         Point portraitPoint = subject.getScaledDimensions(1337, 4200,
                 VastResource.Type.HTML_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.PORTRAIT);
-        assertThat(portraitPoint.x).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
-        assertThat(portraitPoint.y).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.x).isEqualTo(DIM_SHORT - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(portraitPoint.y).isEqualTo(DIM_LONG - VastVideoViewController.WEBVIEW_PADDING);
     }
 
     @Test
     public void getScaledDimensions_withIFrameResource_withWidthLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(1600, 400,
                 VastResource.Type.IFRAME_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
-        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.x).isEqualTo(DIM_LONG - VastVideoViewController.WEBVIEW_PADDING);
         assertThat(landscapePoint.y).isEqualTo(200 - VastVideoViewController.WEBVIEW_PADDING);
 
         // Width and height are evaluated in portrait
@@ -1155,10 +1141,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getScaledDimensions_withIFrameResource_withHeightLargerThanScreen_shouldScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(400, 960,
@@ -1177,19 +1162,18 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getScaledDimensions_withIFrameResource_withWidthAndHeightEqualToScreen_shouldNotScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(
-                800 - VastVideoViewController.WEBVIEW_PADDING,
-                480 - VastVideoViewController.WEBVIEW_PADDING,
+                DIM_LONG - VastVideoViewController.WEBVIEW_PADDING,
+                DIM_SHORT - VastVideoViewController.WEBVIEW_PADDING,
                 VastResource.Type.IFRAME_RESOURCE,
                 VastXmlManagerAggregator.CompanionOrientation.LANDSCAPE);
-        assertThat(landscapePoint.x).isEqualTo(800 - VastVideoViewController.WEBVIEW_PADDING);
-        assertThat(landscapePoint.y).isEqualTo(480 - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.x).isEqualTo(DIM_LONG - VastVideoViewController.WEBVIEW_PADDING);
+        assertThat(landscapePoint.y).isEqualTo(DIM_SHORT - VastVideoViewController.WEBVIEW_PADDING);
 
         // Width and height are evaluated in portrait
         Point portraitPoint = subject.getScaledDimensions(
@@ -1203,11 +1187,10 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getScaledDimensions_withIFrameResource_withWidthAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(
                 Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(1600, 2,
@@ -1226,10 +1209,9 @@ public class VastXmlManagerAggregatorTest {
 
     @Test
     public void getScaledDimensions_withIFrameResource_withHeightAdjustedToLessThanZero_shouldNotScaleWidthAndHeight() throws Exception {
-        // Default screen width is 480, height is 800
         final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        assertThat(display.getWidth()).isEqualTo(480);
-        assertThat(display.getHeight()).isEqualTo(800);
+        assertThat(display.getWidth()).isEqualTo(DIM_SHORT);
+        assertThat(display.getHeight()).isEqualTo(DIM_LONG);
 
         // Width and height are evaluated in landscape
         Point landscapePoint = subject.getScaledDimensions(2, 960,

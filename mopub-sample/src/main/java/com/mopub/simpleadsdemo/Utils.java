@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.simpleadsdemo;
 
 import android.content.Context;
@@ -36,8 +40,8 @@ class Utils {
     static void logToast(Context context, String message) {
         Log.d(LOGTAG, message);
 
-        if (context != null) {
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+        if (context != null && context.getApplicationContext() != null) {
+            Toast.makeText(context.getApplicationContext(), message, Toast.LENGTH_SHORT).show();
         }
     }
 }

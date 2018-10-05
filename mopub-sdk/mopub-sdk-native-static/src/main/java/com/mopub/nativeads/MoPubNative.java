@@ -1,8 +1,13 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import com.mopub.common.AdFormat;
 import com.mopub.common.Constants;
@@ -12,12 +17,11 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.ManifestUtils;
 import com.mopub.mobileads.MoPubErrorCode;
-import com.mopub.network.AdRequest;
+import com.mopub.network.AdLoader;
 import com.mopub.network.AdResponse;
 import com.mopub.network.MoPubNetworkError;
-import com.mopub.network.Networking;
 import com.mopub.volley.NetworkResponse;
-import com.mopub.volley.RequestQueue;
+import com.mopub.volley.Request;
 import com.mopub.volley.VolleyError;
 
 import java.lang.ref.WeakReference;
@@ -60,8 +64,10 @@ public class MoPubNative {
 
     // For small sets TreeMap, takes up less memory than HashMap
     @NonNull private Map<String, Object> mLocalExtras = new TreeMap<String, Object>();
-    @NonNull private final AdRequest.Listener mVolleyListener;
-    @Nullable private AdRequest mNativeRequest;
+    @Nullable private AdLoader mAdLoader;
+    @Nullable private CustomEventNativeAdapter mNativeAdapter;
+    @NonNull private final AdLoader.Listener mVolleyListener;
+    @Nullable private Request mNativeRequest;
     @NonNull AdRendererRegistry mAdRendererRegistry;
 
     public MoPubNative(@NonNull final Context context,
@@ -86,7 +92,7 @@ public class MoPubNative {
         mAdUnitId = adUnitId;
         mMoPubNativeNetworkListener = moPubNativeNetworkListener;
         mAdRendererRegistry = adRendererRegistry;
-        mVolleyListener = new AdRequest.Listener() {
+        mVolleyListener = new AdLoader.Listener() {
             @Override
             public void onSuccess(@NonNull final AdResponse response) {
                 onAdLoad(response);
@@ -114,6 +120,8 @@ public class MoPubNative {
             mNativeRequest.cancel();
             mNativeRequest = null;
         }
+        mAdLoader = null;
+
         mMoPubNativeNetworkListener = EMPTY_NETWORK_LISTENER;
     }
 
@@ -167,26 +175,27 @@ public class MoPubNative {
         final String endpointUrl = generator.generateUrlString(Constants.HOST);
 
         if (endpointUrl != null) {
-            MoPubLog.d("Loading ad from: " + endpointUrl);
+            MoPubLog.d("MoPubNative Loading ad from: " + endpointUrl);
         }
 
-        requestNativeAd(endpointUrl);
+        requestNativeAd(endpointUrl, null);
     }
 
-    void requestNativeAd(@Nullable final String endpointUrl) {
+    void requestNativeAd(@Nullable final String endpointUrl, @Nullable final NativeErrorCode errorCode) {
         final Context context = getContextOrDestroy();
         if (context == null) {
             return;
         }
 
-        if (endpointUrl == null) {
-            mMoPubNativeNetworkListener.onNativeFail(INVALID_REQUEST_URL);
-            return;
+        if (mAdLoader == null || !mAdLoader.hasMoreAds()) {
+            if (TextUtils.isEmpty(endpointUrl)) {
+                mMoPubNativeNetworkListener.onNativeFail(errorCode == null ? INVALID_REQUEST_URL : errorCode);
+                return;
+            } else {
+                mAdLoader = new AdLoader(endpointUrl, AdFormat.NATIVE, mAdUnitId, context, mVolleyListener);
+            }
         }
-
-        mNativeRequest = new AdRequest(endpointUrl, AdFormat.NATIVE, mAdUnitId, context, mVolleyListener);
-        RequestQueue requestQueue = Networking.getRequestQueue(context);
-        requestQueue.add(mNativeRequest);
+        mNativeRequest = mAdLoader.loadNextAd(errorCode);
     }
 
     private void onAdLoad(@NonNull final AdResponse response) {
@@ -198,6 +207,9 @@ public class MoPubNative {
                 new CustomEventNativeListener() {
                     @Override
                     public void onNativeAdLoaded(@NonNull final BaseNativeAd nativeAd) {
+                        MoPubLog.w("MoPubNative.onNativeAdLoaded " + mNativeAdapter);
+                        mNativeAdapter = null;
+
                         final Context context = getContextOrDestroy();
                         if (context == null) {
                             return;
@@ -209,8 +221,12 @@ public class MoPubNative {
                             return;
                         }
 
+                        if(mAdLoader!=null) {
+                            mAdLoader.creativeDownloadSuccess();
+                        }
+
                         mMoPubNativeNetworkListener.onNativeLoad(new NativeAd(context,
-                                        response.getImpressionTrackingUrl(),
+                                        response.getImpressionTrackingUrls(),
                                         response.getClickTrackingUrl(),
                                         mAdUnitId,
                                         nativeAd,
@@ -221,16 +237,21 @@ public class MoPubNative {
                     @Override
                     public void onNativeAdFailed(final NativeErrorCode errorCode) {
                         MoPubLog.v(String.format("Native Ad failed to load with error: %s.", errorCode));
-                        requestNativeAd(response.getFailoverUrl());
+                        mNativeAdapter = null;
+                        requestNativeAd("", errorCode);
                     }
                 };
 
-        CustomEventNativeAdapter.loadNativeAd(
+        if (mNativeAdapter != null) {
+            MoPubLog.w("Native adapter is not null.");
+            mNativeAdapter.stopLoading();
+        }
+
+        mNativeAdapter = new CustomEventNativeAdapter(customEventNativeListener);
+        mNativeAdapter.loadNativeAd(
                 context,
                 mLocalExtras,
-                response,
-                customEventNativeListener
-        );
+                response);
     }
 
     @VisibleForTesting

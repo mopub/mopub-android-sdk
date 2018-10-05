@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.app.Activity;
@@ -162,6 +166,10 @@ public abstract class MoPubRewardedAd extends CustomEventRewardedAd {
         @Override
         public void onInterstitialClicked() {
             MoPubRewardedVideoManager.onRewardedVideoClicked(mCustomEventClass, getAdNetworkId());
+        }
+
+        @Override
+        public void onInterstitialImpression() {
         }
 
         @Override

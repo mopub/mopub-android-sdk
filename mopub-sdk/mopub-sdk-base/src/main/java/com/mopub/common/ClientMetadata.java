@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common;
 
 import android.annotation.SuppressLint;
@@ -92,7 +96,7 @@ public class ClientMetadata {
      * Returns the singleton ClientMetadata object, using the context to obtain data if necessary.
      */
     @NonNull
-    public static ClientMetadata getInstance(Context context) {
+    public static ClientMetadata getInstance(@NonNull final Context context) {
         // Use a local variable so we can reduce accesses of the volatile field.
         ClientMetadata result = sInstance;
         if (result == null) {
@@ -126,7 +130,9 @@ public class ClientMetadata {
     }
 
     // NEVER CALL THIS AS A USER. Get it from the Singletons class.
-    public ClientMetadata(Context context) {
+    public ClientMetadata(@NonNull final Context context) {
+        Preconditions.checkNotNull(context);
+
         mContext = context.getApplicationContext();
         mConnectivityManager =
                 (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -141,7 +147,7 @@ public class ClientMetadata {
         mAppVersion = getAppVersionFromContext(mContext);
         PackageManager packageManager = mContext.getPackageManager();
         ApplicationInfo applicationInfo = null;
-        mAppPackageName = context.getPackageName();
+        mAppPackageName = mContext.getPackageName();
         try {
             applicationInfo = packageManager.getApplicationInfo(mAppPackageName, 0);
         } catch (final NameNotFoundException e) {

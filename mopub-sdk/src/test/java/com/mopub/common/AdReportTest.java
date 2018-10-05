@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common;
 
 import android.app.Activity;
@@ -23,7 +27,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import static org.fest.assertions.api.Assertions.assertThat;
-import static org.mockito.Mockito.stub;
+import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -67,17 +71,17 @@ public class AdReportTest {
                         "ad_type : interstitial\n" +
                         "ad_size : {480, 320}\n";
 
-        stub(mockClientMetadata.getSdkVersion()).toReturn("1.15.2.2");
-        stub(mockAdResponse.getDspCreativeId()).toReturn("");
-        stub(mockClientMetadata.getDeviceModel()).toReturn("android");
-        stub(mockClientMetadata.getDeviceLocale()).toReturn(Locale.US);
-        stub(mockClientMetadata.getMoPubIdentifier()).toReturn(new MoPubIdentifier(context));
+        when(mockClientMetadata.getSdkVersion()).thenReturn("1.15.2.2");
+        when(mockAdResponse.getDspCreativeId()).thenReturn("");
+        when(mockClientMetadata.getDeviceModel()).thenReturn("android");
+        when(mockClientMetadata.getDeviceLocale()).thenReturn(Locale.US);
+        when(mockClientMetadata.getMoPubIdentifier()).thenReturn(new MoPubIdentifier(context));
 
-        stub(mockAdResponse.getNetworkType()).toReturn("unknown");
-        stub(mockAdResponse.getTimestamp()).toReturn(now.getTime());
-        stub(mockAdResponse.getAdType()).toReturn("interstitial");
-        stub(mockAdResponse.getWidth()).toReturn(480);
-        stub(mockAdResponse.getHeight()).toReturn(320);
+        when(mockAdResponse.getNetworkType()).thenReturn("unknown");
+        when(mockAdResponse.getTimestamp()).thenReturn(now.getTime());
+        when(mockAdResponse.getAdType()).thenReturn("interstitial");
+        when(mockAdResponse.getWidth()).thenReturn(480);
+        when(mockAdResponse.getHeight()).thenReturn(320);
 
         subject = new AdReport("testAdUnit", mockClientMetadata, mockAdResponse);
         assertThat(subject.toString()).isEqualTo(expectedParameters);
@@ -99,16 +103,16 @@ public class AdReportTest {
                         "ad_type : null\n" +
                         "ad_size : {0, 0}\n";
 
-        stub(mockClientMetadata.getSdkVersion()).toReturn(null);
-        stub(mockAdResponse.getDspCreativeId()).toReturn(null);
-        stub(mockClientMetadata.getDeviceLocale()).toReturn(null);
-        stub(mockAdResponse.getNetworkType()).toReturn(null);
-        stub(mockClientMetadata.getMoPubIdentifier()).toReturn(new MoPubIdentifier(context));
+        when(mockClientMetadata.getSdkVersion()).thenReturn(null);
+        when(mockAdResponse.getDspCreativeId()).thenReturn(null);
+        when(mockClientMetadata.getDeviceLocale()).thenReturn(null);
+        when(mockAdResponse.getNetworkType()).thenReturn(null);
+        when(mockClientMetadata.getMoPubIdentifier()).thenReturn(new MoPubIdentifier(context));
 
-        stub(mockAdResponse.getTimestamp()).toReturn(-1L);
-        stub(mockAdResponse.getAdType()).toReturn(null);
-        stub(mockAdResponse.getWidth()).toReturn(null);
-        stub(mockAdResponse.getHeight()).toReturn(null);
+        when(mockAdResponse.getTimestamp()).thenReturn(-1L);
+        when(mockAdResponse.getAdType()).thenReturn(null);
+        when(mockAdResponse.getWidth()).thenReturn(null);
+        when(mockAdResponse.getHeight()).thenReturn(null);
 
         subject = new AdReport("testAdUnit", mockClientMetadata, mockAdResponse);
         assertThat(subject.toString()).isEqualTo(expectedParameters);

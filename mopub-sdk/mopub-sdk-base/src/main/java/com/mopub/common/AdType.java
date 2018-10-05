@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.common;
 
 /**
@@ -14,5 +18,4 @@ public class AdType {
     public static final String REWARDED_PLAYABLE = "rewarded_playable";
     public static final String CUSTOM = "custom";
     public static final String CLEAR = "clear";
-    public static final String MULTI = "multi";
 }

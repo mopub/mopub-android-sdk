@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.support.annotation.NonNull;
@@ -257,7 +261,9 @@ public abstract class StaticNativeAd extends BaseNativeAd implements ImpressionI
     public void clear(@NonNull final View view) { }
 
     @Override
-    public void destroy() { }
+    public void destroy() {
+        invalidate();
+    }
 
     // Event Handlers
     /**

@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.content.Context;
@@ -13,10 +17,9 @@ import com.mopub.common.logging.MoPubLog;
 import java.lang.ref.WeakReference;
 
 /**
- * @deprecated As of release 2.4, use {@link com.mopub.nativeads.MoPubAdAdapter} or
+ * Use {@link com.mopub.nativeads.MoPubAdAdapter} or
  * {@link com.mopub.nativeads.MoPubStreamAdPlacer} instead
  */
-@Deprecated
 public final class AdapterHelper {
     /**
      * Preferably an Activity Context.
@@ -26,19 +29,17 @@ public final class AdapterHelper {
     private final int mStart;
     private final int mInterval;
 
-    @Deprecated
     public AdapterHelper(@NonNull final Context context, final int start, final int interval) {
         Preconditions.checkNotNull(context, "Context cannot be null.");
         Preconditions.checkArgument(start >= 0, "start position must be non-negative");
         Preconditions.checkArgument(interval >= 2, "interval must be at least 2");
 
-        mContext = new WeakReference<Context>(context);
+        mContext = new WeakReference<>(context);
         mApplicationContext = context.getApplicationContext();
         mStart = start;
         mInterval = interval;
     }
 
-    @Deprecated
     @NonNull
     public View getAdView(@Nullable final View convertView,
             @Nullable final ViewGroup parent,
@@ -59,7 +60,6 @@ public final class AdapterHelper {
         );
     }
 
-    @Deprecated
     @NonNull
     public View getAdView(@Nullable final View convertView,
             @Nullable final ViewGroup parent,
@@ -68,18 +68,15 @@ public final class AdapterHelper {
     }
 
     // Total number of content rows + ad rows
-    @Deprecated
     public int shiftedCount(final int originalCount) {
         return originalCount + numberOfAdsThatCouldFitWithContent(originalCount);
     }
 
     // Shifted position of content in the backing list
-    @Deprecated
     public int shiftedPosition(final int position) {
         return position - numberOfAdsSeenUpToPosition(position);
     }
 
-    @Deprecated
     public boolean isAdPosition(final int position) {
         if (position < mStart) {
             return false;

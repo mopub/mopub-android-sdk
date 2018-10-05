@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.content.Context;
@@ -34,6 +38,12 @@ public abstract class CustomEventNative {
             @NonNull final CustomEventNativeListener customEventNativeListener,
             @NonNull final Map<String, Object> localExtras,
             @NonNull final Map<String, String> serverExtras);
+
+    /*
+     * Called when a Custom Event is being invalidated or destroyed. Perform any final cleanup here.
+     */
+    protected void onInvalidate() {
+    }
 
     public interface CustomEventNativeListener {
         /**

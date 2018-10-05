@@ -1,9 +1,15 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.os.Handler;
 import android.view.View;
 
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.common.VisibilityTracker;
+import com.mopub.common.VisibilityTrackerTest;
 import com.mopub.mobileads.BuildConfig;
 
 import org.fest.util.Lists;
@@ -17,7 +23,7 @@ import org.robolectric.shadows.ShadowSystemClock;
 
 import java.util.HashMap;
 
-import static com.mopub.nativeads.VisibilityTracker.VisibilityChecker;
+import static com.mopub.common.VisibilityTracker.VisibilityChecker;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;

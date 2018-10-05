@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mobileads;
 
 import android.content.Context;
@@ -14,7 +18,9 @@ import java.util.Map;
  * and invoke its loadInterstitial() method.
  */
 public abstract class CustomEventInterstitial implements Interstitial {
-    
+
+    private boolean mAutomaticImpressionAndClickTracking = true;
+
     /*
      * When the MoPub SDK receives a response indicating it should load a custom event, it will send
      * this message to your custom event class. Your implementation of this method can either load
@@ -44,6 +50,20 @@ public abstract class CustomEventInterstitial implements Interstitial {
      * Called when a Custom Event is being invalidated or destroyed. Perform any final cleanup here.
      */
     protected abstract void onInvalidate();
+
+    /**
+     * Enables or disables automatic impression and click tracking. This is enabled by default.
+     *
+     * @param autoTrack True to use automatic impression and click tracking. False to use manual
+     *                  impression and click tracking.
+     */
+    protected void setAutomaticImpressionAndClickTracking(final boolean autoTrack) {
+        mAutomaticImpressionAndClickTracking = autoTrack;
+    }
+
+    boolean isAutomaticImpressionAndClickTrackingEnabled() {
+        return mAutomaticImpressionAndClickTracking;
+    }
     
     public interface CustomEventInterstitialListener {
         /*
@@ -72,6 +92,12 @@ public abstract class CustomEventInterstitial implements Interstitial {
          * ad. This method is optional.
          */
         void onInterstitialClicked();
+
+        /**
+         * Your custom event subclass should call this method when an impression happens if you
+         * set automatic impression and click tracking to false. Otherwise, this method is optional.
+         */
+        void onInterstitialImpression();
         
         /*
          * This is an alias for onInterstitialClicked().

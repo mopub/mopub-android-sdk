@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.mraid;
 
 import android.app.Activity;
@@ -89,7 +93,7 @@ public class MraidControllerTest {
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         rootView = new FrameLayout(activity);
-        when(mockBridge.isVisible()).thenReturn(true);
+        when(mockBridge.isViewable()).thenReturn(true);
 
         // By default, immediately fulfill a screen metrics wait request. Individual tests can
         // reset this, if desired.
@@ -135,7 +139,7 @@ public class MraidControllerTest {
 
     @Test
     public void handlePageLoad_shouldNotifyBridgeOfVisibilityPlacementScreenSizeAndSupports() {
-        when(mockBridge.isVisible()).thenReturn(true);
+        when(mockBridge.isViewable()).thenReturn(true);
 
         subject.handlePageLoad();
 

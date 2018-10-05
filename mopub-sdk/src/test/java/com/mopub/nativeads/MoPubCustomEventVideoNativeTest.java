@@ -1,3 +1,7 @@
+// Copyright 2018 Twitter, Inc.
+// Licensed under the MoPub SDK License Agreement
+// http://www.mopub.com/legal/sdk-license-agreement/
+
 package com.mopub.nativeads;
 
 import android.app.Activity;
@@ -59,12 +63,12 @@ public class MoPubCustomEventVideoNativeTest {
         localExtras.put(DataKeys.CLICK_TRACKING_URL_KEY, "clicktrackingurl");
 
         serverExtras = new HashMap<String, String>();
-        serverExtras.put("Play-Visible-Percent", "10");
-        serverExtras.put("Pause-Visible-Percent", "5");
-        serverExtras.put("Impression-Min-Visible-Percent", "15");
-        serverExtras.put("Impression-Visible-Ms", "100");
-        serverExtras.put("Max-Buffer-Ms", "20");
-        serverExtras.put("Video-Trackers", "{" +
+        serverExtras.put("play-visible-percent", "10");
+        serverExtras.put("pause-visible-percent", "5");
+        serverExtras.put("impression-min-visible-percent", "15");
+        serverExtras.put("impression-visible-ms", "100");
+        serverExtras.put("max-buffer-ms", "20");
+        serverExtras.put("video-trackers", "{" +
                 "urls: [" +
                     "\"http://mopub.com/%%VIDEO_EVENT%%/foo\"," +
                     "\"http://mopub.com/%%VIDEO_EVENT%%/bar\"" +
@@ -98,7 +102,7 @@ public class MoPubCustomEventVideoNativeTest {
 
     @Test
     public void loadNativeAd_withInvalidHeaders_shouldNotifyListenerOnNativeAdFailed() {
-        serverExtras.put("Play-Visible-Percent", "not_a_number");
+        serverExtras.put("play-visible-percent", "not_a_number");
         subject.loadNativeAd(context, mockCustomEventNativeListener, localExtras, serverExtras);
 
         verify(mockCustomEventNativeListener).onNativeAdFailed(NativeErrorCode.INVALID_RESPONSE);
@@ -187,38 +191,38 @@ public class MoPubCustomEventVideoNativeTest {
 
     @Test
     public void VideoResponseHeaders_constructor_withInvalidNumberString_withInvalidJson_shouldSetHeadersAreValidToFalse() {
-        serverExtras.put("Play-Visible-Percent", "not_a_number");
+        serverExtras.put("play-visible-percent", "not_a_number");
         VideoResponseHeaders videoResponseHeaders = new VideoResponseHeaders(serverExtras);
         assertThat(videoResponseHeaders.hasValidHeaders()).isFalse();
 
-        serverExtras.put("Play-Visible-Percent", "10");
-        serverExtras.put("Pause-Visible-Percent", "not_a_number");
+        serverExtras.put("play-visible-percent", "10");
+        serverExtras.put("pause-visible-percent", "not_a_number");
         videoResponseHeaders = new VideoResponseHeaders(serverExtras);
         assertThat(videoResponseHeaders.hasValidHeaders()).isFalse();
 
-        serverExtras.put("Pause-Visible-Percent", "5");
-        serverExtras.put("Impression-Min-Visible-Percent", "not_a_number");
+        serverExtras.put("pause-visible-percent", "5");
+        serverExtras.put("impression-min-visible-percent", "not_a_number");
         videoResponseHeaders = new VideoResponseHeaders(serverExtras);
         assertThat(videoResponseHeaders.hasValidHeaders()).isFalse();
 
-        serverExtras.put("Impression-Min-Visible-Percent", "15");
-        serverExtras.put("Impression-Visible-Ms", "not_a_number");
+        serverExtras.put("impression-min-visible-percent", "15");
+        serverExtras.put("impression-visible-ms", "not_a_number");
         videoResponseHeaders = new VideoResponseHeaders(serverExtras);
         assertThat(videoResponseHeaders.hasValidHeaders()).isFalse();
 
-        serverExtras.put("Impression-Visible-Ms", "100");
-        serverExtras.put("Max-Buffer-Ms", "not_a_number");
+        serverExtras.put("impression-visible-ms", "100");
+        serverExtras.put("max-buffer-ms", "not_a_number");
         videoResponseHeaders = new VideoResponseHeaders(serverExtras);
         assertThat(videoResponseHeaders.hasValidHeaders()).isFalse();
 
-        serverExtras.put("Max-Buffer-Ms", "20");
+        serverExtras.put("max-buffer-ms", "20");
         videoResponseHeaders = new VideoResponseHeaders(serverExtras);
         assertThat(videoResponseHeaders.hasValidHeaders()).isTrue();
     }
 
     @Test
     public void VideoResponseHeaders_constructor_withInvalidJson_shouldSetVideoTrackersToNull() throws Exception {
-        serverExtras.put("Video-Trackers", "not_a_json_object");
+        serverExtras.put("video-trackers", "not_a_json_object");
         VideoResponseHeaders videoResponseHeaders = new VideoResponseHeaders(serverExtras);
 
         assertThat(videoResponseHeaders.getVideoTrackers()).isNull();
