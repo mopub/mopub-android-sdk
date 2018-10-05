@@ -28,7 +28,6 @@ class NativeAdViewHelper {
         AD
     }
 
-    @Deprecated
     @NonNull
     static View getAdView(@Nullable View convertView,
             @Nullable final ViewGroup parent,
@@ -63,7 +62,7 @@ class NativeAdViewHelper {
     private static void clearNativeAd(@NonNull final View view) {
         final NativeAd nativeAd = (NativeAd) view.getTag(R.id.mopub_tag_NativeAdViewHelper_NativeAd);
         if (nativeAd != null) {
-        	view.setTag(R.id.mopub_tag_NativeAdViewHelper_NativeAd, null);
+            view.setTag(R.id.mopub_tag_NativeAdViewHelper_NativeAd, null);
             nativeAd.clear(view);
         }
     }
