@@ -84,7 +84,11 @@ class ConsentDialogLayout extends CloseableLayout {
 
     @SuppressLint("SetJavaScriptEnabled")
     private WebView initWebView() {
-        WebView webView = new WebView(getContext());
+        try {
+            WebView webView = new WebView(getContext());
+        } catch (RuntimeException re) {
+            return null;
+        }
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
 
