@@ -10,6 +10,7 @@ public enum ResponseHeader {
     CLICK_TRACKING_URL("x-clickthrough"),
     CUSTOM_EVENT_DATA("x-custom-event-class-data"),
     CUSTOM_EVENT_NAME("x-custom-event-class-name"),
+    AD_SOURCE_ID("x-adgroupid"),
     CREATIVE_ID("x-creativeid"),
     DSP_CREATIVE_ID("x-dspcreativeid"),
     FAIL_URL("x-next-url"),
