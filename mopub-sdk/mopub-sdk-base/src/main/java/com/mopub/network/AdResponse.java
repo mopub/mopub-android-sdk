@@ -16,7 +16,6 @@ import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -235,10 +234,6 @@ public class AdResponse implements Serializable {
     @Nullable
     public JSONObjectSerializable getRawPayload() {
         return mRawPayload;
-    }
-
-    public boolean isScrollable() {
-        return mScrollable;
     }
 
     @Nullable
