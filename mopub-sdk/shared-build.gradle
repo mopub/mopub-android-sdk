@@ -3,6 +3,7 @@
 // http://www.mopub.com/legal/sdk-license-agreement/
 
 apply plugin: 'com.android.library'
+//apply plugin: 'com.github.dcendents.android-maven'
 
 repositories {
     google()
