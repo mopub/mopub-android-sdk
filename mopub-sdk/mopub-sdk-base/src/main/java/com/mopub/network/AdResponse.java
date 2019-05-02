@@ -7,6 +7,7 @@ package com.mopub.network;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.mopub.common.JSONObjectSerializable;
 import com.mopub.common.MoPub.BrowserAgent;
 import com.mopub.common.Preconditions;
 import com.mopub.common.util.DateAndTime;
@@ -15,7 +16,6 @@ import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -88,6 +88,9 @@ public class AdResponse implements Serializable {
 
     private final long mTimestamp;
 
+    @Nullable
+    private final JSONObjectSerializable mRawPayload;
+
     private AdResponse(@NonNull Builder builder) {
 
         mAdType = builder.adType;
@@ -121,6 +124,7 @@ public class AdResponse implements Serializable {
         mBrowserAgent = builder.browserAgent;
         mServerExtras = builder.serverExtras;
         mTimestamp = DateAndTime.now().getTime();
+        mRawPayload = builder.rawPayload;
     }
 
     public boolean hasJson() {
@@ -228,6 +232,11 @@ public class AdResponse implements Serializable {
     }
 
     @Nullable
+    public JSONObjectSerializable getRawPayload() {
+        return mRawPayload;
+    }
+
+    @Nullable
     public Integer getWidth() {
         return mWidth;
     }
@@ -298,7 +307,8 @@ public class AdResponse implements Serializable {
                 .setJsonBody(mJsonBody)
                 .setCustomEventClassName(mCustomEventClassName)
                 .setBrowserAgent(mBrowserAgent)
-                .setServerExtras(mServerExtras);
+                .setServerExtras(mServerExtras)
+                .setRawPayload(mRawPayload);
     }
 
     public static class Builder {
@@ -336,6 +346,9 @@ public class AdResponse implements Serializable {
         private BrowserAgent browserAgent;
 
         private Map<String, String> serverExtras = new TreeMap<>();
+
+        @Nullable
+        private JSONObjectSerializable rawPayload;
 
         public Builder setAdType(@Nullable final String adType) {
             this.adType = adType;
@@ -488,6 +501,11 @@ public class AdResponse implements Serializable {
 
         public AdResponse build() {
             return new AdResponse(this);
+        }
+
+        public Builder setRawPayload(@Nullable final JSONObjectSerializable rawPayload) {
+            this.rawPayload = rawPayload;
+            return this;
         }
     }
 }
