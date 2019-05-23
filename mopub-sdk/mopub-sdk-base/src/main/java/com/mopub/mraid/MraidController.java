@@ -61,6 +61,7 @@ public class MraidController {
     public interface MraidListener {
         void onLoaded(View view);
         void onFailedToLoad();
+        void onRenderProcessGone();
         void onExpand();
         void onResize(final boolean toOriginalSize);
         void onOpen();
@@ -205,6 +206,13 @@ public class MraidController {
         }
 
         @Override
+        public void onRenderProcessGone() {
+            if (mMraidListener != null) {
+                mMraidListener.onRenderProcessGone();
+            }
+        }
+
+        @Override
         public void onVisibilityChanged(final boolean isVisible) {
             // The bridge only receives visibility events if there is no 2 part covering it
             if (!mTwoPartBridge.isAttached()) {
@@ -271,6 +279,11 @@ public class MraidController {
         @Override
         public void onPageFailedToLoad() {
             // no-op for two-part expandables. An expandable failing to load should not trigger failover.
+        }
+
+        @Override
+        public void onRenderProcessGone() {
+            //no op
         }
 
         @Override

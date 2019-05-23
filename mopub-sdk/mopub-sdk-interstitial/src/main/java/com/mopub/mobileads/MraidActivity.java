@@ -207,6 +207,12 @@ public class MraidActivity extends BaseInterstitialActivity {
                 finish();
             }
 
+            @Override
+            public void onRenderProcessGone() {
+                // Treat as if it failed to load to close activity
+                onFailedToLoad();
+            }
+
             public void onClose() {
                 MoPubLog.log(WILL_DISAPPEAR);
                 mMraidController.loadJavascript(WEB_VIEW_DID_CLOSE.getJavascript());

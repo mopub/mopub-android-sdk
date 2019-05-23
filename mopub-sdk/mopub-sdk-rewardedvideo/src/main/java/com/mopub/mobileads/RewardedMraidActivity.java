@@ -135,6 +135,12 @@ public class RewardedMraidActivity extends MraidActivity {
                 finish();
             }
 
+            @Override
+            public void onRenderProcessGone() {
+                // Treat it as a load failure to close activity
+                onFailedToLoad();
+            }
+
             public void onClose() {
                 mRewardedMraidController.loadJavascript(WEB_VIEW_DID_CLOSE.getJavascript());
                 finish();

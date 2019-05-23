@@ -33,6 +33,7 @@ import static com.mopub.common.logging.MoPubLog.AdapterLogEvent.LOAD_SUCCESS;
 import static com.mopub.common.logging.MoPubLog.AdapterLogEvent.SHOW_ATTEMPTED;
 import static com.mopub.common.util.JavaScriptWebViewCallbacks.WEB_VIEW_DID_APPEAR;
 import static com.mopub.mobileads.MoPubErrorCode.MRAID_LOAD_ERROR;
+import static com.mopub.mobileads.MoPubErrorCode.RENDER_PROCESS_GONE;
 
 class MraidBanner extends CustomEventBanner {
     public static final String ADAPTER_NAME = MraidBanner.class.getSimpleName();
@@ -106,6 +107,14 @@ class MraidBanner extends CustomEventBanner {
                         MRAID_LOAD_ERROR.getIntCode(),
                         MRAID_LOAD_ERROR);
                 mBannerListener.onBannerFailed(MRAID_LOAD_ERROR);
+            }
+
+            @Override
+            public void onRenderProcessGone() {
+                MoPubLog.log(LOAD_FAILED, ADAPTER_NAME,
+                        RENDER_PROCESS_GONE.getIntCode(),
+                        RENDER_PROCESS_GONE);
+                mBannerListener.onBannerFailed(RENDER_PROCESS_GONE);
             }
 
             @Override

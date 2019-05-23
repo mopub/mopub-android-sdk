@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.webkit.ConsoleMessage;
 import android.webkit.JsResult;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -52,6 +53,8 @@ public class MraidBridge {
         void onPageLoaded();
 
         void onPageFailedToLoad();
+
+        void onRenderProcessGone();
 
         void onVisibilityChanged(boolean isVisible);
 
@@ -322,6 +325,18 @@ public class MraidBridge {
                 @NonNull String description, @NonNull String failingUrl) {
             MoPubLog.log(CUSTOM, "Error: " + description);
             super.onReceivedError(view, errorCode, description, failingUrl);
+        }
+
+        @Override
+        public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                String reason = detail.didCrash() ? "Process Crashed" : "Low memory";
+                MoPubLog.log(MoPubLog.SdkLogEvent.CUSTOM, "MraidWebView - RenderProcessGone: " + reason);
+                MraidBridge.this.mMraidBridgeListener.onRenderProcessGone();
+                return true;
+            } else {
+                return super.onRenderProcessGone(view, detail);
+            }
         }
     };
 
