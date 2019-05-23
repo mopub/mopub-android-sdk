@@ -6,8 +6,10 @@ package com.mopub.common;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -97,5 +99,17 @@ class BrowserWebViewClient extends WebViewClient {
                 ? RIGHT_ARROW.createDrawable(mMoPubBrowser)
                 : UNRIGHT_ARROW.createDrawable(mMoPubBrowser);
         mMoPubBrowser.getForwardButton().setImageDrawable(forwardImageDrawable);
+    }
+
+    @Override
+    public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            String reason = detail.didCrash() ? "Process Crashed" : "Low memory";
+            MoPubLog.log(CUSTOM, "MoPubBrowser - RenderProcessGone: " + reason);
+            mMoPubBrowser.finish();
+            return true;
+        } else {
+            return super.onRenderProcessGone(view, detail);
+        }
     }
 }
