@@ -332,6 +332,7 @@ public class MraidBridge {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 String reason = detail.didCrash() ? "Process Crashed" : "Low memory";
                 MoPubLog.log(MoPubLog.SdkLogEvent.CUSTOM, "MraidWebView - RenderProcessGone: " + reason);
+                detach();
                 MraidBridge.this.mMraidBridgeListener.onRenderProcessGone();
                 return true;
             } else {
