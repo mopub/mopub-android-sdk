@@ -13,7 +13,7 @@ public class TestCustomEventBannerFactory extends CustomEventBannerFactory{
     private CustomEventBanner instance = mock(CustomEventBanner.class);
 
     @Override
-    protected CustomEventBanner internalCreate(String className) {
+    public CustomEventBanner internalCreate(String className) {
         return instance;
     }
 }

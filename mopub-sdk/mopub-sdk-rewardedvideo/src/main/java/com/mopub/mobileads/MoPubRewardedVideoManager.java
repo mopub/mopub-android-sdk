@@ -75,6 +75,7 @@ public class MoPubRewardedVideoManager {
     @NonNull private final Context mContext;
     @NonNull private final RewardedAdData mRewardedAdData;
     @Nullable private MoPubRewardedVideoListener mVideoListener;
+    @Nullable private RewardedVideoCustomEventAdListener mCustomEventAdListener;
 
     @NonNull private final Set<MediationSettings> mGlobalMediationSettings;
     @NonNull private final Map<String, Set<MediationSettings>> mInstanceMediationSettings;
@@ -220,6 +221,14 @@ public class MoPubRewardedVideoManager {
     public static void setVideoListener(@Nullable MoPubRewardedVideoListener listener) {
         if (sInstance != null) {
             sInstance.mVideoListener = listener;
+        } else {
+            logErrorNotInitialized();
+        }
+    }
+
+    public static void setAnalyticsHook(@Nullable RewardedVideoCustomEventAdListener listener) {
+        if (sInstance != null) {
+            sInstance.mCustomEventAdListener = listener;
         } else {
             logErrorNotInitialized();
         }
@@ -526,6 +535,10 @@ public class MoPubRewardedVideoManager {
             // Load custom event
             MoPubLog.log(CUSTOM, String.format(Locale.US,
                     "Loading custom event with class name %s", customEventClassName));
+            if(sInstance.mCustomEventAdListener != null) {
+                sInstance.mCustomEventAdListener.onCustomEventRewardedVideoAttempted(adUnitId,
+                        customEventClassName);
+            }
             customEvent.loadCustomEvent(mainActivity, localExtras, serverExtras);
 
             final String adNetworkId = customEvent.getAdNetworkId();
@@ -629,6 +642,10 @@ public class MoPubRewardedVideoManager {
             @Override
             protected void forEach(@NonNull final String moPubId) {
                 sInstance.cancelTimeouts(moPubId);
+                if (sInstance.mCustomEventAdListener != null) {
+                    sInstance.mCustomEventAdListener.onCustomEventRewardedVideoAttemptSucceeded(
+                            moPubId, sInstance.rewardedAdsLoaders.getDspCreativeId(moPubId));
+                }
                 sInstance.rewardedAdsLoaders.creativeDownloadSuccess(moPubId);
                 if (sInstance.mVideoListener != null) {
                     sInstance.mVideoListener.onRewardedVideoLoadSuccess(moPubId);
@@ -642,8 +659,11 @@ public class MoPubRewardedVideoManager {
         postToInstance(new ForEachMoPubIdRunnable(customEventClass, thirdPartyId) {
             @Override
             protected void forEach(@NonNull final String moPubId) {
-                   sInstance.cancelTimeouts(moPubId);
-                   sInstance.failover(moPubId, errorCode);
+                sInstance.cancelTimeouts(moPubId);
+                sInstance.failover(moPubId, errorCode);
+                if(sInstance.mCustomEventAdListener != null) {
+                    sInstance.mCustomEventAdListener.onCustomEventRewardedVideoFailed(moPubId, errorCode);
+                }
             }
         });
     }
@@ -919,7 +939,7 @@ public class MoPubRewardedVideoManager {
     @Deprecated
     @VisibleForTesting
     @Nullable
-    static RewardedAdsLoaders getAdRequestStatusMapping() {
+    public static RewardedAdsLoaders getAdRequestStatusMapping() {
         if (sInstance != null) {
             return sInstance.rewardedAdsLoaders;
         }

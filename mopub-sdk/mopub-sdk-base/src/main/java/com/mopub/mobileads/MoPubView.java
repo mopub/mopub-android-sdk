@@ -50,6 +50,12 @@ public class MoPubView extends FrameLayout {
         public void onBannerCollapsed(MoPubView banner);
     }
 
+    public interface BannerCustomEventAdListener {
+        void onCustomEventBannerAttempted(MoPubView banner, String customEventClassName);
+        void onCustomEventBannerAttemptSucceeded(MoPubView banner, String creativeId);
+        void onCustomEventBannerFailed(MoPubView banner, MoPubErrorCode errorCode);
+    }
+
     private static final String CUSTOM_EVENT_BANNER_ADAPTER_FACTORY =
             "com.mopub.mobileads.factories.CustomEventBannerAdapterFactory";
 
@@ -63,6 +69,7 @@ public class MoPubView extends FrameLayout {
     private BroadcastReceiver mScreenStateReceiver;
 
     private BannerAdListener mBannerAdListener;
+    protected BannerCustomEventAdListener mBannerCustomEventAdListener;
 
     public MoPubView(Context context) {
         this(context, null);
@@ -161,6 +168,10 @@ public class MoPubView extends FrameLayout {
     }
 
     protected boolean loadFailUrl(@NonNull final MoPubErrorCode errorCode) {
+        if (mBannerCustomEventAdListener != null) {
+            mBannerCustomEventAdListener.onCustomEventBannerFailed(this, errorCode);
+        }
+
         if (mAdViewController == null) {
             return false;
         }
@@ -182,6 +193,9 @@ public class MoPubView extends FrameLayout {
         }
 
         MoPubLog.log(CUSTOM, "Loading custom event adapter.");
+        if (mBannerCustomEventAdListener != null) {
+            mBannerCustomEventAdListener.onCustomEventBannerAttempted(this, customEventClassName);
+        }
 
         if (Reflection.classFound(CUSTOM_EVENT_BANNER_ADAPTER_FACTORY)) {
             try {
@@ -242,6 +256,15 @@ public class MoPubView extends FrameLayout {
 
     protected void adLoaded() {
         MoPubLog.log(LOAD_SUCCESS);
+        if (mBannerCustomEventAdListener != null) {
+            String creativeId = "";
+            if (mAdViewController != null && mAdViewController.getAdReport() != null) {
+                creativeId = mAdViewController.getAdReport().getDspCreativeId();
+            }
+            mBannerCustomEventAdListener.onCustomEventBannerAttemptSucceeded(this,
+                    creativeId);
+        }
+
         if (mBannerAdListener != null) {
             mBannerAdListener.onBannerLoaded(this);
         }
@@ -333,6 +356,10 @@ public class MoPubView extends FrameLayout {
 
     public void setBannerAdListener(BannerAdListener listener) {
         mBannerAdListener = listener;
+    }
+
+    public void setBannerCustomEventAdListener(BannerCustomEventAdListener listener) {
+        mBannerCustomEventAdListener = listener;
     }
 
     public BannerAdListener getBannerAdListener() {

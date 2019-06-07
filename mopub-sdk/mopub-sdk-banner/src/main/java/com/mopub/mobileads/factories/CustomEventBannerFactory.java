@@ -20,11 +20,15 @@ public class CustomEventBannerFactory {
         instance = factory;
     }
 
-    protected CustomEventBanner internalCreate(String className) throws Exception {
+    public CustomEventBanner internalCreate(String className) throws Exception {
         Class<? extends CustomEventBanner> bannerClass = Class.forName(className)
                 .asSubclass(CustomEventBanner.class);
         Constructor<?> bannerConstructor = bannerClass.getDeclaredConstructor((Class[]) null);
         bannerConstructor.setAccessible(true);
         return (CustomEventBanner) bannerConstructor.newInstance();
+    }
+
+    public static CustomEventBannerFactory getInstance() {
+        return instance;
     }
 }

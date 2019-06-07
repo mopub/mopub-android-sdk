@@ -40,7 +40,7 @@ public class TestCustomEventInterstitialAdapterFactory extends CustomEventInters
     }
 
     @Override
-    protected CustomEventInterstitialAdapter internalCreate(MoPubInterstitial moPubInterstitial, String className, Map<String, String> serverExtras, long broadcastIdentifier, AdReport adReport) {
+    public CustomEventInterstitialAdapter internalCreate(MoPubInterstitial moPubInterstitial, String className, Map<String, String> serverExtras, long broadcastIdentifier, AdReport adReport) {
         latestMoPubInterstitial = moPubInterstitial;
         latestClassName = className;
         latestClassData = serverExtras;

@@ -28,11 +28,15 @@ public class CustomEventBannerAdapterFactory {
         return instance.internalCreate(moPubView, className, serverExtras, broadcastIdentifier, adReport);
     }
 
-    protected CustomEventBannerAdapter internalCreate(@NonNull MoPubView moPubView,
+    public CustomEventBannerAdapter internalCreate(@NonNull MoPubView moPubView,
             @NonNull String className,
             @NonNull Map<String, String> serverExtras,
             long broadcastIdentifier,
             @NonNull AdReport adReport) {
         return new CustomEventBannerAdapter(moPubView, className, serverExtras, broadcastIdentifier, adReport);
+    }
+
+    public static CustomEventBannerAdapterFactory getInstance() {
+        return instance;
     }
 }

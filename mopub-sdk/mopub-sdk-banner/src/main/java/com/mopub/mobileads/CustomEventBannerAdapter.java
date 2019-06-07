@@ -53,10 +53,19 @@ public class CustomEventBannerAdapter implements InternalCustomEventBannerListen
     @Nullable private BannerVisibilityTracker mVisibilityTracker;
 
     public CustomEventBannerAdapter(@NonNull MoPubView moPubView,
+                                    @NonNull String className,
+                                    @NonNull Map<String, String> serverExtras,
+                                    long broadcastIdentifier,
+                                    @Nullable AdReport adReport) {
+        this(moPubView, className, serverExtras, broadcastIdentifier, adReport, CustomEventBannerFactory.getInstance());
+    }
+
+    public CustomEventBannerAdapter(@NonNull MoPubView moPubView,
             @NonNull String className,
             @NonNull Map<String, String> serverExtras,
             long broadcastIdentifier,
-            @Nullable AdReport adReport) {
+            @Nullable AdReport adReport,
+            @NonNull CustomEventBannerFactory customEventBannerFactory) {
         Preconditions.checkNotNull(serverExtras);
         mHandler = new Handler();
         mMoPubView = moPubView;
@@ -74,7 +83,7 @@ public class CustomEventBannerAdapter implements InternalCustomEventBannerListen
 
         MoPubLog.log(CUSTOM,  "Attempting to invoke custom event: " + className);
         try {
-            mCustomEventBanner = CustomEventBannerFactory.create(className);
+            mCustomEventBanner = customEventBannerFactory.internalCreate(className);
         } catch (Exception exception) {
             MoPubLog.log(CUSTOM,  "Couldn't locate or instantiate custom event: " + className + ".");
             mMoPubView.loadFailUrl(ADAPTER_NOT_FOUND);
