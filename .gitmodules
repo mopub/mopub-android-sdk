@@ -1,0 +1,3 @@
+[submodule "mopub-sdk-common"]
+	path = mopub-sdk-common
+	url = git@github.com:mopub/mopub-sdk-common.git

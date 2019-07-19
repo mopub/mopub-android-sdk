@@ -25,14 +25,6 @@ import static com.mopub.simpleadsdemo.MoPubSQLiteHelper.COLUMN_ID;
 import static com.mopub.simpleadsdemo.MoPubSQLiteHelper.COLUMN_USER_GENERATED;
 import static com.mopub.simpleadsdemo.MoPubSQLiteHelper.TABLE_AD_CONFIGURATIONS;
 import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType;
-import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.BANNER;
-import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.CUSTOM_NATIVE;
-import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.INTERSTITIAL;
-import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.LEADERBOARD;
-import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.LIST_VIEW;
-import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.MRECT;
-import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.RECYCLER_VIEW;
-import static com.mopub.simpleadsdemo.MoPubSampleAdUnit.AdType.REWARDED_VIDEO;
 
 class AdUnitDataSource {
     private Context mContext;
@@ -129,65 +121,14 @@ class AdUnitDataSource {
         return adConfigurations;
     }
 
-    List<MoPubSampleAdUnit> getDefaultAdUnits() {
-        final List<MoPubSampleAdUnit> adUnitList = new ArrayList<>();
-        adUnitList.add(
-                new MoPubSampleAdUnit
-                        .Builder(mContext.getString(R.string.ad_unit_id_banner), BANNER)
-                        .description("MoPub Banner Sample")
-                        .build());
-        adUnitList.add(
-                new MoPubSampleAdUnit
-                        .Builder(mContext.getString(R.string.ad_unit_id_mrect), MRECT)
-                        .description("MoPub Mrect Sample")
-                        .build());
-        adUnitList.add(
-                new MoPubSampleAdUnit
-                        .Builder(mContext.getString(R.string.ad_unit_id_leaderboard), LEADERBOARD)
-                        .description("MoPub Leaderboard Sample")
-                        .build());
-        adUnitList.add(
-                new MoPubSampleAdUnit
-                        .Builder(mContext.getString(R.string.ad_unit_id_interstitial), INTERSTITIAL)
-                        .description("MoPub Interstitial Sample")
-                        .build());
-        adUnitList.add(
-                new MoPubSampleAdUnit
-                        .Builder(mContext.getString(R.string.ad_unit_id_rewarded_video),
-                        REWARDED_VIDEO)
-                        .description("MoPub Rewarded Video Sample")
-                        .build());
-        adUnitList.add(
-                new MoPubSampleAdUnit
-                        .Builder(mContext.getString(R.string.ad_unit_id_rewarded_rich_media),
-                        REWARDED_VIDEO)
-                        .description("MoPub Rewarded Rich Media Sample")
-                        .build());
-        adUnitList.add(
-                new MoPubSampleAdUnit
-                        .Builder(mContext.getString(R.string.ad_unit_id_native), LIST_VIEW)
-                        .description("MoPub Ad Placer Sample")
-                        .build());
-        adUnitList.add(
-                new MoPubSampleAdUnit
-                        .Builder(mContext.getString(R.string.ad_unit_id_native), RECYCLER_VIEW)
-                        .description("MoPub Recycler View Sample")
-                        .build());
-        adUnitList.add(
-                new MoPubSampleAdUnit
-                        .Builder(mContext.getString(R.string.ad_unit_id_native), CUSTOM_NATIVE)
-                        .description("MoPub View Pager Sample")
-                        .build());
-        return adUnitList;
-    }
-
     private void populateDefaultSampleAdUnits() {
         final HashSet<MoPubSampleAdUnit> allAdUnits = new HashSet<>();
         for (final MoPubSampleAdUnit adUnit : getAllAdUnits()) {
             allAdUnits.add(adUnit);
         }
 
-        for (final MoPubSampleAdUnit defaultAdUnit : getDefaultAdUnits()) {
+        for (final MoPubSampleAdUnit defaultAdUnit :
+                SampleAppDefaultAdUnits.getDefaultAdUnits(mContext)) {
             if (!allAdUnits.contains(defaultAdUnit)) {
                 createDefaultSampleAdUnit(defaultAdUnit);
             }

@@ -201,6 +201,6 @@ public class ConsentDialogControllerTest {
                 "&language=en" +
                 "&gdpr_applies=1" +
                 "&force_gdpr_applies=0" +
-                "&bundle=com.mopub.mobileads";
+                "&bundle=com.mopub.mobileads.test";
     }
 }

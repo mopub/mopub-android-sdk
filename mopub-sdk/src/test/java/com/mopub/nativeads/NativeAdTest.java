@@ -10,6 +10,10 @@ import android.view.ViewGroup;
 
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.nativeads.BaseNativeAd.NativeEventListener;
+import com.mopub.network.AdResponse;
+import com.mopub.network.ImpressionData;
+import com.mopub.network.ImpressionListener;
+import com.mopub.network.ImpressionsEmitter;
 import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
 
@@ -48,6 +52,7 @@ public class NativeAdTest {
     @Mock private MoPubRequestQueue mockRequestQueue;
     @Mock private MoPubNativeEventListener mockEventListener;
     @Mock private BaseNativeAd mockBaseNativeAd;
+    @Mock private ImpressionData mockImpressionData;
 
     @Before
     public void setUp() {
@@ -183,6 +188,28 @@ public class NativeAdTest {
     }
 
     @Test
+    public void recordImpression_shouldCallImpressionCallback() {
+        ImpressionListener listener = mock(ImpressionListener.class);
+        ImpressionsEmitter.addListener(listener);
+
+        subject.recordImpression(mockView);
+
+        verify(listener).onImpression("adunit_id", null);
+    }
+
+    @Test
+    public void recordImpression_whenImpressionDataPresent_shouldCallImpressionData() {
+        subject = new NativeAd(activity, mockAdResponse(), "adunit_id", mockBaseNativeAd, mockRenderer);
+
+        ImpressionListener listener = mock(ImpressionListener.class);
+        ImpressionsEmitter.addListener(listener);
+
+        subject.recordImpression(mockView);
+
+        verify(listener).onImpression("adunit_id", mockImpressionData);
+    }
+
+    @Test
     public void handleClick_shouldTrackClicksOnce() {
         subject.handleClick(mockView);
         verify(mockRequestQueue).add(argThat(isUrl("moPubClickTrackerUrl")));
@@ -204,5 +231,14 @@ public class NativeAdTest {
         subject.handleClick(mockView);
         verifyZeroInteractions(mockRequestQueue);
         verifyZeroInteractions(mockEventListener);
+    }
+
+    private AdResponse mockAdResponse() {
+        AdResponse response = mock(AdResponse.class);
+        when(response.getClickTrackingUrl()).thenReturn("moPubClickTrackerUrl");
+        when(response.getImpressionTrackingUrls())
+                .thenReturn(Arrays.asList("moPubImpressionTrackerUrl1", "moPubImpressionTrackerUrl2"));
+        when(response.getImpressionData()).thenReturn(mockImpressionData);
+        return response;
     }
 }

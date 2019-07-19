@@ -54,4 +54,10 @@
     <string name="network_adapters">Network Adapters</string>
     <string name="pim_is_not_available">getPersonalInformationManager() returned null</string>
     <string name="list_fragment_not_found">Can\'t find MoPubListFragment.</string>
+    <string name="filter_ads">Filter ads</string>
+    <string name="impressions_text">Impressions</string>
+    <string name="clear_logs">Clear logs</string>
+    <string name="empty_list">Empty list</string>
+    <string name="share_impression">Share Impression</string>
+
 </resources>

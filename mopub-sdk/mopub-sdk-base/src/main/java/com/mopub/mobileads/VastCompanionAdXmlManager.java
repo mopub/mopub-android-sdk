@@ -147,7 +147,9 @@ class VastCompanionAdXmlManager {
 
         for (final Node trackerNode : trackerNodes) {
             final String trackerUrl = XmlUtils.getNodeValue(trackerNode);
-            companionCreativeViewTrackers.add(new VastTracker(trackerUrl));
+            if (trackerUrl != null) {
+                companionCreativeViewTrackers.add(new VastTracker(trackerUrl));
+            }
         }
 
         return companionCreativeViewTrackers;

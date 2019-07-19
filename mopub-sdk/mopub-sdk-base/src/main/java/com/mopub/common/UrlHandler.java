@@ -59,6 +59,7 @@ public class UrlHandler {
         void onFinishLoad();
         void onClose();
         void onFailLoad();
+        void onCrash();
     }
 
     /**
@@ -172,6 +173,8 @@ public class UrlHandler {
         @Override public void onClose() { }
 
         @Override public void onFailLoad() { }
+
+        @Override public void onCrash() { }
     };
 
     @NonNull

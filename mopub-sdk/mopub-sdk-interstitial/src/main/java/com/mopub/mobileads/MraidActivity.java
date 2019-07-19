@@ -207,6 +207,12 @@ public class MraidActivity extends BaseInterstitialActivity {
                 finish();
             }
 
+            @Override
+            public void onRenderProcessGone(@NonNull final MoPubErrorCode errorCode) {
+                MoPubLog.log(CUSTOM, "Finishing the activity due to a problem: " + errorCode);
+                finish();
+            }
+
             public void onClose() {
                 MoPubLog.log(WILL_DISAPPEAR);
                 mMraidController.loadJavascript(WEB_VIEW_DID_CLOSE.getJavascript());

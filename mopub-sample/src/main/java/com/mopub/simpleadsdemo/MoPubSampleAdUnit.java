@@ -237,4 +237,10 @@ class MoPubSampleAdUnit implements Comparable<MoPubSampleAdUnit> {
                 that.mDescription.equals(this.mDescription) &&
                 that.mAdUnitId.equals(this.mAdUnitId);
     }
+
+    @Override
+    @NonNull
+    public String toString() {
+        return mDescription == null ? "" : mDescription;
+    }
 }

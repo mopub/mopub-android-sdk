@@ -6,6 +6,8 @@ package com.mopub.nativeads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.location.Location;
@@ -52,6 +54,7 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.ACCESS_NETWORK_STATE;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -61,6 +64,7 @@ import static org.mockito.Mockito.when;
 @Config(shadows = {MoPubShadowTelephonyManager.class, MoPubShadowConnectivityManager.class})
 public class NativeUrlGeneratorTest {
     private static final String AD_UNIT_ID = "1234";
+    private static final String TEST_BUNDLE = "test.bundle";
     private static final int TEST_SCREEN_WIDTH = 320;
     private static final int TEST_SCREEN_HEIGHT = 470;
     private static final float TEST_DENSITY = 1.0f;
@@ -75,7 +79,7 @@ public class NativeUrlGeneratorTest {
         context = spy(Robolectric.buildActivity(Activity.class).create().get());
         Shadows.shadowOf(context).grantPermissions(ACCESS_NETWORK_STATE);
         Shadows.shadowOf(context).grantPermissions(ACCESS_FINE_LOCATION);
-        when(context.getPackageName()).thenReturn("testBundle");
+        when(context.getPackageName()).thenReturn(TEST_BUNDLE);
         shadowTelephonyManager = (MoPubShadowTelephonyManager)
                 Shadows.shadowOf((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE));
         shadowConnectivityManager = (MoPubShadowConnectivityManager)
@@ -93,6 +97,14 @@ public class NativeUrlGeneratorTest {
         when(spyResources.getDisplayMetrics()).thenReturn(mockDisplayMetrics);
         when(context.getResources()).thenReturn(spyResources);
 
+        final Context spyApplicationContext = spy(context.getApplicationContext());
+        when(spyApplicationContext.getPackageName()).thenReturn(TEST_BUNDLE);
+        PackageManager mockPackageManager = mock(PackageManager.class);
+        PackageInfo mockPackageInfo = mock(PackageInfo.class);
+        mockPackageInfo.versionName = BuildConfig.VERSION_NAME;
+        when(mockPackageManager.getPackageInfo(any(String.class), anyInt())).thenReturn(mockPackageInfo);
+        when(spyApplicationContext.getPackageManager()).thenReturn(mockPackageManager);
+
         // Only do this on Android 17+ because getRealSize doesn't exist before then.
         // This is the default pathway.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -108,7 +120,6 @@ public class NativeUrlGeneratorTest {
                 }
             }).when(mockDisplay).getRealSize(any(Point.class));
             when(mockWindowManager.getDefaultDisplay()).thenReturn(mockDisplay);
-            final Context spyApplicationContext = spy(context.getApplicationContext());
             when(spyApplicationContext.getSystemService(Context.WINDOW_SERVICE)).thenReturn(mockWindowManager);
             when(context.getApplicationContext()).thenReturn(spyApplicationContext);
         }
@@ -434,7 +445,7 @@ public class NativeUrlGeneratorTest {
                         AD_UNIT_ID +
                         "&nv=" + Uri.encode(MoPub.SDK_VERSION) +
                         "&dn=unknown%2Crobolectric%2Crobolectric" +
-                        "&bundle=com.mopub.mobileads" +
+                        "&bundle=" + TEST_BUNDLE +
                         "&z=-0700" +
                         "&o=p" +
                         "&w=" +

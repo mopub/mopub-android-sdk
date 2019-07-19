@@ -31,6 +31,7 @@ import com.mopub.mraid.MraidNativeCommandHandler;
 import com.mopub.network.AdLoader;
 import com.mopub.network.AdResponse;
 import com.mopub.network.MoPubNetworkError;
+import com.mopub.network.SingleImpression;
 import com.mopub.network.TrackingRequest;
 import com.mopub.volley.NetworkResponse;
 import com.mopub.volley.Request;
@@ -99,6 +100,7 @@ public class AdViewController {
     private boolean mAdWasLoaded;
     @Nullable private String mAdUnitId;
     @Nullable private Integer mRefreshTimeMillis;
+    @NonNull private String mLastTrackedRequestId;
 
     public static void setShouldHonorServerDimensions(View view) {
         sViewShouldHonorServerDimensions.put(view, true);
@@ -137,6 +139,7 @@ public class AdViewController {
         };
         mRefreshTimeMillis = DEFAULT_REFRESH_TIME_MILLISECONDS;
         mHandler = new Handler();
+        mLastTrackedRequestId = "";
     }
 
     @VisibleForTesting
@@ -483,6 +486,7 @@ public class AdViewController {
         mMoPubView = null;
         mContext = null;
         mUrlGenerator = null;
+        mLastTrackedRequestId = "";
 
         // Flag as destroyed. LoadUrlTask checks this before proceeding in its onPostExecute().
         mIsDestroyed = true;
@@ -498,8 +502,19 @@ public class AdViewController {
 
     void trackImpression() {
         if (mAdResponse != null) {
-            TrackingRequest.makeTrackingHttpRequest(mAdResponse.getImpressionTrackingUrls(),
-                    mContext);
+            final String requestId = mAdResponse.getRequestId();
+            // If we have already tracked these impressions, don't do it again
+            if (mLastTrackedRequestId.equals(requestId)) {
+                MoPubLog.log(CUSTOM, "Ignoring duplicate impression.");
+                return;
+            }
+
+            if (requestId != null) {
+                mLastTrackedRequestId = requestId;
+            }
+            TrackingRequest.makeTrackingHttpRequest(mAdResponse.getImpressionTrackingUrls(), mContext);
+
+            new SingleImpression(mAdResponse.getAdUnitId(), mAdResponse.getImpressionData()).sendImpression();
         }
     }
 

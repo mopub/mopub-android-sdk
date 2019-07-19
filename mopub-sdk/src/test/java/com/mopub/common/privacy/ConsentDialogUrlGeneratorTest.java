@@ -22,6 +22,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
+import java.net.URLEncoder;
 import java.util.Map;
 
 import static com.mopub.common.privacy.ConsentStatus.EXPLICIT_NO;
@@ -80,7 +81,7 @@ public class ConsentDialogUrlGeneratorTest {
     }
 
     @Test
-    public void generateUrlString_withMinimumParametersSet_shouldGenerateValidUrl() {
+    public void generateUrlString_withMinimumParametersSet_shouldGenerateValidUrl() throws java.io.UnsupportedEncodingException {
         String validUrl = createTestUrl();
 
         subject = new ConsentDialogUrlGenerator(context, AD_UNIT_ID, UNKNOWN.getValue());
@@ -140,11 +141,11 @@ public class ConsentDialogUrlGeneratorTest {
     }
 
     // unit test utils
-    private String createTestUrl() {
+    private String createTestUrl() throws java.io.UnsupportedEncodingException {
         return "https://" + Constants.HOST + "/m/gdpr_consent_dialog" +
                 "?id=" + AD_UNIT_ID +
                 "&current_consent_status=" + UNKNOWN.getValue() +
-                "&nv=" + MoPub.SDK_VERSION +
+                "&nv=" + URLEncoder.encode(MoPub.SDK_VERSION, "UTF-8") +
                 "&language=" + CURRENT_LANGUAGE +
                 "&force_gdpr_applies=" + "0" +
                 "&bundle=" + BUNDLE;

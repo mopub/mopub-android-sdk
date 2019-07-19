@@ -135,6 +135,12 @@ public class RewardedMraidActivity extends MraidActivity {
                 finish();
             }
 
+            @Override
+            public void onRenderProcessGone(@NonNull final MoPubErrorCode errorCode) {
+                MoPubLog.log(CUSTOM, "Finishing the activity due to a problem: " + errorCode);
+                finish();
+            }
+
             public void onClose() {
                 mRewardedMraidController.loadJavascript(WEB_VIEW_DID_CLOSE.getJavascript());
                 finish();

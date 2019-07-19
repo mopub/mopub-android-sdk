@@ -6,8 +6,12 @@ package com.mopub.common;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.text.TextUtils;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -20,6 +24,8 @@ import static com.mopub.common.util.Drawables.LEFT_ARROW;
 import static com.mopub.common.util.Drawables.RIGHT_ARROW;
 import static com.mopub.common.util.Drawables.UNLEFT_ARROW;
 import static com.mopub.common.util.Drawables.UNRIGHT_ARROW;
+import static com.mopub.mobileads.MoPubErrorCode.RENDER_PROCESS_GONE_UNSPECIFIED;
+import static com.mopub.mobileads.MoPubErrorCode.RENDER_PROCESS_GONE_WITH_CRASH;
 
 class BrowserWebViewClient extends WebViewClient {
 
@@ -97,5 +103,15 @@ class BrowserWebViewClient extends WebViewClient {
                 ? RIGHT_ARROW.createDrawable(mMoPubBrowser)
                 : UNRIGHT_ARROW.createDrawable(mMoPubBrowser);
         mMoPubBrowser.getForwardButton().setImageDrawable(forwardImageDrawable);
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    @Override
+    public boolean onRenderProcessGone(@Nullable final WebView view, @Nullable final RenderProcessGoneDetail detail) {
+        MoPubLog.log(CUSTOM, (detail != null && detail.didCrash())
+                ? RENDER_PROCESS_GONE_WITH_CRASH
+                : RENDER_PROCESS_GONE_UNSPECIFIED);
+        mMoPubBrowser.finish();
+        return true;
     }
 }

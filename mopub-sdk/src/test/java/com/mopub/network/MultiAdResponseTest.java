@@ -588,6 +588,42 @@ public class MultiAdResponseTest {
         assertThat(serverExtras.get(DataKeys.HTML_RESPONSE_BODY_KEY)).isEqualToIgnoringCase("content_text");
         assertThat(serverExtras.get(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS)).isEqualTo("1");
         assertThat(serverExtras.get(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS)).isEqualTo("2");
+        assertThat(subject.getImpressionData()).isNull();
+    }
+
+    @Test
+    public void parseNetworkResponse_forBanner_withImpressionData_shouldSucceed() throws MoPubNetworkError, JSONException {
+        // add impression data
+        JSONObject metadata = (JSONObject) singleAdResponse.get(ResponseHeader.METADATA.getKey());
+        JSONObject impJson = createImpressionData();
+        metadata.put(ResponseHeader.IMPRESSION_DATA.getKey(), impJson);
+        NetworkResponse networkResponse = new NetworkResponse(singleAdResponse.toString().getBytes());
+
+        AdResponse subject = MultiAdResponse.parseSingleAdResponse(activity.getApplicationContext(),
+                networkResponse,
+                singleAdResponse,
+                adUnitId,
+                AdFormat.BANNER,
+                REQUEST_ID_VALUE);
+
+        assertThat(subject.getAdType()).isEqualTo(AdType.HTML);
+        assertThat(subject.getAdUnitId()).isEqualTo(adUnitId);
+        ImpressionData impressionData = subject.getImpressionData();
+        assert (impressionData != null);
+        assertThat(impressionData.getImpressionId()).isEqualTo(impJson.getString("id"));
+        assertThat(impressionData.getAdUnitId()).isEqualTo(impJson.getString("adunit_id"));
+        assertThat(impressionData.getAdUnitName()).isEqualTo(impJson.getString("adunit_name"));
+        assertThat(impressionData.getAdUnitFormat()).isEqualTo(impJson.getString("adunit_format"));
+        assertThat(impressionData.getAdGroupId()).isEqualTo(impJson.getString("adgroup_id"));
+        assertThat(impressionData.getAdGroupName()).isEqualTo(impJson.getString("adgroup_name"));
+        assertThat(impressionData.getAdGroupType()).isEqualTo(impJson.getString("adgroup_type"));
+        assertThat(impressionData.getAdGroupPriority()).isEqualTo(impJson.getInt("adgroup_priority"));
+        assertThat(impressionData.getCurrency()).isEqualTo(impJson.getString("currency"));
+        assertThat(impressionData.getCountry()).isEqualTo(impJson.getString("country"));
+        assertThat(impressionData.getNetworkName()).isEqualTo(impJson.getString("network_name"));
+        assertThat(impressionData.getNetworkPlacementId()).isEqualTo(impJson.getString("network_placement_id"));
+        assertThat(impressionData.getPublisherRevenue()).isEqualTo(impJson.getDouble("publisher_revenue"));
+        assertThat(impressionData.getPrecision()).isEqualTo(impJson.getString("precision"));
     }
 
     @Test
@@ -1107,6 +1143,26 @@ public class MultiAdResponseTest {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put(ResponseHeader.METADATA.getKey(), metadata);
         return jsonObject;
+    }
+
+    private static JSONObject createImpressionData() throws JSONException {
+        String jsonString = "{\n" +
+                        "          \"id\": \"impid\",\n" +
+                        "          \"adunit_id\": \"adunitid\",\n" +
+                        "          \"adunit_name\": \"adunitname\",\n" +
+                        "          \"adunit_format\": \"adunitformat\",\n" +
+                        "          \"adgroup_id\": \"adgroupid\",\n" +
+                        "          \"adgroup_name\": \"adgroupname\",\n" +
+                        "          \"adgroup_type\": \"adgrouptype\",\n" +
+                        "          \"adgroup_priority\": 123,\n" +
+                        "          \"currency\": \"USD\",\n" +
+                        "          \"country\": \"USA\",\n" +
+                        "          \"network_name\": \"networkname\",\n" +
+                        "          \"network_placement_id\": \"networkplacementid\",\n" +
+                        "          \"publisher_revenue\": 0.0001,\n" +
+                        "          \"precision\": \"exact\"\n" +
+                        "     }";
+        return new JSONObject(jsonString);
     }
 
     private static void addBackoffParameters(final JSONObject response, int time, String reason) throws JSONException {

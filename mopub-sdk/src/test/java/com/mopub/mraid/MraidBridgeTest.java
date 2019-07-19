@@ -8,12 +8,14 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebSettings;
 import android.webkit.WebViewClient;
 
 import com.mopub.common.AdReport;
 import com.mopub.common.Constants;
 import com.mopub.common.test.support.SdkTestRunner;
+import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.mraid.MraidBridge.MraidBridgeListener;
 import com.mopub.mraid.MraidBridge.MraidWebView;
 import com.mopub.mraid.MraidNativeCommandHandler.MraidCommandFailureListener;
@@ -61,6 +63,8 @@ public class MraidBridgeTest {
     private MraidWebView mockInterstitialWebView;
     @Mock
     private WebSettings mockWebSettings;
+    @Mock
+    private RenderProcessGoneDetail mockRenderProcessGoneDetail;
     @Captor
     private ArgumentCaptor<WebViewClient> bannerWebViewClientCaptor;
 
@@ -277,6 +281,12 @@ public class MraidBridgeTest {
         boolean result = subjectBanner.handleShouldOverrideUrl("https://www.mopub.com");
 
         assertThat(result).isFalse();
+    }
+
+    @Test
+    public void handleRenderProcessGone_shouldDetach_shouldNotifyMraidBridgeListener() {
+        subjectBanner.handleRenderProcessGone(mockRenderProcessGoneDetail);
+        verify(mockBridgeListener).onRenderProcessGone(any(MoPubErrorCode.class));
     }
 
     @Test(expected = MraidCommandException.class)

@@ -8,6 +8,15 @@ repositories {
     flatDir {
         dirs '../libs'
     }
+    maven {
+        name "Tapjoy's maven repo"
+        url "https://tapjoy.bintray.com/maven"
+    }
+    maven {
+        url "https://adcolony.bintray.com/AdColony"
+    }
+    maven { url 'https://jitpack.io' }  // For Vungle
+    maven { url "https://dl.bintray.com/ironsource-mobile/android-sdk" } // For IronSource
     maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
 }
 
@@ -15,7 +24,7 @@ apply plugin: 'com.android.application'
 
 project.group = 'com.mopub'
 project.description = '''MoPub Sample App'''
-project.version = '5.6.0'
+project.version = '5.7.1'
 
 android {
     compileSdkVersion 28
@@ -27,12 +36,22 @@ android {
     }
 
     defaultConfig {
-        versionCode 67
+        versionCode 69
         versionName version
         minSdkVersion 16
         targetSdkVersion 28
+        multiDexEnabled true
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    flavorDimensions "default"
+    productFlavors {
+        external {
+            versionName "external"
+            dimension "default"
+        }
+
     }
 
     buildTypes {
@@ -53,9 +72,10 @@ android {
             resources.srcDirs = ['src/main/java']
             aidl.srcDirs = ['src/main']
             renderscript.srcDirs = ['src/main']
-            res.srcDirs = ['res']
+            res.srcDirs = ['res/main']
             assets.srcDirs = ['assets']
         }
+
     }
 
     // Note: You will also need a local.properties file to set the location of the SDK in the same 
@@ -65,6 +85,36 @@ android {
 }
 
 dependencies {
+    // Third party Custom Network Adapters
+    implementation 'com.adcolony:sdk:3.3.10'
+    implementation 'com.google.android.gms:play-services-ads:17.2.0'
+    implementation "com.applovin:applovin-sdk:9.4.2"
+    // Commented out since we cannot distribute 3rd party libraries
+//    implementation name: 'chartboost-7.3.1'
+    implementation 'com.facebook.android:audience-network-sdk:5.3.0'
+    implementation 'com.flurry.android:ads:11.6.0'
+    implementation 'com.flurry.android:analytics:11.6.0'
+    implementation 'com.ironsource.sdk:mediationsdk:6.8.3@jar'
+    implementation 'com.tapjoy:tapjoy-android-sdk:12.2.1@aar'
+    implementation 'com.unity3d.ads:unity-ads:3.0.3@aar'
+    implementation 'com.verizon.ads:android-vas-standard-edition:1.0.2'
+    // Vungle and its dependencies.
+    implementation 'com.github.vungle:vungle-android-sdk:6.3.24'
+
+    // MoPub Custom Network Adapters
+    implementation 'com.mopub.mediation:adcolony:3.3.10.0'
+    implementation 'com.mopub.mediation:admob:17.2.0.1'
+    implementation 'com.mopub.mediation:applovin:9.4.2.0'
+    // Commented out since we do not include the corresponding library
+//    implementation 'com.mopub.mediation:chartboost:7.3.1.4'
+    implementation 'com.mopub.mediation:facebookaudiencenetwork:5.3.0.0'
+    implementation 'com.mopub.mediation:flurry:11.6.0.0'
+    implementation 'com.mopub.mediation:ironsource:6.8.3.0'
+    implementation 'com.mopub.mediation:tapjoy:12.2.1.1'
+    implementation 'com.mopub.mediation:unityads:3.0.3.0'
+    implementation 'com.mopub.mediation:verizon:1.0.2.1'
+    implementation 'com.mopub.mediation:vungle:6.3.24.2'
+
     implementation 'com.android.support:customtabs:28.0.0'
     implementation 'com.android.support:support-v4:28.0.0'
     implementation 'com.android.support:design:28.0.0'

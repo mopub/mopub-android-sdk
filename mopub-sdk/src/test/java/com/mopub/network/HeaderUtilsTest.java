@@ -92,4 +92,16 @@ public class HeaderUtilsTest {
         subject.put(ResponseHeader.HEIGHT.getKey(), "a%");
         assertThat(HeaderUtils.extractPercentHeader(subject, ResponseHeader.HEIGHT)).isNull();
     }
+
+    @Test
+    public void extractJsonObjectHeader_shouldReturnJsonObject() throws JSONException {
+        JSONObject testObject = new JSONObject();
+
+        subject.put(ResponseHeader.IMPRESSION_DATA.getKey(), testObject);
+        assertThat(HeaderUtils.extractJsonObjectHeader(subject, ResponseHeader.IMPRESSION_DATA)).isEqualTo(testObject);
+        assertThat(HeaderUtils.extractJsonObjectHeader(null, ResponseHeader.IMPRESSION_DATA)).isNull();
+
+        subject.remove(ResponseHeader.IMPRESSION_DATA.getKey());
+        assertThat(HeaderUtils.extractJsonObjectHeader(subject, ResponseHeader.IMPRESSION_DATA)).isNull();
+    }
 }

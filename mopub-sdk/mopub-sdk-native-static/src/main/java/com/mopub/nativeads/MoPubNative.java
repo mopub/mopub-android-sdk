@@ -232,8 +232,7 @@ public class MoPubNative {
                         }
 
                         mMoPubNativeNetworkListener.onNativeLoad(new NativeAd(context,
-                                        response.getImpressionTrackingUrls(),
-                                        response.getClickTrackingUrl(),
+                                        response,
                                         mAdUnitId,
                                         nativeAd,
                                         renderer)

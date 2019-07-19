@@ -61,6 +61,8 @@ public enum UrlAction {
                 moPubSchemeListener.onClose();
             } else if ("failLoad".equalsIgnoreCase(host)) {
                 moPubSchemeListener.onFailLoad();
+            } else if ("crash".equals(host)) {
+                moPubSchemeListener.onCrash();
             } else {
                 throw new IntentNotResolvableException("Could not handle MoPub Scheme url: " + uri);
             }

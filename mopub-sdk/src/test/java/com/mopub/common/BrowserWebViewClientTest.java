@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Build;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebView;
 
 import com.mopub.common.test.support.SdkTestRunner;
@@ -18,9 +20,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -38,12 +42,14 @@ public class BrowserWebViewClientTest {
     private Context context;
     private MoPubBrowser mockMoPubBrowser;
     private WebView mockWebView;
+    private RenderProcessGoneDetail mockRenderProcessGoneDetail;
 
     @Before
     public void setUp() {
         mockMoPubBrowser = mock(MoPubBrowser.class);
         context = Robolectric.buildActivity(Activity.class).create().get().getApplicationContext();
         mockWebView = mock(WebView.class);
+        mockRenderProcessGoneDetail = mock(RenderProcessGoneDetail.class);
 
         doCallRealMethod().when(mockMoPubBrowser).setWebView(mockWebView);
         doCallRealMethod().when(mockMoPubBrowser).getWebView();
@@ -169,6 +175,13 @@ public class BrowserWebViewClientTest {
         assertThat(subject.shouldOverrideUrlLoading(MOOT_WEB_VIEW, url)).isFalse();
         verify(mockWebView, never()).loadUrl(anyString());
         verify(mockMoPubBrowser, never()).finish();
+    }
+
+    @Config(minSdk = Build.VERSION_CODES.O)
+    @Test
+    public void onRenderProcessGone_withAtLeastApi26_shouldReturnTrue_shouldFinish() {
+        assertThat(subject.onRenderProcessGone(mockWebView, mockRenderProcessGoneDetail)).isTrue();
+        verify(mockMoPubBrowser).finish();
     }
 
     private void makeDeeplinkResolvable(String deeplink) {

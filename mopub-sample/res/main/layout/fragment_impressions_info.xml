@@ -2,35 +2,34 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/infoFrarmentId"
+    android:id="@+id/infoFragmentId"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/text_no_adapters"
+        android:id="@+id/text_no_impressions"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/no_network_adapters_found"
+        android:text="@string/empty_list"
         android:textSize="@dimen/sample_text_size"
-        app:layout_constraintBottom_toTopOf="@id/privacy_close_btn"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <android.support.v7.widget.RecyclerView
-        android:id="@+id/networks_recycler_view"
+        android:id="@+id/impressions_recycler_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/networks_close_btn"
+        app:layout_constraintBottom_toTopOf="@+id/close_btn"
         app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@android:layout/simple_selectable_list_item" />
 
     <Button
-        android:id="@+id/networks_close_btn"
+        android:id="@+id/close_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/close"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@id/networks_recycler_view"
-        app:layout_constraintStart_toStartOf="@+id/networks_recycler_view" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 </android.support.constraint.ConstraintLayout>

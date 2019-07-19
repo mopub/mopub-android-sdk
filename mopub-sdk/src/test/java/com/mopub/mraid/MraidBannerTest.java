@@ -27,6 +27,7 @@ import java.util.Map;
 
 import static com.mopub.common.DataKeys.HTML_RESPONSE_BODY_KEY;
 import static com.mopub.mobileads.MoPubErrorCode.MRAID_LOAD_ERROR;
+import static com.mopub.mobileads.MoPubErrorCode.RENDER_PROCESS_GONE_WITH_CRASH;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -164,6 +165,15 @@ public class MraidBannerTest {
         verify(mockMraidController, never()).setMraidListener(listenerCaptor.capture());
 
         verify(mockPublicListener).onBannerFailed(MoPubErrorCode.MRAID_LOAD_ERROR);
+    }
+
+    @Test
+    public void bannerMraidListener_onRenderProcessGone_shouldNotifyBannerFailed() {
+        final MoPubErrorCode errorCode = RENDER_PROCESS_GONE_WITH_CRASH;
+        MraidListener mraidListener = captureMraidListener();
+        mraidListener.onRenderProcessGone(errorCode);
+
+        verify(mockBannerListener).onBannerFailed(errorCode);
     }
 
     @Test

@@ -13,7 +13,7 @@ import com.mopub.framework.pages.AdListPage;
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.assertion.ViewAssertions.matches;
-import static android.support.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static android.support.test.espresso.matcher.ViewMatchers.isEnabled;
 import static android.support.test.espresso.matcher.ViewMatchers.isRoot;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
 import static android.support.test.espresso.matcher.ViewMatchers.withResourceName;
@@ -98,7 +98,7 @@ public class BasePage {
         int i = 0;
         while (i++ < timeoutInSeconds * SAMPLES_PER_SEC) {
             try {
-                element.check(matches(isDisplayed()));
+                element.check(matches(isEnabled()));
                 return true;
             } catch (Exception e) {
                 try {

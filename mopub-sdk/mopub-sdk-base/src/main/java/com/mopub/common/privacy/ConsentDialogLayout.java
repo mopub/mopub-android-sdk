@@ -11,9 +11,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -28,6 +30,8 @@ import com.mopub.exceptions.IntentNotResolvableException;
 import static com.mopub.common.logging.MoPubLog.SdkLogEvent.CUSTOM;
 import static com.mopub.common.privacy.ConsentStatus.EXPLICIT_NO;
 import static com.mopub.common.privacy.ConsentStatus.EXPLICIT_YES;
+import static com.mopub.mobileads.MoPubErrorCode.RENDER_PROCESS_GONE_UNSPECIFIED;
+import static com.mopub.mobileads.MoPubErrorCode.RENDER_PROCESS_GONE_WITH_CRASH;
 
 class ConsentDialogLayout extends CloseableLayout {
     static int FINISHED_LOADING = 101;
@@ -140,6 +144,15 @@ class ConsentDialogLayout extends CloseableLayout {
                 mLoadListener.onLoadProgress(FINISHED_LOADING);
             }
             super.onPageFinished(view, url);
+        }
+
+        @RequiresApi(Build.VERSION_CODES.O)
+        @Override
+        public boolean onRenderProcessGone(@Nullable final WebView view, @Nullable final RenderProcessGoneDetail detail) {
+            MoPubLog.log(CUSTOM, (detail != null && detail.didCrash())
+                    ? RENDER_PROCESS_GONE_WITH_CRASH
+                    : RENDER_PROCESS_GONE_UNSPECIFIED);
+            return true;
         }
 
         @Override

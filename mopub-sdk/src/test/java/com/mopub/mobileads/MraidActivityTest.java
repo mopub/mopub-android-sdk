@@ -17,6 +17,7 @@ import android.widget.FrameLayout;
 
 import com.mopub.common.AdReport;
 import com.mopub.common.Constants;
+import com.mopub.common.CreativeOrientation;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mraid.MraidBridge;
 import com.mopub.mraid.MraidBridge.MraidWebView;
@@ -41,6 +42,7 @@ import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_CLICK;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
 import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_SHOW;
 import static com.mopub.mobileads.EventForwardingBroadcastReceiverTest.getIntentForActionAndIdentifier;
+import static com.mopub.mobileads.MoPubErrorCode.RENDER_PROCESS_GONE_WITH_CRASH;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -374,6 +376,12 @@ public class MraidActivityTest {
         subject.onDestroy();
 
         verify(broadcastReceiver).onReceive(any(Context.class), eq(expectedIntent));
+    }
+
+    @Test
+    public void baseMraidListenerOnRenderProcessGone__shouldCallCustomEventInterstitialOnInterstitialFailed_whenMraidListenerOnFailure() throws Exception {
+
+
     }
 
     private FrameLayout getContentView() {

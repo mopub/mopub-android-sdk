@@ -24,6 +24,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.Robolectric;
 
+import java.net.URLEncoder;
+
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -111,21 +113,23 @@ public class SyncUrlGeneratorTest {
     }
 
     @Test
-    public void generateUrlString_withMinimumParams_shouldGenerateValidUrl() {
+    public void generateUrlString_withMinimumParams_shouldGenerateValidUrl() throws java.io.UnsupportedEncodingException {
         final String url = subject.generateUrlString("minurl");
 
-        assertThat(url).isEqualTo("https://minurl/m/gdpr_sync?nv=" + MoPub.SDK_VERSION +
-        "&current_consent_status=unknown&force_gdpr_applies=0&dnt=mp_tmpl_do_not_track");
+        assertThat(url).isEqualTo("https://minurl/m/gdpr_sync?nv=" +
+                URLEncoder.encode(MoPub.SDK_VERSION, "UTF-8") +
+                "&current_consent_status=unknown&force_gdpr_applies=0&dnt=mp_tmpl_do_not_track");
     }
 
     @Test
-    public void generateUrlString_withExtrasThatShouldBeUrlEncoded_shouldGenerateValidUrl() {
+    public void generateUrlString_withExtrasThatShouldBeUrlEncoded_shouldGenerateValidUrl() throws java.io.UnsupportedEncodingException {
         subject = new SyncUrlGenerator(context, ConsentStatus.EXPLICIT_YES.getValue());
         subject.withExtras("!@#$%^&*()_;'[]{}|\\");
 
         final String url = subject.generateUrlString("host");
 
-        assertThat(url).isEqualTo("https://host/m/gdpr_sync?nv=" + MoPub.SDK_VERSION +
+        assertThat(url).isEqualTo("https://host/m/gdpr_sync?nv=" +
+                URLEncoder.encode(MoPub.SDK_VERSION, "UTF-8") +
                 "&current_consent_status=explicit_yes" +
                 "&extras=!%40%23%24%25%5E%26*()_%3B'%5B%5D%7B%7D%7C%5C" +
                 "&force_gdpr_applies=0&dnt=mp_tmpl_do_not_track");

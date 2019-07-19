@@ -13,6 +13,8 @@ import android.view.ViewGroup;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.nativeads.MoPubCustomEventNative.MoPubStaticNativeAd;
 import com.mopub.network.AdResponse;
+import com.mopub.network.ImpressionData;
+import com.mopub.network.SingleImpression;
 import com.mopub.network.TrackingRequest;
 
 import java.util.HashSet;
@@ -59,6 +61,7 @@ public class NativeAd {
     @NonNull private final Set<String> mImpressionTrackers;
     @NonNull private final Set<String> mClickTrackers;
     @NonNull private final String mAdUnitId;
+    @Nullable private ImpressionData mImpressionData;
     @Nullable private MoPubNativeEventListener mMoPubNativeEventListener;
 
     private boolean mRecordedImpression;
@@ -74,6 +77,7 @@ public class NativeAd {
         mContext = context.getApplicationContext();
 
         mAdUnitId = adUnitId;
+        mImpressionData = null;
 
         mImpressionTrackers = new HashSet<String>();
         mImpressionTrackers.addAll(moPubImpressionTrackerUrls);
@@ -97,6 +101,15 @@ public class NativeAd {
         });
 
         mMoPubAdRenderer = moPubAdRenderer;
+    }
+
+    NativeAd(@NonNull final Context context,
+             @NonNull final AdResponse adResponse,
+             @NonNull final String adUnitId,
+             @NonNull final BaseNativeAd baseNativeAd,
+             @NonNull final MoPubAdRenderer moPubAdRenderer){
+        this(context, adResponse.getImpressionTrackingUrls(), adResponse.getClickTrackingUrl(), adUnitId, baseNativeAd, moPubAdRenderer);
+        mImpressionData = adResponse.getImpressionData();
     }
 
     @Override
@@ -207,12 +220,14 @@ public class NativeAd {
             return;
         }
 
+        mRecordedImpression = true;
+
         TrackingRequest.makeTrackingHttpRequest(mImpressionTrackers, mContext);
         if (mMoPubNativeEventListener != null) {
             mMoPubNativeEventListener.onImpression(view);
         }
 
-        mRecordedImpression = true;
+        new SingleImpression(mAdUnitId, mImpressionData).sendImpression();
     }
 
     @VisibleForTesting

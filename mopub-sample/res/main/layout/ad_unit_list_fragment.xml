@@ -7,11 +7,40 @@
     android:paddingBottom="8dp"
     android:textDirection="locale">
 
+    <EditText
+        android:id="@+id/search_bar_et"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentTop="true"
+        android:autofillHints="@string/filter_ads"
+        android:hint="@string/filter_ads"
+        android:imeActionId="6"
+        android:imeOptions="actionDone"
+        android:inputType="text"
+        android:maxLines="1"
+        android:paddingStart="5dp"
+        android:paddingLeft="5dp"
+        android:paddingEnd="38dp"
+        android:paddingRight="38dp" />
+
+    <Button
+        android:id="@+id/search_bar_clear_button"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:layout_alignEnd="@id/search_bar_et"
+        android:layout_alignRight="@id/search_bar_et"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="7dp"
+        android:layout_marginRight="7dp"
+        android:background="@drawable/baseline_cancel_black_36" />
+
+
     <ListView
         android:id="@android:id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/status_change_notification"
+        android:layout_below="@id/search_bar_et"
         android:layout_marginBottom="10dp" />
 
     <EditText

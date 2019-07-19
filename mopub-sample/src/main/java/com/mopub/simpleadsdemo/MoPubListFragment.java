@@ -15,7 +15,9 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.ListFragment;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,6 +55,8 @@ public class MoPubListFragment extends ListFragment implements TrashCanClickList
 
     private MoPubSampleListAdapter mAdapter;
     private AdUnitDataSource mAdUnitDataSource;
+    private EditText mSearchBar;
+    private Button mSearchBarClearButton;
 
     private static final AdType[] adTypes = AdType.values();
 
@@ -101,6 +105,36 @@ public class MoPubListFragment extends ListFragment implements TrashCanClickList
             @Override
             public void onClick(final View view) {
                 onAddClicked(view);
+            }
+        });
+
+        mSearchBar = view.findViewById(R.id.search_bar_et);
+        mSearchBarClearButton = view.findViewById(R.id.search_bar_clear_button);
+
+        mSearchBarClearButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mSearchBar != null) {
+                    mSearchBar.getText().clear();
+                }
+            }
+        });
+
+        mSearchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(final Editable text) {
+                final MoPubSampleListAdapter adapter = mAdapter;
+                if (adapter != null && text != null) {
+                    adapter.getFilter().filter(text.toString());
+                }
             }
         });
 

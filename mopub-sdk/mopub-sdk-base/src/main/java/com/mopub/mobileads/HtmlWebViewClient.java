@@ -82,6 +82,9 @@ class HtmlWebViewClient extends WebViewClient {
                         mHtmlWebView.stopLoading();
                         mHtmlWebViewListener.onFailed(UNSPECIFIED);
                     }
+
+                    @Override
+                    public void onCrash() { }
                 })
                 .build().handleUrl(mContext, url, mHtmlWebView.wasClicked());
         return true;

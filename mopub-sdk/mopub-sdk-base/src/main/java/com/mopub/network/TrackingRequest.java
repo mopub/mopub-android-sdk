@@ -11,6 +11,7 @@ import android.text.TextUtils;
 
 import com.mopub.common.Preconditions;
 import com.mopub.common.logging.MoPubLog;
+import com.mopub.common.util.Utils;
 import com.mopub.mobileads.VastErrorCode;
 import com.mopub.mobileads.VastMacroHelper;
 import com.mopub.mobileads.VastTracker;
@@ -146,7 +147,7 @@ public class TrackingRequest extends MoPubRequest<Void> {
     public static void makeTrackingHttpRequest(@Nullable final String url,
             @Nullable final Context context,
             @Nullable Listener listener) {
-        if (url != null) {
+        if (!TextUtils.isEmpty(url)) {
             makeTrackingHttpRequest(Arrays.asList(url), context, listener);
         }
     }

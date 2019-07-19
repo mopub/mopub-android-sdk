@@ -42,6 +42,7 @@ import static com.mopub.common.logging.MoPubLog.AdLogEvent.RESPONSE_RECEIVED;
 import static com.mopub.network.HeaderUtils.extractBooleanHeader;
 import static com.mopub.network.HeaderUtils.extractHeader;
 import static com.mopub.network.HeaderUtils.extractIntegerHeader;
+import static com.mopub.network.HeaderUtils.extractJsonObjectHeader;
 import static com.mopub.network.HeaderUtils.extractPercentHeaderString;
 import static com.mopub.network.HeaderUtils.extractStringArray;
 
@@ -250,6 +251,9 @@ public class MultiAdResponse implements Iterator<AdResponse> {
 
         String networkType = extractHeader(jsonHeaders, ResponseHeader.NETWORK_TYPE);
         builder.setNetworkType(networkType);
+
+        JSONObject impressionJson = extractJsonObjectHeader(jsonHeaders, ResponseHeader.IMPRESSION_DATA);
+        builder.setImpressionData(ImpressionData.create(impressionJson));
 
         // X-Clickthrough is parsed into the AdResponse as the click tracker
         // Used by AdViewController, Rewarded Video, Native Adapter, MoPubNative

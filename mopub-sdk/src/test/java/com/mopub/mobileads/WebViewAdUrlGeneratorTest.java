@@ -48,7 +48,6 @@ import com.mopub.mobileads.test.support.MoPubShadowConnectivityManager;
 import com.mopub.mobileads.test.support.MoPubShadowTelephonyManager;
 import com.mopub.mraid.MraidNativeCommandHandler;
 import com.mopub.network.PlayServicesUrlRewriter;
-import com.mopub.network.RequestRateTracker;
 import com.mopub.network.RequestRateTrackerTest;
 
 import org.junit.After;

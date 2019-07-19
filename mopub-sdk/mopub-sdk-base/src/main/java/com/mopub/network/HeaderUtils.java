@@ -37,6 +37,18 @@ public class HeaderUtils {
     }
 
     @Nullable
+    public static JSONObject extractJsonObjectHeader(@Nullable final JSONObject headers,
+                                                     @NonNull final ResponseHeader responseHeader) {
+        Preconditions.checkNotNull(responseHeader);
+
+        if (headers == null) {
+            return null;
+        }
+
+        return headers.optJSONObject(responseHeader.getKey());
+    }
+
+    @Nullable
     public static Integer extractIntegerHeader(JSONObject headers, ResponseHeader responseHeader) {
         return formatIntHeader(extractHeader(headers, responseHeader));
     }

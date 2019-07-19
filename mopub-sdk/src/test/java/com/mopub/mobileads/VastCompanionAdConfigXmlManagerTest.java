@@ -29,6 +29,9 @@ public class VastCompanionAdConfigXmlManagerTest {
                 "        <Tracking event=\"creativeView\">https://tracking/creativeView1</Tracking>" +
                 "        <Tracking event=\"creativeView\">https://tracking/creativeView2</Tracking>" +
                 "        <Tracking event=\"creativeView\">https://tracking/creativeView3</Tracking>" +
+                "        <Tracking event=\"creativeView\"></Tracking>" + // missing Uri
+                "        <Tracking event=\"creativeView\"/>" + // self-terminating with missing Uri
+                "        <Tracking/>" + // self-terminating with missing Uri
                 "    </TrackingEvents>" +
                 "    <CompanionClickThrough>https://clickthrough</CompanionClickThrough>" +
                 "    <CompanionClickThrough>https://second_clickthrough</CompanionClickThrough>" +
@@ -38,6 +41,8 @@ public class VastCompanionAdConfigXmlManagerTest {
                 "    <CompanionClickTracking>" +
                 "        <![CDATA[https://clicktrackingTwo]]>" +
                 "    </CompanionClickTracking>" +
+                "    <CompanionClickTracking></CompanionClickTracking>" + // empty tracker
+                "    <CompanionClickTracking/>" + // self-terminating empty tracker
                 "    <RandomUnusedTag>This_is_unused</RandomUnusedTag>" +
                 "</Companion>";
 
@@ -90,7 +95,7 @@ public class VastCompanionAdConfigXmlManagerTest {
     }
 
     @Test
-    public void getClickTrackers_shouldReturnAllUrls() {
+    public void getClickTrackers_shouldReturnAllUrls_shouldNotThrowException() {
         assertThat(VastUtils.vastTrackersToStrings(subject.getClickTrackers()))
                 .containsOnly("https://clicktrackingOne",
                         "https://clicktrackingTwo");

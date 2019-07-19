@@ -215,7 +215,7 @@ public class MoPubView extends FrameLayout {
     }
 
     protected void trackNativeImpression() {
-        MoPubLog.log(CUSTOM, "Tracking impression for native adapter.");
+        MoPubLog.log(CUSTOM, "Tracking impression. MoPubView internal.");
         if (mAdViewController != null) mAdViewController.trackImpression();
     }
 

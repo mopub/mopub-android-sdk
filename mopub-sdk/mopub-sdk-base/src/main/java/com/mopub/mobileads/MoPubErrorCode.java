@@ -16,6 +16,8 @@ public enum MoPubErrorCode implements MoPubError {
 
     // Client ad load errors
     INTERNAL_ERROR("Unable to serve ad due to invalid internal state."),
+    RENDER_PROCESS_GONE_WITH_CRASH("Render process for this WebView has crashed."),
+    RENDER_PROCESS_GONE_UNSPECIFIED("Render process is gone for this WebView. Unspecified cause."),
     CANCELLED("Ad request was cancelled."),
     MISSING_AD_UNIT_ID("Unable to serve ad due to missing or empty ad unit ID."),
     NO_CONNECTION("No internet connection detected."),

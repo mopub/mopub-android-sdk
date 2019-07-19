@@ -21,6 +21,7 @@ import com.mopub.common.CloseableLayout.ClosePosition;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Utils;
 import com.mopub.mobileads.BaseVideoPlayerActivityTest;
+import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.mobileads.MraidVideoPlayerActivity;
 import com.mopub.mobileads.WebViewCacheService;
 import com.mopub.mraid.MraidBridge.MraidBridgeListener;
@@ -776,6 +777,12 @@ public class MraidControllerTest {
 
         assertThat(activity.getRequestedOrientation()).isEqualTo(ActivityInfo
                 .SCREEN_ORIENTATION_LANDSCAPE);
+    }
+
+    @Test
+    public void handleRenderProcessGone_shouldNotifyMraidListener() {
+        subject.handleRenderProcessGone(MoPubErrorCode.RENDER_PROCESS_GONE_WITH_CRASH);
+        verify(mockMraidListener).onRenderProcessGone(any(MoPubErrorCode.class));
     }
 
     @Test

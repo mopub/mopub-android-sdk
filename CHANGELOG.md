@@ -1,3 +1,20 @@
+## Version 5.7.1 (June 3, 2019)
+- **Bug Fixes**
+  - Handle `WebViewClient#onRenderProcessGone` for API 26+ devices so WebView crashes do not take the entire process with it. This only affects MoPub WebViews, and all WebViews in the application must handle this call in order for the process to not be killed.
+
+## Version 5.7.0 (May 20, 2019)
+- **Features**
+  - Impression Level Revenue Data - a data object that includes revenue information associated with each impression.
+  - Verizon Ads SDK now supported as a mediated network.
+  - Upgraded Gradle dependency to 5.4.1
+  - Upgraded Robolectric dependency to 4.2.1.
+  - Upgraded com.android.tools.build:gradle to 3.4.0.
+  - Sample app improvements.
+
+- **Bug Fixes**
+  - Handle empty impression trackers in VAST.
+  - Improved impression handling when MoPubView is reattached to the screen.
+
 ## Version 5.6.0 (March 18, 2019)
 - **Features**
   - Enabled debug logging when using a debug Google Advertising ID (one that ends with "10ca1ad1abe1").

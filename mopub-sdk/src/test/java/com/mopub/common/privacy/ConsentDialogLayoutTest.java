@@ -5,6 +5,8 @@
 package com.mopub.common.privacy;
 
 import android.app.Activity;
+import android.os.Build;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -16,11 +18,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.robolectric.Robolectric;
+import org.robolectric.annotation.Config;
 
 import java.lang.reflect.Field;
 
+import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SdkTestRunner.class)
@@ -35,6 +41,7 @@ public class ConsentDialogLayoutTest {
 
     private ConsentDialogLayout subject;
     private WebViewClient webViewClient;
+    private RenderProcessGoneDetail mockRenderProcessGoneDetail;
 
     @Before
     public void setUp() throws Exception {
@@ -42,6 +49,7 @@ public class ConsentDialogLayoutTest {
         subject = new ConsentDialogLayout(activity);
         Field webClientField = Reflection.getPrivateField(ConsentDialogLayout.class, "webViewClient");
         webViewClient = (WebViewClient) webClientField.get(subject);
+        mockRenderProcessGoneDetail = mock(RenderProcessGoneDetail.class);
     }
 
     @Test
@@ -91,5 +99,11 @@ public class ConsentDialogLayoutTest {
         webViewClient.onPageFinished(mockWebView, "some_url");
 
         verify(pageLoadListener).onLoadProgress(ConsentDialogLayout.FINISHED_LOADING);
+    }
+
+    @Config(minSdk = Build.VERSION_CODES.O)
+    @Test
+    public void webViewClient_onRenderProcessGone_withAtLeastApi26_shouldReturnTrue() {
+        assertThat(webViewClient.onRenderProcessGone(mockWebView, mockRenderProcessGoneDetail)).isTrue();
     }
 }

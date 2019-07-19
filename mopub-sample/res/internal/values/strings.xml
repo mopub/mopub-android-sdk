@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--Macaw - Exchange test ad units-->
+    <string name="ad_unit_id_macaw_interstitial_portrait">2971114e05df4bb6bfeb83aefd2cb13f</string>
+    <string name="ad_unit_id_macaw_banner">1901a8606d8a45c9bf2358be5dc220e9</string>
+    <string name="ad_unit_id_macaw_mrect">7dfc45083ef04ea6b7533f1b2b8f5f6b</string>
+    <string name="ad_unit_id_macaw_leaderboard">ad21b1b40cfb45d38ca27e996e538005</string>
+    <string name="ad_unit_id_macaw_interstitial_landscape">181294542e6b4b33bd80cf1563dc4724</string>
+    <string name="ad_unit_id_macaw_tablet_interstitial_portrait">c6380a094a444657836884e12b86e013</string>
+    <string name="ad_unit_id_macaw_tablet_interstitial_landscape">d9f040c7f29a4da6b9262a1d504dc057</string>
+    <string name="ad_unit_id_macaw_skyscraper">f12e1691e6614496a1530b530bde85cc</string>
+    <string name="ad_unit_id_macaw_native">5d73b139cd3f402f8a6767670c4cf6fb</string>
+
+    <!--Release Testing ad units-->
+    <string name="ad_unit_id_rt_banner_image">64561445aa894576b6899e364c3cf003</string>
+    <string name="ad_unit_id_rt_banner_html">977c3ca769ce488293edac7a7a85ce99</string>
+    <string name="ad_unit_id_rt_banner_mraid_expanding_device">af50074dfa38476d85449391523ba2aa</string>
+    <string name="ad_unit_id_rt_banner_mraid_expanding_landscape">e31935dc878b412dba363b7b61484df0</string>
+    <string name="ad_unit_id_rt_banner_mraid_expanding_portrait">5b1917e405a34e238f0816371124590d</string>
+    <string name="ad_unit_id_rt_banner_resizing">26c38be32221456e9b5bdfba15211afe</string>
+
+    <string name="ad_unit_id_rt_mrect_image">560b3ba10bbe485ebc9e37a2e1cbbe4b</string>
+    <string name="ad_unit_id_rt_mrect_html">a0d719ae192748c2959f32235db68daf</string>
+    <string name="ad_unit_id_rt_mrect_expanding_device">4badb91a5c344cbda602a0a83d8937f2</string>
+    <string name="ad_unit_id_rt_mrect_expanding_landscape">01b88873d7c74dff9531ea744c4431e3</string>
+    <string name="ad_unit_id_rt_mrect_expanding_portrait">7b3189920ec646acb8f61d4d5013d7e3</string>
+    <string name="ad_unit_id_rt_mrect_resizing">53373b5f681a42438d9df71aa74165c4</string>
+    <string name="ad_unit_id_rt_mrect_html_video">5a85ad2677c34bffb2ae0b45eb18efdd</string>
+
+    <string name="ad_unit_id_rt_leaderboard_image">ab496e83496243e7b27c6b0636d9e9a2</string>
+    <string name="ad_unit_id_rt_leaderboard_html">37309343b1cc46b6ae5f2f4b0728f4f4</string>
+    <string name="ad_unit_id_rt_leaderboard_mraid_expanding_device">cc630d7fe5bf4f918e98d4f3ab6e0e51</string>
+    <string name="ad_unit_id_rt_leaderboard_mraid_expanding_landscape">cda9d79b0d704407ad1f0a1b6c3b837e</string>
+    <string name="ad_unit_id_rt_leaderboard_mraid_expanding_portrait">4f8a48f1ed4346408e793c3e1b83b2fe</string>
+    <string name="ad_unit_id_rt_leaderboard_mraid_resizing_offscreen">a652687cc74c41e19f4999bac37b854d</string>
+    <string name="ad_unit_id_rt_leaderboard_mraid_resizing_no_offscreen">2ff3c7b2d6234798a01ead84a6afda21</string>
+
+    <string name="ad_unit_id_rt_interstitial_vast_no_ext_companion_landscape">eab0db43a021431c9ae43e6ff1dd8fac</string>
+    <string name="ad_unit_id_rt_interstitial_vast_no_ext_no_companion_landscape">3d752afaad8f41f2a32de0c9e83a6b49</string>
+    <string name="ad_unit_id_rt_interstitial_vast_ext_companion_device">4e56aa03c3ad48338b70d8cc890553b0</string>
+    <string name="ad_unit_id_rt_interstitial_vast_ext_companion_landscape">2bc078315efe4edda00d2bae478e894b</string>
+    <string name="ad_unit_id_rt_interstitial_vast_ext_companion_portrait">0ee47e89697a44789a60b3d83dacd526</string>
+    <string name="ad_unit_id_rt_interstitial_vast_ext_no_companion_device">212d6c826d78476f8d01fa32726b4b98</string>
+    <string name="ad_unit_id_rt_interstitial_vast_ext_no_companion_landscape">3521c7acd9dd41358a6564cff5eddedf</string>
+    <string name="ad_unit_id_rt_interstitial_vast_ext_no_companion_portrait">468abb57b71147559d7bcb972e23c91a</string>
+
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_vast_no_ext_companion_landscape">abf919e86136493cbe0237f6067ee1eb</string>
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_vast_no_ext_no_companion_landscape">f1faff48504e4e3db51fcecb64a6e12b</string>
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_vast_ext_companion_device">2393fd574c424602a514d0a47cfb82fb</string>
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_vast_ext_companion_landscape">5ccb97c1c11d4453915e3b8c9a10adad</string>
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_vast_ext_companion_portrait">697bb483986f4f77862e589c785f0f8a</string>
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_vast_ext_no_companion_device">c3630d063505462a92e132cf04ac345b</string>
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_vast_ext_no_companion_landscape">8521f18a728c4ddd8dacba5ae365919c</string>
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_vast_ext_no_companion_portrait">21f931b01a24422db56fe43f10123c2e</string>
+
+    <string name="ad_unit_id_rt_rewarded_single_currency_vast_no_ext_companion_landscape">5b8c27f29c324b32b8c1a2f886533334</string>
+    <string name="ad_unit_id_rt_rewarded_single_currency_vast_no_ext_no_companion_landscape">d344c1d0fcc24b4cbd23cea9a9b584f6</string>
+    <string name="ad_unit_id_rt_rewarded_single_currency_vast_ext_companion_device">fe419b86c7a94c5da8b92c30725e2cac</string>
+    <string name="ad_unit_id_rt_rewarded_single_currency_vast_ext_companion_landscape">5dd4cb47c72e42a0a6232480cdfffbeb</string>
+    <string name="ad_unit_id_rt_rewarded_single_currency_vast_ext_companion_portrait">cf225b3cbec346faa3f135c92d6ed29a</string>
+    <string name="ad_unit_id_rt_rewarded_single_currency_vast_ext_no_companion_device">371b5b7466f648e0813bcdc6892f4f8d</string>
+    <string name="ad_unit_id_rt_rewarded_single_currency_vast_ext_no_companion_landscape">73969508231d4307bbfa0db2d0a0661e</string>
+    <string name="ad_unit_id_rt_rewarded_single_currency_vast_ext_no_companion_portrait">7ca95e3c3cd743cf9dceb832024a1bb6</string>
+
+    <string name="ad_unit_id_rt_rewarded_multi_currency_vast_no_ext_companion_landscape">d02ea0fd104f4cf78dd7923512d708f8</string>
+    <string name="ad_unit_id_rt_rewarded_multi_currency_vast_no_ext_no_companion_landscape">069a58386a604bde86910864b5c75595</string>
+    <string name="ad_unit_id_rt_rewarded_multi_currency_vast_ext_companion_device">96c8fae1fc944df48490787d9e0357b0</string>
+    <string name="ad_unit_id_rt_rewarded_multi_currency_vast_ext_companion_landscape">2b64e0a3fe104d42897cb76f8a3480cb</string>
+    <string name="ad_unit_id_rt_rewarded_multi_currency_vast_ext_companion_portrait">edaec97a7f294a64b85c5276ef2167e8</string>
+    <string name="ad_unit_id_rt_rewarded_multi_currency_vast_ext_no_companion_device">77017a8d78494d26bb4efff5a2afda37</string>
+    <string name="ad_unit_id_rt_rewarded_multi_currency_vast_ext_no_companion_landscape">9aea5f9dce844469b6d38067c18c1a03</string>
+    <string name="ad_unit_id_rt_rewarded_multi_currency_vast_ext_no_companion_portrait">e2979c25a56b4605aa6220cd44c6ae61</string>
+
+    <string name="ad_unit_id_rt_native_image_default">e33263a0d07849858d20718e1f6bd262</string>
+    <string name="ad_unit_id_rt_native_image_custom">06f544793ab94b519c64a8935b97fef8</string>
+    <string name="ad_unit_id_rt_native_video_default">321fce78cfe643bfb1307f68b4ffbc56</string>
+    <string name="ad_unit_id_rt_native_video_custom">28376225b2ea4a34a5dd4d0c258f42b1</string>
+    <string name="ad_unit_id_rt_native_image_default_table">e33263a0d07849858d20718e1f6bd262</string>
+    <string name="ad_unit_id_rt_native_image_custom_table">576d8faa86bf43ed885086428ec12ab7</string>
+    <string name="ad_unit_id_rt_native_video_default_table">321fce78cfe643bfb1307f68b4ffbc56</string>
+    <string name="ad_unit_id_rt_native_video_custom_table">a4ec9929ee58404eb95e8376a0666277</string>
+    <string name="ad_unit_id_rt_native_image_default_collection">e33263a0d07849858d20718e1f6bd262</string>
+    <string name="ad_unit_id_rt_native_image_custom_collection">4d28445bbd95448d9b3fefb6d97fdc41</string>
+    <string name="ad_unit_id_rt_native_video_default_collection">321fce78cfe643bfb1307f68b4ffbc56</string>
+    <string name="ad_unit_id_rt_native_video_custom_collection">ec2b5696162249c0b54098dd0b69c07a</string>
+
+    <string name="ad_unit_id_rt_interstitial_image_landscape_phone">4477f9af6c9344bd808e992ca007e59d</string>
+    <string name="ad_unit_id_rt_interstitial_image_portrait_phone">5cbfe91d79da4329b286901d6182c74a</string>
+    <string name="ad_unit_id_rt_interstitial_html_basic_landscape_phone">f42ae53ecdd4470887672764f12ec835</string>
+    <string name="ad_unit_id_rt_interstitial_html_basic_portrait_phone">1252adbc258b4bc788a5e9cfb943f466</string>
+    <string name="ad_unit_id_rt_interstitial_mraid_basic_device_phone">092db09cfb80492787ce53085aac6a28</string>
+    <string name="ad_unit_id_rt_interstitial_mraid_basic_landscape_phone">ef93604eafc3459cab3c79adc5c09049</string>
+    <string name="ad_unit_id_rt_interstitial_mraid_basic_portrait_phone">f9719cc678a741229dacc64f81e87628</string>
+    <string name="ad_unit_id_rt_interstitial_html_video_landscape_phone">3ae5fe30cc8347ccb5af452b9e027eba</string>
+    <string name="ad_unit_id_rt_interstitial_html_video_portrait_phone">66129990cd3948b08c8003a4294e3def</string>
+
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_mraid_device_phone">f2054a24efac4ecf9b6bfd914e06e23c</string>
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_mraid_landscape_phone">ca84ae968d2c4bea93899f32eda5b643</string>
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_mraid_portrait_phone">7465977860334b348eb2c5d6694948f2</string>
+
+    <string name="ad_unit_id_rt_rewarded_single_currency_mraid_device_phone">02b8b6d870934b29b2bff23327493ee0</string>
+    <string name="ad_unit_id_rt_rewarded_single_currency_mraid_landscape_phone">13026731e30c4717a6b7dcf2487a25ac</string>
+    <string name="ad_unit_id_rt_rewarded_single_currency_mraid_portrait_phone">4dc7af75c20649e7b0a1001f9aa12085</string>
+
+    <string name="ad_unit_id_rt_rewarded_multi_currency_mraid_device_phone">84c1c08648ca4314a9824face0c6c04d</string>
+    <string name="ad_unit_id_rt_rewarded_multi_currency_mraid_landscape_phone">f0f5a7c4e0da43a697095a0e957f1f5f</string>
+    <string name="ad_unit_id_rt_rewarded_multi_currency_mraid_portrait_phone">48d51627826d45c2af0a8b6b0246e67c</string>
+
+    <string name="ad_unit_id_rt_interstitial_image_landscape_tablet">7a78e378b2074e00b3f9769166f74fa2</string>
+    <string name="ad_unit_id_rt_interstitial_image_portrait_tablet">bdc5ef94de78401484df684787221b4e</string>
+    <string name="ad_unit_id_rt_interstitial_html_basic_landscape_tablet">716ee330cba0402bbea1d245d0ea8176</string>
+    <string name="ad_unit_id_rt_interstitial_html_basic_portrait_tablet">5309c6f83dec4f529d534d41ee58098c</string>
+    <string name="ad_unit_id_rt_interstitial_mraid_basic_device_tablet">1d6d1ff7e76b45beb72e7d5f43b177fb</string>
+    <string name="ad_unit_id_rt_interstitial_mraid_basic_landscape_tablet">4a21aec9b6da4c2283868d63017431b6</string>
+    <string name="ad_unit_id_rt_interstitial_mraid_basic_portrait_tablet">adb11b502c1e4d90a5f71754958c8f4f</string>
+    <string name="ad_unit_id_rt_interstitial_html_video_landscape_tablet">9367c4d4b7444bceab89d7df077b9b5f</string>
+    <string name="ad_unit_id_rt_interstitial_html_video_portrait_tablet">6acc18636c214b5696142099916b9ccc</string>
+
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_mraid_device_tablet">7a402b5890ca44a4a28c2a8c02e59db8</string>
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_mraid_landscape_tablet">66d700fdee0446a7ad67d3def71da5aa</string>
+    <string name="ad_unit_id_rt_rewarded_legacy_currency_mraid_portrait_tablet">c5ce794be004487e8815680cf4ce9f66</string>
+
+    <string name="ad_unit_id_rt_rewarded_single_currency_mraid_device_tablet">846d915b5fa74fda8e95c5c9519ec16b</string>
+    <string name="ad_unit_id_rt_rewarded_single_currency_mraid_landscape_tablet">81c2c5bfd8254f4e9f1cf9f9f3548581</string>
+    <string name="ad_unit_id_rt_rewarded_single_currency_mraid_portrait_tablet">84cc08ecb0e3415eb6fa399b9dcbcd5b</string>
+
+    <string name="ad_unit_id_rt_rewarded_multi_currency_mraid_device_tablet">8e658b5231824280833226ba9f0ee433</string>
+    <string name="ad_unit_id_rt_rewarded_multi_currency_mraid_landscape_tablet">d552acc66aec4c4cb85e61d14439b580</string>
+    <string name="ad_unit_id_rt_rewarded_multi_currency_mraid_portrait_tablet">969e1e14f93448b1ad334a7a5e46e512</string>
+
+    <!--Top Grossing-->
+    <string name="ad_unit_id_top_grossing_banner_phone">321da3e82353435cac072116cab84b23</string>
+    <string name="ad_unit_id_top_grossing_mrect_phone">e4ec5b5d8b224ef895d6d93094dc6949</string>
+    <string name="ad_unit_id_top_grossing_interstitial_phone">ebe9132e1ec748ddbc1e333089e95113</string>
+    <string name="ad_unit_id_top_grossing_rewarded_phone">23ba06fc2a9a4b6383812bd7003b3fd9</string>
+    <string name="ad_unit_id_top_grossing_native_phone">554e7a6c341242228f122b653e12417e</string>
+
+    <string name="ad_unit_id_top_grossing_banner_tablet">b87326a1a64746c88b996f0234efd7e3</string>
+    <string name="ad_unit_id_top_grossing_mrect_tablet">be678056f327430b91d62a861cbebd0f</string>
+    <string name="ad_unit_id_top_grossing_leaderboard_tablet">dd85ff2a8dd64318b8fb0a17e35c8f0a</string>
+    <string name="ad_unit_id_top_grossing_interstitial_tablet">1baf215709034ef19ad4cd80e6396e00</string>
+    <string name="ad_unit_id_top_grossing_rewarded_tablet">a83d73f6b65848eb98529a1b168a3708</string>
+    <string name="ad_unit_id_top_grossing_native_tablet">eecebc103df84c0aa0acfb4ea6b93237</string>
+
+    <!--Twitter Audience Platform-->
+    <string name="ad_unit_id_tap_banner">f684d7bf6a104bbdab3993cc291255dd</string>
+    <string name="ad_unit_id_tap_banner_tablet">b4a6dba86aa84c159098335320b22f89</string>
+    <string name="ad_unit_id_tap_interstitial_landscape">bdb933f863d940d4ba0d48c32c31a461</string>
+    <string name="ad_unit_id_tap_interstitial_landscape_tablet">6e554b8347aa41c68df0c1b8024f141c</string>
+    <string name="ad_unit_id_tap_interstitial_portrait">5de9a132df214abcb500c37c447b339c</string>
+    <string name="ad_unit_id_tap_interstitial_portrait_tablet">2905c14f6e4f43b0b9bbaed1705b9296</string>
+    <string name="ad_unit_id_tap_tweet_interstitial_landscape">d3c1cd039dcc4326ad64d4d6fde6a4a5</string>
+    <string name="ad_unit_id_tap_tweet_interstitial_landscape_tablet">2118107dd5bf46409ec2df6b447836dd</string>
+    <string name="ad_unit_id_tap_tweet_interstitial_portrait">efe8c053bf074771b27ea976d82b6a5b</string>
+    <string name="ad_unit_id_tap_tweet_interstitial_portrait_tablet">00b1cf7dcb25410da6e9e6b59f82fc09</string>
+    <string name="ad_unit_id_tap_video_interstitial_device">490a81eec0974e0e9567b87d2fd6b81a</string>
+    <string name="ad_unit_id_tap_video_interstitial_device_tablet">6ea242b72ab849e1a668dbe70715a5f3</string>
+    <string name="ad_unit_id_tap_video_interstitial_landscape">a239770e3b7849988c888a284d7718f0</string>
+    <string name="ad_unit_id_tap_video_interstitial_landscape_tablet">f7eb5bf595964bcc8e047b4a1e7e7817</string>
+    <string name="ad_unit_id_tap_video_interstitial_portrait">28f0dad82c984c5995592f7802b059d7</string>
+    <string name="ad_unit_id_tap_video_interstitial_portrait_tablet">9adfcc1aeb1749dfa90a725d63e6d8b4</string>
+    <string name="ad_unit_id_tap_leaderboard">6a763eac135a446594c530a50c35e5d4</string>
+    <string name="ad_unit_id_tap_mrect">f36e9fdc947d4b4faaeb15aa3e29a2ec</string>
+    <string name="ad_unit_id_tap_mrect_tablet">0f56c33f03754018842aaa794abbe719</string>
+    <string name="ad_unit_id_tap_native_static">09d4e470ca534795b71041c6ca79bac4</string>
+    <string name="ad_unit_id_tap_native_static_tablet">68c0539952f0451093a76c5359d4eecc</string>
+    <string name="ad_unit_id_tap_rewarded_video_device">2cbbe2727b1f43a48abe702fd5900412</string>
+    <string name="ad_unit_id_tap_rewarded_video_device_tablet">ecfb2fe99c754acb8637624c2b522425</string>
+    <string name="ad_unit_id_tap_rewarded_video_landscape">e0cfc0942c7f4fb195dee8456af49149</string>
+    <string name="ad_unit_id_tap_rewarded_video_landscape_tablet">abe2a3157872408289059af8d4f1c9c1</string>
+    <string name="ad_unit_id_tap_rewarded_video_portrait">87fa6ad3da6f4b419bec69e328397c77</string>
+    <string name="ad_unit_id_tap_rewarded_video_portrait_tablet">aa837da50377422d95fe43cd0117d3a7</string>
+
+    <!--AdColony-->
+    <string name="ad_unit_id_adcolony_interstitial">953d93d50ae343168ad44c3c536cdb1a</string>
+    <string name="ad_unit_id_adcolony_rewarded_video">339929134a55413d9c0a85496b250057</string>
+
+    <!--AdMob-->
+    <string name="ad_unit_id_admob_banner">83cff4cec21148cd820470462f6efeca</string>
+    <string name="ad_unit_id_admob_interstitial">278161384e0445b6a6c2d00596caa006</string>
+    <string name="ad_unit_id_admob_rewarded_video">f7cc70b82da549a09f19a73f83bdbfba</string>
+    <string name="ad_unit_id_admob_native">f3ec720ff0e94a81a5bcd4773e98bab9</string>
+
+    <!--AppLovin-->
+    <string name="ad_unit_id_applovin_banner">3bb1e241a91040d79c4194dd476b9c60</string>
+    <string name="ad_unit_id_applovin_interstitial">d960ac7f90d041c8a4d817726a76a2fa</string>
+    <string name="ad_unit_id_applovin_rewarded_video">b28c982f77dd4c68a9e36ab7a1a87c1a</string>
+
+    <!--Chartboost-->
+    <string name="ad_unit_id_chartboost_interstitial">376366b49d324dedae3d5edb360c27b4</string>
+    <string name="ad_unit_id_chartboost_rewarded_video">df605ab15b56400285c99e521ecc2cb1</string>
+
+    <!--Facebook Audience Network-->
+    <string name="ad_unit_id_fan_banner">b40a96dd275e4ce5be2cdf5faa92007d</string>
+    <string name="ad_unit_id_fan_interstitial">9792d876011f4359887d2d26380e8a84</string>
+    <string name="ad_unit_id_fan_rewarded_video">7220c37b8e93499a8f0aff2eb4f0ad3d</string>
+    <string name="ad_unit_id_fan_native">f97733db27f44defbeb39ce495047779</string>
+
+    <!--Flurry-->
+    <string name="ad_unit_id_flurry_interstitial">716519f41a9144ff9c7afc35b80d6ce8</string>
+    <string name="ad_unit_id_flurry_native">17e0b51cac33483f9890fce08bedfed2</string>
+
+    <!--ironSource-->
+    <string name="ad_unit_id_ironsource_interstitial">9556b7f57e724cb4b5eba926b8258e3c</string>
+    <string name="ad_unit_id_ironsource_rewarded_video">885b4f0c25884d468da2c8d657b0d95b</string>
+
+    <!--Tapjoy-->
+    <string name="ad_unit_id_tapjoy_interstitial">aee78cf481994c67b7e7cb983340a5f3</string>
+    <string name="ad_unit_id_tapjoy_rewarded_video">f2be86b5ae52440a83ef24d426074d2e</string>
+
+    <!--Unity Ads-->
+    <string name="ad_unit_id_unity_interstitial">3db70dc7af6d4fb3ababa860bb4b9062</string>
+    <string name="ad_unit_id_unity_rewarded_video">fa84b7823f4147d883f6bb967f8ef15f</string>
+
+    <!--Verizon-->
+    <string name="ad_unit_id_verizon_banner">cdbdbe29679c442aa9b00c4dd41109a5</string>
+    <string name="ad_unit_id_verizon_interstitial">f655c6e61c67465db58fb0665eb86de7</string>
+
+    <!--Vungle-->
+    <string name="ad_unit_id_vungle_interstitial">5635d28cda6c4dab965b9cf7a99d5af5</string>
+    <string name="ad_unit_id_vungle_rewarded_video">e97347b0a04d417ea178d3ec22766490</string>
+</resources>

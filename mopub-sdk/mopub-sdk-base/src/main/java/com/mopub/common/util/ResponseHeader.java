@@ -9,6 +9,7 @@ public enum ResponseHeader {
     BACKOFF_MS("backoff_ms"),
     AD_TIMEOUT("x-ad-timeout-ms"),
     AD_TYPE("x-adtype"),
+    IMPRESSION_DATA("impdata"),
     CLICK_TRACKING_URL("x-clickthrough"),
     CUSTOM_EVENT_DATA("x-custom-event-class-data"),
     CUSTOM_EVENT_NAME("x-custom-event-class-name"),

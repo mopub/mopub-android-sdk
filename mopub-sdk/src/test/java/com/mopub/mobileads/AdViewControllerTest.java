@@ -29,6 +29,9 @@ import com.mopub.mobileads.test.support.MoPubShadowTelephonyManager;
 import com.mopub.mobileads.test.support.ThreadUtils;
 import com.mopub.network.AdLoader;
 import com.mopub.network.AdResponse;
+import com.mopub.network.ImpressionData;
+import com.mopub.network.ImpressionListener;
+import com.mopub.network.ImpressionsEmitter;
 import com.mopub.network.MoPubNetworkError;
 import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.MultiAdRequest;
@@ -78,9 +81,12 @@ public class AdViewControllerTest {
     private static final int[] HTML_ERROR_CODES = new int[]{400, 401, 402, 403, 404, 405, 407, 408,
             409, 410, 411, 412, 413, 414, 415, 416, 417, 500, 501, 502, 503, 504, 505};
 
+    private static final String mAdUnitId = "ad_unit_id";
+
     private AdViewController subject;
     @Mock private MoPubView mockMoPubView;
     @Mock private MoPubRequestQueue mockRequestQueue;
+    @Mock private ImpressionData mockImpressionData;
     private Reflection.MethodBuilder methodBuilder;
     private MoPubShadowTelephonyManager shadowTelephonyManager;
     private MoPubShadowConnectivityManager shadowConnectivityManager;
@@ -115,9 +121,11 @@ public class AdViewControllerTest {
         methodBuilder = TestMethodBuilderFactory.getSingletonMock();
         reset(methodBuilder);
         response = new AdResponse.Builder()
+                .setAdUnitId(mAdUnitId)
                 .setCustomEventClassName("customEvent")
                 .setClickTrackingUrl("clickUrl")
                 .setImpressionTrackingUrls(Arrays.asList("impressionUrl1", "impressionUrl2"))
+                .setImpressionData(mockImpressionData)
                 .setDimensions(320, 50)
                 .setAdType("html")
                 .setFailoverUrl("failUrl")
@@ -388,6 +396,20 @@ public class AdViewControllerTest {
         subject.trackImpression();
 
         verifyZeroInteractions(mockRequestQueue);
+    }
+
+    @Test
+    public void trackImpression_shouldCallImpressonDataListener() {
+        ImpressionListener impressionListener = mock(ImpressionListener.class);
+        ImpressionsEmitter.addListener(impressionListener);
+        subject.onAdLoadSuccess(response);
+        subject.setAdUnitId(mAdUnitId);
+
+        subject.trackImpression();
+
+        verify(impressionListener).onImpression(response.getAdUnitId(), response.getImpressionData());
+        verify(mockRequestQueue).add(argThat(isUrl("impressionUrl1")));
+        verify(mockRequestQueue).add(argThat(isUrl("impressionUrl2")));
     }
 
     @Test
