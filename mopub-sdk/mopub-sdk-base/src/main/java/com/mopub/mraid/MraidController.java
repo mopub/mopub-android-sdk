@@ -707,7 +707,7 @@ public class MraidController {
 
         // Calling destroy eliminates a memory leak on Gingerbread devices
         detachMraidWebView();
-        detachTwoParWebView();
+        detachTwoPartWebView();
         unApplyOrientation();
     }
 
@@ -716,7 +716,7 @@ public class MraidController {
         mMraidWebView = null;
     }
 
-    private void detachTwoParWebView() {
+    private void detachTwoPartWebView() {
         mTwoPartBridge.detach();
         mTwoPartWebView = null;
     }
@@ -938,7 +938,7 @@ public class MraidController {
             if (mTwoPartBridge.isAttached() && mTwoPartWebView != null) {
                 // If we have a two part web view, simply remove it from the closeable container
                 final MraidWebView twoPartWebView = mTwoPartWebView;
-                detachTwoParWebView();
+                detachTwoPartWebView();
                 mCloseableAdContainer.removeView(twoPartWebView);
             } else {
                 // Move the web view from the closeable container back to the default container
