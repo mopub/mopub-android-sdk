@@ -40,9 +40,10 @@ public class MraidVideoPlayerActivity extends BaseVideoPlayerActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+
         super.onCreate(savedInstanceState);
 
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         mBroadcastIdentifier = getBroadcastIdentifierFromIntent(getIntent());
