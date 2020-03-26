@@ -1,6 +1,8 @@
 // Copyright 2018-2019 Twitter, Inc.
 // Licensed under the MoPub SDK License Agreement
 // http://www.mopub.com/legal/sdk-license-agreement/
+// 2020.3.24 add method getHuaweiAdvertisingInfo
+// Huawei Technologies Co., Ltd.
 
 package com.mopub.common.privacy;
 
@@ -18,8 +20,10 @@ import com.mopub.common.Preconditions;
 import com.mopub.common.SdkInitializationListener;
 import com.mopub.common.SharedPreferencesHelper;
 import com.mopub.common.VisibleForTesting;
+import com.mopub.common.factories.MethodBuilderFactory;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.AsyncTasks;
+import com.mopub.common.util.Reflection;
 
 import java.util.Calendar;
 
@@ -108,6 +112,10 @@ public class MoPubIdentifier {
             newInfo = new AdvertisingId(googleAdInfo.advertisingId, oldInfo.mMopubId, googleAdInfo.limitAdTracking, oldInfo.mLastRotation.getTimeInMillis());
         } else {
             newInfo = getAmazonAdvertisingInfo(mAppContext);
+
+            if (newInfo == null) {
+                newInfo = getHuaweiAdvertisingInfo(mAppContext);
+            }
         }
 
         if (newInfo != null) {
@@ -228,6 +236,30 @@ public class MoPubIdentifier {
 
         if (mIdChangeListener != null) {
             mIdChangeListener.onIdChanged(oldId, newId);
+        }
+    }
+
+    @Nullable
+    private AdvertisingId getHuaweiAdvertisingInfo(@NonNull final Context context) {
+        Preconditions.NoThrow.checkNotNull(context);
+
+        final AdvertisingId oldInfo = mAdInfo;
+        Object adInfo = null;
+        String advertisingId = null;
+        boolean isLimitAdTrackingEnabled = false;
+
+        try {
+            Reflection.MethodBuilder methodBuilder = MethodBuilderFactory.create(null, "getAdvertisingIdInfo")
+                    .setStatic(Class.forName("com.huawei.hms.ads.identifier.AdvertisingIdClient"))
+                    .addParam(Context.class, context);
+
+            adInfo = methodBuilder.execute();
+            advertisingId = GpsHelper.reflectedGetAdvertisingId(adInfo, advertisingId);
+            isLimitAdTrackingEnabled = GpsHelper.reflectedIsLimitAdTrackingEnabled(adInfo, isLimitAdTrackingEnabled);
+            return new AdvertisingId(advertisingId, oldInfo.mMopubId, isLimitAdTrackingEnabled, oldInfo.mLastRotation.getTimeInMillis());
+        } catch (Exception e) {
+            MoPubLog.log(CUSTOM, "Unable to obtain Huawei AdvertisingIdClient.Info via reflection.");
+            return null;
         }
     }
 

@@ -1,6 +1,8 @@
 // Copyright 2018-2019 Twitter, Inc.
 // Licensed under the MoPub SDK License Agreement
 // http://www.mopub.com/legal/sdk-license-agreement/
+// 2020.3.24 change method reflectedGetAdvertisingId、reflectedIsLimitAdTrackingEnabled to public
+// Huawei Technologies Co., Ltd.
 
 package com.mopub.common;
 
@@ -133,7 +135,7 @@ public class GpsHelper {
         }
     }
 
-    static String reflectedGetAdvertisingId(final Object adInfo, final String defaultValue) {
+    public static String reflectedGetAdvertisingId(final Object adInfo, final String defaultValue) {
         try {
             return (String) MethodBuilderFactory.create(adInfo, "getId").execute();
         } catch (Exception exception) {
@@ -141,7 +143,7 @@ public class GpsHelper {
         }
     }
 
-    static boolean reflectedIsLimitAdTrackingEnabled(final Object adInfo, final boolean defaultValue) {
+    public static boolean reflectedIsLimitAdTrackingEnabled(final Object adInfo, final boolean defaultValue) {
         try {
             Boolean result = (Boolean) MethodBuilderFactory.create(adInfo, "isLimitAdTrackingEnabled").execute();
             return (result != null) ? result : defaultValue;

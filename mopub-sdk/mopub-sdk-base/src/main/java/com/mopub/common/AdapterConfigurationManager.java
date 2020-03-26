@@ -1,6 +1,8 @@
 // Copyright 2018-2019 Twitter, Inc.
 // Licensed under the MoPub SDK License Agreement
 // http://www.mopub.com/legal/sdk-license-agreement/
+// 2020.3.24 add method noExistGoogleAds
+// Huawei Technologies Co., Ltd.
 
 package com.mopub.common;
 
@@ -26,6 +28,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import static com.mopub.common.DefaultAdapterClasses.GOOGLE_PLAY_SERVICES_ADAPTER_CONFIGURATION;
 import static com.mopub.common.logging.MoPubLog.SdkLogEvent.CUSTOM;
 import static com.mopub.common.logging.MoPubLog.SdkLogEvent.CUSTOM_WITH_THROWABLE;
 import static com.mopub.common.logging.MoPubLog.SdkLogEvent.ERROR;
@@ -253,12 +256,26 @@ public class AdapterConfigurationManager implements AdapterConfigurationsInitial
                         adapterConfigurationClass, adapterConfiguration.getAdapterVersion(),
                         adapterConfiguration.getNetworkSdkVersion(), mergedParameters));
 
+                if (adapterConfigurationClass.equals(GOOGLE_PLAY_SERVICES_ADAPTER_CONFIGURATION.name())
+                        && noExistGoogleAds()) {
+                    continue;
+                }
                 adapterConfiguration.initializeNetwork(context, mergedParameters,
                         adapterConfigurationsInitializationListener);
 
                 adapterConfigurations.put(adapterConfigurationClass, adapterConfiguration);
             }
             return adapterConfigurations;
+        }
+
+        private boolean noExistGoogleAds() {
+            try {
+                Class.forName("com.google.android.gms.ads.MobileAds");
+                return false;
+            } catch (Exception e) {
+                MoPubLog.log(CUSTOM, "class 'com.google.android.gms.ads.MobileAds' not find");
+                return true;
+            }
         }
 
         @Override
