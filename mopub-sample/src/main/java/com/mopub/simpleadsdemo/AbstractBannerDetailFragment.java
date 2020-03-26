@@ -281,6 +281,11 @@ public abstract class AbstractBannerDetailFragment extends Fragment implements B
         mCallbacksAdapter.notifyCallbackCalled(BannerCallbacks.COLLAPSED.toString());
     }
 
+    @Override
+    public void onBannerRequest(MoPubView moPubView){
+        logToast(getActivity(), getName() + " request.");
+    }
+
     private void onAdSizeClicked() {
         final MoPubAdSizeFragment dialogFragment = MoPubAdSizeFragment.newInstance(mMoPubAdSizeSettings);
         dialogFragment.setTargetFragment(this, 0);

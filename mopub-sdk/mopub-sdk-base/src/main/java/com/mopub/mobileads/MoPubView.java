@@ -58,6 +58,7 @@ public class MoPubView extends FrameLayout {
         public void onBannerClicked(MoPubView banner);
         public void onBannerExpanded(MoPubView banner);
         public void onBannerCollapsed(MoPubView banner);
+        public void onBannerRequest(MoPubView banner);
     }
 
     /**
@@ -333,6 +334,11 @@ public class MoPubView extends FrameLayout {
             mAdViewController.resumeRefresh();
         } else {
             mAdViewController.pauseRefresh();
+        }
+    }
+    protected void adRequest(){
+        if (mBannerAdListener != null) {
+            mBannerAdListener.onBannerRequest(this);
         }
     }
 
