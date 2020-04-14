@@ -4,7 +4,6 @@
 
 package com.mopub.mobileads;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
 import android.location.Location;
@@ -75,7 +74,7 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
     @NonNull private MoPubInterstitialView mInterstitialView;
     @Nullable private CustomEventInterstitialAdapter mCustomEventInterstitialAdapter;
     @Nullable private InterstitialAdListener mInterstitialAdListener;
-    @NonNull private Activity mActivity;
+    @NonNull private Context mContext;
     @NonNull private Handler mHandler;
     @NonNull private final Runnable mAdExpiration;
     @NonNull private volatile InterstitialState mCurrentInterstitialState;
@@ -88,10 +87,10 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         void onInterstitialDismissed(MoPubInterstitial interstitial);
     }
 
-    public MoPubInterstitial(@NonNull final Activity activity, @NonNull final String adUnitId) {
-        mActivity = activity;
+    public MoPubInterstitial(@NonNull final Context context, @NonNull final String adUnitId) {
+        mContext = context.getApplicationContext();
 
-        mInterstitialView = new MoPubInterstitialView(mActivity);
+        mInterstitialView = new MoPubInterstitialView(mContext);
         mInterstitialView.setAdUnitId(adUnitId);
 
         mCurrentInterstitialState = IDLE;
@@ -366,8 +365,8 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
     }
 
     @NonNull
-    public Activity getActivity() {
-        return mActivity;
+    public Context getContext() {
+        return mContext;
     }
 
     @Nullable
