@@ -36,7 +36,7 @@ public abstract class BaseBroadcastReceiver extends BroadcastReceiver {
     public abstract IntentFilter getIntentFilter();
 
     public void register(final @NonNull BroadcastReceiver broadcastReceiver, Context context) {
-        mContext = context;
+        mContext = context.getApplicationContext();
         LocalBroadcastManager.getInstance(mContext).registerReceiver(broadcastReceiver,
                 getIntentFilter());
     }
