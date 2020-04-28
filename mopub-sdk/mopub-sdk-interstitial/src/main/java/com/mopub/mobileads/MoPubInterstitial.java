@@ -434,6 +434,10 @@ public class MoPubInterstitial implements CustomEventInterstitialAdapter.CustomE
         if (!mInterstitialView.loadFailUrl(errorCode)) {
             attemptStateTransition(IDLE);
         }
+
+        if (mInterstitialAdListener != null) {
+            mInterstitialAdListener.onInterstitialFailed(this, errorCode);
+        }
     }
 
     @Override
