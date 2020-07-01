@@ -2,6 +2,8 @@
 
 Thanks for taking a look at MoPub! We take pride in having an easy-to-use, flexible monetization solution that works across multiple platforms.
 
+**“MoPub has found a bug regarding failover urls such that using 5.13.0 is not recommended. Stay tuned for 5.13.1.“**
+
 Sign up for an account at [http://app.mopub.com/](http://app.mopub.com/).
 
 ## Need Help?
