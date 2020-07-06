@@ -29,7 +29,6 @@ import org.robolectric.annotation.Config;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import static com.mopub.common.VolleyRequestMatcher.isUrl;
@@ -1267,7 +1266,7 @@ public class VastXmlManagerAggregatorTest {
                         ".com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=https%3A%2F%2Ftapad.com");
         assertThat(vastVideoConfig.getNetworkMediaFileUrl()).isEqualTo(
                 "https://s3.amazonaws.com/mopub-vast/tapad-video.mp4");
-        assertThat(vastVideoConfig.getSkipOffsetString()).isNull();
+        assertThat(vastVideoConfig.getSkipOffset()).isNull();
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getErrorTrackers()))
                 .containsOnly("https://nestedInLineErrorOne", "https://nestedInLineErrorTwo");
 
@@ -1329,22 +1328,24 @@ public class VastXmlManagerAggregatorTest {
         assertThat(vastVideoConfig.getFractionalTrackers()).hasSize(3);
         assertThat(
                 vastVideoConfig.getFractionalTrackers().get(0)).isEqualsToByComparingFields(
-                new VastFractionalProgressTracker("https://myTrackingURL/wrapper/firstQuartile",
-                        0.25f));
+                new VastFractionalProgressTracker.Builder("https://myTrackingURL/wrapper/firstQuartile",
+                        0.25f).build());
         assertThat(
                 vastVideoConfig.getFractionalTrackers().get(1)).isEqualsToByComparingFields(
-                new VastFractionalProgressTracker("https://myTrackingURL/wrapper/midpoint",
-                        0.5f));
+                new VastFractionalProgressTracker.Builder("https://myTrackingURL/wrapper/midpoint",
+                        0.5f).build());
         assertThat(
                 vastVideoConfig.getFractionalTrackers().get(2)).isEqualsToByComparingFields(
-                new VastFractionalProgressTracker("https://myTrackingURL/wrapper/thirdQuartile",
-                        0.75f));
+                new VastFractionalProgressTracker.Builder("https://myTrackingURL/wrapper/thirdQuartile",
+                        0.75f).build());
 
         assertThat(vastVideoConfig.getAbsoluteTrackers().size()).isEqualTo(2);
         assertThat(vastVideoConfig.getAbsoluteTrackers().get(0)).isEqualsToByComparingFields(
-                new VastAbsoluteProgressTracker("https://myTrackingURL/wrapper/creativeView", 0));
+                new VastAbsoluteProgressTracker.Builder("https://myTrackingURL/wrapper/start",
+                        0).build());
         assertThat(vastVideoConfig.getAbsoluteTrackers().get(1)).isEqualsToByComparingFields(
-                new VastAbsoluteProgressTracker("https://myTrackingURL/wrapper/start", 2000));
+                new VastAbsoluteProgressTracker.Builder("https://myTrackingURL/wrapper/creativeView",
+                        0).build());
 
         assertThat(VastUtils.vastTrackersToStrings(vastVideoConfig.getPauseTrackers()))
                 .containsOnly("https://myTrackingURL/wrapper/pause");
@@ -1370,7 +1371,7 @@ public class VastXmlManagerAggregatorTest {
                         ".com:8080/click?ta_pinfo=JnRhX2JpZD1iNDczNTQwMS1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmaXA9OTguMTE2LjEyLjk0JnNzcD1MSVZFUkFJTCZ0YV9iaWRkZXJfaWQ9NTEzJTNBMzA1NSZjdHg9MTMzMSZ0YV9jYW1wYWlnbl9pZD01MTMmZGM9MTAwMjAwMzAyOSZ1YT1Nb3ppbGxhJTJGNS4wKyUyOE1hY2ludG9zaCUzQitJbnRlbCtNYWMrT1MrWCsxMF84XzMlMjkrQXBwbGVXZWJLaXQlMkY1MzcuMzYrJTI4S0hUTUwlMkMrbGlrZStHZWNrbyUyOStDaHJvbWUlMkYyNy4wLjE0NTMuMTE2K1NhZmFyaSUyRjUzNy4zNiZjcHQ9VkFTVCZkaWQ9ZDgyNWZjZDZlNzM0YTQ3ZTE0NWM4ZTkyNzMwMjYwNDY3YjY1NjllMSZpZD1iNDczNTQwMC1lZjJkLTExZTItYTNkNS0yMjAwMGE4YzEwOWQmcGlkPUNPTVBVVEVSJnN2aWQ9MSZicD0zNS4wMCZjdHhfdHlwZT1BJnRpZD0zMDU1JmNyaWQ9MzA3MzE%3D&crid=30731&ta_action_id=click&ts=1374099035458&redirect=https%3A%2F%2Ftapad.com");
         assertThat(vastVideoConfig.getNetworkMediaFileUrl()).isEqualTo(
                 "https://s3.amazonaws.com/mopub-vast/tapad-video.mp4");
-        assertThat(vastVideoConfig.getSkipOffsetString()).isNull();
+        assertThat(vastVideoConfig.getSkipOffset()).isNull();
 
         VastCompanionAdConfig[] companionAds = new VastCompanionAdConfig[2];
         companionAds[0] = vastVideoConfig.getVastCompanionAd(
@@ -1489,7 +1490,7 @@ public class VastXmlManagerAggregatorTest {
         ShadowMoPubHttpUrlConnection.addPendingResponse(200,
                 TEST_NESTED_NO_COMPANION_VAST_XML_STRING);
         VastVideoConfig vastVideoConfig = subject.evaluateVastXmlManager(TEST_VAST_XML_STRING,
-                new ArrayList<VastTracker>());
+                new ArrayList<>());
 
         VideoViewabilityTracker tracker = vastVideoConfig.getVideoViewabilityTracker();
         assertThat(tracker.getPercentViewable()).isEqualTo(70);

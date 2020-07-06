@@ -63,13 +63,6 @@ public class MraidVideoPlayerActivityTest {
     }
 
     @Test
-    public void onCreate_withVastExtraKey_shouldUseVastVideoViewController() throws Exception {
-        initializeSubjectForVast();
-
-        assertThat(subject.getBaseVideoViewController()).isInstanceOf(VastVideoViewController.class);
-    }
-
-    @Test
     public void onCreate_withMraidExtraKey_shouldUseMraidVideoViewController() throws Exception {
         initializeSubjectForMraid();
 

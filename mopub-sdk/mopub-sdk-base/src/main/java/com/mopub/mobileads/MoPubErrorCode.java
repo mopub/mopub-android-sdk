@@ -22,8 +22,8 @@ public enum MoPubErrorCode implements MoPubError {
     MISSING_AD_UNIT_ID("Unable to serve ad due to missing or empty ad unit ID."),
     NO_CONNECTION("No internet connection detected."),
 
-    ADAPTER_NOT_FOUND("Unable to find Native Network or Custom Event adapter."),
-    ADAPTER_CONFIGURATION_ERROR("Native Network or Custom Event adapter was configured incorrectly."),
+    ADAPTER_NOT_FOUND("Unable to find Native Network or ad adapter."),
+    ADAPTER_CONFIGURATION_ERROR("Native Network or ad adapter was configured incorrectly."),
     ADAPTER_INITIALIZATION_SUCCESS("AdapterConfiguration initialization success."),
 
     /** see {@link com.mopub.common.Constants#AD_EXPIRATION_DELAY } */
@@ -33,6 +33,11 @@ public enum MoPubErrorCode implements MoPubError {
     NETWORK_NO_FILL("Third-party network failed to provide an ad."),
     NETWORK_INVALID_STATE("Third-party network failed due to invalid internal state."),
     MRAID_LOAD_ERROR("Error loading MRAID ad."),
+    HTML_LOAD_ERROR("Error loading MRAID ad."),
+    INLINE_LOAD_ERROR("Error loading INLINE ad."),
+    FULLSCREEN_LOAD_ERROR("Error loading FULLSCREEN ad."),
+    INLINE_SHOW_ERROR("Error showing INLINE ad."),
+    FULLSCREEN_SHOW_ERROR("Error showing FULLSCREEN ad."),
     VIDEO_CACHE_ERROR("Error creating a cache to store downloaded videos."),
     VIDEO_DOWNLOAD_ERROR("Error downloading video."),
 

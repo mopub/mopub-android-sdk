@@ -9,7 +9,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
-import android.os.Bundle;
 
 import androidx.annotation.Nullable;
 
@@ -47,9 +46,9 @@ public class BaseVideoPlayerActivity extends Activity {
     }
 
     static void startVast(final Context context,
-            final VastVideoConfig vastVideoConfig,
-            final long broadcastIdentifier,
-            @Nullable final CreativeOrientation orientation) {
+                          final VastVideoConfig vastVideoConfig,
+                          final long broadcastIdentifier,
+                          @Nullable final CreativeOrientation orientation) {
         final Intent intentVideoPlayerActivity = createIntentVast(context, vastVideoConfig,
                 broadcastIdentifier, orientation);
         try {
@@ -61,36 +60,8 @@ public class BaseVideoPlayerActivity extends Activity {
         }
     }
 
-    static void startVast(final Context context,
-                          final VastVideoConfigTwo vastVideoConfig,
-                          final long broadcastIdentifier,
-                          @Nullable final CreativeOrientation orientation) {
-        final Intent intentVideoPlayerActivity = createIntentVast(context, vastVideoConfig,
-                broadcastIdentifier, orientation);
-        try {
-            context.startActivity(intentVideoPlayerActivity);
-        } catch (ActivityNotFoundException e) {
-            MoPubLog.log(CUSTOM, "Attempt to start with VastVideoConfigTwo failed. " +
-                    "Activity MraidVideoPlayerActivity not found. " +
-                    "Did you declare it in your AndroidManifest.xml?");
-        }
-    }
-
     static Intent createIntentVast(final Context context,
-            final VastVideoConfig vastVideoConfig,
-            final long broadcastIdentifier,
-            @Nullable final CreativeOrientation orientation) {
-        final Intent intentVideoPlayerActivity = new Intent(context, MraidVideoPlayerActivity.class);
-        intentVideoPlayerActivity.setFlags(FLAG_ACTIVITY_NEW_TASK);
-        intentVideoPlayerActivity.putExtra(VIDEO_CLASS_EXTRAS_KEY, "vast");
-        intentVideoPlayerActivity.putExtra(VAST_VIDEO_CONFIG, vastVideoConfig);
-        intentVideoPlayerActivity.putExtra(BROADCAST_IDENTIFIER_KEY, broadcastIdentifier);
-        intentVideoPlayerActivity.putExtra(CREATIVE_ORIENTATION_KEY, orientation);
-        return intentVideoPlayerActivity;
-    }
-
-    static Intent createIntentVast(final Context context,
-           final VastVideoConfigTwo vastVideoConfig,
+           final VastVideoConfig vastVideoConfig,
            final long broadcastIdentifier,
            @Nullable final CreativeOrientation orientation) {
         final Intent intentVideoPlayerActivity = new Intent(context, MraidVideoPlayerActivity.class);

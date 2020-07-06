@@ -7,8 +7,7 @@ apply from: 'shared-build.gradle'
 dependencies {
     api project(':mopub-sdk:mopub-sdk-base')
     api project(':mopub-sdk:mopub-sdk-banner')
-    api project(':mopub-sdk:mopub-sdk-interstitial')
-    api project(':mopub-sdk:mopub-sdk-rewardedvideo')
+    api project(':mopub-sdk:mopub-sdk-fullscreen')
     api project(':mopub-sdk:mopub-sdk-native-static')
     api project(':mopub-sdk:mopub-sdk-native-video')
 

@@ -54,6 +54,7 @@ import static com.mopub.common.logging.MoPubLog.SdkLogEvent.CUSTOM_WITH_THROWABL
 
 public class MoPubSampleActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
     private static final List<String> REQUIRED_DANGEROUS_PERMISSIONS = new ArrayList<>();
     private static final String SHOWING_CONSENT_DIALOG_KEY = "ShowingConsentDialog";
 
@@ -418,10 +419,10 @@ public class MoPubSampleActivity extends AppCompatActivity
         return new ImpressionListener() {
             @Override
             public void onImpression(@NonNull final String adUnitId, @Nullable final ImpressionData impressionData) {
-                MoPubLog.log(CUSTOM, "impression for adUnitId= " + adUnitId);
+                MoPubLog.log(CUSTOM, "impression for adUnitId: " + adUnitId);
 
                 if (impressionData == null) {
-                    mImpressionsList.addFirst("adUnitId= " + adUnitId + "\ndata= null");
+                    mImpressionsList.addFirst("adUnitId: " + adUnitId + "\ndata= null");
                 } else {
                     try {
                         mImpressionsList.addFirst(impressionData.getJsonRepresentation().toString(2));

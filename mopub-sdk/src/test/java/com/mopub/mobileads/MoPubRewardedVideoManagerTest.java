@@ -5,13 +5,14 @@
 package com.mopub.mobileads;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.mopub.common.AdFormat;
 import com.mopub.common.AdType;
-import com.mopub.common.DataKeys;
 import com.mopub.common.LifecycleListener;
 import com.mopub.common.MoPub;
 import com.mopub.common.MoPubReward;
@@ -25,6 +26,7 @@ import com.mopub.common.privacy.SyncRequest;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Reflection;
 import com.mopub.common.util.ResponseHeader;
+import com.mopub.mobileads.test.support.TestFullscreenAdAdapterFactory;
 import com.mopub.network.AdResponse;
 import com.mopub.network.MoPubNetworkError;
 import com.mopub.network.MoPubRequestQueue;
@@ -102,7 +104,7 @@ public class
     private MultiAdRequest request;
     private RewardedVideoCompletionRequest rewardedVideoCompletionRequest;
     private Activity mActivity;
-    private SharedPreferences mTestCustomEventSharedPrefs;
+    private SharedPreferences mTestAdAdapterSharedPrefs;
     private PersonalInfoManager mockPersonalInfoManager;
 
     @Before
@@ -127,9 +129,12 @@ public class
 
         MoPubRewardedVideoManager.setVideoListener(mockVideoListener);
 
-        mTestCustomEventSharedPrefs = SharedPreferencesHelper.getSharedPreferences(
+        when(TestFullscreenAdAdapterFactory.getSingletonMock().getBaseAdClassName())
+                .thenReturn(MoPubFullscreen.class.getName());
+
+        mTestAdAdapterSharedPrefs = SharedPreferencesHelper.getSharedPreferences(
                         mActivity, TEST_CUSTOM_EVENT_PREF_NAME);
-        MoPubRewardedVideoManager.setCustomEventSharedPrefs(mTestCustomEventSharedPrefs);
+        MoPubRewardedVideoManager.setBaseAdSharedPrefs(mTestAdAdapterSharedPrefs);
 
         mockPersonalInfoManager = mock(PersonalInfoManager.class);
         when(mockPersonalInfoManager.getPersonalInfoConsentStatus()).thenReturn(ConsentStatus.UNKNOWN);
@@ -171,7 +176,7 @@ public class
         ShadowLooper.unPauseMainLooper();
         MoPubRewardedVideoManager.getRewardedAdData().clear();
         MoPubRewardedVideoManager.getAdRequestStatusMapping().clearMapping();
-        mTestCustomEventSharedPrefs.edit().clear().apply();
+        mTestAdAdapterSharedPrefs.edit().clear().apply();
         MoPubIdentifierTest.clearPreferences(mActivity);
         new Reflection.MethodBuilder(null, "resetMoPub")
                 .setStatic(MoPub.class)
@@ -287,15 +292,10 @@ public class
     }
 
     @Test
-    public void loadVideo_withCustomEventAlreadyLoaded_shouldNotLoadAnotherVideo() throws Exception {
-        final CustomEventRewardedVideo mockCustomEvent = mock(CustomEventRewardedVideo.class);
-        MoPubRewardedVideoManager.getRewardedAdData().updateAdUnitCustomEventMapping(
-                adUnitId, mockCustomEvent, TestCustomEvent.AD_NETWORK_ID);
-
+    public void loadVideo_withAdUnitIdAlreadyLoaded_shouldNotLoadAnotherVideo() throws Exception {
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
 
         NetworkResponse netResponse = new NetworkResponse(jsonResponse.toString().getBytes());
@@ -306,13 +306,14 @@ public class
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
         ShadowLooper.pauseMainLooper();
 
-        // Load the first custom event
+        // Load the first base ad
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoaded();
 
         ShadowLooper.unPauseMainLooper();
 
-        // Verify the first custom event
+        // Verify the first base ad
         assertThat(MoPubRewardedVideoManager.hasVideo(adUnitId)).isTrue();
         verify(mockVideoListener).onRewardedVideoLoadSuccess(eq(adUnitId));
         verifyNoMoreInteractions(mockVideoListener);
@@ -321,12 +322,12 @@ public class
 
         ShadowLooper.pauseMainLooper();
 
-        // Load the second custom event
+        // Load the second base ad
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
 
         ShadowLooper.unPauseMainLooper();
 
-        // Verify the first custom event is still available
+        // Verify the first base ad is still available
         assertThat(MoPubRewardedVideoManager.hasVideo(adUnitId)).isTrue();
         verify(mockVideoListener).onRewardedVideoLoadSuccess(eq(adUnitId));
         verifyNoMoreInteractions(mockVideoListener);
@@ -336,13 +337,18 @@ public class
 
     @Test
     public void callbackMethods_withNullListener_shouldNotError() {
+        final FullscreenAdAdapter mockAdAdapter = TestFullscreenAdAdapterFactory.getSingletonMock();
+        when(mockAdAdapter.getAdNetworkId()).thenReturn("mock_network_id");
+        MoPubRewardedVideoManager.getRewardedAdData().updateAdUnitAdAdapterMapping(
+                adUnitId, mockAdAdapter);
+
         // Clients can set RVM null.
         MoPubRewardedVideoManager.setVideoListener(null);
 
         MultiAdResponse multiAdResponse = Mockito.mock(MultiAdResponse.class);
 
         AdResponse testResponse = new AdResponse.Builder()
-                .setCustomEventClassName("com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent")
+                .setBaseAdClassName("com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter")
                 .setAdType(AdType.CUSTOM)
                 .build();
 
@@ -356,14 +362,11 @@ public class
 
         ShadowLooper.unPauseMainLooper();
 
-        MoPubRewardedVideoManager.onRewardedVideoClicked(TestCustomEvent.class,
-                TestCustomEvent.AD_NETWORK_ID);
-        MoPubRewardedVideoManager.onRewardedVideoStarted(TestCustomEvent.class,
-                TestCustomEvent.AD_NETWORK_ID);
-        MoPubRewardedVideoManager.onRewardedVideoClosed(TestCustomEvent.class,
-                TestCustomEvent.AD_NETWORK_ID);
-        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestCustomEvent.class,
-                TestCustomEvent.AD_NETWORK_ID,
+        MoPubRewardedVideoManager.onRewardedVideoClicked(mockAdAdapter, mockAdAdapter.getAdNetworkId());
+        MoPubRewardedVideoManager.onRewardedVideoStarted(mockAdAdapter, mockAdAdapter.getAdNetworkId());
+        MoPubRewardedVideoManager.onRewardedVideoClosed(mockAdAdapter, mockAdAdapter.getAdNetworkId());
+        MoPubRewardedVideoManager.onRewardedVideoCompleted(mockAdAdapter,
+                mockAdAdapter.getAdNetworkId(),
                 MoPubReward.success("test", 111));
 
         // The test passed because none of the above calls threw an exception even though the listener is null.
@@ -374,8 +377,7 @@ public class
         MultiAdResponse multiAdResponse = Mockito.mock(MultiAdResponse.class);
         AdResponse testResponse = new AdResponse.Builder()
                 .setAdType(AdType.CUSTOM)
-                .setCustomEventClassName(
-                        "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent")
+                .setBaseAdClassName("com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter")
                 .setFailoverUrl("fail.url")
                 .build();
 
@@ -402,8 +404,8 @@ public class
         MultiAdResponse testResponse = new MultiAdResponse(mActivity, netResponse, AdFormat.REWARDED_VIDEO, adUnitId);
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
-
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoadFailed(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
 
         verify(mockVideoListener).onRewardedVideoLoadFailure(eq(adUnitId),
                 eq(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR));
@@ -423,8 +425,9 @@ public class
         MultiAdResponse testResponse = new MultiAdResponse(mActivity, netResponse, AdFormat.REWARDED_VIDEO, adUnitId);
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
-
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoadFailed(MoPubErrorCode.ADAPTER_CONFIGURATION_ERROR);
+
         assertThat(request.getUrl()).isEqualTo("fail.url");
         // Clear up the static state :(
         requestListener.onErrorResponse(new VolleyError("reset"));
@@ -435,7 +438,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME.getKey(), SINGLE_CURRENCY_NAME);
         metadata.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT.getKey(), SINGLE_CURRENCY_AMOUNT);
@@ -450,6 +453,7 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoaded();
 
         ShadowLooper.unPauseMainLooper();
 
@@ -463,7 +467,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME.getKey(), SINGLE_CURRENCY_NAME);
         metadata.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT.getKey(), SINGLE_CURRENCY_AMOUNT);
@@ -478,6 +482,7 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoaded();
 
         ShadowLooper.unPauseMainLooper();
 
@@ -498,7 +503,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_CURRENCIES.getKey(), new JSONObject(MULTI_CURRENCIES_JSON_4));
 
@@ -512,6 +517,7 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoaded();
 
         ShadowLooper.unPauseMainLooper();
 
@@ -534,7 +540,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
 
         NetworkResponse netResponse = new NetworkResponse(jsonResponse.toString().getBytes());
@@ -546,6 +552,7 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoaded();
 
         ShadowLooper.unPauseMainLooper();
 
@@ -567,7 +574,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME.getKey(), SINGLE_CURRENCY_NAME);
         metadata.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT.getKey(), SINGLE_CURRENCY_AMOUNT);
@@ -582,6 +589,7 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoaded();
 
         ShadowLooper.unPauseMainLooper();
 
@@ -604,7 +612,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_CURRENCIES.getKey(), "not json");
 
@@ -637,7 +645,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), TestFullscreenAdAdapterFactory.getSingletonMock().getClass().toString());
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.CUSTOM_EVENT_DATA.getKey(), "{\"k1\":\"v1\",\"k2\":\"v2\"}");
 
@@ -650,31 +658,32 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoaded();
 
         ShadowLooper.unPauseMainLooper();
 
-        Map<String, ?> networkInitSettings = mTestCustomEventSharedPrefs.getAll();
-        String testCustomEventClassName = TestCustomEvent.class.getName();
+        Map<String, ?> networkInitSettings = mTestAdAdapterSharedPrefs.getAll();
+        String testAdAdapterClassName = TestFullscreenAdAdapterFactory.getSingletonMock().getClass().toString();
 
-        // Verify that TestCustomEvent has init params saved in SharedPrefs.
+        // Verify that TestAdAdapter has init params saved in SharedPrefs.
         assertThat(networkInitSettings.size()).isEqualTo(1);
-        assertThat(networkInitSettings.containsKey(testCustomEventClassName)).isTrue();
-        assertThat(networkInitSettings.get(testCustomEventClassName))
+        assertThat(networkInitSettings.containsKey(testAdAdapterClassName)).isTrue();
+        assertThat((String)networkInitSettings.get(testAdAdapterClassName))
                 .isEqualTo("{\"adunit_format\":\"full\",\"com_mopub_vast_click_exp_enabled\":\"false\",\"k1\":\"v1\",\"k2\":\"v2\"}");
     }
 
     @Test
     public void onAdSuccess_withNewInitParams_shouldUpdateInitParamsInSharedPrefs() throws JSONException, MoPubNetworkError {
         // Put in {"k1":"v1","k2":"v2"} as existing init params.
-        mTestCustomEventSharedPrefs.edit().putString(
-                TestCustomEvent.class.getName(),
+        mTestAdAdapterSharedPrefs.edit().putString(
+                TestFullscreenAdAdapterFactory.getSingletonMock().getClass().toString(),
                 "{\"k1\":\"v1\",\"k2\":\"v2\"}").apply();
 
         // New init params are {"k3":"v3"}.
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), TestFullscreenAdAdapterFactory.getSingletonMock().getClass().toString());
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.CUSTOM_EVENT_DATA.getKey(), "{\"k3\":\"v3\"}");
 
@@ -687,41 +696,18 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        TestFullscreenAdAdapterFactory.getSingletonMock().onAdLoaded();
 
         ShadowLooper.unPauseMainLooper();
 
-        Map<String, ?> networkInitSettings = mTestCustomEventSharedPrefs.getAll();
-        String testCustomEventClassName = TestCustomEvent.class.getName();
+        Map<String, ?> networkInitSettings = mTestAdAdapterSharedPrefs.getAll();
+        String testAdAdapterClassName = TestFullscreenAdAdapterFactory.getSingletonMock().getClass().toString();
 
-        // Verify that TestCustomEvent has new init params saved in SharedPrefs.
+        // Verify that TestAdAdapter has new init params saved in SharedPrefs.
         assertThat(networkInitSettings.size()).isEqualTo(1);
-        assertThat(networkInitSettings.containsKey(testCustomEventClassName)).isTrue();
-        assertThat(networkInitSettings.get(testCustomEventClassName)).isEqualTo("{\"adunit_format\":\"full\",\"com_mopub_vast_click_exp_enabled\":\"false\",\"k3\":\"v3\"}");
-    }
-
-    @Test
-    public void onAdSuccess_witNonCustomEventRewardedVideo_shouldNotSaveAnythingInSharedPrefs() throws JSONException, MoPubNetworkError {
-        JSONObject jsonResponse = createRewardedJsonResponse();
-        JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
-        JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideo");
-        metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
-        metadata.put(ResponseHeader.CUSTOM_EVENT_DATA.getKey(), "{\"k1\":\"v1\", \"k2\":\"v2\"}");
-
-        NetworkResponse netResponse = new NetworkResponse(jsonResponse.toString().getBytes());
-        MultiAdResponse testResponse = new MultiAdResponse(mActivity, netResponse, AdFormat.REWARDED_VIDEO, "testAdUnit1");
-
-        // Robolectric executes its handlers immediately, so if we want the async behavior we see
-        // in an actual app we have to pause the main looper until we're done successfully loading the ad.
-        ShadowLooper.pauseMainLooper();
-
-        MoPubRewardedVideoManager.loadVideo("testAdUnit1", null);
-        requestListener.onSuccessResponse(testResponse);
-
-        ShadowLooper.unPauseMainLooper();
-
-        // Verify that nothing got saved in SharedPrefs.
-        assertThat(mTestCustomEventSharedPrefs.getAll().size()).isEqualTo(0);
+        assertThat(networkInitSettings.containsKey(testAdAdapterClassName)).isTrue();
+        assertThat((String)networkInitSettings.get(testAdAdapterClassName))
+                .isEqualTo("{\"adunit_format\":\"full\",\"com_mopub_vast_click_exp_enabled\":\"false\",\"k3\":\"v3\"}");
     }
 
     @Test
@@ -729,7 +715,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
 
         NetworkResponse netResponse = new NetworkResponse(jsonResponse.toString().getBytes());
@@ -739,33 +725,29 @@ public class
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
         ShadowLooper.pauseMainLooper();
 
-        // Load the first custom event
+        // Load the first base ad
         MoPubRewardedVideoManager.loadVideo("testAdUnit1", null);
         requestListener.onSuccessResponse(testResponse);
+        final FullscreenAdAdapter adAdapter1 = (FullscreenAdAdapter) MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter("testAdUnit1");
 
         ShadowLooper.unPauseMainLooper();
 
-        // Get the first custom event's broadcast id
-        TestCustomEvent testCustomEvent1 = (TestCustomEvent)
-                MoPubRewardedVideoManager.getRewardedAdData().getCustomEvent("testAdUnit1");
-        Long broadcastId1 = (Long) testCustomEvent1.getLocalExtras().get(
-                DataKeys.BROADCAST_IDENTIFIER_KEY);
+        // Get the first base ad's broadcast id
+        Long broadcastId1 = adAdapter1.getBroadcastIdentifier();
         assertThat(broadcastId1).isNotNull();
 
         ShadowLooper.pauseMainLooper();
 
-        // Load the second custom event
+        // Load the second base ad
         testResponse = new MultiAdResponse(mActivity, netResponse, AdFormat.REWARDED_VIDEO, "testAdUnit2");
         MoPubRewardedVideoManager.loadVideo("testAdUnit2", null);
         requestListener.onSuccessResponse(testResponse);
+        final FullscreenAdAdapter adAdapter2 = (FullscreenAdAdapter) MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter("testAdUnit2");
 
         ShadowLooper.unPauseMainLooper();
 
-        // Get the second custom event's broadcast id
-        TestCustomEvent testCustomEvent2 = (TestCustomEvent)
-                MoPubRewardedVideoManager.getRewardedAdData().getCustomEvent("testAdUnit2");
-        Long broadcastId2 = (Long) testCustomEvent2.getLocalExtras().get(
-                DataKeys.BROADCAST_IDENTIFIER_KEY);
+        // Get the second base ad's broadcast id
+        Long broadcastId2 = adAdapter2.getBroadcastIdentifier();
         assertThat(broadcastId2).isNotNull();
 
         // Make sure they're different
@@ -777,7 +759,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME.getKey(), SINGLE_CURRENCY_NAME);
         metadata.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT.getKey(), SINGLE_CURRENCY_AMOUNT);
@@ -806,7 +788,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
 
         NetworkResponse netResponse = new NetworkResponse(jsonResponse.toString().getBytes());
@@ -818,6 +800,8 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoaded();
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdShown();
 
         ShadowLooper.unPauseMainLooper();
 
@@ -826,16 +810,16 @@ public class
         verify(mockVideoListener).onRewardedVideoLoadSuccess(eq(adUnitId));
         assertThat(MoPubRewardedVideoManager.hasVideo(adUnitId)).isTrue();
         verify(mockVideoListener).onRewardedVideoStarted(eq(adUnitId));
-        MoPubRewardedVideoManager.onRewardedVideoClosed(TestCustomEvent.class, adUnitId);
+        MoPubRewardedVideoManager.onRewardedVideoClosed(TestFullscreenAdAdapterFactory.getSingletonMock(), adUnitId);
         assertThat(MoPubRewardedVideoManager.hasVideo(adUnitId)).isFalse();
     }
-    
+
     @Test
     public void showVideo_whenNotHasVideo_shouldFail() throws JSONException, MoPubNetworkError {
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$NoVideoCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$NoVideoAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
 
         NetworkResponse netResponse = new NetworkResponse(jsonResponse.toString().getBytes());
@@ -847,6 +831,7 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoadFailed(MoPubErrorCode.NETWORK_NO_FILL);
 
         ShadowLooper.unPauseMainLooper();
 
@@ -862,7 +847,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_CURRENCIES.getKey(), new JSONObject(MULTI_CURRENCIES_JSON_4));
 
@@ -875,6 +860,7 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoaded();
 
         ShadowLooper.unPauseMainLooper();
 
@@ -888,7 +874,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), TestFullscreenAdAdapterFactory.getSingletonMock().getClass().toString());
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_CURRENCIES.getKey(), new JSONObject(MULTI_CURRENCIES_JSON_4));
 
@@ -899,8 +885,11 @@ public class
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
         ShadowLooper.pauseMainLooper();
 
+        final RewardedAdData rewardedVideoData = MoPubRewardedVideoManager.getRewardedAdData();
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        final AdAdapter adAdapter = rewardedVideoData.getAdAdapter(adUnitId);
+        adAdapter.onAdLoaded();
 
         Set<MoPubReward> availableRewards = MoPubRewardedVideoManager.getAvailableRewards(adUnitId);
         assertThat(availableRewards.size()).isEqualTo(4);
@@ -914,7 +903,6 @@ public class
         }
 
         // AdUnit to MoPubReward mapping
-        RewardedAdData rewardedVideoData = MoPubRewardedVideoManager.getRewardedAdData();
         MoPubReward moPubReward = rewardedVideoData.getMoPubReward(adUnitId);
         assertThat(moPubReward.getLabel()).isEqualTo("Diamonds");
         assertThat(moPubReward.getAmount()).isEqualTo(10);
@@ -924,7 +912,7 @@ public class
         MoPubRewardedVideoManager.showVideo(adUnitId);
 
         // CustomEventRewardedAd class to MoPubReward mapping
-        moPubReward = rewardedVideoData.getLastShownMoPubReward(TestCustomEvent.class);
+        moPubReward = rewardedVideoData.getLastShownMoPubReward(adAdapter);
         assertThat(moPubReward.getLabel()).isEqualTo("Diamonds");
         assertThat(moPubReward.getAmount()).isEqualTo(10);
     }
@@ -934,7 +922,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_CURRENCIES.getKey(), new JSONObject(MULTI_CURRENCIES_JSON_4));
 
@@ -947,6 +935,7 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoaded();
 
         Set<MoPubReward> availableRewards = MoPubRewardedVideoManager.getAvailableRewards(adUnitId);
         assertThat(availableRewards.size()).isEqualTo(4);
@@ -973,7 +962,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_CURRENCIES.getKey(), new JSONObject(MULTI_CURRENCIES_JSON_4));
 
@@ -986,6 +975,7 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoaded();
 
         Set<MoPubReward> availableRewards = MoPubRewardedVideoManager.getAvailableRewards(adUnitId);
         assertThat(availableRewards.size()).isEqualTo(4);
@@ -1007,7 +997,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), TestFullscreenAdAdapterFactory.getSingletonMock().getClass().toString());
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_CURRENCIES.getKey(), MULTI_CURRENCY_JSON_1);
 
@@ -1018,14 +1008,16 @@ public class
         // in an actual app we have to pause the main looper until we're done successfully loading the ad.
         ShadowLooper.pauseMainLooper();
 
+        final RewardedAdData rewardedVideoData = MoPubRewardedVideoManager.getRewardedAdData();
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        final AdAdapter adAdapter = rewardedVideoData.getAdAdapter(adUnitId);
+        adAdapter.onAdLoaded();
 
         // There's only one reward in the set of available rewards for this AdUnit
         assertThat(MoPubRewardedVideoManager.getAvailableRewards(adUnitId).size()).isEqualTo(1);
 
         // The only reward is automatically mapped to this AdUnit
-        RewardedAdData rewardedVideoData = MoPubRewardedVideoManager.getRewardedAdData();
         MoPubReward moPubReward = rewardedVideoData.getMoPubReward(adUnitId);
         assertThat(moPubReward.getLabel()).isEqualTo("Coins");
         assertThat(moPubReward.getAmount()).isEqualTo(25);
@@ -1035,7 +1027,7 @@ public class
         MoPubRewardedVideoManager.showVideo(adUnitId);
 
         // CustomEventRewardedAd class to MoPubReward mapping
-        moPubReward = rewardedVideoData.getLastShownMoPubReward(TestCustomEvent.class);
+        moPubReward = rewardedVideoData.getLastShownMoPubReward(adAdapter);
         assertThat(moPubReward.getLabel()).isEqualTo("Coins");
         assertThat(moPubReward.getAmount()).isEqualTo(25);
     }
@@ -1045,7 +1037,7 @@ public class
         JSONObject jsonResponse = createRewardedJsonResponse();
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
         metadata.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME.getKey(), "currency_name");
         metadata.put(ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT.getKey(), 123);
@@ -1060,13 +1052,16 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
+        final AdAdapter adAdapter = MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId);
+        adAdapter.onAdLoaded();
 
         ShadowLooper.unPauseMainLooper();
 
         MoPubRewardedVideoManager.showVideo(adUnitId);
+        adAdapter.onAdShown();
 
         MoPubReward moPubReward =
-                MoPubRewardedVideoManager.getRewardedAdData().getLastShownMoPubReward(TestCustomEvent.class);
+                MoPubRewardedVideoManager.getRewardedAdData().getLastShownMoPubReward(adAdapter);
         assertThat(moPubReward.getAmount()).isEqualTo(123);
         assertThat(moPubReward.getLabel()).isEqualTo("currency_name");
     }
@@ -1076,7 +1071,7 @@ public class
         MultiAdResponse multiAdResponse = Mockito.mock(MultiAdResponse.class);
         when(multiAdResponse.getFailURL()).thenReturn("failUrl");
         AdResponse testResponse = new AdResponse.Builder()
-                .setCustomEventClassName("com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent")
+                .setBaseAdClassName("com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter")
                 .setAdType(AdType.CUSTOM)
                 .build();
 
@@ -1104,7 +1099,7 @@ public class
         MultiAdResponse multiAdResponse = Mockito.mock(MultiAdResponse.class);
         when(multiAdResponse.getFailURL()).thenReturn("failUrl");
         AdResponse testResponse = new AdResponse.Builder()
-                .setCustomEventClassName("com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent")
+                .setBaseAdClassName("com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter")
                 .setAdType(AdType.CUSTOM)
                 .build();
 
@@ -1162,23 +1157,27 @@ public class
                 MoPubRewardedVideoManager.chooseReward(moPubReward, networkReward);
         assertThat(chosenReward).isEqualTo(networkReward);
     }
-    
+
     @Test
     public void onRewardedVideoCompleted_withEmptyServerCompletionUrl_withCurrentlyShowingAdUnitId_shouldNotifyRewardedVideoCompletedForOneAdUnitId() {
         MoPubReward moPubReward = MoPubReward.success(MOPUB_REWARD, 123);
         RewardedAdData rewardedVideoData = MoPubRewardedVideoManager.getRewardedAdData();
+
+        final FullscreenAdAdapter mockAdAdapterOne = mock(FullscreenAdAdapter.class);
+        final FullscreenAdAdapter mockAdAdapterTwo = mock(FullscreenAdAdapter.class);
+
         rewardedVideoData.setCurrentlyShowingAdUnitId("testAdUnit1");
-        rewardedVideoData.updateAdUnitCustomEventMapping("testAdUnit1", new TestCustomEvent(),
-                TestCustomEvent.AD_NETWORK_ID);
-        rewardedVideoData.updateAdUnitCustomEventMapping("testAdUnit2", new TestCustomEvent(),
-                TestCustomEvent.AD_NETWORK_ID);
-        // Server completion url empty and custom event has no server reward set
+        MoPubRewardedVideoManager.getRewardedAdData().updateAdUnitAdAdapterMapping(
+                "testAdUnit2", mockAdAdapterOne);
+        MoPubRewardedVideoManager.getRewardedAdData().updateAdUnitAdAdapterMapping(
+                "testAdUnit2", mockAdAdapterTwo);
+        // Server completion url empty and base ad has no server reward set
 
         ShadowLooper.pauseMainLooper();
 
-        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestCustomEvent.class, TestCustomEvent.AD_NETWORK_ID,
+        MoPubRewardedVideoManager.onRewardedVideoCompleted(mockAdAdapterOne, mockAdAdapterOne.getAdNetworkId(),
                 moPubReward);
-        
+
         ShadowLooper.unPauseMainLooper();
 
         ArgumentCaptor<Set<String>> rewardedIdsCaptor = ArgumentCaptor.forClass((Class) Set.class);
@@ -1192,17 +1191,17 @@ public class
         MoPubReward moPubReward = MoPubReward.success(MOPUB_REWARD, 123);
         RewardedAdData rewardedVideoData = MoPubRewardedVideoManager.getRewardedAdData();
         rewardedVideoData.setCurrentlyShowingAdUnitId(null);
-        rewardedVideoData.updateAdUnitCustomEventMapping("testAdUnit1", new TestCustomEvent(),
-                TestCustomEvent.AD_NETWORK_ID);
-        rewardedVideoData.updateAdUnitCustomEventMapping("testAdUnit2", new TestCustomEvent(),
-                TestCustomEvent.AD_NETWORK_ID);
-        rewardedVideoData.updateAdUnitCustomEventMapping("testAdUnit3", new TestCustomEvent(),
-                TestCustomEvent.AD_NETWORK_ID);
-        // Server completion url empty and custom event has no server reward set
+        rewardedVideoData.updateAdUnitAdAdapterMapping("testAdUnit1", TestFullscreenAdAdapterFactory.getSingletonMock() //new TestAdAdapter(),
+        );
+        rewardedVideoData.updateAdUnitAdAdapterMapping("testAdUnit2", TestFullscreenAdAdapterFactory.getSingletonMock() //new TestAdAdapter(),
+        );
+        rewardedVideoData.updateAdUnitAdAdapterMapping("testAdUnit3", TestFullscreenAdAdapterFactory.getSingletonMock() //new TestAdAdapter(),
+        );
+        // Server completion url empty and base ad has no server reward set
 
         ShadowLooper.pauseMainLooper();
 
-        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestCustomEvent.class, TestCustomEvent.AD_NETWORK_ID,
+        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestFullscreenAdAdapterFactory.getSingletonMock(), TestAdAdapter.AD_NETWORK_ID,
                 moPubReward);
 
         ShadowLooper.unPauseMainLooper();
@@ -1226,7 +1225,7 @@ public class
 
         ShadowLooper.pauseMainLooper();
 
-        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestCustomEvent.class, TestCustomEvent.AD_NETWORK_ID,
+        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestFullscreenAdAdapterFactory.getSingletonMock(), TestAdAdapter.AD_NETWORK_ID,
                 moPubReward);
 
         ShadowLooper.unPauseMainLooper();
@@ -1246,21 +1245,20 @@ public class
         MoPubReward moPubReward = MoPubReward.success(MOPUB_REWARD, 123);
         RewardedAdData rewardedVideoData = MoPubRewardedVideoManager.getRewardedAdData();
         rewardedVideoData.setCurrentlyShowingAdUnitId("testAdUnit1");
-
-        rewardedVideoData.updateAdUnitCustomEventMapping("testAdUnit1", new TestCustomEvent(),
-                TestCustomEvent.AD_NETWORK_ID);
+        rewardedVideoData.updateAdUnitAdAdapterMapping("testAdUnit1", TestFullscreenAdAdapterFactory.getSingletonMock());
         rewardedVideoData.updateAdUnitToServerCompletionUrlMapping("testAdUnit1", "testUrl");
+        rewardedVideoData.updateAdUnitToCustomDataMapping("testAdUnit1", "very%=custom@[data]");
 
         ShadowLooper.pauseMainLooper();
 
-        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestCustomEvent.class,
-                TestCustomEvent.AD_NETWORK_ID, moPubReward);
+        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestFullscreenAdAdapterFactory.getSingletonMock(),
+                TestAdAdapter.AD_NETWORK_ID, moPubReward);
 
         ShadowLooper.unPauseMainLooper();
 
         verify(mockRequestQueue).add(any(RewardedVideoCompletionRequest.class));
         assertThat(rewardedVideoCompletionRequest.getUrl()).contains(
-                "cec=com.mopub.mobileads.MoPubRewardedVideoManagerTest%24TestCustomEvent");
+                "cec=" + MoPubFullscreen.class.getName());
     }
 
     @Test
@@ -1274,8 +1272,8 @@ public class
 
         ShadowLooper.pauseMainLooper();
 
-        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestCustomEvent.class,
-                TestCustomEvent.AD_NETWORK_ID, moPubReward);
+        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestFullscreenAdAdapterFactory.getSingletonMock(),
+                TestAdAdapter.AD_NETWORK_ID, moPubReward);
 
         ShadowLooper.unPauseMainLooper();
 
@@ -1295,8 +1293,8 @@ public class
 
         ShadowLooper.pauseMainLooper();
 
-        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestCustomEvent.class,
-                TestCustomEvent.AD_NETWORK_ID, moPubReward);
+        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestFullscreenAdAdapterFactory.getSingletonMock(),
+                TestAdAdapter.AD_NETWORK_ID, moPubReward);
 
         ShadowLooper.unPauseMainLooper();
 
@@ -1316,7 +1314,7 @@ public class
 
         ShadowLooper.pauseMainLooper();
 
-        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestCustomEvent.class, TestCustomEvent.AD_NETWORK_ID,
+        MoPubRewardedVideoManager.onRewardedVideoCompleted(TestFullscreenAdAdapterFactory.getSingletonMock(), TestAdAdapter.AD_NETWORK_ID,
                 moPubReward);
 
         ShadowLooper.unPauseMainLooper();
@@ -1333,7 +1331,7 @@ public class
         jsonResponse.put(ResponseHeader.FAIL_URL.getKey(), "fail_url");
         JSONObject firstResponse = jsonResponse.getJSONArray(ResponseHeader.AD_RESPONSES.getKey()).getJSONObject(0);
         JSONObject metadata = firstResponse.getJSONObject(ResponseHeader.METADATA.getKey());
-        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestCustomEvent");
+        metadata.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.mopub.mobileads.MoPubRewardedVideoManagerTest$TestAdAdapter");
         metadata.put(ResponseHeader.AD_TYPE.getKey(), AdType.CUSTOM);
 
         NetworkResponse netResponse = new NetworkResponse(jsonResponse.toString().getBytes());
@@ -1341,8 +1339,7 @@ public class
 
         MoPubRewardedVideoManager.loadVideo(adUnitId, null);
         requestListener.onSuccessResponse(testResponse);
-        MoPubRewardedVideoManager.onRewardedVideoLoadFailure(TestCustomEvent.class,
-                TestCustomEvent.AD_NETWORK_ID, MoPubErrorCode.EXPIRED);
+        MoPubRewardedVideoManager.getRewardedAdData().getAdAdapter(adUnitId).onAdLoadFailed(MoPubErrorCode.EXPIRED);
 
         verify(mockVideoListener).onRewardedVideoLoadFailure(eq(adUnitId),
                 eq(MoPubErrorCode.EXPIRED));
@@ -1361,14 +1358,22 @@ public class
         return new String(chars);
     }
 
-    public static class TestCustomEvent extends CustomEventRewardedVideo {
+    public static class TestAdAdapter extends FullscreenAdAdapter {
         public static final String AD_NETWORK_ID = "id!";
 
         boolean mPlayable = false;
-        private Map<String, Object> mLocalExtras;
+        private AdData mAdData;
+
+        public TestAdAdapter(@NonNull Context context,
+                             @NonNull final String className,
+                             @NonNull final AdData adData) throws BaseAdNotFoundException {
+            super(context, className, adData);
+            mPlayable = true;
+            mAdData = adData;
+            MoPubRewardedVideoManager.onRewardedVideoLoadSuccess(this, AD_NETWORK_ID);
+        }
 
         @Nullable
-        @Override
         protected LifecycleListener getLifecycleListener() {
             return null;
         }
@@ -1380,51 +1385,41 @@ public class
         }
 
         @Override
-        protected void onInvalidate() {
-            mPlayable = false;
-        }
-
-        @Override
-        protected boolean checkAndInitializeSdk(@NonNull final Activity launcherActivity,
-                @NonNull final Map<String, Object> localExtras,
-                @NonNull final Map<String, String> serverExtras) throws Exception {
-            return false;
-        }
-
-        @Override
-        protected void loadWithSdkInitialized(@NonNull final Activity activity,
-                @NonNull final Map<String, Object> localExtras,
-                @NonNull final Map<String, String> serverExtras) throws Exception {
-            // Do nothing because robolectric handlers execute immediately.
+        public void onAdLoaded() {
             mPlayable = true;
-            MoPubRewardedVideoManager.onRewardedVideoLoadSuccess(TestCustomEvent.class,
-                    TestCustomEvent.AD_NETWORK_ID);
-            mLocalExtras = localExtras;
+            MoPubRewardedVideoManager.onRewardedVideoLoadSuccess(TestFullscreenAdAdapterFactory.getSingletonMock(),
+                    TestAdAdapter.AD_NETWORK_ID);
         }
 
         @Override
-        protected boolean hasVideoAvailable() {
+        public boolean isReady() {
             return mPlayable;
         }
 
         @Override
-        protected void showVideo() {
-            MoPubRewardedVideoManager.onRewardedVideoStarted(TestCustomEvent.class, TestCustomEvent.AD_NETWORK_ID);
+        public void show(@Nullable MoPubAd moPubAd) {
+            MoPubRewardedVideoManager.onRewardedVideoStarted(TestFullscreenAdAdapterFactory.getSingletonMock(), TestAdAdapter.AD_NETWORK_ID);
+        }
+
+        @Override
+        void invalidate() {
+            mPlayable = false;
         }
 
         @Nullable
-        Map<String, Object> getLocalExtras() {
-            return mLocalExtras;
+        AdData getAdData() {
+            return mAdData;
         }
     }
 
-    public static class NoVideoCustomEvent extends TestCustomEvent {
-        @Override
-        protected void loadWithSdkInitialized(@NonNull final Activity activity,
-                @NonNull final Map<String, Object> localExtras,
-                @NonNull final Map<String, String> serverExtras) throws Exception {
+    public static class NoVideoAdAdapter extends TestAdAdapter {
+
+        public NoVideoAdAdapter(@NonNull Context context,
+                            @NonNull final String className,
+                            @NonNull final AdData adData) throws BaseAdNotFoundException {
+            super(context, className, adData);
             mPlayable = false;
-            MoPubRewardedVideoManager.onRewardedVideoLoadFailure(NoVideoCustomEvent.class, TestCustomEvent.AD_NETWORK_ID, MoPubErrorCode.NETWORK_NO_FILL);
+            MoPubRewardedVideoManager.onRewardedVideoLoadFailure(this, TestAdAdapter.AD_NETWORK_ID, MoPubErrorCode.NETWORK_NO_FILL);
         }
     }
 

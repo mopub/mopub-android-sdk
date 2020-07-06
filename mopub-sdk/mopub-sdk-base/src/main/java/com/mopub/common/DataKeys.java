@@ -5,7 +5,7 @@
 package com.mopub.common;
 
 /**
- * Keys used in localExtras and serverExtras maps for MoPub custom events.
+ * Keys used in localExtras and serverExtras maps for MoPub base ads.
  */
 public class DataKeys {
     public static final String AD_REPORT_KEY = "mopub-intent-ad-report";
@@ -20,6 +20,7 @@ public class DataKeys {
     public static final String AD_WIDTH = "com_mopub_ad_width";
     public static final String AD_HEIGHT = "com_mopub_ad_height";
     public static final String ADUNIT_FORMAT = "adunit_format";
+    public static final String AD_DATA_KEY = "com_mopub_ad_data";
 
     // Banner imp tracking fields
     public static final String BANNER_IMPRESSION_MIN_VISIBLE_DIPS = "banner-impression-min-pixels";

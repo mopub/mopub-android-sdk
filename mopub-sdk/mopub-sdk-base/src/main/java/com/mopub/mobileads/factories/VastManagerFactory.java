@@ -6,6 +6,8 @@ package com.mopub.mobileads.factories;
 
 import android.content.Context;
 
+import androidx.annotation.VisibleForTesting;
+
 import com.mopub.mobileads.VastManager;
 
 public class VastManagerFactory {
@@ -23,7 +25,8 @@ public class VastManagerFactory {
         return new VastManager(context, preCacheVideo);
     }
 
-    @Deprecated // for testing
+    @Deprecated
+    @VisibleForTesting
     public static void setInstance(VastManagerFactory factory) {
         instance = factory;
     }

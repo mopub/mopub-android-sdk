@@ -116,7 +116,7 @@ class VastXmlManager {
         if (TextUtils.isEmpty(errorTracker)) {
             return null;
         }
-        return new VastTracker(errorTracker);
+        return new VastTracker.Builder(errorTracker).build();
     }
 
     /**
@@ -129,7 +129,7 @@ class VastXmlManager {
         List<String> trackers = XmlUtils.getStringDataAsList(mVastDoc, MP_IMPRESSION_TRACKER);
         List<VastTracker> vastTrackers = new ArrayList<VastTracker>(trackers.size());
         for (String tracker : trackers) {
-            vastTrackers.add(new VastTracker(tracker));
+            vastTrackers.add(new VastTracker.Builder(tracker).build());
         }
         return vastTrackers;
     }

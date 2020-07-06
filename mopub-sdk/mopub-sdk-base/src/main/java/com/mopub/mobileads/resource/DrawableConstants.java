@@ -26,10 +26,10 @@ public class DrawableConstants {
     }
 
     public static class RadialCountdown {
-        public static final int SIDE_LENGTH_DIPS = 45;
-        public static final int TOP_MARGIN_DIPS = 16;
-        public static final int RIGHT_MARGIN_DIPS = 16;
-        public static final int PADDING_DIPS = 5;
+        public static final int SIDE_LENGTH_DIPS = 50;
+        public static final int TOP_MARGIN_DIPS = 3;
+        public static final int RIGHT_MARGIN_DIPS = 3;
+        public static final int PADDING_DIPS = 9;
 
         public static final int CIRCLE_STROKE_WIDTH_DIPS = 3;
         public static final float TEXT_SIZE_SP = 18f;
@@ -70,15 +70,12 @@ public class DrawableConstants {
     }
     
     public static class CloseButton {
-        public static final int WIDGET_HEIGHT_DIPS = 56;
+        public static final int WIDGET_HEIGHT_DIPS = 50;
         public static final int EDGE_PADDING = 6;
-        public static final int IMAGE_PADDING_DIPS = 15;
+        public static final int EDGE_MARGIN = 4;
+        public static final int IMAGE_PADDING_DIPS = 5;
         public static final int TEXT_RIGHT_MARGIN_DIPS = 0;
         public static final float TEXT_SIZE_SP = 20f;
-
-        public static final int STROKE_COLOR = Color.WHITE;
-        public static final float STROKE_WIDTH = 8f;
-        public static final Paint.Cap STROKE_CAP = Paint.Cap.ROUND;
 
         public static final String DEFAULT_CLOSE_BUTTON_TEXT = "";
         public static final Typeface TEXT_TYPEFACE = Typeface.create("Helvetica", Typeface.NORMAL);

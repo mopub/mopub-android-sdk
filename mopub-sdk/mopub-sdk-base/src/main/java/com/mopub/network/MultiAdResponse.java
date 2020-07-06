@@ -324,10 +324,10 @@ public class MultiAdResponse implements Iterator<AdResponse> {
             }
         }
 
-        // Derive custom event fields
-        String customEventClassName = AdTypeTranslator.getCustomEventName(adFormat, adTypeString,
+        // Derive base ad fields
+        String customEventClassName = AdTypeTranslator.getBaseAdClassName(adFormat, adTypeString,
                 fullAdTypeString, jsonHeaders);
-        builder.setCustomEventClassName(customEventClassName);
+        builder.setBaseAdClassName(customEventClassName);
 
         // Default browser agent from X-Browser-Agent header
         MoPub.BrowserAgent browserAgent = MoPub.BrowserAgent.fromHeader(
@@ -338,7 +338,7 @@ public class MultiAdResponse implements Iterator<AdResponse> {
         // Process server extras if they are present:
         String customEventData = extractHeader(jsonHeaders, ResponseHeader.CUSTOM_EVENT_DATA);
 
-        // Some server-supported custom events (like AdMob banners) use a different header field
+        // Some server-supported base ads (like AdMob banners) use a different header field
         if (TextUtils.isEmpty(customEventData)) {
             customEventData = extractHeader(jsonHeaders, ResponseHeader.NATIVE_PARAMS);
         }
@@ -347,7 +347,7 @@ public class MultiAdResponse implements Iterator<AdResponse> {
         try {
             serverExtras = Json.jsonStringToMap(customEventData);
         } catch (JSONException e) {
-            throw new MoPubNetworkError("Failed to decode server extras for custom event data.",
+            throw new MoPubNetworkError("Failed to decode server extras for base ad data.",
                     e, MoPubNetworkError.Reason.BAD_HEADER_DATA);
         }
 
@@ -378,7 +378,7 @@ public class MultiAdResponse implements Iterator<AdResponse> {
         serverExtras.put(DataKeys.ADUNIT_FORMAT, adUnitFormat);
 
         if (eventDataIsInResponseBody(adTypeString, fullAdTypeString)) {
-            // Some MoPub-specific custom events get their serverExtras from the response itself:
+            // Some MoPub-specific base ads get their serverExtras from the response itself:
             serverExtras.put(DataKeys.HTML_RESPONSE_BODY_KEY, content);
             serverExtras.put(DataKeys.CREATIVE_ORIENTATION_KEY, extractHeader(jsonHeaders, ResponseHeader.ORIENTATION));
         }
@@ -419,18 +419,18 @@ public class MultiAdResponse implements Iterator<AdResponse> {
         if (!TextUtils.isEmpty(videoTrackers)) {
             serverExtras.put(DataKeys.VIDEO_TRACKERS_KEY, videoTrackers);
         }
-        if (AdType.REWARDED_VIDEO.equals(adTypeString) ||
-                (AdType.INTERSTITIAL.equals(adTypeString) &&
-                        FullAdType.VAST.equals(fullAdTypeString))) {
+        if ((AdType.INTERSTITIAL.equals(adTypeString) && FullAdType.VAST.equals(fullAdTypeString))
+                || AdType.REWARDED_VIDEO.equals(adTypeString)
+                || AdType.FULLSCREEN.equals(adTypeString)) {
             serverExtras.put(DataKeys.EXTERNAL_VIDEO_VIEWABILITY_TRACKERS_KEY,
                     extractHeader(jsonHeaders, ResponseHeader.VIDEO_VIEWABILITY_TRACKERS));
         }
 
         // Banner imp tracking
         if (AdFormat.BANNER.equals(adFormat)) {
-            serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS,
+            builder.setBannerImpressionMinVisibleMs(
                     extractHeader(jsonHeaders, ResponseHeader.BANNER_IMPRESSION_MIN_VISIBLE_MS));
-            serverExtras.put(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS,
+            builder.setBannerImpressionMinVisibleDips(
                     extractHeader(jsonHeaders, ResponseHeader.BANNER_IMPRESSION_MIN_VISIBLE_DIPS));
         }
 
@@ -438,36 +438,28 @@ public class MultiAdResponse implements Iterator<AdResponse> {
         final String disabledViewabilityVendors = extractHeader(jsonHeaders,
                 ResponseHeader.DISABLE_VIEWABILITY);
         if (!TextUtils.isEmpty(disabledViewabilityVendors)) {
-            final ExternalViewabilitySessionManager.ViewabilityVendor disabledVendors =
-                    ExternalViewabilitySessionManager.ViewabilityVendor.fromKey(disabledViewabilityVendors);
-            if (disabledVendors != null) {
-                disabledVendors.disable();
-            }
         }
 
         builder.setServerExtras(serverExtras);
 
-        if (AdType.REWARDED_VIDEO.equals(adTypeString) || AdType.CUSTOM.equals(adTypeString) ||
-                AdType.REWARDED_PLAYABLE.equals(adTypeString)) {
-            final String rewardedVideoCurrencyName = extractHeader(jsonHeaders,
-                    ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME);
-            final String rewardedVideoCurrencyAmount = extractHeader(jsonHeaders,
-                    ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT);
-            final String rewardedCurrencies = extractHeader(jsonHeaders,
-                    ResponseHeader.REWARDED_CURRENCIES);
-            final String rewardedVideoCompletionUrl = extractHeader(jsonHeaders,
-                    ResponseHeader.REWARDED_VIDEO_COMPLETION_URL);
-            final Integer rewardedDuration = extractIntegerHeader(jsonHeaders,
-                    ResponseHeader.REWARDED_DURATION);
-            final boolean shouldRewardOnClick = extractBooleanHeader(jsonHeaders,
-                    ResponseHeader.SHOULD_REWARD_ON_CLICK, false);
-            builder.setRewardedVideoCurrencyName(rewardedVideoCurrencyName);
-            builder.setRewardedVideoCurrencyAmount(rewardedVideoCurrencyAmount);
-            builder.setRewardedCurrencies(rewardedCurrencies);
-            builder.setRewardedVideoCompletionUrl(rewardedVideoCompletionUrl);
-            builder.setRewardedDuration(rewardedDuration);
-            builder.setShouldRewardOnClick(shouldRewardOnClick);
-        }
+        final String rewardedVideoCurrencyName = extractHeader(jsonHeaders,
+                ResponseHeader.REWARDED_VIDEO_CURRENCY_NAME);
+        final String rewardedVideoCurrencyAmount = extractHeader(jsonHeaders,
+                ResponseHeader.REWARDED_VIDEO_CURRENCY_AMOUNT);
+        final String rewardedCurrencies = extractHeader(jsonHeaders,
+                ResponseHeader.REWARDED_CURRENCIES);
+        final String rewardedVideoCompletionUrl = extractHeader(jsonHeaders,
+                ResponseHeader.REWARDED_VIDEO_COMPLETION_URL);
+        final Integer rewardedDuration = extractIntegerHeader(jsonHeaders,
+                ResponseHeader.REWARDED_DURATION);
+        final boolean shouldRewardOnClick = extractBooleanHeader(jsonHeaders,
+                ResponseHeader.SHOULD_REWARD_ON_CLICK, false);
+        builder.setRewardedVideoCurrencyName(rewardedVideoCurrencyName);
+        builder.setRewardedVideoCurrencyAmount(rewardedVideoCurrencyAmount);
+        builder.setRewardedCurrencies(rewardedCurrencies);
+        builder.setRewardedVideoCompletionUrl(rewardedVideoCompletionUrl);
+        builder.setRewardedDuration(rewardedDuration);
+        builder.setShouldRewardOnClick(shouldRewardOnClick);
 
         return builder.build();
     }
@@ -513,6 +505,7 @@ public class MultiAdResponse implements Iterator<AdResponse> {
         return AdType.MRAID.equals(adType) || AdType.HTML.equals(adType) ||
                 (AdType.INTERSTITIAL.equals(adType) && FullAdType.VAST.equals(fullAdType)) ||
                 (AdType.REWARDED_VIDEO.equals(adType) && FullAdType.VAST.equals(fullAdType)) ||
-                AdType.REWARDED_PLAYABLE.equals(adType);
+                AdType.REWARDED_PLAYABLE.equals(adType) ||
+                AdType.FULLSCREEN.equals(adType);
     }
 }

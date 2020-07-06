@@ -212,6 +212,7 @@ public class DeviceUtils {
      * @param context Needs a context (application is fine) to determine width/height.
      * @return Width and height of the device
      */
+    @NonNull
     public static Point getDeviceDimensions(@NonNull final Context context) {
         Integer bestWidthPixels = null;
         Integer bestHeightPixels = null;

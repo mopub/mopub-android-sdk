@@ -8,7 +8,6 @@ import android.app.Activity;
 
 import com.mopub.common.CacheService;
 import com.mopub.common.test.support.SdkTestRunner;
-import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.test.support.ShadowMoPubHttpUrlConnection;
 import com.mopub.mobileads.test.support.VastUtils;
 
@@ -98,9 +97,9 @@ public class VastManagerTest {
 
         // Verify quartile trackers
         assertThat(mVastVideoConfig.getFractionalTrackers().size()).isEqualTo(3);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(0).trackingFraction()).isEqualTo(0.25f);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(1).trackingFraction()).isEqualTo(0.5f);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(2).trackingFraction()).isEqualTo(0.75f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(0).getTrackingFraction()).isEqualTo(0.25f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(1).getTrackingFraction()).isEqualTo(0.5f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(2).getTrackingFraction()).isEqualTo(0.75f);
 
         // Verify start tracker.
         assertThat(mVastVideoConfig.getAbsoluteTrackers().size()).isEqualTo(3);
@@ -171,15 +170,15 @@ public class VastManagerTest {
 
 
         assertThat(mVastVideoConfig.getFractionalTrackers().size()).isEqualTo(9);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(0).trackingFraction()).isEqualTo(0.25f);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(1).trackingFraction()).isEqualTo(0.25f);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(2).trackingFraction()).isEqualTo(0.25f);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(3).trackingFraction()).isEqualTo(0.5f);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(4).trackingFraction()).isEqualTo(0.5f);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(5).trackingFraction()).isEqualTo(0.5f);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(6).trackingFraction()).isEqualTo(0.75f);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(7).trackingFraction()).isEqualTo(0.75f);
-        assertThat(mVastVideoConfig.getFractionalTrackers().get(8).trackingFraction()).isEqualTo(0.75f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(0).getTrackingFraction()).isEqualTo(0.25f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(1).getTrackingFraction()).isEqualTo(0.25f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(2).getTrackingFraction()).isEqualTo(0.25f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(3).getTrackingFraction()).isEqualTo(0.5f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(4).getTrackingFraction()).isEqualTo(0.5f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(5).getTrackingFraction()).isEqualTo(0.5f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(6).getTrackingFraction()).isEqualTo(0.75f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(7).getTrackingFraction()).isEqualTo(0.75f);
+        assertThat(mVastVideoConfig.getFractionalTrackers().get(8).getTrackingFraction()).isEqualTo(0.75f);
 
         assertThat(mVastVideoConfig.getCompleteTrackers().size()).isEqualTo(3);
         assertThat(mVastVideoConfig.getCloseTrackers().size()).isEqualTo(4);
@@ -404,7 +403,7 @@ public class VastManagerTest {
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
-        assertThat(mVastVideoConfig.getSkipOffsetString()).isEqualTo("25%");
+        assertThat(mVastVideoConfig.getSkipOffset()).isEqualTo("25%");
     }
 
 
@@ -420,7 +419,7 @@ public class VastManagerTest {
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
-        assertThat(mVastVideoConfig.getSkipOffsetString()).isEqualTo("00:03:14");
+        assertThat(mVastVideoConfig.getSkipOffset()).isEqualTo("00:03:14");
     }
 
     @Test
@@ -435,7 +434,7 @@ public class VastManagerTest {
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
-        assertThat(mVastVideoConfig.getSkipOffsetString()).isEqualTo("00:03:14.159");
+        assertThat(mVastVideoConfig.getSkipOffset()).isEqualTo("00:03:14.159");
     }
 
     @Test
@@ -459,7 +458,7 @@ public class VastManagerTest {
         verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
         // Verify that the last parsed skipoffset value is returned
-        assertThat(mVastVideoConfig.getSkipOffsetString()).isEqualTo("25%");
+        assertThat(mVastVideoConfig.getSkipOffset()).isEqualTo("25%");
     }
 
     @Test
@@ -474,7 +473,7 @@ public class VastManagerTest {
 
         verify(vastManagerListener).onVastVideoConfigurationPrepared(any(VastVideoConfig.class));
 
-        assertThat(mVastVideoConfig.getSkipOffsetString()).isNull();
+        assertThat(mVastVideoConfig.getSkipOffset()).isNull();
     }
 
     @Test

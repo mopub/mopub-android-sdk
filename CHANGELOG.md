@@ -1,3 +1,14 @@
+## Version 5.13.0 (June 15, 2020)
+- **Features**
+  - Remove Moat and IAS measurement SDKs.
+  - Consolidate banners, interstitials, and rewarded ads into one container. Third party network adapters for these formats should now extend `BaseAd`.
+  - Consolidate the `mopub-sdk-interstitial` and `mopub-sdk-rewarded-video` modules into `mopub-sdk-fullscreen`.
+  - Upgrade to use the Androidx Media2 video player for VAST videos.
+
+- **Bug Fixes**
+  - Unify the design treatment of fullscreen close buttons. Add a skip button for video when the skip threshold has been met before it has completed.
+  - Fix the version name of the sample app on the Play Store.
+
 ## Version 5.12.0 (April 6, 2020)
 - **Features**
   - Add Mintegral as a supported network.

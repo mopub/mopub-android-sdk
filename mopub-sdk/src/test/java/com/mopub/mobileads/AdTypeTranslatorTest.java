@@ -4,9 +4,6 @@
 
 package com.mopub.mobileads;
 
-import android.app.Activity;
-import android.content.Context;
-
 import com.mopub.common.AdFormat;
 import com.mopub.common.AdType;
 import com.mopub.common.test.support.SdkTestRunner;
@@ -17,161 +14,144 @@ import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @RunWith(SdkTestRunner.class)
 public class AdTypeTranslatorTest {
-    private String customEventName;
-    private MoPubView moPubView;
-    private MoPubInterstitial.MoPubInterstitialView moPubInterstitialView;
+    private String baseAdClassName;
     JSONObject headers;
 
     @Before
     public void setUp() throws Exception {
-        moPubView = mock(MoPubView.class);
-        moPubInterstitialView = mock(MoPubInterstitial.MoPubInterstitialView.class);
-
-        Context context = Robolectric.buildActivity(Activity.class).create().get();
-        when(moPubView.getContext()).thenReturn(context);
-        when(moPubInterstitialView.getContext()).thenReturn(context);
-
-        Map<String, String> stringHeaders = new HashMap<String, String>();
+        Map<String, String> stringHeaders = new HashMap<>();
         headers = new JSONObject(stringHeaders);
     }
 
     @Test
-    public void getCustomEventName_shouldBeGoogleBanner() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.BANNER, "admob_native", null, headers);
+    public void getBaseAdClassName_shouldBeGoogleBanner() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.BANNER, "admob_native", null, headers);
 
-        assertThat(customEventName).isEqualTo("com.mopub.mobileads.GooglePlayServicesBanner");
+        assertThat(baseAdClassName).isEqualTo("com.mopub.mobileads.GooglePlayServicesBanner");
     }
 
     @Test
-    public void getCustomEventName_shouldBeGoogleInterstitial() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.BANNER, "interstitial", "admob_full", headers);
+    public void getBaseAdClassName_shouldBeGoogleInterstitial() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.BANNER, "interstitial", "admob_full", headers);
 
-        assertThat(customEventName).isEqualTo("com.mopub.mobileads.GooglePlayServicesInterstitial");
+        assertThat(baseAdClassName).isEqualTo("com.mopub.mobileads.GooglePlayServicesInterstitial");
     }
 
     @Test
-    public void getCustomEventName_shouldBeMraidBanner() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.BANNER, AdType.MRAID, null, headers);
+    public void getBaseAdClassName_forMraid_shouldBeMraidBanner() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.BANNER, AdType.MRAID, null, headers);
 
-        assertThat(customEventName).isEqualTo("com.mopub.mraid.MraidBanner");
+        assertThat(baseAdClassName).isEqualTo("com.mopub.mobileads.MoPubInline");
     }
 
     @Test
-    public void getCustomEventName_shouldBeMraidInterstitial() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.INTERSTITIAL, AdType.MRAID, null, headers);
+    public void getBaseAdClassName_forInterstitial_shouldBeMoPubFullscreen() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.INTERSTITIAL, AdType.MRAID, null, headers);
 
-        assertThat(customEventName).isEqualTo("com.mopub.mraid.MraidInterstitial");
+        assertThat(baseAdClassName).isEqualTo("com.mopub.mobileads.MoPubFullscreen");
     }
 
     @Test
-    public void getCustomEventName_shouldBeHtmlBanner() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.BANNER, "html", null, headers);
+    public void getBaseAdClassName_shouldBeMoPubInline() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.BANNER, "html", null, headers);
 
-        assertThat(customEventName).isEqualTo("com.mopub.mobileads.HtmlBanner");
+        assertThat(baseAdClassName).isEqualTo("com.mopub.mobileads.MoPubInline");
     }
 
     @Test
-    public void getCustomEventName_shouldBeHtmlInterstitial() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.INTERSTITIAL, "html", null, headers);
+    public void getBaseAdClassName_forHtml_shouldBeMoPubFullscreen() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.INTERSTITIAL, "html", null, headers);
 
-        assertThat(customEventName).isEqualTo("com.mopub.mobileads.HtmlInterstitial");
+        assertThat(baseAdClassName).isEqualTo("com.mopub.mobileads.MoPubFullscreen");
     }
 
     @Test
-    public void getCustomEventName_shouldBeVastInterstitial() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.INTERSTITIAL, "interstitial", "vast", headers);
+    public void getBaseAdClassName_shouldBeVastInterstitial() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.INTERSTITIAL, "interstitial", "vast", headers);
 
-        assertThat(customEventName).isEqualTo("com.mopub.mobileads.VastVideoInterstitial");
+        assertThat(baseAdClassName).isEqualTo("com.mopub.mobileads.MoPubFullscreen");
     }
 
     @Test
-    public void getCustomEventName_shouldBeCustomClassName() throws JSONException {
+    public void getBaseAdClassName_shouldBeCustomClassName() throws JSONException {
         headers.put(ResponseHeader.CUSTOM_EVENT_NAME.getKey(), "com.example.CustomClass");
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.BANNER, AdType.CUSTOM, null, headers);
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.BANNER, AdType.CUSTOM, null, headers);
 
-        assertThat(customEventName).isEqualTo("com.example.CustomClass");
+        assertThat(baseAdClassName).isEqualTo("com.example.CustomClass");
     }
 
     @Test
-    public void getCustomEventName_whenNameNotInHeaders_shouldBeEmpty() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.BANNER, AdType.CUSTOM, null, headers);
+    public void getBaseAdClassName_whenNameNotInHeaders_shouldBeEmpty() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.BANNER, AdType.CUSTOM, null, headers);
 
-        assertThat(customEventName).isEmpty();
+        assertThat(baseAdClassName).isEmpty();
     }
 
     @Test
-    public void getCustomEventName_withNativeFormat_shouldBeMoPubNative() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.NATIVE, AdType.STATIC_NATIVE, null, headers);
+    public void getBaseAdClassName_withNativeFormat_shouldBeMoPubNative() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.NATIVE, AdType.STATIC_NATIVE, null, headers);
 
-        assertThat(customEventName).isEqualTo("com.mopub.nativeads.MoPubCustomEventNative");
+        assertThat(baseAdClassName).isEqualTo("com.mopub.nativeads.MoPubCustomEventNative");
     }
 
     @Test
-    public void getCustomEventName_withNativeVideoFormat_shouldBeMoPubNativeVideo() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.NATIVE, AdType.VIDEO_NATIVE, null, headers);
+    public void getBaseAdClassName_withNativeVideoFormat_shouldBeMoPubNativeVideo() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.NATIVE, AdType.VIDEO_NATIVE, null, headers);
 
-        assertThat(customEventName).isEqualTo("com.mopub.nativeads.MoPubCustomEventVideoNative");
+        assertThat(baseAdClassName).isEqualTo("com.mopub.nativeads.MoPubCustomEventVideoNative");
     }
 
     @Test
-    public void getCustomEventName_whenInvalidAdTypeAndInvalidFullAdType_shouldReturnNull() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.BANNER, "garbage", "garbage",
+    public void getBaseAdClassName_whenInvalidAdTypeAndInvalidFullAdType_shouldReturnNull() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.BANNER, "garbage", "garbage",
                 headers);
-        assertThat(customEventName).isNull();
+        assertThat(baseAdClassName).isNull();
     }
 
     @Test
-    public void getCustomEventName_withRewardedVideoFormat_shouldBeMoPubRewardedVideo() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.REWARDED_VIDEO,
+    public void getBaseAdClassName_withRewardedVideoFormat_shouldBeMoPubFullscreen() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.REWARDED_VIDEO,
                 AdType.REWARDED_VIDEO, null, headers);
 
-        assertThat(customEventName).isEqualTo("com.mopub.mobileads.MoPubRewardedVideo");
+        assertThat(baseAdClassName).isEqualTo("com.mopub.mobileads.MoPubFullscreen");
     }
 
     @Test
-    public void getCustomEventName_withRewardedPlayableFormat_shouldBeMoPubRewardedPlayable() {
-        customEventName = AdTypeTranslator.getCustomEventName(AdFormat.INTERSTITIAL,
+    public void getBaseAdClassName_withRewardedPlayableFormat_shouldBeMoPubFullscreen() {
+        baseAdClassName = AdTypeTranslator.getBaseAdClassName(AdFormat.INTERSTITIAL,
                 AdType.REWARDED_PLAYABLE, null, headers);
 
-        assertThat(customEventName).isEqualTo("com.mopub.mobileads.MoPubRewardedPlayable");
+        assertThat(baseAdClassName).isEqualTo("com.mopub.mobileads.MoPubFullscreen");
     }
 
     @Test
-    public void isMoPubSpecific_withMoPubInterstitialClassNames_shouldBeTrue() {
-        assertThat(AdTypeTranslator.CustomEventType
-                .isMoPubSpecific("com.mopub.mraid.MraidInterstitial")).isTrue();
-        assertThat(AdTypeTranslator.CustomEventType
-                .isMoPubSpecific("com.mopub.mobileads.HtmlInterstitial")).isTrue();
-        assertThat(AdTypeTranslator.CustomEventType
-                .isMoPubSpecific("com.mopub.mobileads.VastVideoInterstitial")).isTrue();
+    public void isMoPubSpecific_withMoPubInlineClassNames_shouldBeTrue() {
+        assertThat(AdTypeTranslator.BaseAdType
+                .isMoPubSpecific("com.mopub.mobileads.MoPubInline")).isTrue();
     }
 
     @Test
-    public void isMoPubSpecific_withMoPubRewardedClassNames_shouldBeTrue() {
-        assertThat(AdTypeTranslator.CustomEventType
-                .isMoPubSpecific("com.mopub.mobileads.MoPubRewardedVideo")).isTrue();
-        assertThat(AdTypeTranslator.CustomEventType
-                .isMoPubSpecific("com.mopub.mobileads.MoPubRewardedPlayable")).isTrue();
+    public void isMoPubSpecific_withMoPubFullscreenClassNames_shouldBeTrue() {
+        assertThat(AdTypeTranslator.BaseAdType
+                .isMoPubSpecific("com.mopub.mobileads.MoPubFullscreen")).isTrue();
     }
 
     @Test
     public void isMoPubSpecific_withNonMoPubClassNames_shouldBeFalse() {
-        assertThat(AdTypeTranslator.CustomEventType
+        assertThat(AdTypeTranslator.BaseAdType
                 .isMoPubSpecific("com.mopub.mobileads.GooglePlayServicesBanner")).isFalse();
-        assertThat(AdTypeTranslator.CustomEventType
+        assertThat(AdTypeTranslator.BaseAdType
                 .isMoPubSpecific("com.whatever.ads.SomeRandomAdFormat")).isFalse();
-        assertThat(AdTypeTranslator.CustomEventType
+        assertThat(AdTypeTranslator.BaseAdType
                 .isMoPubSpecific(null)).isFalse();
     }
 }

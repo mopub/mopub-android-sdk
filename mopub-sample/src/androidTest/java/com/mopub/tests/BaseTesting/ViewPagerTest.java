@@ -34,7 +34,6 @@ public class ViewPagerTest extends MoPubBaseTestCase {
 
     // Test Variables
     private static final String TITLE = AdLabels.VIEW_PAGER;
-    private static final String WEB_PAGE_LINK = "https://www.mopub.com/click-test/";
 
     /*
      * Verify that the View Pager Ad loads & shows on the app.

@@ -24,13 +24,13 @@ public class MoPubDefaultLogger implements MoPubLogger {
 
     /**
      * MESSAGE_FORMAT is used to produce a log in the following format:
-     * "[com.mopub.common.logging.MoPubLog][log] Ad Custom Log - Loading custom event adapter."
+     * "[com.mopub.common.logging.MoPubLog][log] Ad Custom Log - Loading ad adapter."
      */
     private static final String MESSAGE_FORMAT = "[%s][%s] %s";
 
     /**
      * MESSAGE_WITH_ID_FORMAT is used to produce a log in the following format:
-     * "[com.mopub.common.logging.MoPubLog][log][ad-unit-id-123] Adapter Custom Log - Attempting to invoke custom event: com.mopub.mobileads.HtmlBanner"
+     * "[com.mopub.common.logging.MoPubLog][log][ad-unit-id-123] Adapter Custom Log - Attempting to invoke base ad: com.mopub.mobileads.MoPubInline"
      */
     private static final String MESSAGE_WITH_ID_FORMAT = "[%s][%s][%s] %s";
 

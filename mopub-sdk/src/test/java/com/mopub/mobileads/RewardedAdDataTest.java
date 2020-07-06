@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import java.util.Set;
 
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 @RunWith(SdkTestRunner.class)
 public class RewardedAdDataTest {
@@ -142,6 +143,36 @@ public class RewardedAdDataTest {
     public void getAvailableRewards_whenAdUnitDoesNotHaveAvailableRewards_shouldReturnEmptySet() throws Exception {
         subject.addAvailableReward("mopub_id", "currency_name", "123");
         assertThat(subject.getAvailableRewards("foo_id")).isEmpty();
+    }
+
+    @Test
+    public void getAdUnitIdsForAdAdapter_whenAdapterDoesNotHaveAdUnitIds_shouldReturnEmptySet() throws Exception {
+        final AdAdapter adAdapterOne = mock(AdAdapter.class);
+        final AdAdapter adAdapterTwo = mock(AdAdapter.class);
+
+        final String adUnitIdOne = "adUnitId1";
+        final String adUnitIdTwo = "adUnitId2";
+
+        subject.associateAdAdapterWithAdUnitId(adAdapterOne, adUnitIdOne);
+        subject.associateAdAdapterWithAdUnitId(adAdapterOne, adUnitIdTwo);
+
+        assertThat(subject.getAdUnitIdsForAdAdapter(adAdapterTwo)).isEmpty();
+    }
+
+    @Test
+    public void getAdUnitIdsForAdAdapter_whenAdapterHasAdUnitIds_shouldReturnCompleteSet() throws Exception {
+        final AdAdapter adAdapterOne = mock(AdAdapter.class);
+        final AdAdapter adAdapterTwo = mock(AdAdapter.class);
+
+        final String adUnitIdOne = "adUnitId1";
+        final String adUnitIdTwo = "adUnitId2";
+
+        subject.associateAdAdapterWithAdUnitId(adAdapterOne, adUnitIdOne);
+        subject.associateAdAdapterWithAdUnitId(adAdapterOne, adUnitIdTwo);
+
+        assertThat(subject.getAdUnitIdsForAdAdapter(adAdapterOne)).contains(adUnitIdOne);
+        assertThat(subject.getAdUnitIdsForAdAdapter(adAdapterOne)).contains(adUnitIdTwo);
+        assertThat(subject.getAdUnitIdsForAdAdapter(adAdapterOne).size()).isEqualTo(2);
     }
 
     @Test

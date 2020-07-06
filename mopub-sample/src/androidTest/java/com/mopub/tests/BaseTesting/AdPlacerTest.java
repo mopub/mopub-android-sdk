@@ -31,7 +31,6 @@ public class AdPlacerTest extends MoPubBaseTestCase {
 
     // Test Variables
     private static final String TITLE = AdLabels.AD_PLACER;
-    private static final String WEB_PAGE_LINK = "https://www.mopub.com/click-test/";
 
     /*
      * Verify that the Rewarded Video Ad loads & shows on the app.

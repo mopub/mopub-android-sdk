@@ -6,6 +6,7 @@ package com.mopub.nativeads.factories;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import com.mopub.common.Preconditions;
 import com.mopub.nativeads.CustomEventNative;
@@ -26,7 +27,8 @@ public class CustomEventNativeFactory {
         }
     }
 
-    @Deprecated // for testing
+    @Deprecated
+    @VisibleForTesting
     public static void setInstance(
             @NonNull final CustomEventNativeFactory customEventNativeFactory) {
         Preconditions.checkNotNull(customEventNativeFactory);

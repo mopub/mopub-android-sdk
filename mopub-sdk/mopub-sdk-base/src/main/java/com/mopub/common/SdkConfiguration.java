@@ -35,7 +35,7 @@ public class SdkConfiguration {
     @NonNull private final Set<String> mAdapterConfigurationClasses;
 
     /**
-     * Used for rewarded video initialization. This holds each custom event's unique settings.
+     * Used for rewarded video initialization. This holds each base ad's unique settings.
      */
     @NonNull private final MediationSettings[] mMediationSettings;
 
@@ -169,7 +169,7 @@ public class SdkConfiguration {
         }
 
         /**
-         * Adds mediation settings for rewarded video custom events.
+         * Adds mediation settings for rewarded video base ads.
          *
          * @param mediationSettings Array of mediation settings. Can be empty but not null.
          * @return The builder.

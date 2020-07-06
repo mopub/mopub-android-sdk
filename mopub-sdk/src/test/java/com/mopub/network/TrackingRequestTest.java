@@ -64,8 +64,8 @@ public class TrackingRequestTest {
     }
 
     @Test
-    public void makeVastTrackingHttpRequest_shouldSubstituteMacros_shouldMakeSingleRequest() throws Exception {
-        VastTracker vastTracker = new VastTracker("uri?errorcode=[ERRORCODE]&contentplayhead=[CONTENTPLAYHEAD]&asseturi=[ASSETURI]");
+    public void makeVastTrackingTwoHttpRequest_shouldSubstituteMacros_shouldMakeSingleRequest() throws Exception {
+        final VastTracker vastTracker = new VastTracker.Builder("uri?errorcode=[ERRORCODE]&contentplayhead=[CONTENTPLAYHEAD]&asseturi=[ASSETURI]").build();
         TrackingRequest.makeVastTrackingHttpRequest(
                 Arrays.asList(vastTracker),
                 VastErrorCode.UNDEFINED_ERROR,
@@ -89,8 +89,8 @@ public class TrackingRequestTest {
     }
 
     @Test
-    public void makeVastTrackingHttpRequest_withRepeatableRequest_shouldMakeMultipleTrackingRequests() throws Exception {
-        VastTracker vastTracker = new VastTracker("uri?errorcode=[ERRORCODE]&contentplayhead=[CONTENTPLAYHEAD]&asseturi=[ASSETURI]");
+    public void makeVastTrackingTwoHttpRequest_withRepeatableRequest_shouldMakeMultipleTrackingRequests() throws Exception {
+        final VastTracker vastTracker = new VastTracker.Builder("uri?errorcode=[ERRORCODE]&contentplayhead=[CONTENTPLAYHEAD]&asseturi=[ASSETURI]").build();
         TrackingRequest.makeVastTrackingHttpRequest(
                 Arrays.asList(vastTracker),
                 VastErrorCode.UNDEFINED_ERROR,

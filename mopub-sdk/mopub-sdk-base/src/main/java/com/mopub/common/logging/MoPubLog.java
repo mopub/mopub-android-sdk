@@ -328,84 +328,81 @@ public class MoPubLog {
     public enum AdapterLogEvent implements MPLogEventType {
 
         // Params:
-        // Custom event name
+        // Base ad name
         // Creative ID
         // DSP Name
         LOAD_ATTEMPTED(LogLevel.DEBUG, "Adapter {0} attempting to load ad{1}{2}"),
 
         // Params:
-        // Custom event name
+        // Base ad name
         LOAD_SUCCESS(LogLevel.DEBUG, "Adapter {0} successfully loaded ad"),
 
         // Params:
-        // Custom event name
+        // Base ad name
         // Error Code
         // Error Message
         LOAD_FAILED(LogLevel.DEBUG, "Adapter {0} failed to load ad: ({1}) {2}"),
 
         // Params:
-        // Custom event name
+        // Base ad name
         SHOW_ATTEMPTED(LogLevel.DEBUG, "Adapter {0} attempting to show ad"),
 
         // Params:
-        // Custom event name
+        // Base ad name
         SHOW_SUCCESS(LogLevel.DEBUG, "Adapter {0} successfully showed ad"),
 
         // Params:
-        // Custom event name
+        // Base ad name
         // Error Code
         // Error Message
         SHOW_FAILED(LogLevel.DEBUG, "Adapter {0} failed to show ad: ({1}) {2}"),
 
         // Params:
-        // Custom Event Name
+        // Base Ad Name
         // Expiration time interval in seconds
         EXPIRED(LogLevel.DEBUG, "Adapter {0} expired since it was not shown within {1} seconds of it being loaded"),
 
         // Params:
-        // Custom Event Name
-        // <none>
+        // Base Ad Name
         CLICKED(LogLevel.DEBUG, "Adapter {0} clicked"),
 
         // Params:
-        // Custom Event Name
-        // <none>
+        // Base Ad Name
         WILL_APPEAR(LogLevel.DEBUG, "Adapter {0} will appear"),
 
         // Params:
-        // Custom Event Name
-        // <none>
+        // Base Ad Name
         DID_APPEAR(LogLevel.DEBUG, "Adapter {0} did appear"),
 
         // Params:
-        // Custom Event Name
-        // <none>
+        // Base Ad Name
         WILL_DISAPPEAR(LogLevel.DEBUG, "Adapter {0} will disappear"),
 
         // Params:
-        // Custom Event Name
+        // Base Ad Name
         // <none>
         DID_DISAPPEAR(LogLevel.DEBUG, "Adapter {0} did disappear"),
 
         // Params:
-        // Custom Event Name
+        // Base Ad Name
         // Reward amount
         // Reward currency name
         SHOULD_REWARD(LogLevel.DEBUG, "Adapter {0} should reward user with {1} {2}"),
 
         // Params:
-        // Custom Event Name
-        // <none>
+        // Base Ad Name
         WILL_LEAVE_APPLICATION(LogLevel.DEBUG, "Adapter {0} will leave application"),
 
         // Params:
+        // Base Ad Name
         // Custom message string
         CUSTOM(LogLevel.DEBUG, "Adapter {0} Log - {1}"),
 
         // Params:
+        // Base Ad Name
         // Custom message string
         // Throwable message string
-        CUSTOM_WITH_THROWABLE(LogLevel.DEBUG, "Adapter Log With Throwable - {0}, {1}");
+        CUSTOM_WITH_THROWABLE(LogLevel.DEBUG, "Adapter {0} Log With Throwable - {1}, {2}");
 
         private LogLevel mLogLevel;
         private String mMessageFormat;

@@ -31,7 +31,6 @@ public class RecyclerViewAdTest extends MoPubBaseTestCase {
 
     // Test Variables
     private static final String TITLE = AdLabels.RECYCLER_VIEW;
-    private static final String WEB_PAGE_LINK = "https://www.mopub.com/click-test/";
 
     /*
      * Verify that the Recycler View Ad loads & shows on the app.

@@ -36,7 +36,8 @@ public class ViewGestureDetector extends GestureDetector {
         return mGestureListener.isClicked();
     }
 
-    @Deprecated // for testing
+    @Deprecated
+    @VisibleForTesting
     void setGestureListener(@NonNull GestureListener gestureListener) {
         mGestureListener = gestureListener;
     }

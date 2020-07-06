@@ -14,7 +14,6 @@ import android.widget.RelativeLayout;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Dips;
-import com.mopub.common.util.Utils;
 import com.mopub.mobileads.resource.CtaButtonDrawable;
 import com.mopub.mobileads.resource.DrawableConstants;
 

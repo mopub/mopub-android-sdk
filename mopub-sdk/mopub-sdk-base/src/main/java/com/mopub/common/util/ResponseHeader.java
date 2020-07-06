@@ -90,7 +90,6 @@ public enum ResponseHeader {
 
     // Experiment keys
     VAST_CLICK_ENABLED("vast-click-enabled"),
-    VAST_VIDEO_PLAYER_VERSION("vast-player-version"),
 
     // Mraid Custom Close
     ALLOW_CUSTOM_CLOSE("allow-custom-close");

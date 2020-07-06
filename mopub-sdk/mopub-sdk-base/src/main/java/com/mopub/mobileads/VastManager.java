@@ -40,14 +40,17 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
          * when the VAST document is invalid.
          *
          * @param vastVideoConfig A configuration that can be used for displaying a VAST
-         *                               video or {@code null} if the VAST document is invalid.
+         *                        video or {@code null} if the VAST document is invalid.
          */
         void onVastVideoConfigurationPrepared(@Nullable final VastVideoConfig vastVideoConfig);
     }
 
-    @Nullable private VastManagerListener mVastManagerListener;
-    @Nullable private VastXmlManagerAggregator mVastXmlManagerAggregator;
-    @Nullable private String mDspCreativeId;
+    @Nullable
+    private VastManagerListener mVastManagerListener;
+    @Nullable
+    private VastXmlManagerAggregator mVastXmlManagerAggregator;
+    @Nullable
+    private String mDspCreativeId;
     private double mScreenAspectRatio;
     private int mScreenWidthDp;
 
@@ -61,14 +64,14 @@ public class VastManager implements VastXmlManagerAggregator.VastXmlManagerAggre
     /**
      * Creates and starts an async task that parses the VAST xml document.
      *
-     * @param vastXml The initial VAST xml document
+     * @param vastXml             The initial VAST xml document
      * @param vastManagerListener Notified when a video configuration has been found or when
      *                            the VAST document is invalid
      */
     public void prepareVastVideoConfiguration(@Nullable final String vastXml,
-            @NonNull final VastManagerListener vastManagerListener,
-            @Nullable String dspCreativeId,
-            @NonNull final Context context) {
+                                              @NonNull final VastManagerListener vastManagerListener,
+                                              @Nullable String dspCreativeId,
+                                              @NonNull final Context context) {
         Preconditions.checkNotNull(vastManagerListener, "vastManagerListener cannot be null");
         Preconditions.checkNotNull(context, "context cannot be null");
 

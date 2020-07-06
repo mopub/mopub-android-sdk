@@ -4,12 +4,15 @@
 
 package com.mopub.common.factories;
 
+import androidx.annotation.VisibleForTesting;
+
 import static com.mopub.common.util.Reflection.MethodBuilder;
 
 public class MethodBuilderFactory {
     protected static MethodBuilderFactory instance = new MethodBuilderFactory();
 
-    @Deprecated // for testing
+    @Deprecated
+    @VisibleForTesting
     public static void setInstance(MethodBuilderFactory factory) {
         instance = factory;
     }

@@ -63,8 +63,8 @@ import com.mopub.common.MoPub;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.ResponseHeader;
-import com.mopub.mobileads.HtmlBanner;
-import com.mopub.mobileads.MoPubRewardedVideo;
+import com.mopub.mobileads.MoPubFullscreen;
+import com.mopub.mobileads.MoPubInline;
 import com.mopub.nativeads.MoPubCustomEventNative;
 import com.mopub.nativeads.MoPubCustomEventVideoNative;
 import com.mopub.network.MultiAdResponse.ServerOverrideListener;
@@ -86,10 +86,10 @@ import java.util.Locale;
 import java.util.Map;
 
 import static org.fest.assertions.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -561,6 +561,8 @@ public class MultiAdResponseTest {
         assertThat(subject.getAdGroupId()).isEqualTo(AD_GROUP_ID);
         assertThat(subject.getAdUnitId()).isEqualTo(adUnitId);
         assertThat(subject.getClickTrackingUrl()).isEqualTo(CLICKTTRACKING_URL);
+        assertThat(subject.getImpressionMinVisibleDips()).isEmpty();
+        assertThat(subject.getImpressionMinVisibleMs()).isEmpty();
         assertThat(subject.getImpressionTrackingUrls()).isEqualTo(IMPTRACKER_URLS_LIST);
         assertThat(subject.getBeforeLoadUrl()).isEqualTo(BEFORE_LOAD_URL);
         assertThat(subject.getAfterLoadUrls()).isEqualTo(AFTER_LOAD_URLS_LIST);
@@ -570,13 +572,11 @@ public class MultiAdResponseTest {
         assertThat(subject.getHeight()).isEqualTo(HEIGHT);
         assertThat(subject.getWidth()).isEqualTo(WIDTH);
         assertThat(subject.getStringBody()).isEqualTo("content_text");
-        assertThat(subject.getCustomEventClassName()).isEqualTo(HtmlBanner.class.getName());
+        assertThat(subject.getBaseAdClassName()).isEqualTo(MoPubInline.class.getName());
         final Map<String, String> serverExtras = subject.getServerExtras();
         assertNotNull(serverExtras);
         assertThat(serverExtras.get(DataKeys.CLICKTHROUGH_URL_KEY)).isEqualToIgnoringCase(CLICKTTRACKING_URL);
         assertThat(serverExtras.get(DataKeys.HTML_RESPONSE_BODY_KEY)).isEqualToIgnoringCase("content_text");
-        assertThat(serverExtras.get(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS)).isEmpty();
-        assertThat(serverExtras.get(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS)).isEmpty();
         assertThat(serverExtras.get(DataKeys.ADUNIT_FORMAT)).isEqualTo(ADUNIT_FORMAT);
     }
 
@@ -600,6 +600,8 @@ public class MultiAdResponseTest {
         assertThat(subject.getAdGroupId()).isEqualTo(AD_GROUP_ID);
         assertThat(subject.getAdUnitId()).isEqualTo(adUnitId);
         assertThat(subject.getClickTrackingUrl()).isEqualTo(CLICKTTRACKING_URL);
+        assertThat(subject.getImpressionMinVisibleDips()).isEqualTo("1");
+        assertThat(subject.getImpressionMinVisibleMs()).isEqualTo("2");
         assertThat(subject.getImpressionTrackingUrls()).isEqualTo(IMPTRACKER_URLS_LIST);
         assertThat(subject.getBeforeLoadUrl()).isEqualTo(BEFORE_LOAD_URL);
         assertThat(subject.getAfterLoadUrls()).isEqualTo(AFTER_LOAD_URLS_LIST);
@@ -609,14 +611,12 @@ public class MultiAdResponseTest {
         assertThat(subject.getHeight()).isEqualTo(HEIGHT);
         assertThat(subject.getWidth()).isEqualTo(WIDTH);
         assertThat(subject.getStringBody()).isEqualTo("content_text");
-        assertThat(subject.getCustomEventClassName()).isEqualTo(HtmlBanner.class.getName());
+        assertThat(subject.getCustomEventClassName()).isEqualTo(MoPubInline.class.getName());
         final Map<String, String> serverExtras = subject.getServerExtras();
         assertNotNull(serverExtras);
         assertThat(serverExtras).isNotEmpty();
         assertThat(serverExtras.get(DataKeys.CLICKTHROUGH_URL_KEY)).isEqualToIgnoringCase(CLICKTTRACKING_URL);
         assertThat(serverExtras.get(DataKeys.HTML_RESPONSE_BODY_KEY)).isEqualToIgnoringCase("content_text");
-        assertThat(serverExtras.get(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_DIPS)).isEqualTo("1");
-        assertThat(serverExtras.get(DataKeys.BANNER_IMPRESSION_MIN_VISIBLE_MS)).isEqualTo("2");
         assertThat(serverExtras.get(DataKeys.ADUNIT_FORMAT)).isEqualTo(ADUNIT_FORMAT);
         assertThat(subject.getImpressionData()).isNull();
     }
@@ -686,7 +686,7 @@ public class MultiAdResponseTest {
         assertThat(subject.getHeight()).isEqualTo(HEIGHT);
         assertThat(subject.getWidth()).isEqualTo(WIDTH);
         assertThat(subject.getStringBody()).isEqualTo("content_text");
-        assertThat(subject.getCustomEventClassName()).isEqualTo(HtmlBanner.class.getName());
+        assertThat(subject.getCustomEventClassName()).isEqualTo(MoPubInline.class.getName());
         final Map<String, String> serverExtras = subject.getServerExtras();
         assertNotNull(serverExtras);
         assertThat(serverExtras).isNotEmpty();
@@ -896,7 +896,7 @@ public class MultiAdResponseTest {
         assertThat(subject.getHeight()).isEqualTo(HEIGHT);
         assertThat(subject.getWidth()).isEqualTo(WIDTH);
         assertThat(subject.getStringBody()).isEqualTo("content_text");
-        assertThat(subject.getCustomEventClassName()).isEqualTo(MoPubRewardedVideo.class.getName());
+        assertThat(subject.getCustomEventClassName()).isEqualTo(MoPubFullscreen.class.getName());
         assertThat(subject.getRewardedCurrencies()).isEqualTo(rewardedCurrenciesJson);
         assertThat(subject.getRewardedVideoCompletionUrl()).isEqualTo(
                 "http://completionUrl");

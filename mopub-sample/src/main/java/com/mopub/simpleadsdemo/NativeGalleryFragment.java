@@ -18,9 +18,6 @@ import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import com.mopub.nativeads.FacebookAdRenderer;
-import com.mopub.nativeads.FlurryCustomEventNative;
-import com.mopub.nativeads.FlurryNativeAdRenderer;
-import com.mopub.nativeads.FlurryViewBinder;
 import com.mopub.nativeads.GooglePlayServicesAdRenderer;
 import com.mopub.nativeads.MediaViewBinder;
 import com.mopub.nativeads.MintegralAdRenderer;
@@ -33,8 +30,6 @@ import com.mopub.nativeads.VerizonNativeAdRenderer;
 import com.mopub.nativeads.ViewBinder;
 
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.mopub.nativeads.RequestParameters.NativeAdAsset;
 
@@ -107,27 +102,6 @@ public class NativeGalleryFragment extends Fragment implements MoPubNativeAdLoad
                         .adChoicesRelativeLayoutId(R.id.native_privacy_information_icon_layout)
                         .build());
 
-        // Set up a renderer for Flurry ads.
-        Map<String, Integer> extraToResourceMap = new HashMap<>(3);
-        extraToResourceMap.put(FlurryCustomEventNative.EXTRA_SEC_BRANDING_LOGO,
-                R.id.flurry_native_brand_logo);
-        extraToResourceMap.put(FlurryCustomEventNative.EXTRA_APP_CATEGORY,
-                R.id.flurry_app_category);
-        extraToResourceMap.put(FlurryCustomEventNative.EXTRA_STAR_RATING_IMG,
-                R.id.flurry_star_rating_image);
-        ViewBinder flurryBinder = new ViewBinder.Builder(R.layout.native_ad_flurry_list_item)
-                .titleId(R.id.flurry_native_title)
-                .textId(R.id.flurry_native_text)
-                .mainImageId(R.id.flurry_native_main_image)
-                .iconImageId(R.id.flurry_native_icon_image)
-                .callToActionId(R.id.flurry_native_cta)
-                .addExtras(extraToResourceMap)
-                .build();
-        FlurryViewBinder flurryViewBinder = new FlurryViewBinder.Builder(flurryBinder)
-                .videoViewId(R.id.flurry_native_video_view)
-                .build();
-        final FlurryNativeAdRenderer flurryRenderer = new FlurryNativeAdRenderer(flurryViewBinder);
-
         // Set up a renderer for AdMob ads.
         final GooglePlayServicesAdRenderer googlePlayServicesAdRenderer = new GooglePlayServicesAdRenderer(
                 new MediaViewBinder.Builder(R.layout.video_ad_list_item)
@@ -169,7 +143,6 @@ public class NativeGalleryFragment extends Fragment implements MoPubNativeAdLoad
         mStreamAdPlacer.registerAdRenderer(mintegralAdRenderer);
         mStreamAdPlacer.registerAdRenderer(verizonNativeAdRenderer);
         mStreamAdPlacer.registerAdRenderer(googlePlayServicesAdRenderer);
-        mStreamAdPlacer.registerAdRenderer(flurryRenderer);
         mStreamAdPlacer.registerAdRenderer(facebookAdRenderer);
         mStreamAdPlacer.registerAdRenderer(moPubStaticNativeAdRenderer);
         mStreamAdPlacer.registerAdRenderer(moPubVideoNativeAdRenderer);

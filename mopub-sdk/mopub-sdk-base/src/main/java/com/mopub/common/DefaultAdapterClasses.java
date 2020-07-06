@@ -17,7 +17,6 @@ public enum DefaultAdapterClasses {
     APPLOVIN_ADAPTER_CONFIGURATION("com.mopub.mobileads.AppLovinAdapterConfiguration"),
     CHARTBOOST_ADAPTER_CONFIGURATION("com.mopub.mobileads.ChartboostAdapterConfiguration"),
     FACEBOOK_ADAPTER_CONFIGURATION("com.mopub.mobileads.FacebookAdapterConfiguration"),
-    FLURRY_ADAPTER_CONFIGURATION("com.mopub.mobileads.FlurryAdapterConfiguration"),
     IRON_SOURCE_ADAPTER_CONFIGURATION("com.mopub.mobileads.IronSourceAdapterConfiguration"),
     GOOGLE_PLAY_SERVICES_ADAPTER_CONFIGURATION("com.mopub.mobileads.GooglePlayServicesAdapterConfiguration"),
     TAPJOY_ADAPTER_CONFIGURATION("com.mopub.mobileads.TapjoyAdapterConfiguration"),
@@ -25,7 +24,7 @@ public enum DefaultAdapterClasses {
     VERIZON_ADAPTER_CONFIGURATION("com.mopub.mobileads.VerizonAdapterConfiguration"),
     VUNGLE_ADAPTER_CONFIGURATION("com.mopub.mobileads.VungleAdapterConfiguration"),
     MINTEGRAL_ADAPTER_CONFIGURATION("com.mopub.mobileads.MintegralAdapterConfiguration");
-
+;
     private final String mClassName;
 
     DefaultAdapterClasses(@NonNull final String className) {

@@ -126,11 +126,11 @@ public class MoPubVideoNativeAdTest {
         videoResponseHeaders = new VideoResponseHeaders(serverExtras);
 
         when(mockVastVideoConfig.getVideoViewabilityTracker())
-                .thenReturn(new VideoViewabilityTracker(98, 76, "viewabilityTracker"));
+                .thenReturn(new VideoViewabilityTracker.Builder( "viewabilityTracker", 98, 76).build());
 
-        List<VastTracker> vastTrackers = new ArrayList<VastTracker>();
-        vastTrackers.add(new VastTracker("vastimpression1"));
-        vastTrackers.add(new VastTracker("vastimpression2"));
+        ArrayList<VastTracker> vastTrackers = new ArrayList<>();
+        vastTrackers.add(new VastTracker.Builder("vastimpression1").build());
+        vastTrackers.add(new VastTracker.Builder("vastimpression2").build());
 
         when(mockVastVideoConfig.getImpressionTrackers()).thenReturn(vastTrackers);
 
@@ -882,7 +882,7 @@ public class MoPubVideoNativeAdTest {
     @Test
     public void applyState_withVideoStatePause_afterVideoStatePlayingMuted_shouldFirePauseTrackers() {
         final ArrayList<VastTracker> testList = new ArrayList<VastTracker>();
-        testList.add(new VastTracker("testUrl", true));
+        testList.add(new VastTracker.Builder("testUrl").isRepeatable(true).build());
 
         when(mockVastVideoConfig.getPauseTrackers()).thenReturn(testList);
 
@@ -901,7 +901,7 @@ public class MoPubVideoNativeAdTest {
     @Test
     public void applyState_withVideoStatePlayingMuted_afterPaused_afterPlaying_shouldFireResumeTrackers() {
         final ArrayList<VastTracker> testList = new ArrayList<VastTracker>();
-        testList.add(new VastTracker("testResumeUrl", true));
+        testList.add(new VastTracker.Builder("testResumeUrl").isRepeatable(true).build());
 
         when(mockVastVideoConfig.getResumeTrackers()).thenReturn(testList);
 

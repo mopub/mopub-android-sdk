@@ -14,7 +14,6 @@ import androidx.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
-import android.widget.VideoView;
 
 import com.mopub.common.IntentActions;
 import com.mopub.common.Preconditions;
@@ -87,7 +86,7 @@ public abstract class BaseVideoViewController {
 
     protected void videoError(boolean shouldFinish) {
         MoPubLog.log(CUSTOM, "Video cannot be played.");
-        broadcastAction(IntentActions.ACTION_INTERSTITIAL_FAIL);
+        broadcastAction(IntentActions.ACTION_FULLSCREEN_FAIL);
         if (shouldFinish) {
            mBaseVideoViewControllerListener.onFinish();
         }

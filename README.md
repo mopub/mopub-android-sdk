@@ -2,6 +2,8 @@
 
 Thanks for taking a look at MoPub! We take pride in having an easy-to-use, flexible monetization solution that works across multiple platforms.
 
+**MoPub has found a bug regarding failover urls such that using 5.13.0 is not recommended. Stay tuned for 5.13.1.**
+
 Sign up for an account at [http://app.mopub.com/](http://app.mopub.com/).
 
 ## Need Help?
@@ -13,12 +15,6 @@ To file an issue with our team visit the [MoPub Forum](https://twittercommunity.
 ## New Pull Requests?
 
 Thank you for submitting pull requests to the MoPub Android GitHub repository. Our team regularly monitors and investigates all submissions for inclusion in our official SDK releases. Please note that MoPub does not directly merge these pull requests at this time. Please reach out to your account team or [support@mopub.com](mailto:support@mopub.com) if you have further questions.
-
-## Disclosures
-
-MoPub SDK 4.16 and above integrates technology from our partners Integral Ad Science, Inc. (“IAS”) and Moat, Inc. (“Moat”) in order to support viewability measurement and other proprietary reporting that [IAS](https://integralads.com/capabilities/viewability/) and [Moat](https://moat.com/analytics) provide to their advertiser and publisher clients. You have the option to remove or disable this technology by following the [opt-out instructions](#disableViewability) below.  
-
-If you do not remove or disable IAS's and/or Moat’s technology in accordance with these instructions, you agree that IAS's [privacy policy](https://integralads.com/privacy-policy/) and [license](https://integralads.com/sdk-license-agreement) and Moat’s [privacy policy](https://moat.com/privacy),  [terms](https://moat.com/terms), and [license](https://moat.com/sdklicense.txt), respectively, apply to your integration of these partners' technologies into your application.
 
 ## Download
 
@@ -37,7 +33,7 @@ The MoPub SDK is available via:
     }
 
     dependencies {
-        implementation('com.mopub:mopub-sdk:5.12.0@aar') {
+        implementation('com.mopub:mopub-sdk:5.13.0@aar') {
             transitive = true
         }
     }
@@ -59,27 +55,22 @@ The MoPub SDK is available via:
         // ... other project dependencies
 
         // For banners
-        implementation('com.mopub:mopub-sdk-banner:5.12.0@aar') {
+        implementation('com.mopub:mopub-sdk-banner:5.13.0@aar') {
             transitive = true
         }
         
-        // For interstitials
-        implementation('com.mopub:mopub-sdk-interstitial:5.12.0@aar') {
-            transitive = true
-        }
-
-        // For rewarded videos. This will automatically also include interstitials
-        implementation('com.mopub:mopub-sdk-rewardedvideo:5.12.0@aar') {
+        // For interstitials and rewarded ads
+        implementation('com.mopub:mopub-sdk-fullscreen:5.13.0@aar') {
             transitive = true
         }
 
         // For native static (images).
-        implementation('com.mopub:mopub-sdk-native-static:5.12.0@aar') {
+        implementation('com.mopub:mopub-sdk-native-static:5.13.0@aar') {
             transitive = true
         }
 
         // For native video. This will automatically also include native static
-        implementation('com.mopub:mopub-sdk-native-video:5.12.0@aar') {
+        implementation('com.mopub:mopub-sdk-native-video:5.13.0@aar') {
             transitive = true
         }
     }
@@ -108,14 +99,14 @@ The MoPub SDK is available via:
 Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/master/CHANGELOG.md) for a complete list of additions, fixes, and enhancements in the latest release.
 
 - **Features**
-  - Add Mintegral as a supported network.
-  - Geographical location is set automatically by the SDK. Public methods to set location are marked deprecated.
-  - Add a new method `getAppVersion()` to the `ImpressionData` class.
-  - MRAID ads always show native close button.
+  - Remove Moat and IAS measurement SDKs.
+  - Consolidate banners, interstitials, and rewarded ads into one container. Third party network adapters for these formats should now extend `BaseAd`.
+  - Consolidate the `mopub-sdk-interstitial` and `mopub-sdk-rewarded-video` modules into `mopub-sdk-fullscreen`.
+  - Upgrade to use the Androidx Media2 video player for VAST videos.
 
 - **Bug Fixes**
-  - Fix multiple UI layout warnings in the sample application.
-  - Remove parameter android_perms_ext_storage from an ad request.
+  - Unify the design treatment of fullscreen close buttons. Add a skip button for video when the skip threshold has been met before it has completed.
+  - Fix the version name of the sample app on the Play Store.
 
 ## Requirements
 
@@ -142,49 +133,15 @@ Please view the [changelog](https://github.com/mopub/mopub-android-sdk/blob/mast
     }
     ```
 
+## Upgrading to SDK 5.13.0
+AVID and Moat have been removed as MoPub works on a future viewability solution. No action is necessary, though the maven repository for Moat is no longer required.
+All supported network adapters have been updated and are not backwards compatible. Please update to the latest network adapters when upgrading to SDK 5.13.0.
+
 ## Upgrading to SDK 5.0
 
 Please see the [Getting Started Guide](https://developers.mopub.com/docs/android/getting-started/) for instructions on upgrading from SDK 4.X to SDK 5.0.
 
 For GDPR-specific upgrading instructions, also see the [GDPR Integration Guide](https://developers.mopub.com/docs/publisher/gdpr-guide).
-
-## <a name="upgradeRepositoryViewability"></a>Upgrading from 4.15.0 and Prior
-In 4.16.0, dependencies were added to viewability libraries provided by AVID and Moat. Apps upgrading from previous versions must add
-`maven { url "https://s3.amazonaws.com/moat-sdk-builds" }`
-to their `build.gradle` repositories block for these included dependencies to resolve.
-
-## <a name="disableViewability"></a>Disabling Viewability Measurement
-There are a few options for opting out of viewability measurement:  
-##### Strip out from JCenter Integration
-Normally, to add the MoPub SDK to your app via JCenter, your `build.gradle` would contain:
-
-```	
-dependencies {
-    implementation('com.mopub:mopub-sdk:5.12.0@aar') {
-        transitive = true
-    }
-}
-```
-Update to the following to exclude one or both viewability vendors:
-
-```
-dependencies {
-    implementation('com.mopub:mopub-sdk:5.12.0@aar') {
-        transitive = true
-        exclude module: 'libAvid-mopub' // To exclude AVID
-        exclude module: 'moat-mobile-app-kit' // To exclude Moat
-    }
-}
-```
-##### Strip out from GitHub integration
-Navigate to the `gradle.properties` file in your home directory (e.g. `~/.gradle/gradle.properties`) and include one or both of these lines to opt out of viewability measurement for AVID and/or Moat.  
-
-```
-mopub.avidEnabled=false
-mopub.moatEnabled=false
-```
-##### Disable via API
-If you would like to opt out of viewability measurement but do not want to modify the MoPub SDK, a function is provided for your convenience. At any point, call `MoPub.disableViewability(vendor);`. This method can be called with any of the enum values available in `ExternalViewabilitySessionManager.ViewabilityVendor`: `AVID` will disable AVID but leave Moat enabled, `MOAT` will disable Moat but leave AVID enabled, and `ALL` will disable all viewability measurement.
 
 ## Working with Android 6.0 Runtime Permissions
 If your app's target SDK is 23 or higher _**and**_ the user's device is running Android 6.0 or higher, you are responsible for supporting [runtime permissions](http://developer.android.com/training/permissions/requesting.html), one of the [changes](http://developer.android.com/about/versions/marshmallow/android-6.0-changes.html) introduced in Android 6.0 (API level 23). In addition to listing any dangerous permissions your app needs in the manifest, your app also has to explicitly request the dangerous permission(s) during runtime by calling method `requestPermissions()` in the [`ActivityCompat`](http://developer.android.com/reference/android/support/v4/app/ActivityCompat.html) class.

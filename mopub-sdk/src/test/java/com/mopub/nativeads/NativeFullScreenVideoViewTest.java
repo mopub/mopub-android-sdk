@@ -13,18 +13,19 @@ import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.GradientDrawable;
-import androidx.annotation.NonNull;
+import android.graphics.drawable.VectorDrawable;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
+import androidx.annotation.NonNull;
+
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.Dips;
 import com.mopub.common.util.Drawables;
 import com.mopub.mobileads.VastVideoProgressBarWidget;
-import com.mopub.mobileads.resource.CloseButtonDrawable;
 import com.mopub.mobileads.resource.CtaButtonDrawable;
 import com.mopub.nativeads.NativeFullScreenVideoView.LoadingBackground;
 import com.mopub.nativeads.NativeFullScreenVideoView.Mode;
@@ -135,8 +136,8 @@ public class NativeFullScreenVideoViewTest {
         assertThat(subject.mCtaWidthPx).isEqualTo(200);
         assertThat(subject.mCtaHeightPx).isEqualTo(42);
         assertThat(subject.mCtaMarginPx).isEqualTo(10);
-        assertThat(subject.mCloseControlSizePx).isEqualTo(50);
-        assertThat(subject.mClosePaddingPx).isEqualTo(8);
+        assertThat(subject.mCloseControlSizePx).isEqualTo(56);
+        assertThat(subject.mClosePaddingPx).isEqualTo(6);
         assertThat(subject.mPrivacyInformationIconSizePx).isEqualTo(44);
         assertThat(subject.mPlayControlSizePx).isEqualTo(50);
         assertThat(subject.mGradientStripHeightPx).isEqualTo(45);
@@ -144,7 +145,7 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void constructor_shouldAddVideoTextureToLayout_shouldSetWidthAndHeight() throws Exception {
-        assertThat(subject.findViewById(spyVideoTexture.getId())).isEqualTo(spyVideoTexture);
+        assertThat((View)subject.findViewById(spyVideoTexture.getId())).isEqualTo(spyVideoTexture);
 
         RelativeLayout.LayoutParams layoutParams =
                 (RelativeLayout.LayoutParams) spyVideoTexture.getLayoutParams();
@@ -156,7 +157,7 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void constructor_shouldAddLoadingSpinnerToLayout() throws Exception {
-        assertThat(subject.findViewById(spyLoadingSpinner.getId())).isEqualTo(spyLoadingSpinner);
+        assertThat((View)subject.findViewById(spyLoadingSpinner.getId())).isEqualTo(spyLoadingSpinner);
         assertThat(spyLoadingSpinner.isIndeterminate()).isTrue();
         assertThat(spyLoadingSpinner.getParent()).isEqualTo(subject);
 
@@ -170,7 +171,7 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void constructor_shouldAddBottomGradientToLayout() throws Exception {
-        assertThat(subject.findViewById(spyBottomGradient.getId())).isEqualTo(spyBottomGradient);
+        assertThat((View)subject.findViewById(spyBottomGradient.getId())).isEqualTo(spyBottomGradient);
         GradientDrawable gradientDrawable = (GradientDrawable) spyBottomGradient.getDrawable();
         assertThat(gradientDrawable.getOrientation())
                 .isEqualTo(GradientDrawable.Orientation.BOTTOM_TOP);
@@ -186,7 +187,7 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void constructor_shouldAddTopGradientToLayout() throws Exception {
-        assertThat(subject.findViewById(spyTopGradient.getId())).isEqualTo(spyTopGradient);
+        assertThat((View)subject.findViewById(spyTopGradient.getId())).isEqualTo(spyTopGradient);
         GradientDrawable gradientDrawable = (GradientDrawable) spyTopGradient.getDrawable();
         assertThat(gradientDrawable.getOrientation())
                 .isEqualTo(GradientDrawable.Orientation.TOP_BOTTOM);
@@ -202,14 +203,14 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void constructor_shouldAddVideoProgressToLayout() throws Exception {
-        assertThat(subject.findViewById(spyVideoProgress.getId())).isEqualTo(spyVideoProgress);
+        assertThat((View)subject.findViewById(spyVideoProgress.getId())).isEqualTo(spyVideoProgress);
         verify(spyVideoProgress).setAnchorId(spyVideoTexture.getId());
         verify(spyVideoProgress).calibrateAndMakeVisible(1000, 0);
     }
 
     @Test
     public void constructor_shouldAddOverlayToLayout() throws Exception {
-        assertThat(subject.findViewById(spyOverlay.getId())).isEqualTo(spyOverlay);
+        assertThat((View)subject.findViewById(spyOverlay.getId())).isEqualTo(spyOverlay);
         verify(spyOverlay).setBackgroundColor(0x88000000);
 
         RelativeLayout.LayoutParams layoutParams =
@@ -222,7 +223,7 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void constructor_shouldAddPlayButtonToLayout() throws Exception {
-        assertThat(subject.findViewById(spyOverlay.getId())).isEqualTo(spyOverlay);
+        assertThat((View)subject.findViewById(spyOverlay.getId())).isEqualTo(spyOverlay);
         verify(spyOverlay).setBackgroundColor(0x88000000);
 
         RelativeLayout.LayoutParams layoutParams =
@@ -235,7 +236,7 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void constructor_shouldSetUpPrivacyInformationIconToLayout() throws Exception {
-        assertThat(subject.findViewById(spyPrivacyInformationIcon.getId())).isEqualTo(
+        assertThat((View)subject.findViewById(spyPrivacyInformationIcon.getId())).isEqualTo(
                 spyPrivacyInformationIcon);
         verify(spyPrivacyInformationIcon, times(0)).setImageDrawable(
                 Drawables.NATIVE_PRIVACY_INFORMATION_ICON.createDrawable(context));
@@ -258,7 +259,7 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void constructor_shouldAddCtaButtonToLayout() throws Exception {
-        assertThat(subject.findViewById(spyCtaButton.getId())).isEqualTo(spyCtaButton);
+        assertThat((View)subject.findViewById(spyCtaButton.getId())).isEqualTo(spyCtaButton);
         CtaButtonDrawable ctaButtonDrawable = (CtaButtonDrawable) spyCtaButton.getDrawable();
         assertThat(ctaButtonDrawable.getCtaText()).isEqualTo("Learn More");
 
@@ -278,8 +279,8 @@ public class NativeFullScreenVideoViewTest {
 
     @Test
     public void constructor_shouldAddCloseControlToLayout() throws Exception {
-        assertThat(subject.findViewById(spyCloseControl.getId())).isEqualTo(spyCloseControl);
-        verify(spyCloseControl).setImageDrawable(any(CloseButtonDrawable.class));
+        assertThat((View)subject.findViewById(spyCloseControl.getId())).isEqualTo(spyCloseControl);
+        verify(spyCloseControl).setImageDrawable(any(VectorDrawable.class));
         assertThat(spyCloseControl.getPaddingLeft()).isEqualTo(subject.mClosePaddingPx * 3);
         assertThat(spyCloseControl.getPaddingTop()).isEqualTo(subject.mClosePaddingPx);
         assertThat(spyCloseControl.getPaddingRight()).isEqualTo(subject.mClosePaddingPx);
@@ -416,7 +417,7 @@ public class NativeFullScreenVideoViewTest {
         assertThat(layoutParams.getRules()[RelativeLayout.ALIGN_LEFT])
                 .isEqualTo(spyVideoTexture.getId());
 
-        assertThat(subject.findViewById(spyCtaButton.getId())).isEqualTo(spyCtaButton);
+        assertThat((View)subject.findViewById(spyCtaButton.getId())).isEqualTo(spyCtaButton);
         CtaButtonDrawable ctaButtonDrawable = (CtaButtonDrawable) spyCtaButton.getDrawable();
         assertThat(ctaButtonDrawable.getCtaText()).isEqualTo("Learn More");
 

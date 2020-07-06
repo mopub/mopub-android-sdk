@@ -851,7 +851,7 @@ public class WebViewAdUrlGeneratorTest {
                     paramIfNotEmpty("backoff_ms", backoffMs) +
                     paramIfNotEmpty("backoff_reason", backoffReason) +
                     "&mr=1" +
-                    "&vv=3";
+                    "&vv=0";
         }
 
         public AdUrlBuilder withAdUnitId(String adUnitId) {

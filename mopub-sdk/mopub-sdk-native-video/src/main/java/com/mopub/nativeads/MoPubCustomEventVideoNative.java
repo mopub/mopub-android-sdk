@@ -199,7 +199,8 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
         // We need to hold a reference to the VastManager because internal VAST classes
         // hold only weak refs to this.
         @NonNull private final VastManager mVastManager;
-        @Nullable VastVideoConfig mVastVideoConfig;
+        @Nullable
+        VastVideoConfig mVastVideoConfig;
         @Nullable private MediaLayout mMediaLayout;
         @Nullable private View mRootView;
 
@@ -397,7 +398,10 @@ public class MoPubCustomEventVideoNative extends CustomEventNative {
 
             final ArrayList<VastTracker> vastClickTrackers = new ArrayList<VastTracker>();
             for (String clickTrackingUrl : clickTrackers) {
-                vastClickTrackers.add(new VastTracker(clickTrackingUrl, false));
+                vastClickTrackers.add(
+                        new VastTracker.Builder(clickTrackingUrl)
+                                .isRepeatable(false).build()
+                );
             }
             mVastVideoConfig.addClickTrackers(vastClickTrackers);
 

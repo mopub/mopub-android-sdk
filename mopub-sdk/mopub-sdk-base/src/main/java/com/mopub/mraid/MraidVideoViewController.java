@@ -6,23 +6,23 @@ package com.mopub.mraid;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.graphics.drawable.StateListDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.VideoView;
 
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+
 import com.mopub.common.util.Dips;
 import com.mopub.mobileads.BaseVideoViewController;
+import com.mopub.mobileads.base.R;
 
 import static android.view.View.GONE;
 import static android.view.View.OnClickListener;
 import static android.view.View.VISIBLE;
-import static com.mopub.common.util.Drawables.INTERSTITIAL_CLOSE_BUTTON_NORMAL;
-import static com.mopub.common.util.Drawables.INTERSTITIAL_CLOSE_BUTTON_PRESSED;
 import static com.mopub.mobileads.BaseVideoPlayerActivity.VIDEO_URL;
 
 public class MraidVideoViewController extends BaseVideoViewController {
@@ -106,14 +106,10 @@ public class MraidVideoViewController extends BaseVideoViewController {
 
     private void createInterstitialCloseButton() {
         mCloseButton = new ImageButton(getContext());
-        StateListDrawable states = new StateListDrawable();
-        states.addState(new int[] {-android.R.attr.state_pressed}, INTERSTITIAL_CLOSE_BUTTON_NORMAL.createDrawable(
-                getContext()));
-        states.addState(new int[] {android.R.attr.state_pressed}, INTERSTITIAL_CLOSE_BUTTON_PRESSED.createDrawable(
-                getContext()));
-        mCloseButton.setImageDrawable(states);
         //noinspection deprecation
         mCloseButton.setBackgroundDrawable(null);
+        mCloseButton.setImageDrawable(
+                ContextCompat.getDrawable(getContext(), R.drawable.ic_mopub_close_button));
         mCloseButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 getBaseVideoViewControllerListener().onFinish();

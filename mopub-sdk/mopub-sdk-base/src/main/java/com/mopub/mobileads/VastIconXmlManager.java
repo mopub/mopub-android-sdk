@@ -9,7 +9,6 @@ import androidx.annotation.Nullable;
 
 import com.mopub.common.Preconditions;
 import com.mopub.common.logging.MoPubLog;
-import com.mopub.common.util.Strings;
 import com.mopub.mobileads.util.XmlUtils;
 
 import org.w3c.dom.Node;
@@ -80,7 +79,7 @@ public class VastIconXmlManager {
         String iconOffsetStr = XmlUtils.getAttributeValue(mIconNode, OFFSET);
         Integer iconOffset = null;
         try {
-            iconOffset = VastAbsoluteProgressTracker.parseAbsoluteOffset(iconOffsetStr);
+            iconOffset = VastAbsoluteProgressTracker.Companion.parseAbsoluteOffset(iconOffsetStr);
         } catch (NumberFormatException e) {
             MoPubLog.log(CUSTOM, String.format("Invalid VAST icon offset format: %s:", iconOffsetStr));
         }
@@ -100,7 +99,7 @@ public class VastIconXmlManager {
         String iconDurationStr = XmlUtils.getAttributeValue(mIconNode, DURATION);
         Integer iconDuration = null;
         try {
-            iconDuration = VastAbsoluteProgressTracker.parseAbsoluteOffset(iconDurationStr);
+            iconDuration = VastAbsoluteProgressTracker.Companion.parseAbsoluteOffset(iconDurationStr);
         } catch (NumberFormatException e) {
             MoPubLog.log(CUSTOM, String.format("Invalid VAST icon duration format: %s:", iconDurationStr));
         }
@@ -125,7 +124,7 @@ public class VastIconXmlManager {
         for (Node iconClickTrackingNode : iconClickTrackingNodes) {
             String uri = XmlUtils.getNodeValue(iconClickTrackingNode);
             if (uri != null) {
-                iconClickTrackingUris.add(new VastTracker(uri));
+                iconClickTrackingUris.add(new VastTracker.Builder(uri).build());
             }
         }
         return iconClickTrackingUris;
@@ -152,7 +151,7 @@ public class VastIconXmlManager {
         for (Node iconViewTrackingNode : iconViewTrackingNodes) {
             String uri = XmlUtils.getNodeValue(iconViewTrackingNode);
             if (uri != null) {
-                iconViewTrackingUris.add(new VastTracker(uri));
+                iconViewTrackingUris.add(new VastTracker.Builder(uri).build());
             }
         }
         return iconViewTrackingUris;

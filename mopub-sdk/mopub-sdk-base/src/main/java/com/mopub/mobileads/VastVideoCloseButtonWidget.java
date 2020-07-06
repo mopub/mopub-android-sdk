@@ -14,11 +14,12 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.Dips;
-import com.mopub.mobileads.resource.CloseButtonDrawable;
+import com.mopub.mobileads.base.R;
 import com.mopub.mobileads.resource.DrawableConstants;
 import com.mopub.network.Networking;
 import com.mopub.volley.VolleyError;
@@ -32,7 +33,7 @@ public class VastVideoCloseButtonWidget extends RelativeLayout {
     @NonNull private TextView mTextView;
     @NonNull private ImageView mImageView;
     @NonNull private final ImageLoader mImageLoader;
-    @NonNull private CloseButtonDrawable mCloseButtonDrawable;
+    private boolean mHasCustomImage;
 
     private final int mEdgePadding;
     private final int mTextRightMargin;
@@ -49,7 +50,6 @@ public class VastVideoCloseButtonWidget extends RelativeLayout {
         mWidgetHeight = Dips.dipsToIntPixels(DrawableConstants.CloseButton.WIDGET_HEIGHT_DIPS, context);
         mTextRightMargin = Dips.dipsToIntPixels(DrawableConstants.CloseButton.TEXT_RIGHT_MARGIN_DIPS, context);
 
-        mCloseButtonDrawable = new CloseButtonDrawable();
         mImageLoader = Networking.getImageLoader(context);
 
         createImageView();
@@ -72,8 +72,8 @@ public class VastVideoCloseButtonWidget extends RelativeLayout {
                 mWidgetHeight);
 
         iconLayoutParams.addRule(ALIGN_PARENT_RIGHT);
-
-        mImageView.setImageDrawable(mCloseButtonDrawable);
+        mImageView.setImageDrawable(
+                ContextCompat.getDrawable(getContext(), R.drawable.ic_mopub_skip_button));
         mImageView.setPadding(mImagePadding, mImagePadding + mEdgePadding, mImagePadding + mEdgePadding, mImagePadding);
         addView(mImageView, iconLayoutParams);
     }
@@ -115,6 +115,7 @@ public class VastVideoCloseButtonWidget extends RelativeLayout {
                 Bitmap bitmap = imageContainer.getBitmap();
                 if (bitmap != null) {
                     mImageView.setImageBitmap(bitmap);
+                    mHasCustomImage = true;
                 } else {
                     MoPubLog.log(CUSTOM, String.format("%s returned null bitmap", imageUrl));
                 }
@@ -130,6 +131,13 @@ public class VastVideoCloseButtonWidget extends RelativeLayout {
     void setOnTouchListenerToContent(@Nullable View.OnTouchListener onTouchListener) {
         mImageView.setOnTouchListener(onTouchListener);
         mTextView.setOnTouchListener(onTouchListener);
+    }
+
+    void notifyVideoComplete() {
+        if (!mHasCustomImage) {
+            mImageView.setImageDrawable(
+                    ContextCompat.getDrawable(getContext(), R.drawable.ic_mopub_close_button));
+        }
     }
 
     // for testing

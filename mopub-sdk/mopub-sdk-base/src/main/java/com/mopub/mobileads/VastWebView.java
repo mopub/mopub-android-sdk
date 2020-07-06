@@ -76,25 +76,6 @@ public class VastWebView extends BaseWebView {
     }
 
     /**
-     * Creates and populates a webview.
-     *
-     * @param context      the context.
-     * @param vastResource A resource describing the contents of the webview
-     * @return a fully populated webview
-     */
-    @NonNull
-    static VastWebView createView(@NonNull final Context context,
-                                  @NonNull final VastResourceTwo vastResource) {
-        Preconditions.checkNotNull(context);
-        Preconditions.checkNotNull(vastResource);
-
-        VastWebView webView = new VastWebView(context);
-        vastResource.initializeWebView(webView);
-
-        return webView;
-    }
-
-    /**
      * Custom on touch listener to easily detect clicks on the entire WebView.
      */
     class VastWebViewOnTouchListener implements View.OnTouchListener {

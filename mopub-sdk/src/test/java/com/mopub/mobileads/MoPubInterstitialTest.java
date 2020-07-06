@@ -11,10 +11,9 @@ import androidx.annotation.NonNull;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.mobileads.test.support.TestAdViewControllerFactory;
-import com.mopub.mobileads.test.support.TestCustomEventInterstitialAdapterFactory;
+import com.mopub.mobileads.test.support.TestFullscreenAdAdapterFactory;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -27,8 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.mopub.common.Constants.FOUR_HOURS_MILLIS;
-import static com.mopub.common.util.ResponseHeader.CUSTOM_EVENT_DATA;
-import static com.mopub.mobileads.MoPubErrorCode.ADAPTER_NOT_FOUND;
 import static com.mopub.mobileads.MoPubErrorCode.CANCELLED;
 import static com.mopub.mobileads.MoPubErrorCode.INTERNAL_ERROR;
 import static com.mopub.mobileads.MoPubErrorCode.UNSPECIFIED;
@@ -40,6 +37,7 @@ import static com.mopub.mobileads.MoPubInterstitial.InterstitialState.SHOWING;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -57,9 +55,9 @@ public class MoPubInterstitialTest {
     private Activity activity;
     private MoPubInterstitial subject;
     private Map<String, String> serverExtras;
-    private CustomEventInterstitialAdapter customEventInterstitialAdapter;
+    private FullscreenAdAdapter fullscreenAdapter;
     private MoPubInterstitial.InterstitialAdListener interstitialAdListener;
-    private MoPubInterstitial.MoPubInterstitialView interstitialView;
+    private AdLifecycleListener.InteractionListener interactionListener;
     private AdViewController adViewController;
     private String customEventClassName;
     @Mock private Handler mockHandler;
@@ -69,76 +67,62 @@ public class MoPubInterstitialTest {
         activity = Robolectric.buildActivity(Activity.class).create().get();
         subject = new MoPubInterstitial(activity, AD_UNIT_ID_VALUE);
         interstitialAdListener = mock(MoPubInterstitial.InterstitialAdListener.class);
+        interactionListener = mock(AdLifecycleListener.InteractionListener.class);
         subject.setInterstitialAdListener(interstitialAdListener);
         subject.setHandler(mockHandler);
         MoPubLog.setLogLevel(MoPubLog.LogLevel.DEBUG);
-
-        interstitialView = mock(MoPubInterstitial.MoPubInterstitialView.class);
 
         customEventClassName = "class name";
         serverExtras = new HashMap<String, String>();
         serverExtras.put("testExtra", "class data");
 
-        customEventInterstitialAdapter = TestCustomEventInterstitialAdapterFactory.getSingletonMock();
-        reset(customEventInterstitialAdapter);
-        when(customEventInterstitialAdapter.isAutomaticImpressionAndClickTrackingEnabled())
+        fullscreenAdapter = TestFullscreenAdAdapterFactory.getSingletonMock();
+        reset(fullscreenAdapter);
+        when(fullscreenAdapter.isAutomaticImpressionAndClickTrackingEnabled())
                 .thenReturn(true);
         adViewController = TestAdViewControllerFactory.getSingletonMock();
+        subject.setAdViewController(adViewController);
     }
 
     @Test
     public void forceRefresh_shouldResetInterstitialViewAndMarkNotDestroyed() throws Exception {
-        subject.setInterstitialView(interstitialView);
-        subject.onCustomEventInterstitialLoaded();
+        subject.onAdLoaded();
         subject.setCurrentInterstitialState(READY);
         subject.forceRefresh();
 
         assertThat(subject.isReady()).isFalse();
         assertThat(subject.isDestroyed()).isFalse();
-        verify(interstitialView).forceRefresh();
+        verify(adViewController).forceRefresh();
     }
 
     @Test
     public void setUserDataKeywordsTest() throws Exception {
-        subject.setInterstitialView(interstitialView);
         String userDataKeywords = "these_are_user_data_keywords";
 
         subject.setUserDataKeywords(userDataKeywords);
-        verify(interstitialView).setUserDataKeywords(eq(userDataKeywords));
-    }
-
-    @Test
-    public void getUserDataKeywords() throws Exception {
-        subject.setInterstitialView(interstitialView);
-
-        subject.getUserDataKeywords();
-        verify(interstitialView).getUserDataKeywords();
+        verify(adViewController).setUserDataKeywords(eq(userDataKeywords));
     }
 
     @Test
     public void setKeywords_withNonEmptyKeywords_shouldsetKeywordsOnInterstitialView() throws Exception {
-        subject.setInterstitialView(interstitialView);
         String keywords = "these_are_keywords";
 
         subject.setKeywords(keywords);
 
-        verify(interstitialView).setKeywords(eq(keywords));
+        verify(adViewController).setKeywords(eq(keywords));
     }
 
     @Test
     public void getKeywordsTest_shouldCallGetKeywordsOnInterstitialView() throws Exception {
-        subject.setInterstitialView(interstitialView);
-
         subject.getKeywords();
 
-        verify(interstitialView).getKeywords();
+        verify(adViewController).getKeywords();
     }
 
     @Test
     public void setTestingTest() throws Exception {
-        subject.setInterstitialView(interstitialView);
         subject.setTesting(true);
-        verify(interstitialView).setTesting(eq(true));
+        verify(adViewController).setTesting(eq(true));
     }
 
     @Test
@@ -150,38 +134,24 @@ public class MoPubInterstitialTest {
 
     @Test
     public void getTestingTest() throws Exception {
-        subject.setInterstitialView(interstitialView);
         subject.getTesting();
-        verify(interstitialView).getTesting();
+        verify(adViewController).getTesting();
     }
 
     @Test
     public void setLocalExtrasTest() throws Exception {
-        subject.setInterstitialView(interstitialView);
-
         Map<String,Object> localExtras = new HashMap<String, Object>();
         localExtras.put("guy", new Activity());
         localExtras.put("other guy", new BigDecimal(27f));
 
         subject.setLocalExtras(localExtras);
-        verify(interstitialView).setLocalExtras(eq(localExtras));
+        verify(adViewController).setLocalExtras(eq(localExtras));
     }
 
-    @Test
-    public void loadCustomEvent_shouldCreateAndLoadCustomEventInterstitialAdapter() throws Exception {
-        MoPubInterstitial.MoPubInterstitialView moPubInterstitialView = subject.new MoPubInterstitialView(activity);
-        moPubInterstitialView.loadCustomEvent(customEventClassName, serverExtras);
-
-        assertThat(TestCustomEventInterstitialAdapterFactory.getLatestMoPubInterstitial()).isSameAs(subject);
-        assertThat(TestCustomEventInterstitialAdapterFactory.getLatestClassName()).isEqualTo("class name");
-        assertThat(TestCustomEventInterstitialAdapterFactory.getLatestServerExtras().get("testExtra")).isEqualTo("class data");
-    }
 
     @Test
-    public void onCustomEventInterstitialLoaded_withoutLoad_shouldNotNotifyListener() throws Exception {
-        subject.setInterstitialView(interstitialView);
-
-        subject.onCustomEventInterstitialLoaded();
+    public void onLoaded_withoutLoad_shouldNotNotifyListener() throws Exception {
+        subject.onAdLoaded();
         final List<ShadowLog.LogItem> allLogMessages = ShadowLog.getLogs();
         final ShadowLog.LogItem latestLogMessage = allLogMessages.get(allLogMessages.size() - 1);
 
@@ -190,110 +160,88 @@ public class MoPubInterstitialTest {
                 .isEqualTo("[com.mopub.mobileads.MoPubInterstitial][attemptStateTransition] Ad Log " +
                         "- Attempted transition from IDLE to READY failed due to no known load call.");
 
-        verify(interstitialView, never()).trackImpression();
+        verify(adViewController, never()).onAdImpression();
     }
 
     @Test
-    public void onCustomEventInterstitialLoaded_withLoad_shouldNotifyListener() throws Exception {
-        subject.setInterstitialView(interstitialView);
-
+    public void onLoaded_withLoad_shouldNotifyListener() throws Exception {
         subject.load();
-        subject.onCustomEventInterstitialLoaded();
+        subject.onAdLoaded();
         verify(interstitialAdListener).onInterstitialLoaded(eq(subject));
 
-        verify(interstitialView, never()).trackImpression();
+        verify(adViewController, never()).onAdImpression();
     }
 
     @Test
-    public void onCustomEventInterstitialLoaded_whenInterstitialAdListenerIsNull_shouldNotNotifyListenerOrTrackImpression() throws Exception {
-        subject.setInterstitialView(interstitialView);
+    public void onLoaded_whenInterstitialAdListenerIsNull_shouldNotNotifyListenerOrTrackImpression() throws Exception {
         subject.setInterstitialAdListener(null);
 
-        subject.onCustomEventInterstitialLoaded();
+        subject.onAdLoaded();
 
-        verify(interstitialView, never()).trackImpression();
+        verify(adViewController, never()).onAdImpression();
         verify(interstitialAdListener, never()).onInterstitialLoaded(eq(subject));
     }
 
     @Test
-    public void onCustomEventInterstitialFailed_shouldLoadFailUrl() throws Exception {
-        subject.setInterstitialView(interstitialView);
+    public void onFailed_shouldLoadFailUrl() throws Exception {
+        subject.onAdFailed(INTERNAL_ERROR);
 
-        subject.onCustomEventInterstitialFailed(INTERNAL_ERROR);
-
-        verify(interstitialView).loadFailUrl(INTERNAL_ERROR);
+        verify(adViewController).loadFailUrl(INTERNAL_ERROR);
     }
 
     @Test
-    public void onCustomEventInterstitialShown_shouldTrackImpressionAndNotifyListener() throws Exception {
-        subject.setInterstitialView(interstitialView);
-        subject.onCustomEventInterstitialShown();
+    public void onShown_shouldTrackImpressionAndNotifyListener() throws Exception {
+        subject.onAdShown();
 
-        verify(interstitialView).trackImpression();
         verify(interstitialAdListener).onInterstitialShown(eq(subject));
     }
 
     @Test
-    public void onCustomEventInterstitialShown_whenInterstitialAdListenerIsNull_shouldNotNotifyListener() throws Exception {
+    public void onShown_whenInterstitialAdListenerIsNull_shouldNotNotifyListener() throws Exception {
         subject.setInterstitialAdListener(null);
-        subject.onCustomEventInterstitialShown();
+        subject.onAdShown();
         verify(interstitialAdListener, never()).onInterstitialShown(eq(subject));
     }
 
     @Test
-    public void onCustomEventInterstitialClicked_shouldRegisterClickAndNotifyListener() throws Exception {
-        subject.setInterstitialView(interstitialView);
+    public void onClicked_shouldRegisterClickAndNotifyListener() throws Exception {
+        subject.onAdClicked();
 
-        subject.onCustomEventInterstitialClicked();
-
-        verify(interstitialView).registerClick();
+        verify(adViewController).registerClick();
         verify(interstitialAdListener).onInterstitialClicked(eq(subject));
     }
 
     @Test
-    public void onCustomEventInterstitialClicked_whenInterstitialAdListenerIsNull_shouldNotNotifyListener() throws Exception {
+    public void onClicked_whenInterstitialAdListenerIsNull_shouldNotNotifyListener() throws Exception {
         subject.setInterstitialAdListener(null);
 
-        subject.onCustomEventInterstitialClicked();
+        subject.onAdClicked();
 
         verify(interstitialAdListener, never()).onInterstitialClicked(eq(subject));
     }
 
     @Test
-    public void onCustomEventInterstitialImpression_whenAutomaticImpressionTrackingIsEnabled_shouldDoNothing() {
-        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
-        subject.setInterstitialView(interstitialView);
-        when(customEventInterstitialAdapter.isAutomaticImpressionAndClickTrackingEnabled())
+    public void onImpression_whenAutomaticImpressionTrackingIsEnabled_shouldDoNothing() {
+        subject.setFullscreenAdAdapter(fullscreenAdapter);
+        when(fullscreenAdapter.isAutomaticImpressionAndClickTrackingEnabled())
                 .thenReturn(true);
 
-        subject.onCustomEventInterstitialImpression();
+        subject.onAdImpression();
 
-        verify(interstitialView, never()).trackImpression();
+        verify(adViewController, never()).onAdImpression();
     }
 
     @Test
-    public void onCustomEventInterstitialImpression_whenAutomaticImpressionTrackingIsDisabled_shouldDoNothing() {
-        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
-        subject.setInterstitialView(interstitialView);
-        when(customEventInterstitialAdapter.isAutomaticImpressionAndClickTrackingEnabled())
-                .thenReturn(false);
-
-        subject.onCustomEventInterstitialImpression();
-
-        verify(interstitialView).trackImpression();
-    }
-
-    @Test
-    public void onCustomEventInterstitialDismissed_shouldNotifyListener() throws Exception {
-        subject.onCustomEventInterstitialDismissed();
+    public void onDismissed_shouldNotifyListener() throws Exception {
+        subject.onAdDismissed();
 
         verify(interstitialAdListener).onInterstitialDismissed(eq(subject));
     }
 
     @Test
-    public void onCustomEventInterstitialDismissed_whenInterstitialAdListenerIsNull_shouldNotNotifyListener() throws Exception {
+    public void onDismissed_whenInterstitialAdListenerIsNull_shouldNotNotifyListener() throws Exception {
         subject.setInterstitialAdListener(null);
-        subject.onCustomEventInterstitialDismissed();
+        subject.onAdDismissed();
         verify(interstitialAdListener, never()).onInterstitialDismissed(eq(subject));
     }
 
@@ -301,36 +249,34 @@ public class MoPubInterstitialTest {
     public void destroy_shouldPreventOnCustomEventInterstitialLoadedNotification() throws Exception {
         subject.destroy();
 
-        subject.onCustomEventInterstitialLoaded();
+        subject.onAdLoaded();
 
         verify(interstitialAdListener, never()).onInterstitialLoaded(eq(subject));
     }
 
     @Test
     public void destroy_shouldPreventOnCustomEventInterstitialFailedNotification() throws Exception {
-        subject.setInterstitialView(interstitialView);
         subject.destroy();
 
-        subject.onCustomEventInterstitialFailed(UNSPECIFIED);
+        subject.onAdFailed(UNSPECIFIED);
 
-        verify(interstitialView, never()).loadFailUrl(UNSPECIFIED);
+        verify(adViewController, never()).loadFailUrl(UNSPECIFIED);
     }
 
     @Test
     public void destroy_shouldPreventOnCustomEventInterstitialClickedFromRegisteringClick() throws Exception {
-        subject.setInterstitialView(interstitialView);
         subject.destroy();
 
-        subject.onCustomEventInterstitialClicked();
+        subject.onAdClicked();
 
-        verify(interstitialView, never()).registerClick();
+        verify(adViewController, never()).registerClick();
     }
 
     @Test
     public void destroy_shouldPreventOnCustomEventShownNotification() throws Exception {
         subject.destroy();
 
-        subject.onCustomEventInterstitialShown();
+        subject.onAdShown();
 
         verify(interstitialAdListener, never()).onInterstitialShown(eq(subject));
     }
@@ -339,81 +285,35 @@ public class MoPubInterstitialTest {
     public void destroy_shouldPreventOnCustomEventInterstitialDismissedNotification() throws Exception {
         subject.destroy();
 
-        subject.onCustomEventInterstitialDismissed();
+        subject.onAdDismissed();
 
         verify(interstitialAdListener, never()).onInterstitialDismissed(eq(subject));
     }
 
     @Test
     public void newlyCreated_shouldNotBeReadyAndNotShow() throws Exception {
-        assertShowsCustomEventInterstitial(false);
-    }
-
-    @Test
-    public void loadingCustomEventInterstitial_shouldBecomeReadyToShowCustomEventAd() throws Exception {
-        subject.load();
-        subject.onCustomEventInterstitialLoaded();
-
-        assertShowsCustomEventInterstitial(true);
-    }
-
-    @Ignore("pending")
-    @Test
-    public void dismissingHtmlInterstitial_shouldNotBecomeReadyToShowHtmlAd() throws Exception {
-//        EventForwardingBroadcastReceiver broadcastReceiver = new EventForwardingBroadcastReceiver(subject.mInterstitialAdListener);
-//
-//        subject.onCustomEventInterstitialLoaded();
-//        broadcastReceiver.onHtmlInterstitialDismissed();
-//
-//        assertShowsCustomEventInterstitial(false);
+        assertShowsFullscreenAd(false);
     }
 
     @Test
     public void failingCustomEventInterstitial_shouldNotBecomeReadyToShowCustomEventAd() throws Exception {
-        subject.onCustomEventInterstitialLoaded();
-        subject.onCustomEventInterstitialFailed(CANCELLED);
+        subject.onAdLoaded();
+        subject.onAdFailed(CANCELLED);
 
-        assertShowsCustomEventInterstitial(false);
+        assertShowsFullscreenAd(false);
     }
 
     @Test
     public void dismissingCustomEventInterstitial_shouldNotBecomeReadyToShowCustomEventAd() throws Exception {
-        subject.onCustomEventInterstitialLoaded();
-        subject.onCustomEventInterstitialDismissed();
+        subject.onAdLoaded();
+        subject.onAdDismissed();
 
-        assertShowsCustomEventInterstitial(false);
-    }
-
-    @Test
-    public void loadCustomEvent_shouldInitializeCustomEventInterstitialAdapter() throws Exception {
-        MoPubInterstitial.MoPubInterstitialView moPubInterstitialView = subject.new MoPubInterstitialView(activity);
-
-        serverExtras.put("testExtra", "data");
-        moPubInterstitialView.loadCustomEvent("name", serverExtras);
-
-        assertThat(TestCustomEventInterstitialAdapterFactory.getLatestMoPubInterstitial()).isEqualTo(subject);
-        assertThat(TestCustomEventInterstitialAdapterFactory.getLatestClassName()).isEqualTo("name");
-        assertThat(TestCustomEventInterstitialAdapterFactory.getLatestServerExtras().get("testExtra")).isEqualTo("data");
-
-        verify(customEventInterstitialAdapter).setAdapterListener(eq(subject));
-        verify(customEventInterstitialAdapter).loadInterstitial();
-    }
-
-    @Test
-    public void loadCustomEvent_whenParamsMapIsNull_shouldCallLoadFailUrl() throws Exception {
-        MoPubInterstitial.MoPubInterstitialView moPubInterstitialView = subject.new MoPubInterstitialView(activity);
-
-        moPubInterstitialView.loadCustomEvent(null, null);
-
-        verify(adViewController).loadFailUrl(eq(ADAPTER_NOT_FOUND));
-        verify(customEventInterstitialAdapter, never()).invalidate();
-        verify(customEventInterstitialAdapter, never()).loadInterstitial();
+        assertShowsFullscreenAd(false);
     }
 
     @Test
     public void adFailed_shouldNotifyInterstitialAdListener() throws Exception {
-        MoPubInterstitial.MoPubInterstitialView moPubInterstitialView = subject.new MoPubInterstitialView(activity);
-        moPubInterstitialView.adFailed(CANCELLED);
+        subject.onAdFailed(CANCELLED);
 
         verify(interstitialAdListener).onInterstitialFailed(eq(subject), eq(CANCELLED));
     }
@@ -425,68 +325,68 @@ public class MoPubInterstitialTest {
          * DESTROYED if the interstitial view is destroyed.
          */
 
-        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
+        subject.setFullscreenAdAdapter(fullscreenAdapter);
         subject.setCurrentInterstitialState(IDLE);
         boolean stateDidChange = subject.attemptStateTransition(IDLE, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(IDLE);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(IDLE);
         stateDidChange = subject.attemptStateTransition(IDLE, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(IDLE);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(IDLE);
         stateDidChange = subject.attemptStateTransition(LOADING, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(LOADING);
-        verify(customEventInterstitialAdapter).invalidate();
-        verify(interstitialView).loadAd();
+        verify(fullscreenAdapter).invalidate();
+        verify(adViewController).loadAd();
 
         resetMoPubInterstitial(IDLE);
         stateDidChange = subject.attemptStateTransition(LOADING, true);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(LOADING);
-        verify(customEventInterstitialAdapter).invalidate();
-        verify(interstitialView).forceRefresh();
+        verify(fullscreenAdapter).invalidate();
+        verify(adViewController).forceRefresh();
 
         resetMoPubInterstitial(IDLE);
         stateDidChange = subject.attemptStateTransition(READY, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(IDLE);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(IDLE);
         stateDidChange = subject.attemptStateTransition(READY, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(IDLE);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(IDLE);
         stateDidChange = subject.attemptStateTransition(SHOWING, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(IDLE);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(IDLE);
         stateDidChange = subject.attemptStateTransition(SHOWING, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(IDLE);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(IDLE);
         stateDidChange = subject.attemptStateTransition(DESTROYED, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verify(customEventInterstitialAdapter).invalidate();
+        verify(fullscreenAdapter).invalidate();
 
         resetMoPubInterstitial(IDLE);
         stateDidChange = subject.attemptStateTransition(DESTROYED, true);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verify(customEventInterstitialAdapter).invalidate();
+        verify(fullscreenAdapter).invalidate();
     }
 
     @Test
@@ -497,70 +397,68 @@ public class MoPubInterstitialTest {
          * LOADING can go to DESTROYED if the interstitial view is destroyed.
          */
 
-        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
+        subject.setFullscreenAdAdapter(fullscreenAdapter);
         subject.setCurrentInterstitialState(LOADING);
-        subject.setInterstitialView(interstitialView);
         boolean stateDidChange = subject.attemptStateTransition(IDLE, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(IDLE);
-        verify(customEventInterstitialAdapter).invalidate();
+        verify(fullscreenAdapter).invalidate();
 
         resetMoPubInterstitial(LOADING);
         stateDidChange = subject.attemptStateTransition(IDLE, true);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(IDLE);
-        verify(customEventInterstitialAdapter).invalidate();
+        verify(fullscreenAdapter).invalidate();
 
         resetMoPubInterstitial(LOADING);
         stateDidChange = subject.attemptStateTransition(LOADING, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(LOADING);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(LOADING);
         stateDidChange = subject.attemptStateTransition(LOADING, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(LOADING);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(LOADING);
-        when(interstitialView.getCustomEventClassName())
-                .thenReturn(AdTypeTranslator.CustomEventType.HTML_INTERSTITIAL.toString());
+        when(adViewController.getBaseAdClassName())
+                .thenReturn(AdTypeTranslator.BaseAdType.MOPUB_FULLSCREEN.toString());
         stateDidChange = subject.attemptStateTransition(READY, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(READY);
-        verifyZeroInteractions(customEventInterstitialAdapter);
-        verify(mockHandler).postDelayed(any(Runnable.class), eq((long) FOUR_HOURS_MILLIS));
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(LOADING);
         stateDidChange = subject.attemptStateTransition(READY, true);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(READY);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(LOADING);
         stateDidChange = subject.attemptStateTransition(SHOWING, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(LOADING);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(LOADING);
         stateDidChange = subject.attemptStateTransition(SHOWING, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(LOADING);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(LOADING);
         stateDidChange = subject.attemptStateTransition(DESTROYED, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verify(customEventInterstitialAdapter).invalidate();
+        verify(fullscreenAdapter).invalidate();
 
         resetMoPubInterstitial(LOADING);
         stateDidChange = subject.attemptStateTransition(DESTROYED, true);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verify(customEventInterstitialAdapter).invalidate();
+        verify(fullscreenAdapter).invalidate();
     }
 
     @Test
@@ -570,73 +468,68 @@ public class MoPubInterstitialTest {
          * here into IDLE. Also, READY can go into DESTROYED.
          */
 
-        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
+        subject.setFullscreenAdAdapter(fullscreenAdapter);
         subject.setCurrentInterstitialState(READY);
         boolean stateDidChange = subject.attemptStateTransition(IDLE, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(READY);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(IDLE, true);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(IDLE);
-        verify(customEventInterstitialAdapter).invalidate();
+        verify(fullscreenAdapter).invalidate();
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(LOADING, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(READY);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
         verify(interstitialAdListener).onInterstitialLoaded(subject);
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(LOADING, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(READY);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
         verify(interstitialAdListener).onInterstitialLoaded(subject);
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(READY, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(READY);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(READY, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(READY);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(SHOWING, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(SHOWING);
-        verify(customEventInterstitialAdapter).showInterstitial();
-        verify(mockHandler).removeCallbacks(any(Runnable.class));
         reset(mockHandler);
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(SHOWING, true);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(SHOWING);
-        verify(customEventInterstitialAdapter).showInterstitial();
-        verify(mockHandler).removeCallbacks(any(Runnable.class));
         reset(mockHandler);
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(DESTROYED, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verify(customEventInterstitialAdapter).invalidate();
-        verify(mockHandler).removeCallbacks(any(Runnable.class));
+        verify(fullscreenAdapter).invalidate();
 
         resetMoPubInterstitial(READY);
         stateDidChange = subject.attemptStateTransition(DESTROYED, true);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verify(customEventInterstitialAdapter).invalidate();
+        verify(fullscreenAdapter).invalidate();
     }
 
     @Test
@@ -646,124 +539,124 @@ public class MoPubInterstitialTest {
          * other transitions except to DESTROYED. You cannot force refresh while an interstitial
          * is showing.
          */
-        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
+        subject.setFullscreenAdAdapter(fullscreenAdapter);
         subject.setCurrentInterstitialState(SHOWING);
         boolean stateDidChange = subject.attemptStateTransition(IDLE, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(IDLE);
-        verify(customEventInterstitialAdapter).invalidate();
+        verify(fullscreenAdapter).invalidate();
 
         resetMoPubInterstitial(SHOWING);
         stateDidChange = subject.attemptStateTransition(IDLE, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(SHOWING);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(SHOWING);
         stateDidChange = subject.attemptStateTransition(LOADING, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(SHOWING);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(SHOWING);
         stateDidChange = subject.attemptStateTransition(LOADING, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(SHOWING);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(SHOWING);
         stateDidChange = subject.attemptStateTransition(READY, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(SHOWING);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(SHOWING);
         stateDidChange = subject.attemptStateTransition(READY, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(SHOWING);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(SHOWING);
         stateDidChange = subject.attemptStateTransition(SHOWING, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(SHOWING);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(SHOWING);
         stateDidChange = subject.attemptStateTransition(SHOWING, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(SHOWING);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(SHOWING);
         stateDidChange = subject.attemptStateTransition(DESTROYED, false);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verify(customEventInterstitialAdapter).invalidate();
+        verify(fullscreenAdapter).invalidate();
 
         resetMoPubInterstitial(SHOWING);
         stateDidChange = subject.attemptStateTransition(DESTROYED, true);
         assertThat(stateDidChange).isTrue();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verify(customEventInterstitialAdapter).invalidate();
+        verify(fullscreenAdapter).invalidate();
     }
     @Test
     public void attemptStateTransition_withDestroyedStartState() {
         // All state transitions should fail if starting from a destroyed state
-        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
+        subject.setFullscreenAdAdapter(fullscreenAdapter);
         subject.setCurrentInterstitialState(DESTROYED);
         boolean stateDidChange = subject.attemptStateTransition(IDLE, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(DESTROYED);
         stateDidChange = subject.attemptStateTransition(IDLE, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(DESTROYED);
         stateDidChange = subject.attemptStateTransition(LOADING, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(DESTROYED);
         stateDidChange = subject.attemptStateTransition(LOADING, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(DESTROYED);
         stateDidChange = subject.attemptStateTransition(READY, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(DESTROYED);
         stateDidChange = subject.attemptStateTransition(READY, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(DESTROYED);
         stateDidChange = subject.attemptStateTransition(LOADING, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(DESTROYED);
         stateDidChange = subject.attemptStateTransition(LOADING, true);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(DESTROYED);
         stateDidChange = subject.attemptStateTransition(DESTROYED, false);
         assertThat(stateDidChange).isFalse();
         assertThat(subject.getCurrentInterstitialState()).isEqualTo(DESTROYED);
-        verifyZeroInteractions(customEventInterstitialAdapter);
+        verifyZeroInteractions(fullscreenAdapter);
 
         resetMoPubInterstitial(DESTROYED);
         stateDidChange = subject.attemptStateTransition(DESTROYED, true);
@@ -773,67 +666,51 @@ public class MoPubInterstitialTest {
 
     @Test
     public void attemptStateTransition_withLoadingStartState_withReadyEndState_withMoPubCustomEvent_shouldExpireAd() {
-        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
+        subject.setFullscreenAdAdapter(fullscreenAdapter);
         subject.setCurrentInterstitialState(LOADING);
-        subject.setInterstitialView(interstitialView);
-
-        when(interstitialView.getCustomEventClassName())
-                .thenReturn(AdTypeTranslator.CustomEventType.MRAID_INTERSTITIAL.toString());
+        when(adViewController.getBaseAdClassName())
+                .thenReturn(AdTypeTranslator.BaseAdType.MOPUB_FULLSCREEN.toString());
         subject.attemptStateTransition(READY, false);
-        verify(mockHandler).postDelayed(any(Runnable.class), eq((long) FOUR_HOURS_MILLIS));
         reset(mockHandler);
 
         resetMoPubInterstitial(LOADING);
-        when(interstitialView.getCustomEventClassName())
-                .thenReturn(AdTypeTranslator.CustomEventType.HTML_INTERSTITIAL.toString());
+        when(adViewController.getBaseAdClassName())
+                .thenReturn(AdTypeTranslator.BaseAdType.MOPUB_FULLSCREEN.toString());
         subject.attemptStateTransition(READY, false);
-        verify(mockHandler).postDelayed(any(Runnable.class), eq((long) FOUR_HOURS_MILLIS));
         reset(mockHandler);
 
         resetMoPubInterstitial(LOADING);
-        when(interstitialView.getCustomEventClassName())
-                .thenReturn(AdTypeTranslator.CustomEventType.VAST_VIDEO_INTERSTITIAL.toString());
+        when(adViewController.getBaseAdClassName())
+                .thenReturn(AdTypeTranslator.BaseAdType.MOPUB_FULLSCREEN.toString());
         subject.attemptStateTransition(READY, false);
-        verify(mockHandler).postDelayed(any(Runnable.class), eq((long) FOUR_HOURS_MILLIS));
     }
 
     @Test
     public void attemptStateTransition_withLoadingStartState_withReadyEndState_withNonMoPubCustomEvent_shouldNotExpireAd() {
-        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
+        subject.setFullscreenAdAdapter(fullscreenAdapter);
         subject.setCurrentInterstitialState(LOADING);
-        subject.setInterstitialView(interstitialView);
-
-        when(interstitialView.getCustomEventClassName()).thenReturn("thirdPartyAd");
+        when(adViewController.getBaseAdClassName()).thenReturn("thirdPartyAd");
         subject.attemptStateTransition(READY, false);
         verifyZeroInteractions(mockHandler);
     }
 
-    private void loadCustomEvent() {
-        MoPubInterstitial.MoPubInterstitialView moPubInterstitialView = subject.new MoPubInterstitialView(activity);
-
-        serverExtras.put(CUSTOM_EVENT_DATA.getKey(), "data");
-        moPubInterstitialView.loadCustomEvent("name", serverExtras);
-    }
-
-    private void assertShowsCustomEventInterstitial(boolean shouldBeReady) {
-        MoPubInterstitial.MoPubInterstitialView moPubInterstitialView = subject.new MoPubInterstitialView(activity);
-        moPubInterstitialView.loadCustomEvent(customEventClassName, serverExtras);
+    private void assertShowsFullscreenAd(boolean shouldBeReady) {
+        subject.load();
 
         assertThat(subject.isReady()).isEqualTo(shouldBeReady);
         assertThat(subject.show()).isEqualTo(shouldBeReady);
 
         if (shouldBeReady) {
-            verify(customEventInterstitialAdapter).showInterstitial();
+            verify(fullscreenAdapter).show(subject);
         } else {
-            verify(customEventInterstitialAdapter, never()).showInterstitial();
+            verify(fullscreenAdapter, never()).show(subject);
         }
     }
 
     private void resetMoPubInterstitial(
             @NonNull final MoPubInterstitial.InterstitialState interstitialState) {
-        reset(customEventInterstitialAdapter, interstitialAdListener, interstitialView);
-        subject.setCustomEventInterstitialAdapter(customEventInterstitialAdapter);
-        subject.setInterstitialView(interstitialView);
+        reset(fullscreenAdapter, interstitialAdListener);
+        subject.setFullscreenAdAdapter(fullscreenAdapter);
         subject.setCurrentInterstitialState(interstitialState);
     }
 }

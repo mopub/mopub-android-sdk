@@ -13,7 +13,6 @@ import android.webkit.WebSettings;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.mopub.common.AdReport;
 import com.mopub.common.Constants;
 import com.mopub.common.logging.MoPubLog;
 import com.mopub.network.Networking;
@@ -21,10 +20,22 @@ import com.mopub.network.Networking;
 import static com.mopub.common.logging.MoPubLog.SdkLogEvent.CUSTOM;
 
 public class BaseHtmlWebView extends BaseWebView {
+
+    public interface BaseWebViewListener {
+        void onLoaded(View view);
+        void onFailedToLoad(@NonNull final MoPubErrorCode errorCode);
+        void onRenderProcessGone(@NonNull final MoPubErrorCode errorCode);
+        void onFailed();
+        void onClicked();
+        void onExpand();
+        void onResize(final boolean toOriginalSize);
+        void onClose();
+    }
+
     @NonNull
     private final ViewGestureDetector mViewGestureDetector;
 
-    public BaseHtmlWebView(Context context, AdReport adReport) {
+    public BaseHtmlWebView(Context context) {
         super(context);
 
         disableScrollingAndZoom();

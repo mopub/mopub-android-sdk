@@ -17,7 +17,7 @@ repositories {
     }
     maven { url 'https://jitpack.io' }  // For Vungle
     maven { url "https://dl.bintray.com/ironsource-mobile/android-sdk" } // For IronSource
-    maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
+    maven { url  "https://chartboostmobile.bintray.com/Chartboost" } // For Chartboost
 }
 
 apply plugin: 'com.android.application'
@@ -26,7 +26,7 @@ apply plugin: 'kotlin-android-extensions'
 
 project.group = 'com.mopub'
 project.description = '''MoPub Sample App'''
-project.version = '5.12.0'
+project.version = '5.13.0'
 
 android {
     compileSdkVersion 29
@@ -38,7 +38,7 @@ android {
     }
 
     defaultConfig {
-        versionCode 79
+        versionCode 80
         versionName version
         minSdkVersion 19
         targetSdkVersion 29
@@ -52,7 +52,7 @@ android {
     flavorDimensions "default"
     productFlavors {
         external {
-            versionName "external"
+            versionName version
             dimension "default"
         }
 
@@ -87,45 +87,40 @@ android {
 
 dependencies {
     // Third party Custom Network Adapters
-    implementation 'com.adcolony:sdk:4.1.0'
-    implementation 'com.google.android.gms:play-services-ads:18.2.0'
-    implementation "com.applovin:applovin-sdk:9.9.2"
-    // Commented out since we cannot distribute 3rd party libraries
-//    implementation name: 'chartboost-7.5.0'
-    implementation 'com.facebook.android:audience-network-sdk:5.5.0'
-    implementation 'com.flurry.android:ads:11.7.1'
-    implementation 'com.flurry.android:analytics:11.7.1'
-    implementation 'com.ironsource.sdk:mediationsdk:6.10.1@jar'
-    implementation 'com.tapjoy:tapjoy-android-sdk:12.3.4@aar'
-    implementation 'com.unity3d.ads:unity-ads:3.3.0@aar'
-    implementation 'com.verizon.ads:android-vas-standard-edition:1.2.0'
-    implementation 'com.github.vungle:vungle-android-sdk:6.4.11'
-    implementation "com.mintegral.msdk:common:13.0.11"
-    implementation "com.mintegral.msdk:interstitialvideo:13.0.11"
-    implementation "com.mintegral.msdk:mtgbanner:13.0.11"
-    implementation "com.mintegral.msdk:mtgbid:13.0.11"
-    implementation "com.mintegral.msdk:mtgjscommon:13.0.11"
-    implementation "com.mintegral.msdk:mtgnative:13.0.11"
-    implementation "com.mintegral.msdk:nativeex:13.0.11";
-    implementation "com.mintegral.msdk:playercommon:13.0.11"
-    implementation "com.mintegral.msdk:reward:13.0.11"
-    implementation "com.mintegral.msdk:videocommon:13.0.11"
-    implementation "com.mintegral.msdk:videojs:13.0.11"
+    implementation 'com.adcolony:sdk:4.1.4'
+    implementation 'com.google.android.gms:play-services-ads:19.1.0'
+    implementation "com.applovin:applovin-sdk:9.12.6"
+    implementation "com.chartboost:chartboost-sdk:8.0.3"
+    implementation 'com.facebook.android:audience-network-sdk:5.9.0'
+    implementation 'com.ironsource.sdk:mediationsdk:6.16.1'
+    implementation "com.mintegral.msdk:common:14.0.01"
+    implementation "com.mintegral.msdk:interstitialvideo:14.0.01"
+    implementation "com.mintegral.msdk:mtgbanner:14.0.01"
+    implementation "com.mintegral.msdk:mtgbid:14.0.01"
+    implementation "com.mintegral.msdk:mtgjscommon:14.0.01"
+    implementation "com.mintegral.msdk:mtgnative:14.0.01"
+    implementation "com.mintegral.msdk:nativeex:14.0.01";
+    implementation "com.mintegral.msdk:playercommon:14.0.01"
+    implementation "com.mintegral.msdk:reward:14.0.01"
+    implementation "com.mintegral.msdk:videocommon:14.0.01"
+    implementation "com.mintegral.msdk:videojs:14.0.01"
+    implementation 'com.tapjoy:tapjoy-android-sdk:12.4.2@aar'
+    implementation 'com.unity3d.ads:unity-ads:3.4.2@aar'
+    implementation 'com.verizon.ads:android-vas-standard-edition:1.5.0'
+    implementation 'com.github.vungle:vungle-android-sdk:6.5.3'
 
     // MoPub Custom Network Adapters
-    implementation 'com.mopub.mediation:adcolony:4.1.0.0'
-    implementation 'com.mopub.mediation:admob:18.2.0.3'
-    implementation 'com.mopub.mediation:applovin:9.9.2.1'
-    // Commented out since we do not include the corresponding library
-//    implementation 'com.mopub.mediation:chartboost:7.5.0.2'
-    implementation 'com.mopub.mediation:facebookaudiencenetwork:5.5.0.8'
-    implementation 'com.mopub.mediation:flurry:11.7.1.1'
-    implementation 'com.mopub.mediation:ironsource:6.10.1.0'
-    implementation 'com.mopub.mediation:tapjoy:12.3.4.0'
-    implementation 'com.mopub.mediation:unityads:3.3.0.0@aar'
-    implementation 'com.mopub.mediation:verizon:1.2.0.1'
-    implementation 'com.mopub.mediation:vungle:6.4.11.4'
-    implementation 'com.mopub.mediation:mintegral:13.0.11.0'
+    implementation 'com.mopub.mediation:adcolony:4.1.4.2'
+    implementation 'com.mopub.mediation:admob:19.1.0.1'
+    implementation 'com.mopub.mediation:applovin:9.12.6.1'
+    implementation 'com.mopub.mediation:chartboost:8.0.3.0'
+    implementation 'com.mopub.mediation:facebookaudiencenetwork:5.9.0.2'
+    implementation 'com.mopub.mediation:ironsource:6.16.1.1'
+    implementation 'com.mopub.mediation:mintegral:14.0.01.0'
+    implementation 'com.mopub.mediation:tapjoy:12.4.2.1'
+    implementation 'com.mopub.mediation:unityads:3.4.2.1@aar'
+    implementation 'com.mopub.mediation:verizon:1.5.0.1'
+    implementation 'com.mopub.mediation:vungle:6.5.3.1'
 
     implementation 'androidx.browser:browser:1.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
@@ -133,7 +128,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'com.google.android.gms:play-services-ads-identifier:17.0.0'
-    implementation 'com.google.android.gms:play-services-base:17.1.0'
+    implementation 'com.google.android.gms:play-services-base:17.2.1'
     implementation project(':mopub-sdk')
 
     // Instrumentation testing-only dependencies
@@ -146,5 +141,5 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '5.4.1' //gradle version is required
+    gradleVersion = '5.6.4' //gradle version is required
 }

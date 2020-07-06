@@ -5,12 +5,14 @@
 package com.mopub.tests.BaseTesting;
 
 import androidx.test.espresso.ViewInteraction;
-import androidx.test.filters.LargeTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
+
 import com.mopub.framework.models.AdLabels;
 import com.mopub.framework.pages.AdDetailPage;
 import com.mopub.simpleadsdemo.R;
 import com.mopub.tests.base.MoPubBaseTestCase;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -30,7 +32,6 @@ public class InterstitialAdTests extends MoPubBaseTestCase {
 
     // Test Variables
     private static final String TITLE = AdLabels.INTERSTITIAL;
-    private static final String WEB_PAGE_LINK = "https://www.mopub.com/click-test/";
 
     /*
      * Verify that the Interstitial Ad loads & shows on the app.

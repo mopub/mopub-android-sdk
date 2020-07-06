@@ -7,7 +7,7 @@ package com.mopub.mobileads.test.support;
 import android.content.Context;
 
 import com.mopub.mobileads.AdViewController;
-import com.mopub.mobileads.MoPubView;
+import com.mopub.mobileads.MoPubAd;
 import com.mopub.mobileads.factories.AdViewControllerFactory;
 
 import static org.mockito.Mockito.mock;
@@ -24,7 +24,7 @@ public class TestAdViewControllerFactory extends AdViewControllerFactory {
     }
 
     @Override
-    protected AdViewController internalCreate(Context context, MoPubView moPubView) {
+    protected AdViewController internalCreate(Context context, MoPubAd moPubAd) {
         return mockAdViewController;
     }
 }

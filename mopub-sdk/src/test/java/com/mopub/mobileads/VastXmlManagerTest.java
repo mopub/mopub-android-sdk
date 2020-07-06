@@ -5,7 +5,6 @@
 package com.mopub.mobileads;
 
 import com.mopub.common.test.support.SdkTestRunner;
-import com.mopub.common.util.DeviceUtils.ForceOrientation;
 import com.mopub.mobileads.test.support.VastUtils;
 
 import org.junit.Before;
@@ -615,31 +614,31 @@ public class VastXmlManagerTest {
         assertThat(trackers.size()).isEqualTo(7);
 
         VastFractionalProgressTracker tracker0 = trackers.get(0);
-        assertThat(tracker0.trackingFraction()).isEqualTo(0.13f);
+        assertThat(tracker0.getTrackingFraction()).isEqualTo(0.13f);
         assertThat(tracker0.getContent()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=11;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker1 = trackers.get(1);
-        assertThat(tracker1.trackingFraction()).isEqualTo(0.25f);
+        assertThat(tracker1.getTrackingFraction()).isEqualTo(0.25f);
         assertThat(tracker1.getContent()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=26;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker2 = trackers.get(2);
-        assertThat(tracker2.trackingFraction()).isEqualTo(0.25f);
+        assertThat(tracker2.getTrackingFraction()).isEqualTo(0.25f);
         assertThat(tracker2.getContent()).isEqualTo("https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.2;sz=1x1;ord=2922389?");
 
         VastFractionalProgressTracker tracker3 = trackers.get(3);
-        assertThat(tracker3.trackingFraction()).isEqualTo(0.5f);
+        assertThat(tracker3.getTrackingFraction()).isEqualTo(0.5f);
         assertThat(tracker3.getContent()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=18;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker4 = trackers.get(4);
-        assertThat(tracker4.trackingFraction()).isEqualTo(0.5f);
+        assertThat(tracker4.getTrackingFraction()).isEqualTo(0.5f);
         assertThat(tracker4.getContent()).isEqualTo("https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.3;sz=1x1;ord=2922389?");
 
         VastFractionalProgressTracker tracker5 = trackers.get(5);
-        assertThat(tracker5.trackingFraction()).isEqualTo(0.75f);
+        assertThat(tracker5.getTrackingFraction()).isEqualTo(0.75f);
         assertThat(tracker5.getContent()).isEqualTo("https://ad.doubleclick.net/activity;src=2215309;met=1;v=1;pid=47414672;aid=223626102;ko=0;cid=30477563;rid=30495440;rv=1;timestamp=2922389;eid1=27;ecn1=1;etm1=0;");
 
         VastFractionalProgressTracker tracker6 = trackers.get(6);
-        assertThat(tracker6.trackingFraction()).isEqualTo(0.75f);
+        assertThat(tracker6.getTrackingFraction()).isEqualTo(0.75f);
         assertThat(tracker6.getContent()).isEqualTo("https://ad.doubleclick.net/ad/N270.Process_Other/B3473145.4;sz=1x1;ord=2922389?");
     }
 

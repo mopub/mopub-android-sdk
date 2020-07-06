@@ -632,8 +632,8 @@ public class NativeVideoControllerTest {
         when(mockExoPlayer.getDuration()).thenReturn(25L);
         when(mockExoPlayer.getPlayWhenReady()).thenReturn(true);
 
-        VastTracker vastTracker = new VastTracker("vastTrackingUrl");
-        List<VastTracker> vastTrackers = new ArrayList<VastTracker>();
+        VastTracker vastTracker = new VastTracker.Builder("vastTrackingUrl").build();
+        List<VastTracker> vastTrackers = new ArrayList<>();
         vastTrackers.add(vastTracker);
         when(mockVastVideoConfig.getUntriggeredTrackersBefore(10, 25)).thenReturn(vastTrackers);
 
@@ -654,8 +654,8 @@ public class NativeVideoControllerTest {
         when(mockExoPlayer.getDuration()).thenReturn(25L);
         when(mockExoPlayer.getPlayWhenReady()).thenReturn(true);
 
-        VastTracker vastTracker = new VastTracker("vastTrackingUrl");
-        List<VastTracker> vastTrackers = new ArrayList<VastTracker>();
+        VastTracker vastTracker = new VastTracker.Builder("vastTrackingUrl").build();
+        List<VastTracker> vastTrackers = new ArrayList<>();
         vastTrackers.add(vastTracker);
         when(mockVastVideoConfig.getUntriggeredTrackersBefore(10, 25)).thenReturn(vastTrackers);
         nativeVideoProgressRunnable.setUpdateIntervalMillis(10);
@@ -678,8 +678,8 @@ public class NativeVideoControllerTest {
         when(mockExoPlayer.getDuration()).thenReturn(25L);
         when(mockExoPlayer.getPlayWhenReady()).thenReturn(false);
 
-        VastTracker vastTracker = new VastTracker("vastTrackingUrl");
-        List<VastTracker> vastTrackers = new ArrayList<VastTracker>();
+        VastTracker vastTracker = new VastTracker.Builder("vastTrackingUrl").build();
+        List<VastTracker> vastTrackers = new ArrayList<>();
         vastTrackers.add(vastTracker);
         when(mockVastVideoConfig.getUntriggeredTrackersBefore(10, 25)).thenReturn(vastTrackers);
         nativeVideoProgressRunnable.setUpdateIntervalMillis(10);

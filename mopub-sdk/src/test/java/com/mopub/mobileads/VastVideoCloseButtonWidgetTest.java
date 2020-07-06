@@ -8,10 +8,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.VectorDrawable;
 import android.widget.ImageView;
 
 import com.mopub.common.test.support.SdkTestRunner;
-import com.mopub.mobileads.resource.CloseButtonDrawable;
 import com.mopub.network.MaxWidthImageLoader;
 import com.mopub.network.MoPubRequestQueue;
 import com.mopub.network.Networking;
@@ -85,7 +85,7 @@ public class VastVideoCloseButtonWidgetTest {
         ImageLoader.ImageListener listener = imageCaptor.getValue();
         listener.onResponse(mockImageContainer, true);
         verify(imageViewSpy, never()).setImageBitmap(any(Bitmap.class));
-        assertThat(subject.getImageView().getDrawable()).isInstanceOf(CloseButtonDrawable.class);
+        assertThat(subject.getImageView().getDrawable()).isInstanceOf(VectorDrawable.class);
     }
 
     @Test
@@ -99,6 +99,6 @@ public class VastVideoCloseButtonWidgetTest {
         ImageLoader.ImageListener listener = imageCaptor.getValue();
         listener.onErrorResponse(new VolleyError());
         verify(imageViewSpy, never()).setImageBitmap(any(Bitmap.class));
-        assertThat(subject.getImageView().getDrawable()).isInstanceOf(CloseButtonDrawable.class);
+        assertThat(subject.getImageView().getDrawable()).isInstanceOf(VectorDrawable.class);
     }
 }

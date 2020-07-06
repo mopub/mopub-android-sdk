@@ -6,6 +6,7 @@ package com.mopub.mobileads;
 
 import android.annotation.SuppressLint;
 import android.os.Handler;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -13,7 +14,6 @@ import com.mopub.common.ExternalViewabilitySessionManager;
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
-import com.mopub.mraid.MraidController;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
@@ -32,18 +32,22 @@ public class WebViewCacheService {
         @NonNull
         private final BaseWebView mWebView;
         @NonNull
-        private final WeakReference<Interstitial> mWeakInterstitial;
+        private final WeakReference<BaseAd> mWeakBaseAd;
         @NonNull
         private final ExternalViewabilitySessionManager mViewabilityManager;
         @Nullable
-        private final MraidController mController;
+        private final MoPubWebViewController mController;
 
         Config(@NonNull final BaseWebView baseWebView,
-                @NonNull final Interstitial baseInterstitial,
-                @NonNull final ExternalViewabilitySessionManager viewabilityManager,
-                @Nullable final MraidController controller) {
+               @NonNull final BaseAd baseAd,
+               @NonNull final ExternalViewabilitySessionManager viewabilityManager,
+               @Nullable final MoPubWebViewController controller) {
+            Preconditions.checkNotNull(baseWebView);
+            Preconditions.checkNotNull(baseAd);
+            Preconditions.checkNotNull(viewabilityManager);
+
             mWebView = baseWebView;
-            mWeakInterstitial = new WeakReference<>(baseInterstitial);
+            mWeakBaseAd = new WeakReference<>(baseAd);
             mViewabilityManager = viewabilityManager;
             mController = controller;
         }
@@ -54,8 +58,8 @@ public class WebViewCacheService {
         }
 
         @NonNull
-        public WeakReference<Interstitial> getWeakInterstitial() {
-            return mWeakInterstitial;
+        public WeakReference<BaseAd> getWeakBaseAd() {
+            return mWeakBaseAd;
         }
 
         @NonNull
@@ -64,7 +68,7 @@ public class WebViewCacheService {
         }
 
         @Nullable
-        public MraidController getController() {
+        public MoPubWebViewController getController() {
             return mController;
         }
     }
@@ -79,7 +83,7 @@ public class WebViewCacheService {
     /**
      * Trim the cache at least this frequently. Trimming only removes a {@link Config}s when its
      * associated {@link Interstitial} is no longer in memory. The cache is also
-     * trimmed every time {@link #storeWebViewConfig(Long, Interstitial, BaseWebView, ExternalViewabilitySessionManager, MraidController)} is called.
+     * trimmed every time {@link #storeWebViewConfig(Long, BaseAd, BaseWebView, ExternalViewabilitySessionManager, MoPubWebViewController)} is called.
      */
     @VisibleForTesting
     static final long TRIM_CACHE_FREQUENCY_MILLIS = FIFTEEN_MINUTES_MILLIS;
@@ -103,20 +107,20 @@ public class WebViewCacheService {
      * {@link #popWebViewConfig(Long)} or when the base interstitial object is removed from memory.
      *
      * @param broadcastIdentifier The unique identifier associated with both the interstitial and the WebView
-     * @param baseInterstitial    The interstitial managing this WebView
      * @param baseWebView         The BaseWebView to be stored
      * @param viewabilityManager  The associated viewability manager, which needs to be created
      *                            during Interstitial load and reutilized on show
      */
     @VisibleForTesting
     public static void storeWebViewConfig(@NonNull final Long broadcastIdentifier,
-            @NonNull final Interstitial baseInterstitial,
-            @NonNull final BaseWebView baseWebView,
-            @NonNull final ExternalViewabilitySessionManager viewabilityManager,
-            @Nullable final MraidController controller) {
+                                          @NonNull final BaseWebView baseWebView,
+                                          @NonNull final BaseAd baseAd,
+                                          @NonNull final ExternalViewabilitySessionManager viewabilityManager,
+                                          @Nullable final MoPubWebViewController controller) {
         Preconditions.checkNotNull(broadcastIdentifier);
-        Preconditions.checkNotNull(baseInterstitial);
         Preconditions.checkNotNull(baseWebView);
+        Preconditions.checkNotNull(baseAd);
+        Preconditions.checkNotNull(viewabilityManager);
 
         trimCache();
         // Ignore request when max size is reached.
@@ -127,7 +131,7 @@ public class WebViewCacheService {
         }
 
         sWebViewConfigs.put(broadcastIdentifier,
-                new Config(baseWebView, baseInterstitial, viewabilityManager, controller));
+                new Config(baseWebView, baseAd, viewabilityManager, controller));
     }
 
     @Nullable
@@ -143,9 +147,9 @@ public class WebViewCacheService {
         while (iterator.hasNext()) {
             final Map.Entry<Long, Config> entry = iterator.next();
 
-            // If the Interstitial was removed from memory, end viewability manager tracking and
+            // If the BaseAd was removed from memory, end viewability manager tracking and
             // discard the entire associated Config.
-            if (entry.getValue().getWeakInterstitial().get() == null) {
+            if (entry.getValue().getWeakBaseAd().get() == null) {
                 entry.getValue().getViewabilityManager().endDisplaySession();
                 iterator.remove();
             }

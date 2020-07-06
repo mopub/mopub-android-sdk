@@ -7,11 +7,11 @@ package com.mopub.mobileads;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.mopub.common.DataKeys;
 import com.mopub.common.test.support.SdkTestRunner;
-import com.mopub.mobileads.factories.CustomEventInterstitialAdapterFactory;
 
 import org.fest.util.Sets;
 import org.junit.Before;
@@ -25,11 +25,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_CLICK;
-import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_DISMISS;
-import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_FAIL;
-import static com.mopub.common.IntentActions.ACTION_INTERSTITIAL_SHOW;
-import static com.mopub.mobileads.CustomEventInterstitial.CustomEventInterstitialListener;
+import static com.mopub.common.IntentActions.ACTION_FULLSCREEN_CLICK;
+import static com.mopub.common.IntentActions.ACTION_FULLSCREEN_DISMISS;
+import static com.mopub.common.IntentActions.ACTION_FULLSCREEN_FAIL;
+import static com.mopub.common.IntentActions.ACTION_FULLSCREEN_SHOW;
+import static com.mopub.common.IntentActions.ACTION_REWARDED_AD_COMPLETE;
 import static com.mopub.mobileads.MoPubInterstitial.InterstitialAdListener;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -41,16 +41,16 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 @RunWith(SdkTestRunner.class)
 public class EventForwardingBroadcastReceiverTest {
 
-    private CustomEventInterstitialListener customEventInterstitialListener;
+    private AdLifecycleListener.InteractionListener interactionListener;
     private EventForwardingBroadcastReceiver subject;
     private Activity context;
     private int broadcastIdentifier;
 
     @Before
     public void setUp() throws Exception {
-        customEventInterstitialListener = mock(CustomEventInterstitialListener.class);
+        interactionListener = mock(AdLifecycleListener.InteractionListener.class);
         broadcastIdentifier = 27027027;
-        subject = new EventForwardingBroadcastReceiver(customEventInterstitialListener, broadcastIdentifier);
+        subject = new EventForwardingBroadcastReceiver(interactionListener, broadcastIdentifier);
         context = Robolectric.buildActivity(Activity.class).create().get();
     }
 
@@ -67,26 +67,29 @@ public class EventForwardingBroadcastReceiverTest {
 
         Map<String, String> serverExtras = new HashMap<String, String>();
         serverExtras.put(DataKeys.HTML_RESPONSE_BODY_KEY, "response");
-        final CustomEventInterstitialAdapter customEventInterstitialAdapter =
-                CustomEventInterstitialAdapterFactory.create(
-                        interstitialA,
-                        "com.mopub.mobileads.HtmlInterstitial",
-                        serverExtras, broadcastIdentifier, null);
+        final AdData adData = new AdData.Builder()
+                .extras(serverExtras)
+                .broadcastIdentifier(broadcastIdentifier)
+                .build();
+
+        final FullscreenAdAdapter fullscreenAdAdapter = new FullscreenAdAdapter(context,
+                "com.mopub.mobileads.MoPubFullscreen",
+                adData);
 
 
-        customEventInterstitialAdapter.loadInterstitial();
+        fullscreenAdAdapter.load(mock(AdLifecycleListener.LoadListener.class));
         verify(listenerA).onInterstitialLoaded(interstitialA);
         verify(listenerB, never()).onInterstitialLoaded(any(MoPubInterstitial.class));
 
-        interstitialA.onCustomEventInterstitialShown();
+        interstitialA.onAdShown();
         verify(listenerA).onInterstitialLoaded(interstitialA);
         verify(listenerB, never()).onInterstitialShown(any(MoPubInterstitial.class));
 
-        interstitialA.onCustomEventInterstitialClicked();
+        interstitialA.onAdClicked();
         verify(listenerA).onInterstitialClicked(interstitialA);
         verify(listenerB, never()).onInterstitialClicked(any(MoPubInterstitial.class));
 
-        interstitialA.onCustomEventInterstitialDismissed();
+        interstitialA.onAdDismissed();
         verify(listenerA).onInterstitialDismissed(interstitialA);
         verify(listenerB, never()).onInterstitialDismissed(any(MoPubInterstitial.class));
     }
@@ -94,16 +97,17 @@ public class EventForwardingBroadcastReceiverTest {
     @Test
     public void constructor_shouldSetIntentFilter() throws Exception {
         Set<String> expectedActions = Sets.newLinkedHashSet(
-                ACTION_INTERSTITIAL_FAIL,
-                ACTION_INTERSTITIAL_SHOW,
-                ACTION_INTERSTITIAL_DISMISS,
-                ACTION_INTERSTITIAL_CLICK
+                ACTION_FULLSCREEN_FAIL,
+                ACTION_FULLSCREEN_SHOW,
+                ACTION_FULLSCREEN_DISMISS,
+                ACTION_FULLSCREEN_CLICK,
+                ACTION_REWARDED_AD_COMPLETE
         );
 
         final IntentFilter intentFilter = subject.getIntentFilter();
         final Iterator<String> actionIterator = intentFilter.actionsIterator();
 
-        assertThat(intentFilter.countActions()).isEqualTo(4);
+        assertThat(intentFilter.countActions()).isEqualTo(5);
         while (actionIterator.hasNext()) {
             assertThat(expectedActions.contains(actionIterator.next()));
         }
@@ -111,61 +115,73 @@ public class EventForwardingBroadcastReceiverTest {
 
     @Test
     public void onReceive_whenActionInterstitialFail_shouldNotifyListener() throws Exception {
-        Intent intent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_CLICK, broadcastIdentifier);
+        Intent intent = getIntentForActionAndIdentifier(ACTION_FULLSCREEN_CLICK, broadcastIdentifier);
 
         subject.onReceive(context, intent);
 
-        verify(customEventInterstitialListener).onInterstitialClicked();
+        verify(interactionListener).onAdClicked();
     }
 
     @Test
     public void onReceive_whenActionInterstitialShow_shouldNotifyListener() throws Exception {
-        Intent intent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_SHOW, broadcastIdentifier);
+        Intent intent = getIntentForActionAndIdentifier(ACTION_FULLSCREEN_SHOW, broadcastIdentifier);
 
         subject.onReceive(context, intent);
 
-        verify(customEventInterstitialListener).onInterstitialShown();
+        verify(interactionListener).onAdShown();
     }
 
 
     @Test
     public void onReceive_whenActionInterstitialDismiss_shouldNotifyListener() throws Exception {
-        Intent intent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_DISMISS, broadcastIdentifier);
+        Intent intent = getIntentForActionAndIdentifier(ACTION_FULLSCREEN_DISMISS, broadcastIdentifier);
 
         subject.onReceive(context, intent);
 
-        verify(customEventInterstitialListener).onInterstitialDismissed();
+        verify(interactionListener).onAdDismissed();
     }
 
     @Test
     public void onReceive_whenActionInterstitialClick_shouldNotifyListener() throws Exception {
-        Intent intent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_CLICK, broadcastIdentifier);
+        Intent intent = getIntentForActionAndIdentifier(ACTION_FULLSCREEN_CLICK, broadcastIdentifier);
 
         subject.onReceive(context, intent);
 
-        verify(customEventInterstitialListener).onInterstitialClicked();
+        verify(interactionListener).onAdClicked();
+    }
+
+
+    @Test
+    public void onReceive_withActionRewardedAdComplete_shouldNotifyListener() {
+        Intent intent = getIntentForActionAndIdentifier(ACTION_REWARDED_AD_COMPLETE, broadcastIdentifier);
+
+        subject.onReceive(context, intent);
+
+        verify(interactionListener).onAdComplete(any());
     }
 
     @Test
     public void onReceive_withIncorrectBroadcastIdentifier_shouldDoNothing() throws Exception {
         long incorrectBroadcastIdentifier = broadcastIdentifier + 1;
 
-        Intent fail = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_FAIL, incorrectBroadcastIdentifier);
-        Intent show = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_SHOW, incorrectBroadcastIdentifier);
-        Intent click = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_CLICK, incorrectBroadcastIdentifier);
-        Intent dismiss = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_DISMISS, incorrectBroadcastIdentifier);
+        Intent fail = getIntentForActionAndIdentifier(ACTION_FULLSCREEN_FAIL, incorrectBroadcastIdentifier);
+        Intent show = getIntentForActionAndIdentifier(ACTION_FULLSCREEN_SHOW, incorrectBroadcastIdentifier);
+        Intent click = getIntentForActionAndIdentifier(ACTION_FULLSCREEN_CLICK, incorrectBroadcastIdentifier);
+        Intent complete = getIntentForActionAndIdentifier(ACTION_REWARDED_AD_COMPLETE, incorrectBroadcastIdentifier);
+        Intent dismiss = getIntentForActionAndIdentifier(ACTION_FULLSCREEN_DISMISS, incorrectBroadcastIdentifier);
 
         subject.onReceive(context, fail);
         subject.onReceive(context, show);
         subject.onReceive(context, click);
+        subject.onReceive(context, complete);
         subject.onReceive(context, dismiss);
 
-        verifyNoMoreInteractions(customEventInterstitialListener);
+        verifyNoMoreInteractions(interactionListener);
     }
 
     @Test
-    public void onReceiver_whenCustomEventInterstitialListenerIsNull_shouldNotBlowUp() throws Exception {
-        Intent intent = new Intent(ACTION_INTERSTITIAL_SHOW);
+    public void onReceive_whenFullscreenAdListenerIsNull_shouldNotBlowUp() throws Exception {
+        Intent intent = new Intent(ACTION_FULLSCREEN_SHOW);
 
         subject = new EventForwardingBroadcastReceiver(null, broadcastIdentifier);
         subject.onReceive(context, intent);
@@ -176,10 +192,10 @@ public class EventForwardingBroadcastReceiverTest {
     @Test
     public void register_shouldEnableReceivingBroadcasts() throws Exception {
         subject.register(subject, context);
-        Intent intent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_SHOW, broadcastIdentifier);
+        Intent intent = getIntentForActionAndIdentifier(ACTION_FULLSCREEN_SHOW, broadcastIdentifier);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
-        verify(customEventInterstitialListener).onInterstitialShown();
+        verify(interactionListener).onAdShown();
     }
 
     @Test
@@ -187,10 +203,10 @@ public class EventForwardingBroadcastReceiverTest {
         subject.register(subject, context);
 
         subject.unregister(subject);
-        Intent intent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_SHOW, broadcastIdentifier);
+        Intent intent = getIntentForActionAndIdentifier(ACTION_FULLSCREEN_SHOW, broadcastIdentifier);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
-        verify(customEventInterstitialListener, never()).onInterstitialShown();
+        verify(interactionListener, never()).onAdShown();
     }
 
     @Test
@@ -209,9 +225,9 @@ public class EventForwardingBroadcastReceiverTest {
         subject.unregister(subject);
 
         // Unregister shouldn't know the context any more and so should not have worked
-        Intent intent = getIntentForActionAndIdentifier(ACTION_INTERSTITIAL_SHOW, broadcastIdentifier);
+        Intent intent = getIntentForActionAndIdentifier(ACTION_FULLSCREEN_SHOW, broadcastIdentifier);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-        verify(customEventInterstitialListener).onInterstitialShown();
+        verify(interactionListener).onAdShown();
     }
 
     public static Intent getIntentForActionAndIdentifier(final String action, final long broadcastIdentifier) {

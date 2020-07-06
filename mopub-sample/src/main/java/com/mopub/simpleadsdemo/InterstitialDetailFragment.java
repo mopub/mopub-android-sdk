@@ -6,16 +6,16 @@ package com.mopub.simpleadsdemo;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
 
 import com.mopub.mobileads.MoPubErrorCode;
 import com.mopub.mobileads.MoPubInterstitial;
@@ -30,11 +30,11 @@ public class InterstitialDetailFragment extends Fragment implements Interstitial
     @Nullable private CallbacksAdapter mCallbacksAdapter;
 
     private enum InterstitialCallbacks {
-        LOADED("onInterstitialLoaded"),
-        FAILED("onInterstitialFailed"),
-        SHOWN("onInterstitialShown"),
-        CLICKED("onInterstitialClicked"),
-        DISMISSED("onInterstitialDismissed");
+        LOADED("onAdLoaded"),
+        FAILED("onAdFailed"),
+        SHOWN("onAdShown"),
+        CLICKED("onAdClicked"),
+        DISMISSED("onAdDismissed");
 
         InterstitialCallbacks(@NonNull final String name) {
             this.name = name;

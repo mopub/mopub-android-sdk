@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.mopub.common.Constants.VIDEO_CONTROLLER_ONE;
+
 public class AdResponse implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -76,6 +78,10 @@ public class AdResponse implements Serializable {
     @Nullable
     private final Integer mRefreshTimeMillis;
     @Nullable
+    private final String mBannerImpressionMinVisibleDips;
+    @Nullable
+    private final String mBannerImpressionMinVisibleMs;
+    @Nullable
     private final String mDspCreativeId;
 
     @Nullable
@@ -84,7 +90,7 @@ public class AdResponse implements Serializable {
     private final JSONObject mJsonBody;
 
     @Nullable
-    private final String mCustomEventClassName;
+    private final String mBaseAdClassName;
     @Nullable
     private final BrowserAgent mBrowserAgent;
     @NonNull
@@ -122,10 +128,12 @@ public class AdResponse implements Serializable {
         mHeight = builder.height;
         mAdTimeoutDelayMillis = builder.adTimeoutDelayMillis;
         mRefreshTimeMillis = builder.refreshTimeMillis;
+        mBannerImpressionMinVisibleDips = builder.bannerImpressionMinVisibleDips;
+        mBannerImpressionMinVisibleMs = builder.bannerImpressionMinVisibleMs;
         mDspCreativeId = builder.dspCreativeId;
         mResponseBody = builder.responseBody;
         mJsonBody = builder.jsonBody;
-        mCustomEventClassName = builder.customEventClassName;
+        mBaseAdClassName = builder.customEventClassName;
         mBrowserAgent = builder.browserAgent;
         mServerExtras = builder.serverExtras;
         mTimestamp = DateAndTime.now().getTime();
@@ -270,13 +278,29 @@ public class AdResponse implements Serializable {
     }
 
     @Nullable
+    public String getImpressionMinVisibleDips() {
+        return mBannerImpressionMinVisibleDips;
+    }
+
+    @Nullable
+    public String getImpressionMinVisibleMs() {
+        return mBannerImpressionMinVisibleMs;
+    }
+
+    @Nullable
     public String getDspCreativeId() {
         return mDspCreativeId;
     }
 
     @Nullable
+    @Deprecated
     public String getCustomEventClassName() {
-        return mCustomEventClassName;
+        return getBaseAdClassName();
+    }
+
+    @Nullable
+    public String getBaseAdClassName() {
+        return mBaseAdClassName;
     }
 
     @Nullable
@@ -307,6 +331,7 @@ public class AdResponse implements Serializable {
                 .setRewardedVideoCompletionUrl(mRewardedVideoCompletionUrl)
                 .setRewardedDuration(mRewardedDuration)
                 .setShouldRewardOnClick(mShouldRewardOnClick)
+                .setAllowCustomClose(mAllowCustomClose)
                 .setImpressionData(mImpressionData)
                 .setClickTrackingUrl(mClickTrackingUrl)
                 .setImpressionTrackingUrls(mImpressionTrackingUrls)
@@ -318,10 +343,12 @@ public class AdResponse implements Serializable {
                 .setDimensions(mWidth, mHeight)
                 .setAdTimeoutDelayMilliseconds(mAdTimeoutDelayMillis)
                 .setRefreshTimeMilliseconds(mRefreshTimeMillis)
+                .setBannerImpressionMinVisibleDips(mBannerImpressionMinVisibleDips)
+                .setBannerImpressionMinVisibleMs(mBannerImpressionMinVisibleMs)
                 .setDspCreativeId(mDspCreativeId)
                 .setResponseBody(mResponseBody)
                 .setJsonBody(mJsonBody)
-                .setCustomEventClassName(mCustomEventClassName)
+                .setBaseAdClassName(mBaseAdClassName)
                 .setBrowserAgent(mBrowserAgent)
                 .setAllowCustomClose(mAllowCustomClose)
                 .setServerExtras(mServerExtras);
@@ -355,6 +382,8 @@ public class AdResponse implements Serializable {
         private Integer height;
         private Integer adTimeoutDelayMillis;
         private Integer refreshTimeMillis;
+        private String bannerImpressionMinVisibleDips;
+        private String bannerImpressionMinVisibleMs;
         private String dspCreativeId;
 
         private String responseBody;
@@ -492,6 +521,16 @@ public class AdResponse implements Serializable {
             return this;
         }
 
+        public Builder setBannerImpressionMinVisibleDips(@Nullable final String bannerImpressionMinVisibleDips) {
+            this.bannerImpressionMinVisibleDips = bannerImpressionMinVisibleDips;
+            return this;
+        }
+
+        public Builder setBannerImpressionMinVisibleMs(@Nullable final String bannerImpressionMinVisibleMs) {
+            this.bannerImpressionMinVisibleMs = bannerImpressionMinVisibleMs;
+            return this;
+        }
+
         public Builder setDspCreativeId(@Nullable final String dspCreativeId) {
             this.dspCreativeId = dspCreativeId;
             return this;
@@ -507,7 +546,7 @@ public class AdResponse implements Serializable {
             return this;
         }
 
-        public Builder setCustomEventClassName(@Nullable final String customEventClassName) {
+        public Builder setBaseAdClassName(@Nullable final String customEventClassName) {
             this.customEventClassName = customEventClassName;
             return this;
         }
@@ -526,7 +565,7 @@ public class AdResponse implements Serializable {
             return this;
         }
 
-        Builder setAllowCustomClose(final boolean allow) {
+        public Builder setAllowCustomClose(final boolean allow) {
             allowCustomClose = allow;
             return this;
         }

@@ -14,13 +14,12 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.net.Uri;
-import android.os.Handler;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver.OnPreDrawListener;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.JsResult;
@@ -30,7 +29,6 @@ import android.widget.FrameLayout.LayoutParams;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.mopub.common.AdReport;
 import com.mopub.common.CloseableLayout;
 import com.mopub.common.CloseableLayout.ClosePosition;
 import com.mopub.common.CloseableLayout.OnCloseListener;
@@ -43,8 +41,10 @@ import com.mopub.common.logging.MoPubLog;
 import com.mopub.common.util.DeviceUtils;
 import com.mopub.common.util.Dips;
 import com.mopub.common.util.Views;
+import com.mopub.mobileads.BaseHtmlWebView;
 import com.mopub.mobileads.BaseWebView;
 import com.mopub.mobileads.MoPubErrorCode;
+import com.mopub.mobileads.MoPubWebViewController;
 import com.mopub.mobileads.MraidVideoPlayerActivity;
 import com.mopub.mobileads.util.WebViews;
 import com.mopub.mraid.MraidBridge.MraidBridgeListener;
@@ -62,38 +62,13 @@ import static com.mopub.common.logging.MoPubLog.SdkLogEvent.CUSTOM_WITH_THROWABL
 import static com.mopub.common.util.ManifestUtils.isDebuggable;
 import static com.mopub.common.util.Utils.bitMaskContainsFlag;
 
-public class MraidController {
-    private final AdReport mAdReport;
-
-    public interface MraidListener {
-        void onLoaded(View view);
-        void onFailedToLoad();
-        void onRenderProcessGone(@NonNull final MoPubErrorCode errorCode);
-        void onExpand();
-        void onResize(final boolean toOriginalSize);
-        void onOpen();
-        void onClose();
-    }
+public class MraidController extends MoPubWebViewController {
 
     public interface UseCustomCloseListener {
         public void useCustomCloseChanged(boolean useCustomClose);
     }
 
-    public interface MraidWebViewCacheListener {
-        void onReady(final MraidWebView webView, final ExternalViewabilitySessionManager viewabilityManager);
-    }
-
-    /**
-     * Holds a weak reference to the activity if the context that is passed in is an activity.
-     * While this field is never null, the reference could become null. This reference starts out
-     * null if the passed-in context is not an activity.
-     */
-    @NonNull private WeakReference<Activity> mWeakActivity;
-    @NonNull private final Context mContext;
     @NonNull private final PlacementType mPlacementType;
-
-    // An ad container, which contains the ad web view in default state, but is empty when expanded.
-    @NonNull private final FrameLayout mDefaultAdContainer;
 
     // Ad ad container which contains the ad view in expanded state.
     @NonNull private final CloseableLayout mCloseableAdContainer;
@@ -109,13 +84,10 @@ public class MraidController {
     @NonNull private ViewState mViewState = ViewState.LOADING;
 
     // Listeners
-    @Nullable private MraidListener mMraidListener;
     @Nullable private UseCustomCloseListener mOnCloseButtonListener;
-    @Nullable private MraidWebViewDebugListener mDebugListener;
 
     // The WebView which will display the ad. "Two part" creatives, loaded via handleExpand(URL)
     // are shown in a separate web view
-    @Nullable private MraidWebView mMraidWebView;
     @Nullable private MraidWebView mTwoPartWebView;
 
     // A bridge to handle all interactions with the WebView HTML and Javascript.
@@ -130,21 +102,25 @@ public class MraidController {
     // itself requires an orientation lock.
     @Nullable private Integer mOriginalActivityOrientation;
 
-    @NonNull private UrlHandler.MoPubSchemeListener mDebugSchemeListener
+    @NonNull
+    private UrlHandler.MoPubSchemeListener mDebugSchemeListener
             = new UrlHandler.MoPubSchemeListener() {
         @Override
-        public void onFinishLoad() { }
+        public void onFinishLoad() {
+        }
 
         @Override
-        public void onClose() { }
+        public void onClose() {
+        }
 
         @Override
-        public void onFailLoad() { }
+        public void onFailLoad() {
+        }
 
         @Override
         public void onCrash() {
-            if (mMraidWebView != null) {
-                mMraidWebView.loadUrl("chrome://crash");
+            if (mWebView != null) {
+                mWebView.loadUrl("chrome://crash");
             }
         }
     };
@@ -154,31 +130,23 @@ public class MraidController {
 
     private final MraidNativeCommandHandler mMraidNativeCommandHandler;
 
-    private boolean mIsPaused = true;
 
-    public MraidController(@NonNull Context context, @Nullable AdReport adReport,
-            @NonNull PlacementType placementType) {
-        this(context, adReport, placementType,
-                new MraidBridge(adReport, placementType),
-                new MraidBridge(adReport, PlacementType.INTERSTITIAL),
+    @Nullable private String mDspCreativeId;
+
+    public MraidController(final @NonNull Context context, final @Nullable String dspCreativeId,
+            final @NonNull PlacementType placementType, final boolean allowCustomClose) {
+        this(context, dspCreativeId, placementType,
+                new MraidBridge(placementType, allowCustomClose),
+                new MraidBridge(PlacementType.INTERSTITIAL, allowCustomClose),
                 new ScreenMetricsWaiter());
     }
 
     @VisibleForTesting
-    MraidController(@NonNull Context context, @Nullable AdReport adReport,
+    MraidController(@NonNull Context context, @Nullable String dspCreativeId,
             @NonNull PlacementType placementType,
             @NonNull MraidBridge bridge, @NonNull MraidBridge twoPartBridge,
             @NonNull ScreenMetricsWaiter screenMetricsWaiter) {
-        mContext = context.getApplicationContext();
-        Preconditions.checkNotNull(mContext);
-        mAdReport = adReport;
-        if (context instanceof Activity) {
-            mWeakActivity = new WeakReference<Activity>((Activity) context);
-        } else {
-            // Make sure mWeakActivity itself is never null, though the reference
-            // it's pointing to could be null.
-            mWeakActivity = new WeakReference<Activity>(null);
-        }
+        super(context, dspCreativeId);
 
         mPlacementType = placementType;
         mMraidBridge = bridge;
@@ -189,7 +157,6 @@ public class MraidController {
 
         DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
         mScreenMetrics = new MraidScreenMetrics(mContext, displayMetrics.density);
-        mDefaultAdContainer = new FrameLayout(mContext);
         mCloseableAdContainer = new CloseableLayout(mContext);
         mCloseableAdContainer.setOnCloseListener(new OnCloseListener() {
             @Override
@@ -219,15 +186,15 @@ public class MraidController {
         @Override
         public void onPageLoaded() {
             handlePageLoad();
-            if (mMraidListener != null) {
-                mMraidListener.onLoaded(mDefaultAdContainer);
+            if (mBaseWebViewListener != null) {
+                mBaseWebViewListener.onLoaded(mDefaultAdContainer);
             }
         }
 
         @Override
         public void onPageFailedToLoad() {
-            if (mMraidListener != null) {
-                mMraidListener.onFailedToLoad();
+            if (mBaseWebViewListener != null) {
+                mBaseWebViewListener.onFailedToLoad(MoPubErrorCode.MRAID_LOAD_ERROR);
             }
         }
 
@@ -366,57 +333,17 @@ public class MraidController {
         }
     };
 
-    public void setMraidListener(@Nullable MraidListener mraidListener) {
-        mMraidListener = mraidListener;
-    }
-
     public void setUseCustomCloseListener(@Nullable UseCustomCloseListener listener) {
         mOnCloseButtonListener = listener;
     }
 
-    public void setDebugListener(@Nullable MraidWebViewDebugListener debugListener) {
+    public void setDebugListener(@Nullable WebViewDebugListener debugListener) {
         mDebugListener = debugListener;
     }
 
-    /**
-     * Creates an MraidWebView and fills it with data.
-     *
-     * @param htmlData            The HTML of the ad. This will only be loaded if a cached WebView
-     *                            is not found.
-     * @param listener            Optional listener that (if non-null) is notified when an
-     *                            MraidWebView is loaded from the cache or created.
-     */
-    public void fillContent(@NonNull final String htmlData,
-            @Nullable final MraidWebViewCacheListener listener) {
-        Preconditions.checkNotNull(htmlData, "htmlData cannot be null");
-
-        mMraidWebView = new MraidWebView(mContext);
-
-        if (listener != null) {
-            listener.onReady(mMraidWebView,null);
-        }
-        mMraidBridge.attachView(mMraidWebView);
-        mDefaultAdContainer.addView(mMraidWebView,
-                new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-
-        mMraidBridge.setContentHtml(htmlData);
-    }
-
-    public void onPreloadFinished(@NonNull final BaseWebView baseWebView) {
-        mMraidWebView = (MraidWebView) baseWebView;
-        mMraidBridge.attachView(mMraidWebView);
-        mDefaultAdContainer.addView(mMraidWebView,
-                new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-        handlePageLoad();
-    }
-
-    /**
-     * Updates the activity and calls any onShow() callbacks when an ad is showing.
-     *
-     * @param activity The new activity associated with this mraid controller
-     */
+    @Override
     public void onShow(@NonNull final Activity activity) {
-        mWeakActivity = new WeakReference<>(activity);
+        super.onShow(activity);
         if (mOnCloseButtonListener != null) {
             mOnCloseButtonListener.useCustomCloseChanged(isUsingCustomClose());
         }
@@ -427,7 +354,6 @@ public class MraidController {
         }
     }
 
-    // onPageLoaded gets fired once the html is loaded into the webView.
     private int getDisplayRotation() {
         WindowManager wm = (WindowManager) mContext
                 .getSystemService(Context.WINDOW_SERVICE);
@@ -452,88 +378,14 @@ public class MraidController {
         return true;
     }
 
-    @VisibleForTesting
-    static class ScreenMetricsWaiter {
-        static class WaitRequest {
-            @NonNull private final View[] mViews;
-            @NonNull private final Handler mHandler;
-            @Nullable private Runnable mSuccessRunnable;
-            int mWaitCount;
-
-            private WaitRequest(@NonNull Handler handler, @NonNull final View[] views) {
-                mHandler = handler;
-                mViews = views;
-            }
-
-            private void countDown() {
-                mWaitCount--;
-                if (mWaitCount == 0 && mSuccessRunnable != null) {
-                    mSuccessRunnable.run();
-                    mSuccessRunnable = null;
-                }
-            }
-
-            private final Runnable mWaitingRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    for (final View view : mViews) {
-                        // Immediately count down for any views that already have a size
-                        if (view.getHeight() > 0 || view.getWidth() > 0) {
-                            countDown();
-                            continue;
-                        }
-
-                        // For views that didn't have a size, listen (once) for a preDraw. Note
-                        // that this doesn't leak because the ViewTreeObserver gets detached when
-                        // the view is no longer part of the view hierarchy.
-                        view.getViewTreeObserver().addOnPreDrawListener(new OnPreDrawListener() {
-                            @Override
-                            public boolean onPreDraw() {
-                                view.getViewTreeObserver().removeOnPreDrawListener(this);
-                                countDown();
-                                return true;
-                            }
-                        });
-                    }
-                }
-            };
-
-            void start(@NonNull Runnable successRunnable) {
-                mSuccessRunnable = successRunnable;
-                mWaitCount = mViews.length;
-                mHandler.post(mWaitingRunnable);
-            }
-
-            void cancel() {
-                mHandler.removeCallbacks(mWaitingRunnable);
-                mSuccessRunnable = null;
-            }
-        }
-
-        @NonNull private final Handler mHandler = new Handler();
-        @Nullable private WaitRequest mLastWaitRequest;
-
-        WaitRequest waitFor(@NonNull View... views) {
-            mLastWaitRequest = new WaitRequest(mHandler, views);
-            return mLastWaitRequest;
-        }
-
-        void cancelLastRequest() {
-            if (mLastWaitRequest != null) {
-                mLastWaitRequest.cancel();
-                mLastWaitRequest = null;
-            }
-        }
-    }
-
     @Nullable
     public MraidWebView getCurrentWebView() {
-        return mTwoPartBridge.isAttached() ? mTwoPartWebView : mMraidWebView;
+        return mTwoPartBridge.isAttached() ? mTwoPartWebView : (MraidWebView) mWebView;
     }
 
     /**
      * Checks that the hardware acceleration is enabled.
-     *
+     * <p>
      * Will always return true for PlacementType.INTERSTITIAL since those activities will always
      * force hardware acceleration when created.
      */
@@ -641,31 +493,25 @@ public class MraidController {
         updateScreenMetricsAsync(null);
     }
 
-    public void pause(boolean isFinishing) {
-        mIsPaused = true;
-
-        // This causes an inline video to pause if there is one playing
-        if (mMraidWebView != null) {
-            WebViews.onPause(mMraidWebView, isFinishing);
-        }
+    @Override
+    protected void pause(boolean isFinishing) {
+        super.pause(isFinishing);
         if (mTwoPartWebView != null) {
             WebViews.onPause(mTwoPartWebView, isFinishing);
         }
     }
 
-    public void resume() {
-        mIsPaused = false;
-
-        // This causes an inline video to resume if it was playing previously
-        if (mMraidWebView != null) {
-            mMraidWebView.onResume();
-        }
+    @Override
+    protected void resume() {
+        super.resume();
         if (mTwoPartWebView != null) {
             mTwoPartWebView.onResume();
         }
     }
 
-    public void destroy() {
+    @Override
+    protected void destroy() {
+        super.destroy();
         mScreenMetricsWaiter.cancelLastRequest();
 
         try {
@@ -674,11 +520,6 @@ public class MraidController {
             if (!e.getMessage().contains("Receiver not registered")) {
                 throw e;
             } // Else ignore this exception.
-        }
-
-        // Pause the controller to make sure the video gets stopped.
-        if (!mIsPaused) {
-            pause(true);
         }
 
         // Remove the closeable ad container from the view hierarchy, if necessary
@@ -692,7 +533,7 @@ public class MraidController {
 
     private void detachMraidWebView() {
         mMraidBridge.detach();
-        mMraidWebView = null;
+        mWebView = null;
     }
 
     private void detachTwoPartWebView() {
@@ -712,30 +553,30 @@ public class MraidController {
             mTwoPartBridge.notifyViewState(viewState);
         }
 
-        if (mMraidListener != null) {
-            callMraidListenerCallbacks(mMraidListener, previousViewState, viewState);
+        if (mBaseWebViewListener != null) {
+            callMraidListenerCallbacks(mBaseWebViewListener, previousViewState, viewState);
         }
 
         updateScreenMetricsAsync(null);
     }
 
     @VisibleForTesting
-    static void callMraidListenerCallbacks(@NonNull final MraidListener mraidListener,
+    static void callMraidListenerCallbacks(@NonNull final BaseHtmlWebView.BaseWebViewListener baseWebViewListener,
             @NonNull final ViewState previousViewState, @NonNull final ViewState currentViewState) {
-        Preconditions.checkNotNull(mraidListener);
+        Preconditions.checkNotNull(baseWebViewListener);
         Preconditions.checkNotNull(previousViewState);
         Preconditions.checkNotNull(currentViewState);
 
         if (currentViewState == ViewState.EXPANDED) {
-            mraidListener.onExpand();
+            baseWebViewListener.onExpand();
         } else if (previousViewState == ViewState.EXPANDED && currentViewState == ViewState.DEFAULT) {
-            mraidListener.onClose();
+            baseWebViewListener.onClose();
         } else if (currentViewState == ViewState.HIDDEN) {
-            mraidListener.onClose();
+            baseWebViewListener.onClose();
         } else if (previousViewState == ViewState.RESIZED && currentViewState == ViewState.DEFAULT) {
-            mraidListener.onResize(true);
+            baseWebViewListener.onResize(true);
         } else if (currentViewState == ViewState.RESIZED) {
-            mraidListener.onResize(false);
+            baseWebViewListener.onResize(false);
         }
     }
 
@@ -748,7 +589,7 @@ public class MraidController {
             final int offsetYDips, @NonNull final ClosePosition closePosition,
             final boolean allowOffscreen)
             throws MraidCommandException {
-        if (mMraidWebView == null) {
+        if (mWebView == null) {
             throw new MraidCommandException("Unable to resize after the WebView is destroyed");
         }
 
@@ -818,9 +659,9 @@ public class MraidController {
         layoutParams.leftMargin = resizeRect.left - mScreenMetrics.getRootViewRect().left;
         layoutParams.topMargin = resizeRect.top - mScreenMetrics.getRootViewRect().top;
         if (mViewState == ViewState.DEFAULT) {
-            mDefaultAdContainer.removeView(mMraidWebView);
+            mDefaultAdContainer.removeView(mWebView);
             mDefaultAdContainer.setVisibility(View.INVISIBLE);
-            mCloseableAdContainer.addView(mMraidWebView,
+            mCloseableAdContainer.addView(mWebView,
                     new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
             getAndMemoizeRootView().addView(mCloseableAdContainer, layoutParams);
         } else if (mViewState == ViewState.RESIZED) {
@@ -833,7 +674,7 @@ public class MraidController {
 
     void handleExpand(@Nullable URI uri, boolean shouldUseCustomClose)
             throws MraidCommandException {
-        if (mMraidWebView == null) {
+        if (mWebView == null) {
             throw new MraidCommandException("Unable to expand after the WebView is destroyed");
         }
 
@@ -852,7 +693,7 @@ public class MraidController {
         if (isTwoPart) {
             // Of note: the two part ad will start off with its view state as LOADING, and will
             // transition to EXPANDED once the page is fully loaded
-            mTwoPartWebView = new MraidWebView(mContext);
+            mTwoPartWebView = (MraidWebView) createWebView();
             mTwoPartBridge.attachView(mTwoPartWebView);
 
             // onPageLoaded gets fired once the html is loaded into the two part webView
@@ -866,9 +707,9 @@ public class MraidController {
             if (isTwoPart) {
                 mCloseableAdContainer.addView(mTwoPartWebView, layoutParams);
             } else {
-                mDefaultAdContainer.removeView(mMraidWebView);
+                mDefaultAdContainer.removeView(mWebView);
                 mDefaultAdContainer.setVisibility(View.INVISIBLE);
-                mCloseableAdContainer.addView(mMraidWebView, layoutParams);
+                mCloseableAdContainer.addView(mWebView, layoutParams);
             }
             getAndMemoizeRootView().addView(mCloseableAdContainer,
                     new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
@@ -876,8 +717,8 @@ public class MraidController {
             if (isTwoPart) {
                 // Move the ad back to the original container so that when we close the
                 // resized ad, it will be in the correct place
-                mCloseableAdContainer.removeView(mMraidWebView);
-                mDefaultAdContainer.addView(mMraidWebView, layoutParams);
+                mCloseableAdContainer.removeView(mWebView);
+                mDefaultAdContainer.addView(mWebView, layoutParams);
                 mDefaultAdContainer.setVisibility(View.INVISIBLE);
                 mCloseableAdContainer.addView(mTwoPartWebView, layoutParams);
             }
@@ -893,7 +734,7 @@ public class MraidController {
 
     @VisibleForTesting
     protected void handleClose() {
-        if (mMraidWebView == null) {
+        if (mWebView == null) {
             // Doesn't throw an exception because the ad has been destroyed
             return;
         }
@@ -915,8 +756,8 @@ public class MraidController {
                 mCloseableAdContainer.removeView(twoPartWebView);
             } else {
                 // Move the web view from the closeable container back to the default container
-                mCloseableAdContainer.removeView(mMraidWebView);
-                mDefaultAdContainer.addView(mMraidWebView, new LayoutParams(
+                mCloseableAdContainer.removeView(mWebView);
+                mDefaultAdContainer.addView(mWebView, new LayoutParams(
                         LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
                 mDefaultAdContainer.setVisibility(View.VISIBLE);
             }
@@ -932,8 +773,8 @@ public class MraidController {
 
     @VisibleForTesting
     void handleRenderProcessGone(@NonNull final MoPubErrorCode errorCode) {
-        if (mMraidListener != null) {
-            mMraidListener.onRenderProcessGone(errorCode);
+        if (mBaseWebViewListener != null) {
+            mBaseWebViewListener.onRenderProcessGone(errorCode);
         }
     }
 
@@ -1073,14 +914,30 @@ public class MraidController {
         return !mCloseableAdContainer.isCloseVisible();
     }
 
-    @NonNull
-    public FrameLayout getAdContainer() {
-        return mDefaultAdContainer;
+    @Override
+    public BaseWebView createWebView() {
+        return new MraidWebView(mContext);
+    }
+
+    @Override
+    protected void doFillContent(@NonNull String htmlData) {
+        mMraidBridge.attachView((MraidWebView) mWebView);
+        mDefaultAdContainer.addView(mWebView,
+                new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+
+        mMraidBridge.setContentHtml(htmlData);
+    }
+
+    @Override
+    protected ViewGroup.LayoutParams getLayoutParams() {
+        return new ViewGroup.LayoutParams
+                (ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
     }
 
     /**
      * Loads a javascript URL. Useful for running callbacks, such as javascript:webviewDidClose()
      */
+    @Override
     public void loadJavascript(@NonNull String javascript) {
         mMraidBridge.injectJavaScript(javascript);
     }
@@ -1158,10 +1015,9 @@ public class MraidController {
      */
     @VisibleForTesting
     void handleOpen(@NonNull final String url) {
-        if (mMraidListener != null) {
-            mMraidListener.onOpen();
+        if (mBaseWebViewListener != null) {
+            mBaseWebViewListener.onClicked();
         }
-
 
         final Uri uri = Uri.parse(url);
         if (HANDLE_PHONE_SCHEME.shouldTryHandlingUrl(uri)) {
@@ -1173,8 +1029,8 @@ public class MraidController {
 
         final UrlHandler.Builder builder = new UrlHandler.Builder();
 
-        if (mAdReport != null) {
-            builder.withDspCreativeId(mAdReport.getDspCreativeId());
+        if (!TextUtils.isEmpty(mDspCreativeId)) {
+            builder.withDspCreativeId(mDspCreativeId);
         }
 
         final EnumSet<UrlAction> urlActions = EnumSet.of(
@@ -1195,70 +1051,70 @@ public class MraidController {
                 .handleUrl(mContext, url);
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     @NonNull
     ViewState getViewState() {
         return mViewState;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     void setViewStateForTesting(@NonNull ViewState viewState) {
         mViewState = viewState;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     @NonNull
     CloseableLayout getExpandedAdContainer() {
         return mCloseableAdContainer;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     void setRootView(FrameLayout rootView) {
         mRootView = rootView;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     void setRootViewSize(int width, int height) {
         mScreenMetrics.setRootViewPosition(0, 0, width, height);
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     Integer getOriginalActivityOrientation() {
         return mOriginalActivityOrientation;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     boolean getAllowOrientationChange() {
         return mAllowOrientationChange;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     MraidOrientation getForceOrientation() {
         return mForceOrientation;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     void setOrientationBroadcastReceiver(OrientationBroadcastReceiver receiver) {
         mOrientationBroadcastReceiver = receiver;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     MraidWebView getMraidWebView() {
-        return mMraidWebView;
+        return (MraidWebView) mWebView;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     MraidWebView getTwoPartWebView() {
         return mTwoPartWebView;
     }

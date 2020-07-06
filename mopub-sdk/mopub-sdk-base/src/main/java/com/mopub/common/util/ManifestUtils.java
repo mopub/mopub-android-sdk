@@ -12,9 +12,10 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import androidx.annotation.NonNull;
 import android.view.Gravity;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
@@ -32,37 +33,29 @@ import static com.mopub.common.logging.MoPubLog.SdkLogEvent.CUSTOM;
 public class ManifestUtils {
     private ManifestUtils() {}
 
-    private static final String MOPUB_ACTIVITY = "com.mopub.mobileads.MoPubActivity";
-    private static final String MRAID_ACTIVITY = "com.mopub.mobileads.MraidActivity";
-    private static final String REWARDED_MRAID_ACTIVITY =
-            "com.mopub.mobileads.RewardedMraidActivity";
     private static final String CONSENT_ACTIVITY = "com.mopub.common.privacy.ConsentDialogActivity";
+    private static final String FULLSCREEN_ACTIVITY = "com.mopub.mobileads.MoPubFullscreenActivity";
 
     private static FlagCheckUtil sFlagCheckUtil = new FlagCheckUtil();
 
     private static final List<Class<? extends Activity>> REQUIRED_WEB_VIEW_SDK_ACTIVITIES;
     static {
-        REQUIRED_WEB_VIEW_SDK_ACTIVITIES = new ArrayList<Class<? extends Activity>>(4);
+        REQUIRED_WEB_VIEW_SDK_ACTIVITIES = new ArrayList<>(1);
         // As a convenience, full class paths are provided here, in case the MoPub SDK was imported
         // incorrectly and these files were left out.
         try {
-            final Class moPubActivityClass = Class.forName(MOPUB_ACTIVITY);
-            final Class mraidActivityClass = Class.forName(MRAID_ACTIVITY);
-            final Class rewardedMraidActivityClass = Class.forName(REWARDED_MRAID_ACTIVITY);
-            REQUIRED_WEB_VIEW_SDK_ACTIVITIES.add(moPubActivityClass);
-            REQUIRED_WEB_VIEW_SDK_ACTIVITIES.add(mraidActivityClass);
-            REQUIRED_WEB_VIEW_SDK_ACTIVITIES.add(rewardedMraidActivityClass);
+            final Class moPubFullscreenActivity = Class.forName(FULLSCREEN_ACTIVITY);
+            REQUIRED_WEB_VIEW_SDK_ACTIVITIES.add(moPubFullscreenActivity);
         } catch (ClassNotFoundException e) {
             MoPubLog.log(CUSTOM, "ManifestUtils running without interstitial module");
         }
 
-        REQUIRED_WEB_VIEW_SDK_ACTIVITIES.add(com.mopub.mobileads.MraidVideoPlayerActivity.class);
         REQUIRED_WEB_VIEW_SDK_ACTIVITIES.add(com.mopub.common.MoPubBrowser.class);
     }
 
     private static final List<Class<? extends Activity>> REQUIRED_NATIVE_SDK_ACTIVITIES;
     static {
-        REQUIRED_NATIVE_SDK_ACTIVITIES = new ArrayList<Class<? extends Activity>>(1);
+        REQUIRED_NATIVE_SDK_ACTIVITIES = new ArrayList<>(1);
         REQUIRED_NATIVE_SDK_ACTIVITIES.add(com.mopub.common.MoPubBrowser.class);
     }
 
@@ -282,20 +275,20 @@ public class ManifestUtils {
         public boolean hasScreenSize;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     static List<Class<? extends Activity>> getRequiredWebViewSdkActivities() {
         return REQUIRED_WEB_VIEW_SDK_ACTIVITIES;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     static List<Class<? extends Activity>> getRequiredNativeSdkActivities() {
         return REQUIRED_NATIVE_SDK_ACTIVITIES;
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     static void setFlagCheckUtil(final FlagCheckUtil flagCheckUtil) {
         sFlagCheckUtil = flagCheckUtil;
     }

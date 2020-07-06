@@ -39,13 +39,11 @@ public class BaseVideoPlayerActivityTest {
 
     private long testBroadcastIdentifier;
     private VastVideoConfig mVastVideoConfig;
-    private VastVideoConfigTwo mVastVideoConfigTwo;
     private CreativeOrientation mOrientation;
 
     @Before
     public void setup() throws Exception {
         mVastVideoConfig = mock(VastVideoConfig.class, withSettings().serializable());
-        mVastVideoConfigTwo = mock(VastVideoConfigTwo.class, withSettings().serializable());
         testBroadcastIdentifier = 1234;
         mOrientation = CreativeOrientation.DEVICE;
     }
@@ -73,14 +71,6 @@ public class BaseVideoPlayerActivityTest {
     }
 
     @Test
-    public void startVast_withVastVideoConfigTwo_shouldStartMraidVideoPlayerActivity() throws Exception {
-        startVast(Robolectric.buildActivity(Activity.class).create().get(), mVastVideoConfig,
-                testBroadcastIdentifier, mOrientation);
-        assertVastVideoPlayerActivityStartedWithVastVideoConfig(MraidVideoPlayerActivity.class, mVastVideoConfig,
-                testBroadcastIdentifier);
-    }
-
-    @Test
     public void onDestroy_shouldReleaseAudioFocus() throws Exception {
         BaseVideoPlayerActivity subject = spy(
                 Robolectric.buildActivity(BaseVideoPlayerActivity.class).create().get());
@@ -94,24 +84,13 @@ public class BaseVideoPlayerActivityTest {
     }
 
     static void assertVastVideoPlayerActivityStartedWithVastVideoConfig(final Class clazz,
-            final VastVideoConfig vastVideoConfig,
-            final long broadcastIdentifier) {
+                                                     final VastVideoConfig vastVideoConfig,
+                                                     final long broadcastIdentifier) {
         final Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
         assertIntentAndBroadcastIdentifierAreCorrect(intent, clazz, broadcastIdentifier);
 
         final VastVideoConfig expectedVastVideoConfig =
                 (VastVideoConfig) intent.getSerializableExtra(VastVideoViewController.VAST_VIDEO_CONFIG);
-        assertThat(expectedVastVideoConfig).isEqualsToByComparingFields(vastVideoConfig);
-    }
-
-    static void assertVastVideoPlayerActivityStartedWithVastVideoConfigTwo(final Class clazz,
-                                                     final VastVideoConfigTwo vastVideoConfig,
-                                                     final long broadcastIdentifier) {
-        final Intent intent = ShadowApplication.getInstance().getNextStartedActivity();
-        assertIntentAndBroadcastIdentifierAreCorrect(intent, clazz, broadcastIdentifier);
-
-        final VastVideoConfigTwo expectedVastVideoConfig =
-                (VastVideoConfigTwo) intent.getSerializableExtra(VastVideoViewController.VAST_VIDEO_CONFIG);
         assertThat(expectedVastVideoConfig).isEqualsToByComparingFields(vastVideoConfig);
     }
 

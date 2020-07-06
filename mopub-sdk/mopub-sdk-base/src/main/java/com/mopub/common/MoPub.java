@@ -30,7 +30,7 @@ import static com.mopub.common.logging.MoPubLog.SdkLogEvent.INIT_FINISHED;
 import static com.mopub.common.logging.MoPubLog.SdkLogEvent.INIT_STARTED;
 
 public class MoPub {
-    public static final String SDK_VERSION = "5.12.0";
+    public static final String SDK_VERSION = "5.13.0";
 
     public enum LocationAwareness { NORMAL, TRUNCATED, DISABLED }
 
@@ -163,7 +163,7 @@ public class MoPub {
 
     /**
      * Initializes the MoPub SDK. Call this before making any rewarded ads or advanced bidding
-     * requests. This will do the rewarded video custom event initialization any number of times,
+     * requests. This will do the rewarded video base ad initialization any number of times,
      * but the SDK itself can only be initialized once, and the rewarded ads module can only be
      * initialized once.
      *
@@ -339,10 +339,10 @@ public class MoPub {
         MoPubLifecycleManager.getInstance(activity).onBackPressed(activity);
     }
 
+    @Deprecated
     public static void disableViewability(@NonNull final ViewabilityVendor vendor) {
         Preconditions.checkNotNull(vendor);
 
-        vendor.disable();
     }
 
     @Nullable

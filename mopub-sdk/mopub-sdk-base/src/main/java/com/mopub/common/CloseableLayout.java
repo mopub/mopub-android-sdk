@@ -7,9 +7,7 @@ package com.mopub.common;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
-import android.graphics.drawable.StateListDrawable;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -17,10 +15,12 @@ import android.view.SoundEffectConstants;
 import android.view.ViewConfiguration;
 import android.widget.FrameLayout;
 
-import com.mopub.common.util.Dips;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
-import static com.mopub.common.util.Drawables.INTERSTITIAL_CLOSE_BUTTON_NORMAL;
-import static com.mopub.common.util.Drawables.INTERSTITIAL_CLOSE_BUTTON_PRESSED;
+import com.mopub.common.util.Dips;
+import com.mopub.mobileads.base.R;
 
 /**
  * CloseableLayout provides a layout class that shows a close button, and allows setting a
@@ -42,7 +42,7 @@ public class CloseableLayout extends FrameLayout {
     }
 
     @VisibleForTesting
-    static final float CLOSE_BUTTON_SIZE_DP = 30.0f;
+    static final float CLOSE_BUTTON_SIZE_DP = 34.0f;
     static final float CLOSE_REGION_SIZE_DP = 50.0f;
 
     @VisibleForTesting
@@ -81,8 +81,8 @@ public class CloseableLayout extends FrameLayout {
     @Nullable
     private OnCloseListener mOnCloseListener;
 
-    @NonNull
-    private final StateListDrawable mCloseDrawable;
+    @Nullable
+    private final Drawable mCloseDrawable;
     @NonNull
     private ClosePosition mClosePosition;
     private final int mCloseRegionSize;  // Size of the touchable close region.
@@ -99,6 +99,7 @@ public class CloseableLayout extends FrameLayout {
     private final Rect mInsetCloseRegionBounds = new Rect();
 
     private boolean mCloseAlwaysInteractable;
+    private boolean mClosePressed;
 
     @Nullable
     private UnsetPressedState mUnsetPressedState;
@@ -112,16 +113,8 @@ public class CloseableLayout extends FrameLayout {
 
     public CloseableLayout(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        mCloseDrawable = new StateListDrawable();
+        mCloseDrawable = ContextCompat.getDrawable(context, R.drawable.ic_mopub_close_button);
         mClosePosition = ClosePosition.TOP_RIGHT;
-
-        mCloseDrawable.addState(SELECTED_STATE_SET,
-                INTERSTITIAL_CLOSE_BUTTON_PRESSED.createDrawable(context));
-        mCloseDrawable.addState(EMPTY_STATE_SET,
-                INTERSTITIAL_CLOSE_BUTTON_NORMAL.createDrawable(context));
-
-        mCloseDrawable.setState(EMPTY_STATE_SET);
-        mCloseDrawable.setCallback(this);
 
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
 
@@ -147,7 +140,7 @@ public class CloseableLayout extends FrameLayout {
     }
 
     public void setCloseVisible(boolean visible) {
-        if (mCloseDrawable.setVisible(visible, false)) {
+        if (mCloseDrawable != null && mCloseDrawable.setVisible(visible, false)) {
             invalidate(mCloseRegionBounds);
         }
     }
@@ -176,12 +169,14 @@ public class CloseableLayout extends FrameLayout {
             // The close button sits inside the close region with padding and gravity
             // in the same way the close region sits inside the whole ClosableLayout
             applyCloseButtonBounds(mClosePosition, mInsetCloseRegionBounds, mCloseButtonBounds);
-            mCloseDrawable.setBounds(mCloseButtonBounds);
+            if (mCloseDrawable != null) {
+                mCloseDrawable.setBounds(mCloseButtonBounds);
+            }
         }
 
         // Draw last so that this gets drawn as the top layer. This is also why we override
         // draw instead of onDraw.
-        if (mCloseDrawable.isVisible()) {
+        if (mCloseDrawable != null && mCloseDrawable.isVisible()) {
             mCloseDrawable.draw(canvas);
         }
     }
@@ -261,7 +256,7 @@ public class CloseableLayout extends FrameLayout {
 
     @VisibleForTesting
     boolean shouldAllowPress() {
-        return mCloseAlwaysInteractable || mCloseDrawable.isVisible();
+        return mCloseAlwaysInteractable || mCloseDrawable == null || mCloseDrawable.isVisible();
     }
 
     private void setClosePressed(boolean pressed) {
@@ -269,13 +264,13 @@ public class CloseableLayout extends FrameLayout {
             return;
         }
 
-        mCloseDrawable.setState(pressed ? SELECTED_STATE_SET : EMPTY_STATE_SET);
+        mClosePressed = pressed;
         invalidate(mCloseRegionBounds);
     }
 
     @VisibleForTesting
     boolean isClosePressed() {
-        return mCloseDrawable.getState() == SELECTED_STATE_SET;
+        return mClosePressed;
     }
 
     @VisibleForTesting

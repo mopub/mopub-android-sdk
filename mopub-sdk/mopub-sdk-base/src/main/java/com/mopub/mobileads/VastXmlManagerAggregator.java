@@ -32,10 +32,8 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static com.mopub.common.logging.MoPubLog.SdkLogEvent.ERROR_WITH_THROWABLE;
@@ -437,7 +435,7 @@ public class VastXmlManagerAggregator extends AsyncTask<String, Void, VastVideoC
         vastVideoConfig.addClickTrackers(linearXmlManager.getClickTrackers());
 
         // Only set the skip offset if we haven't set it already in one of the redirects
-        if (vastVideoConfig.getSkipOffsetString() == null) {
+        if (vastVideoConfig.getSkipOffset() == null) {
             vastVideoConfig.setSkipOffset(linearXmlManager.getSkipOffset());
         }
 

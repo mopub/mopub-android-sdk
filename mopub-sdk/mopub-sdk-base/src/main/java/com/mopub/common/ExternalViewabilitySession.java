@@ -11,7 +11,6 @@ import androidx.annotation.Nullable;
 import android.view.View;
 import android.webkit.WebView;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,6 +23,7 @@ import java.util.Set;
  * true - successfully called through via reflection
  * false - error invoking via reflection or unexpected internal session state
  */
+@Deprecated
 public interface ExternalViewabilitySession {
     @NonNull String getName();
 

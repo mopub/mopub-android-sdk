@@ -14,7 +14,6 @@ import com.mopub.mobileads.util.XmlUtils;
 import org.w3c.dom.Node;
 
 import static com.mopub.common.logging.MoPubLog.SdkLogEvent.CUSTOM;
-import static com.mopub.mobileads.VastAbsoluteProgressTracker.parseAbsoluteOffset;
 
 /**
  * Data Object for the MoPubViewabilityTracker VAST Custom Extension.
@@ -50,9 +49,10 @@ public class VideoViewabilityTrackerXmlManager {
         }
 
         Integer viewablePlaytimeMS = null;
-        if (VastAbsoluteProgressTracker.isAbsoluteTracker(viewablePlaytimeStr)) {
+        if (VastAbsoluteProgressTracker.Companion.isAbsoluteTracker(viewablePlaytimeStr)) {
             try {
-                viewablePlaytimeMS = VastAbsoluteProgressTracker.parseAbsoluteOffset(viewablePlaytimeStr);
+                viewablePlaytimeMS = VastAbsoluteProgressTracker.Companion
+                        .parseAbsoluteOffset(viewablePlaytimeStr);
             } catch (NumberFormatException e) {
                 MoPubLog.log(CUSTOM, String.format("Invalid VAST viewablePlaytime format " +
                         "for \"HH:MM:SS[.mmm]\": %s:", viewablePlaytimeStr));

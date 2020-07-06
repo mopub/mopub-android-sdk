@@ -32,7 +32,6 @@ public class MRectAdTests extends MoPubBaseTestCase {
     // Test Variables
     private static final AdUnitType AD_TYPE = AdUnitType.MEDIUM_RECTANGLE;
     private static final String TITLE = AdLabels.MEDIUM_RECTANGLE;
-    private static final String WEB_PAGE_LINK = "https://www.mopub.com/click-test/";
 
     /*
      * Verify that the MEDIUM_RECTANGLE Ad is successfully loaded and displayed on

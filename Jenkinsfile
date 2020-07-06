@@ -19,16 +19,16 @@ pipeline {
                             echo "Internal Automation Tests are running - ${PARSED_JOB_NAME}"
                             sh '''
                                 #!/bin/bash
-                                chmod +x android.sh
-                                ./android.sh
+                                chmod +x scripts/private/android.sh
+                                scripts/private/android.sh
                             '''
                         }
                         stage('External Android automation tests') {
                             echo "External Automation Tests are running - ${PARSED_JOB_NAME}"
                             sh '''
                                 #!/bin/bash
-                                chmod +x androidRT.sh
-                                ./androidRT.sh
+                                chmod +x scripts/private/androidRT.sh
+                                scripts/private/androidRT.sh
                             '''
                         }
                     } else {

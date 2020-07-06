@@ -113,7 +113,7 @@ class VastCompanionAdXmlManager {
         for (final Node trackerNode : trackerNodes) {
             String uri = XmlUtils.getNodeValue(trackerNode);
             if (!TextUtils.isEmpty(uri)) {
-                companionAdClickTrackers.add(new VastTracker(uri));
+                companionAdClickTrackers.add(new VastTracker.Builder(uri).build());
             }
         }
         return companionAdClickTrackers;
@@ -148,7 +148,7 @@ class VastCompanionAdXmlManager {
         for (final Node trackerNode : trackerNodes) {
             final String trackerUrl = XmlUtils.getNodeValue(trackerNode);
             if (trackerUrl != null) {
-                companionCreativeViewTrackers.add(new VastTracker(trackerUrl));
+                companionCreativeViewTrackers.add(new VastTracker.Builder(trackerUrl).build());
             }
         }
 

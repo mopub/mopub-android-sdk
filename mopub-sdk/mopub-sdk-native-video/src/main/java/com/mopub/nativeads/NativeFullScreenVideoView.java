@@ -28,13 +28,14 @@ import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 
 import com.mopub.common.Preconditions;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.util.Dips;
 import com.mopub.common.util.Drawables;
 import com.mopub.mobileads.VastVideoProgressBarWidget;
-import com.mopub.mobileads.resource.CloseButtonDrawable;
+import com.mopub.mobileads.native_video.R;
 import com.mopub.mobileads.resource.CtaButtonDrawable;
 import com.mopub.mobileads.resource.DrawableConstants;
 import com.mopub.mobileads.resource.DrawableConstants.GradientStrip;
@@ -109,8 +110,8 @@ public class NativeFullScreenVideoView extends RelativeLayout {
         mCtaWidthPx = Dips.asIntPixels(200, context);
         mCtaHeightPx = Dips.asIntPixels(42, context);
         mCtaMarginPx = Dips.asIntPixels(10, context);
-        mCloseControlSizePx = Dips.asIntPixels(50, context);
-        mClosePaddingPx = Dips.asIntPixels(8, context);
+        mCloseControlSizePx = Dips.asIntPixels(56, context);
+        mClosePaddingPx = Dips.asIntPixels(6, context);
         mPrivacyInformationIconSizePx = Dips.asIntPixels(44, context);
         mPlayControlSizePx = Dips.asIntPixels(50, context);
         mGradientStripHeightPx = Dips.asIntPixels(45, context);
@@ -205,7 +206,9 @@ public class NativeFullScreenVideoView extends RelativeLayout {
 
         mCloseControl = closeControl;
         mCloseControl.setId(View.generateViewId());
-        mCloseControl.setImageDrawable(new CloseButtonDrawable());
+        mCloseControl.setImageDrawable(
+                ContextCompat.getDrawable(getContext(), R.drawable.ic_mopub_close_button));
+
         mCloseControl.setPadding(mClosePaddingPx * 3, mClosePaddingPx, mClosePaddingPx, mClosePaddingPx * 3);
         addView(mCloseControl);
 

@@ -189,6 +189,16 @@ public class UrlResolutionTaskTest {
         assertThat(subject.doInBackground(mopubNativeBrowserUrl)).isEqualTo(mopubNativeBrowserUrl);
     }
 
+    @Test
+    public void doInBackground_withNullUrl_shouldReturnNull() {
+        assertThat(subject.doInBackground(new String[] {null})).isEqualTo(null);
+    }
+
+    @Test
+    public void doInBackground_withNoUrls_shouldReturnNull() {
+        assertThat(subject.doInBackground()).isEqualTo(null);
+    }
+
     private void setupMockHttpUrlConnection(final int responseCode,
             @Nullable final String absolutePathUrl) throws IOException {
         when(mockHttpUrlConnection.getResponseCode()).thenReturn(responseCode);

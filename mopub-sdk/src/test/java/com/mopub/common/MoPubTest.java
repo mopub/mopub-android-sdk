@@ -6,6 +6,7 @@ package com.mopub.common;
 
 import android.app.Activity;
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -14,7 +15,6 @@ import com.mopub.common.privacy.SyncRequest;
 import com.mopub.common.test.support.SdkTestRunner;
 import com.mopub.common.util.AsyncTasks;
 import com.mopub.common.util.Reflection;
-import com.mopub.mobileads.CustomEventRewardedVideo;
 import com.mopub.mobileads.MoPubRewardedVideoListener;
 import com.mopub.mobileads.MoPubRewardedVideoManager;
 import com.mopub.mobileads.MoPubRewardedVideos;
@@ -47,7 +47,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
@@ -64,9 +63,6 @@ public class MoPubTest {
 
     private Activity mActivity;
     private MediationSettings[] mMediationSettings;
-    private String mAdUnitId;
-    private MoPubRewardedVideoListener mockRewardedVideoListener;
-    private MoPubRewardedVideoManager.RequestParameters mockRequestParameters;
     private SdkInitializationListener mockInitializationListener;
     private MoPubRequestQueue mockRequestQueue;
     private SyncRequest.Listener syncListener;
@@ -78,10 +74,7 @@ public class MoPubTest {
     public void setup() {
         mActivity = Robolectric.buildActivity(Activity.class).create().get();
         mMediationSettings = new MediationSettings[0];
-        mAdUnitId = "123";
 
-        mockRewardedVideoListener = mock(MoPubRewardedVideoListener.class);
-        mockRequestParameters = mock(MoPubRewardedVideoManager.RequestParameters.class);
         mockInitializationListener = org.mockito.Mockito.mock(SdkInitializationListener.class);
         mockRequestQueue = org.mockito.Mockito.mock(MoPubRequestQueue.class);
         Networking.setRequestQueueForTesting(mockRequestQueue);
@@ -155,7 +148,7 @@ public class MoPubTest {
     }
 
     @Test
-    public void initializeSdk_withRewardedVideo_shouldCallMoPubRewardedVideoManager() throws Exception {
+    public void initializeSdk_withRewardedVideo_shouldCallMoPubRewardedVideoManager() {
         MoPub.initializeSdk(mActivity,
                 new SdkConfiguration.Builder(INIT_ADUNIT).build(),
                 mockInitializationListener);
@@ -167,7 +160,7 @@ public class MoPubTest {
     }
 
     @Test
-    public void initializeSdk_withRewardedVideo_withMediationSettings_shouldCallMoPubRewardedVideoManager() throws Exception {
+    public void initializeSdk_withRewardedVideo_withMediationSettings_shouldCallMoPubRewardedVideoManager() {
         MoPub.initializeSdk(mActivity,
                 new SdkConfiguration.Builder(INIT_ADUNIT).withMediationSettings(mMediationSettings).build(),
                 mockInitializationListener);
@@ -179,7 +172,7 @@ public class MoPubTest {
     }
 
     @Test
-    public void initializeSdk_withRewardedVideo_withoutActivity_shouldNotCallMoPubRewardedVideoManager() throws Exception {
+    public void initializeSdk_withRewardedVideo_withoutActivity_shouldNotCallMoPubRewardedVideoManager() {
         // Since we can't verifyStatic with 0 times, we expect this to call the rewarded video
         // manager exactly twice instead of three times since one of the times is with the
         // application context instead of the activity context.
@@ -207,7 +200,7 @@ public class MoPubTest {
     }
 
     @Test
-    public void updateActivity_withValidActivity_shouldCallMoPubRewardedVideoManager() throws Exception {
+    public void updateActivity_withValidActivity_shouldCallMoPubRewardedVideoManager() {
         MoPub.updateActivity(mActivity);
 
         verifyStatic();
@@ -235,7 +228,7 @@ public class MoPubTest {
     }
 
     @Test
-    public void initializeSdk_withOneAdvancedBidder_shouldSetAdvancedBiddingTokens() throws Exception {
+    public void initializeSdk_withOneAdvancedBidder_shouldSetAdvancedBiddingTokens() {
         SdkConfiguration sdkConfiguration = new SdkConfiguration.Builder(
                 INIT_ADUNIT).withAdditionalNetwork(
                 AdapterConfigurationTestClass.class.getName()).build();
@@ -248,7 +241,7 @@ public class MoPubTest {
     }
 
     @Test
-    public void initializeSdk_withMultipleInitializations_shouldSetAdvancedBiddingTokensOnce() throws Exception {
+    public void initializeSdk_withMultipleInitializations_shouldSetAdvancedBiddingTokensOnce() {
         SdkConfiguration sdkConfiguration = new SdkConfiguration.Builder
                 (INIT_ADUNIT).withAdditionalNetwork(
                 AdapterConfigurationTestClass.class.getName()).build();
@@ -397,56 +390,6 @@ public class MoPubTest {
         @Override
         public void setMoPubRequestOptions(
                 @Nullable final Map<String, String> moPubRequestOptions) {
-        }
-    }
-
-    private static class TestCustomEventRewardedVideo extends CustomEventRewardedVideo {
-
-        public TestCustomEventRewardedVideo(String param) {
-
-        }
-        @Nullable
-        @Override
-        protected LifecycleListener getLifecycleListener() {
-            return null;
-        }
-
-        @Override
-        protected boolean checkAndInitializeSdk(@NonNull final Activity launcherActivity,
-                @NonNull final Map<String, Object> localExtras,
-                @NonNull final Map<String, String> serverExtras) throws Exception {
-            return false;
-        }
-
-        @Override
-        protected void loadWithSdkInitialized(@NonNull final Activity activity,
-                @NonNull final Map<String, Object> localExtras,
-                @NonNull final Map<String, String> serverExtras) throws Exception {
-        }
-
-        @NonNull
-        @Override
-        protected String getAdNetworkId() {
-            return "";
-        }
-
-        @Override
-        protected void onInvalidate() {
-        }
-
-        @Override
-        protected boolean hasVideoAvailable() {
-            return false;
-        }
-
-        @Override
-        protected void showVideo() {
-        }
-    }
-
-    private static class TestInheritedCustomEventRewardedVideo extends TestCustomEventRewardedVideo {
-        public TestInheritedCustomEventRewardedVideo(String param) {
-            super(param);
         }
     }
 }

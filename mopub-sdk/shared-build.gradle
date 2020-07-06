@@ -12,18 +12,27 @@ repositories {
     flatDir {
         dirs project(':mopub-sdk').file('../libs')
     }
-    maven { url "https://s3.amazonaws.com/moat-sdk-builds" }
 }
 
 project.group = 'com.mopub'
-project.version = '5.12.0'
+project.version = '5.13.0'
 
 android {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        freeCompilerArgs = ['-Xjvm-default=enable']
+        jvmTarget = '1.8'
+    }
+
     compileSdkVersion 29
     lintOptions { abortOnError false }
 
     defaultConfig {
-        versionCode 79
+        versionCode 80
         versionName version
         minSdkVersion 19
         targetSdkVersion 29

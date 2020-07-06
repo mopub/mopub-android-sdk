@@ -11,14 +11,8 @@ def bintrayRepo = 'mopub-android-sdk'
 def bintrayUserOrg = 'mopub'
 // Put your credentials (bintray.user, bintray.apikey) in ~/.gradle/gradle.properties
 
-if (JavaVersion.current().isJava8Compatible()) {
-    allprojects {
-        tasks.withType(Javadoc) {
-            // The javadoc task in Java 8 is too strict and throws unnecessary syntax errors
-            // if our comments fail to abide by the new standard.
-            options.addStringOption('Xdoclint:none', '-quiet')
-        }
-    }
+tasks.withType(Javadoc).all {
+    enabled = false
 }
 
 android.libraryVariants.all { variant ->
@@ -39,7 +33,7 @@ android.libraryVariants.all { variant ->
         classpath += configurations.compile
 
         options {
-            links "http://docs.oracle.com/javase/7/docs/api/"
+            links "https://docs.oracle.com/javase/8/docs/api/"
             linksOffline "https://developer.android.com/reference","${android.sdkDirectory}/docs/reference"
         }
 

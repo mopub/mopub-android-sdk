@@ -32,7 +32,6 @@ public class BannerAdTests extends MoPubBaseTestCase {
     // Test Variables
     private static final AdUnitType AD_TYPE = AdUnitType.BANNER;
     private static final String TITLE = AdLabels.BANNER;
-    private static final String WEB_PAGE_LINK = "https://www.mopub.com/click-test/";
 
     /*
      * Verify that the Banner Ad is successfully loaded and displayed on

@@ -49,7 +49,7 @@ abstract class VastBaseInLineWrapperXmlManager {
         for (Node impressionNode : impressionNodes) {
             String uri = XmlUtils.getNodeValue(impressionNode);
             if (!TextUtils.isEmpty(uri)) {
-                impressionTrackers.add(new VastTracker(uri));
+                impressionTrackers.add(new VastTracker.Builder(uri).build());
             }
         }
 
@@ -72,7 +72,7 @@ abstract class VastBaseInLineWrapperXmlManager {
         for (Node error : errorNodes) {
             final String tracker = XmlUtils.getNodeValue(error);
             if (!TextUtils.isEmpty(tracker)) {
-                errorTrackers.add(new VastTracker(tracker, true));
+                errorTrackers.add(new VastTracker.Builder(tracker).isRepeatable(true).build());
             }
         }
         return errorTrackers;

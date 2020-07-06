@@ -61,7 +61,8 @@ class VastLinearXmlManager {
     private static final float MID_POINT_MARKER = 0.50f;
     private static final float THIRD_QUARTER_MARKER = 0.75f;
 
-    @NonNull private final Node mLinearNode;
+    @NonNull
+    private final Node mLinearNode;
 
     VastLinearXmlManager(@NonNull final Node linearNode) {
         Preconditions.checkNotNull(linearNode);
@@ -71,18 +72,18 @@ class VastLinearXmlManager {
     /**
      * Return a sorted list of the video's percent-based progress-trackers. These are the
      * quartile trackers and any "progress" nodes with percent-based offsets.
-     *
+     * <p>
      * Quartile trackers look like:
      * {@code
      * <Tracking event="firstQuartile">
-     *     <![CDATA[trackingURL]]>
+     * <![CDATA[trackingURL]]>
      * </Tracking>
      * }
-     *
+     * <p>
      * Percent-based progress trackers look like:
      * {@code
      * <Tracking event="progress" offset="11%">
-     *     <![CDATA[trackingURL]]>
+     * <![CDATA[trackingURL]]>
      * </Tracking>
      * }
      */
@@ -107,14 +108,14 @@ class VastLinearXmlManager {
                     continue;
                 }
                 offsetString = offsetString.trim();
-                if (VastFractionalProgressTrackerTwo.Companion.isPercentageTracker(offsetString)) {
+                if (VastFractionalProgressTracker.Companion.isPercentageTracker(offsetString)) {
                     String trackingUrl = XmlUtils.getNodeValue(progressNode);
                     try {
                         final float trackingFraction =
                                 Float.parseFloat(offsetString.replace("%", "")) / 100f;
                         if (trackingFraction >= 0) {
-                            percentTrackers.add(new VastFractionalProgressTracker(trackingUrl,
-                                    trackingFraction));
+                            percentTrackers.add(new VastFractionalProgressTracker.Builder(trackingUrl,
+                                    trackingFraction).build());
                         }
                     } catch (NumberFormatException e) {
                         MoPubLog.log(CUSTOM, String.format("Failed to parse VAST progress tracker %s",
@@ -132,28 +133,30 @@ class VastLinearXmlManager {
     /**
      * Return a sorted list of the video's absolute progress trackers. This includes start trackers
      * and any "progress" nodes with absolute offsets.
-     *
+     * <p>
      * Start trackers live in nodes like:
      * {@code
      * <Tracking event="start">
-     *     <![CDATA[trackingURL]]>
+     * <![CDATA[trackingURL]]>
      * </Tracking>
      * }
      * Absolute progress trackers look like:
      * {@code
      * <Tracking event="progress" offset="00:00:10.000">
-     *     <![CDATA[trackingURL]]>
+     * <![CDATA[trackingURL]]>
      * </Tracking>
      * }
      */
     @NonNull
     List<VastAbsoluteProgressTracker> getAbsoluteProgressTrackers() {
-        List<VastAbsoluteProgressTracker> trackers = new ArrayList<VastAbsoluteProgressTracker>();
+        List<VastAbsoluteProgressTracker> trackers = new ArrayList<>();
 
         // Start trackers are treated as absolute trackers set at 0 seconds
         final List<String> startTrackers = getVideoTrackersByAttribute(START);
         for (String url : startTrackers) {
-            trackers.add(new VastAbsoluteProgressTracker(url, START_TRACKER_THRESHOLD));
+            trackers.add(
+                    new VastAbsoluteProgressTracker.Builder(url, START_TRACKER_THRESHOLD).build()
+            );
         }
 
         final Node trackingEvents = XmlUtils.getFirstMatchingChildNode(mLinearNode, TRACKING_EVENTS);
@@ -168,12 +171,12 @@ class VastLinearXmlManager {
                     continue;
                 }
                 offsetString = offsetString.trim();
-                if (VastAbsoluteProgressTracker.isAbsoluteTracker(offsetString)) {
+                if (VastAbsoluteProgressTracker.Companion.isAbsoluteTracker(offsetString)) {
                     String trackingUrl = XmlUtils.getNodeValue(progressNode);
                     try {
-                        Integer trackingMilliseconds = VastAbsoluteProgressTracker.parseAbsoluteOffset(offsetString);
+                        Integer trackingMilliseconds = VastAbsoluteProgressTracker.Companion.parseAbsoluteOffset(offsetString);
                         if (trackingMilliseconds != null && trackingMilliseconds >= 0) {
-                            trackers.add(new VastAbsoluteProgressTracker(trackingUrl, trackingMilliseconds));
+                            trackers.add(new VastAbsoluteProgressTracker.Builder(trackingUrl, trackingMilliseconds).build());
                         }
                     } catch (NumberFormatException e) {
                         MoPubLog.log(CUSTOM, String.format("Failed to parse VAST progress tracker %s",
@@ -189,8 +192,9 @@ class VastLinearXmlManager {
                 final String creativeNodeValue = XmlUtils.getNodeValue(creativeViewNode);
                 if (creativeNodeValue != null) {
                     trackers.add(
-                            new VastAbsoluteProgressTracker(creativeNodeValue,
-                                    CREATIVE_VIEW_TRACKER_THRESHOLD));
+                            new VastAbsoluteProgressTracker.Builder(creativeNodeValue,
+                                    CREATIVE_VIEW_TRACKER_THRESHOLD).build()
+                    );
                 }
             }
         }
@@ -220,7 +224,7 @@ class VastLinearXmlManager {
         List<String> trackers = getVideoTrackersByAttribute(PAUSE);
         List<VastTracker> vastRepeatableTrackers = new ArrayList<VastTracker>();
         for (String tracker : trackers) {
-            vastRepeatableTrackers.add(new VastTracker(tracker, true));
+            vastRepeatableTrackers.add(new VastTracker.Builder(tracker).isRepeatable(true).build());
         }
         return vastRepeatableTrackers;
     }
@@ -235,7 +239,7 @@ class VastLinearXmlManager {
         List<String> trackers = getVideoTrackersByAttribute(RESUME);
         List<VastTracker> vastRepeatableTrackers = new ArrayList<VastTracker>();
         for (String tracker : trackers) {
-            vastRepeatableTrackers.add(new VastTracker(tracker, true));
+            vastRepeatableTrackers.add(new VastTracker.Builder(tracker).isRepeatable(true).build());
         }
         return vastRepeatableTrackers;
     }
@@ -298,7 +302,7 @@ class VastLinearXmlManager {
         for (Node clickTrackerNode : clickTrackerNodes) {
             String tracker = XmlUtils.getNodeValue(clickTrackerNode);
             if (tracker != null) {
-                clickTrackers.add(new VastTracker(tracker));
+                clickTrackers.add(new VastTracker.Builder(tracker).build());
             }
         }
         return clickTrackers;
@@ -352,7 +356,7 @@ class VastLinearXmlManager {
     List<VastIconXmlManager> getIconXmlManagers() {
         final List<VastIconXmlManager> iconXmlManagers = new ArrayList<VastIconXmlManager>();
 
-        final Node icons= XmlUtils.getFirstMatchingChildNode(mLinearNode, ICONS);
+        final Node icons = XmlUtils.getFirstMatchingChildNode(mLinearNode, ICONS);
         if (icons == null) {
             return iconXmlManagers;
         }
@@ -371,7 +375,7 @@ class VastLinearXmlManager {
         List<String> trackers = getVideoTrackersByAttribute(attributeValue);
         List<VastTracker> vastTrackers = new ArrayList<VastTracker>(trackers.size());
         for (String tracker : trackers) {
-            vastTrackers.add(new VastTracker(tracker));
+            vastTrackers.add(new VastTracker.Builder(tracker).build());
         }
         return vastTrackers;
     }
@@ -416,7 +420,7 @@ class VastLinearXmlManager {
         Preconditions.checkNotNull(trackers, "trackers cannot be null");
         Preconditions.checkNotNull(urls, "urls cannot be null");
         for (String url : urls) {
-            trackers.add(new VastFractionalProgressTracker(url, fraction));
+            trackers.add(new VastFractionalProgressTracker.Builder(url, fraction).build());
         }
     }
 }

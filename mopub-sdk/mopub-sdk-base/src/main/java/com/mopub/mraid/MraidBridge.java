@@ -25,7 +25,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
-import com.mopub.common.AdReport;
 import com.mopub.common.CloseableLayout.ClosePosition;
 import com.mopub.common.Constants;
 import com.mopub.common.Preconditions;
@@ -52,8 +51,6 @@ import static com.mopub.mobileads.MoPubErrorCode.RENDER_PROCESS_GONE_WITH_CRASH;
 import static com.mopub.network.MoPubRequestUtils.getQueryParamMap;
 
 public class MraidBridge {
-    private final AdReport mAdReport;
-
     public interface MraidBridgeListener {
         void onPageLoaded();
 
@@ -99,16 +96,19 @@ public class MraidBridge {
 
     private boolean mHasLoaded;
 
-    MraidBridge(@Nullable AdReport adReport, @NonNull PlacementType placementType) {
-        this(adReport, placementType, new MraidNativeCommandHandler());
+    private boolean mAllowCustomClose;
+
+    MraidBridge(@NonNull final PlacementType placementType, final boolean allowCustomClose) {
+        this(placementType, new MraidNativeCommandHandler(), allowCustomClose);
     }
 
     @VisibleForTesting
-    MraidBridge(@Nullable AdReport adReport, @NonNull PlacementType placementType,
-            @NonNull MraidNativeCommandHandler mraidNativeCommandHandler) {
-        mAdReport = adReport;
+    MraidBridge(@NonNull final PlacementType placementType,
+                @NonNull final MraidNativeCommandHandler mraidNativeCommandHandler,
+                final boolean allowCustomClose) {
         mPlacementType = placementType;
         mMraidNativeCommandHandler = mraidNativeCommandHandler;
+        mAllowCustomClose = allowCustomClose;
     }
 
     void setMraidBridgeListener(@Nullable MraidBridgeListener listener) {
@@ -453,17 +453,14 @@ public class MraidBridge {
                 boolean allowOffscreen = parseBoolean(params.get("allowOffscreen"), true);
                 mMraidBridgeListener.onResize(
                         width, height, offsetX, offsetY, closePosition, allowOffscreen);
-                boolean shouldUseCustomClose = mAdReport != null && mAdReport.shouldAllowCustomClose();
-                mMraidBridgeListener.onUseCustomClose(shouldUseCustomClose);
+                mMraidBridgeListener.onUseCustomClose(mAllowCustomClose);
                 break;
             case EXPAND:
                 URI uri = parseURI(params.get("url"), null);
-                shouldUseCustomClose = parseAllowCustomClose(params, mAdReport);
-                mMraidBridgeListener.onExpand(uri, shouldUseCustomClose);
+                mMraidBridgeListener.onExpand(uri, parseAllowCustomClose(params, mAllowCustomClose));
                 break;
             case USE_CUSTOM_CLOSE:
-                shouldUseCustomClose = parseAllowCustomClose(params, mAdReport);
-                mMraidBridgeListener.onUseCustomClose(shouldUseCustomClose);
+                mMraidBridgeListener.onUseCustomClose(parseAllowCustomClose(params, mAllowCustomClose));
                 break;
             case OPEN:
                 uri = parseURI(params.get("url"));
@@ -538,9 +535,9 @@ public class MraidBridge {
     }
 
     private static boolean parseAllowCustomClose(@NonNull final Map<String, String> params,
-                                                 @Nullable final AdReport adReport) throws MraidCommandException {
+                                                 final boolean allowCustomClose) throws MraidCommandException {
         boolean useCustomClose = parseBoolean(params.get("shouldUseCustomClose"), false);
-        useCustomClose &= adReport != null && adReport.shouldAllowCustomClose();
+        useCustomClose &= allowCustomClose;
         return useCustomClose;
     }
 

@@ -125,8 +125,8 @@ public class BaseWebView extends WebView {
         }
     }
 
+    @Deprecated
     @VisibleForTesting
-    @Deprecated // for testing
     void setIsDestroyed(boolean isDestroyed) {
         mIsDestroyed = isDestroyed;
     }

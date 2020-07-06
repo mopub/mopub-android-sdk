@@ -100,13 +100,13 @@ public class UrlResolutionTask extends AsyncTask<String, Void, String> {
             return resolveRedirectLocation(urlString, httpUrlConnection);
         } finally {
             if (httpUrlConnection != null) {
-                final InputStream is = httpUrlConnection.getInputStream();
-                if (is != null) {
-                    try {
+                try {
+                    final InputStream is = httpUrlConnection.getInputStream();
+                    if (is != null) {
                         is.close();
-                    } catch (IOException e) {
-                        MoPubLog.log(CUSTOM, "IOException when closing httpUrlConnection. Ignoring.");
                     }
+                } catch (IOException e) {
+                    MoPubLog.log(CUSTOM, "IOException when closing httpUrlConnection. Ignoring.");
                 }
                 httpUrlConnection.disconnect();
             }

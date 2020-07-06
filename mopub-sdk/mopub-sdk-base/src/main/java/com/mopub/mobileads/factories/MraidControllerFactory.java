@@ -5,9 +5,9 @@
 package com.mopub.mobileads.factories;
 
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 
-import com.mopub.common.AdReport;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.mraid.MraidController;
 import com.mopub.mraid.PlacementType;
@@ -20,15 +20,17 @@ public class MraidControllerFactory {
         instance = factory;
     }
 
-    public static MraidController create(@NonNull final Context context, 
-            @NonNull final AdReport adReport, 
-            @NonNull final PlacementType placementType) {
-        return instance.internalCreate(context, adReport, placementType);
+    public static MraidController create(@NonNull final Context context,
+                                         @NonNull final String dspCreativeId,
+                                         @NonNull final PlacementType placementType,
+                                         final boolean allowCustomClose) {
+        return instance.internalCreate(context, dspCreativeId, placementType, allowCustomClose);
     }
 
-    protected MraidController internalCreate(@NonNull final Context context, 
-            @NonNull final AdReport adReport, 
-            @NonNull final PlacementType placementType) {
-        return new MraidController(context, adReport, placementType);
+    protected MraidController internalCreate(@NonNull final Context context,
+                                             @NonNull final String dspCreativeId,
+                                             @NonNull final PlacementType placementType,
+                                             final boolean allowCustomClose) {
+        return new MraidController(context, dspCreativeId, placementType, allowCustomClose);
     }
 }

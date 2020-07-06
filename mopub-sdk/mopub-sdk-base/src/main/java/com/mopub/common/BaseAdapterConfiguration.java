@@ -45,7 +45,7 @@ public abstract class BaseAdapterConfiguration implements AdapterConfiguration {
         final String adapterConfigurationClassName = getClass().getName();
 
         MoPubLog.log(CUSTOM, String.format(Locale.US,
-                "Updating init settings for custom event %s with params %s",
+                "Updating init settings for base ad %s with params %s",
                 adapterConfigurationClassName, serverExtrasJsonString));
 
         sharedPreferences
@@ -60,8 +60,6 @@ public abstract class BaseAdapterConfiguration implements AdapterConfiguration {
         final SharedPreferences sharedPreferences = SharedPreferencesHelper.getSharedPreferences(
                 context, CUSTOM_EVENT_PREF_NAME);
         final Map<String, ?> networkInitSettings = sharedPreferences.getAll();
-        MoPubLog.log(CUSTOM, String.format(Locale.US, "fetched init settings for %s networks: %s",
-                networkInitSettings.size(), networkInitSettings.keySet()));
 
         final String adapterConfigurationClassName = getClass().getName();
         final String networkInitParamsJsonString =
