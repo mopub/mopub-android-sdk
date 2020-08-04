@@ -54,6 +54,7 @@ public class Networking {
     // for more information.
     private volatile static MoPubRequestQueue sRequestQueue;
     private volatile static String sUserAgent;
+    private volatile static LruCache<String, Bitmap> sImageCache;
     private volatile static MaxWidthImageLoader sMaxWidthImageLoader;
     private static boolean sUseHttps = false;
     private static HurlStack.UrlRewriter sUrlRewriter;
@@ -115,7 +116,7 @@ public class Networking {
                 if (imageLoader == null) {
                     RequestQueue queue = getRequestQueue(context);
                     int cacheSize = DeviceUtils.memoryCacheSizeBytes(context);
-                    final LruCache<String, Bitmap> imageCache = new LruCache<String, Bitmap>(cacheSize) {
+                    sImageCache = new LruCache<String, Bitmap>(cacheSize) {
                         @Override
                         protected int sizeOf(String key, Bitmap value) {
                             if (value != null) {
@@ -128,12 +129,12 @@ public class Networking {
                     imageLoader = new MaxWidthImageLoader(queue, context, new MaxWidthImageLoader.ImageCache() {
                         @Override
                         public Bitmap getBitmap(final String key) {
-                            return imageCache.get(key);
+                            return Networking.sImageCache.get(key);
                         }
 
                         @Override
                         public void putBitmap(final String key, final Bitmap bitmap) {
-                            imageCache.put(key, bitmap);
+                            Networking.sImageCache.put(key, bitmap);
                         }
                     });
                     sMaxWidthImageLoader = imageLoader;
@@ -179,6 +180,13 @@ public class Networking {
         return userAgent;
     }
 
+    public static void clearMemImageCache() {
+        final LruCache<String, Bitmap> imageCache = sImageCache;
+        if (imageCache != null) {
+            imageCache.evictAll();
+        }
+    }
+
     /**
      * Gets the previously cached WebView user agent. This returns the default userAgent if the
      * WebView user agent has not been initialized yet.
@@ -197,6 +205,7 @@ public class Networking {
     @VisibleForTesting
     public static synchronized void clearForTesting() {
         sRequestQueue = null;
+        sImageCache = null;
         sMaxWidthImageLoader = null;
         sUserAgent = null;
     }
