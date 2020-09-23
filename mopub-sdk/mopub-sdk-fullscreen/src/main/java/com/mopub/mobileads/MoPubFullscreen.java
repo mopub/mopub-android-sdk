@@ -304,11 +304,11 @@ public class MoPubFullscreen extends BaseAd implements VastManager.VastManagerLi
 
         mAdData.setVastVideoConfigString(vastVideoConfig.toJsonString());
 
+        markReady();
+
         if (mLoadListener != null) {
             mLoadListener.onAdLoaded();
         }
-
-        markReady();
     }
 
     @VisibleForTesting
