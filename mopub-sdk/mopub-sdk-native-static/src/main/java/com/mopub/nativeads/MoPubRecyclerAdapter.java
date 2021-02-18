@@ -104,6 +104,14 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
             }
 
             @Override
+            public void onItemRangeChanged(int positionStart, int itemCount, Object payload) {
+                int adjustedEndPosition = mStreamAdPlacer.getAdjustedPosition(positionStart + itemCount - 1);
+                int adjustedStartPosition = mStreamAdPlacer.getAdjustedPosition(positionStart);
+                int adjustedCount = adjustedEndPosition - adjustedStartPosition + 1;
+                notifyItemRangeChanged(adjustedStartPosition, adjustedCount, payload);
+            }
+
+            @Override
             public void onItemRangeChanged(final int positionStart, final int itemCount) {
                 int adjustedEndPosition = mStreamAdPlacer.getAdjustedPosition(positionStart + itemCount - 1);
                 int adjustedStartPosition = mStreamAdPlacer.getAdjustedPosition(positionStart);
@@ -419,6 +427,11 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
 
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
+        onBindViewHolder(holder, position, null);
+    }
+
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
         Object adResponse = mStreamAdPlacer.getAdData(position);
         if (adResponse != null) {
             mStreamAdPlacer.bindAdView((NativeAd) adResponse, holder.itemView);
@@ -429,7 +442,7 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
         mVisibilityTracker.addView(holder.itemView, 0, null);
 
         //noinspection unchecked
-        mOriginalAdapter.onBindViewHolder(holder, mStreamAdPlacer.getOriginalPosition(position));
+        mOriginalAdapter.onBindViewHolder(holder, mStreamAdPlacer.getOriginalPosition(position), payloads);
     }
 
     @Override
