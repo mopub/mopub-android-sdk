@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import com.mopub.common.VisibleForTesting;
 import com.mopub.common.logging.MoPubLog;
 
-import java.util.WeakHashMap;
+import com.mopub.mobileads.native_static.R;
 
 import static com.mopub.common.logging.MoPubLog.SdkLogEvent.CUSTOM;
 
@@ -29,13 +29,6 @@ class NativeAdViewHelper {
         EMPTY,
         AD
     }
-
-    /**
-     * Used to keep track of the last {@link NativeAd} a view was associated with in order to clean
-     * up its state before associating with a new {@link NativeAd}
-     */
-    static private final WeakHashMap<View, NativeAd> sNativeAdMap =
-            new WeakHashMap<>();
 
     @NonNull
     static View getAdView(@Nullable View convertView,
@@ -69,15 +62,16 @@ class NativeAdViewHelper {
     }
 
     private static void clearNativeAd(@NonNull final View view) {
-        final NativeAd nativeAd = sNativeAdMap.get(view);
+        final NativeAd nativeAd = (NativeAd) view.getTag(R.id.mopub_tag_NativeAdViewHelper_NativeAd);
         if (nativeAd != null) {
+            view.setTag(R.id.mopub_tag_NativeAdViewHelper_NativeAd, null);
             nativeAd.clear(view);
         }
     }
 
     private static void prepareNativeAd(@NonNull final View view,
             @NonNull final NativeAd nativeAd) {
-        sNativeAdMap.put(view, nativeAd);
+        view.setTag(R.id.mopub_tag_NativeAdViewHelper_NativeAd, nativeAd);
         nativeAd.prepare(view);
     }
 }
