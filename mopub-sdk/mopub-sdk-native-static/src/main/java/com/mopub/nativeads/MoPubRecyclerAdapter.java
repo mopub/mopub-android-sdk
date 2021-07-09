@@ -112,6 +112,14 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
             }
 
             @Override
+            public void onItemRangeChanged(int positionStart, int itemCount, Object payload) {
+                int adjustedEndPosition = mStreamAdPlacer.getAdjustedPosition(positionStart + itemCount - 1);
+                int adjustedStartPosition = mStreamAdPlacer.getAdjustedPosition(positionStart);
+                int adjustedCount = adjustedEndPosition - adjustedStartPosition + 1;
+                notifyItemRangeChanged(adjustedStartPosition, adjustedCount, payload);
+            }
+
+            @Override
             public void onItemRangeInserted(final int positionStart, final int itemCount) {
                 final int adjustedStartPosition = mStreamAdPlacer.getAdjustedPosition(positionStart);
                 final int newOriginalCount = mOriginalAdapter.getItemCount();
@@ -430,6 +438,11 @@ public final class MoPubRecyclerAdapter extends RecyclerView.Adapter<RecyclerVie
 
         //noinspection unchecked
         mOriginalAdapter.onBindViewHolder(holder, mStreamAdPlacer.getOriginalPosition(position));
+    }
+
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
+        mOriginalAdapter.onBindViewHolder(holder, mStreamAdPlacer.getOriginalPosition(position), payloads);
     }
 
     @Override
